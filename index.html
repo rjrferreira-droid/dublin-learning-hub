@@ -3,60 +3,90 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Dublin Learning Hub</title>
-  <meta name="description" content="Rafael & Viviane — Dublin 2028/29 professional learning hub" />
-  <link rel="stylesheet" href="styles.css?v=10" />
-  <link rel="stylesheet" href="toolkit-ui.css?v=10" />
-  <link rel="stylesheet" href="toolkit-tab.css?v=10" />
+  <title>Dublin Learning Hub Premium</title>
+  <meta name="description" content="Learning platform for ACCA, Global Finance, Ireland and Irish Payroll." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="premium.css?v=1" />
 </head>
 <body>
-  <header class="topbar">
-    <div>
-      <div class="eyebrow">DUBLIN 2028/29</div>
-      <h1>Dublin Learning Hub</h1>
-      <p>Preparação profissional de Rafael e Viviane para Dublin</p>
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-brand">
+      <div class="brand-mark">DLH</div>
+      <div>
+        <div class="eyebrow">DUBLIN 2028/29</div>
+        <h1>Dublin Learning Hub</h1>
+        <p>ACCA • Global Finance • Ireland • Irish Payroll</p>
+      </div>
     </div>
-    <div class="month-badge">Mês 1 • 40 microaulas</div>
-  </header>
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-auth-mode="signin">Entrar</button>
+        <button class="auth-tab" data-auth-mode="signup">Criar acesso</button>
+      </div>
+      <form id="authForm">
+        <div id="signupFields" class="hidden">
+          <label>Nome</label>
+          <input id="displayName" type="text" placeholder="Ex.: Rafael" />
+          <label>Trilha</label>
+          <select id="learnerTrack">
+            <option value="rafael_finance">Rafael — Global Finance / ACCA / Ireland</option>
+            <option value="viviane_payroll">Viviane — Irish Payroll / HR Operations</option>
+          </select>
+        </div>
+        <label>E-mail</label>
+        <input id="email" type="email" autocomplete="email" required placeholder="seu@email.com" />
+        <label>Senha</label>
+        <input id="password" type="password" autocomplete="current-password" required minlength="6" placeholder="••••••••" />
+        <button id="authSubmit" class="btn primary wide" type="submit">Entrar</button>
+        <div id="authMessage" class="form-message"></div>
+      </form>
+      <p class="privacy-note">Seu progresso fica salvo no banco privado do projeto. Cada usuário acessa apenas o próprio histórico.</p>
+    </div>
+  </div>
 
-  <div class="layout">
-    <aside class="sidebar panel">
-      <div class="label">Perfil</div>
-      <button class="profile active" data-profile="rafael"><strong>Rafael</strong><span>Finance Ireland</span></button>
-      <button class="profile" data-profile="viviane"><strong>Viviane</strong><span>Irish Payroll</span></button>
-      <div class="label spacer">Semanas</div>
-      <div id="weekList"></div>
-      <div class="label spacer">Progresso do mês</div>
-      <div class="progress"><div id="monthProgress"></div></div>
-      <div id="monthProgressText" class="small muted"></div>
+  <div id="appShell" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="side-brand">
+        <div class="brand-mark small">DLH</div>
+        <div><strong>Dublin Learning Hub</strong><span>Premium Learning</span></div>
+      </div>
+      <div class="profile-box">
+        <div class="avatar" id="avatar">RF</div>
+        <div><strong id="profileName">Learner</strong><span id="profileTrack">Track</span></div>
+      </div>
+      <nav class="side-nav">
+        <button class="nav-item active" data-view="dashboard"><span>⌂</span> Dashboard</button>
+        <button class="nav-item" data-view="study"><span>▤</span> Study</button>
+        <button class="nav-item" data-view="practice"><span>✦</span> Practice</button>
+        <button class="nav-item" data-view="revision"><span>↻</span> Revision</button>
+        <button class="nav-item" data-view="assessments"><span>✓</span> Assessments</button>
+        <button class="nav-item" data-view="performance"><span>◫</span> Performance</button>
+      </nav>
+      <div class="side-bottom">
+        <div class="sync-state"><span class="dot"></span> Supabase sync ativo</div>
+        <button id="logoutBtn" class="nav-item subtle"><span>↪</span> Sair</button>
+      </div>
     </aside>
 
-    <main class="main panel">
-      <div class="lesson-head">
+    <main class="workspace">
+      <header class="workspace-head">
         <div>
-          <div id="breadcrumb" class="small muted"></div>
-          <h2 id="lessonTitle"></h2>
-          <p id="weekFocus" class="muted"></p>
+          <div id="pageEyebrow" class="eyebrow dark">LEARNING HUB</div>
+          <h2 id="pageTitle">Dashboard</h2>
+          <p id="pageSubtitle">Seu plano adaptativo para Dublin 2028/29.</p>
         </div>
-        <div id="status" class="status">Não concluída</div>
-      </div>
-      <div id="dayNav" class="day-nav"></div>
-      <nav class="tabs">
-        <button class="tab active" data-tab="lesson">Aula</button>
-        <button class="tab" data-tab="case">Caso prático</button>
-        <button class="tab" data-tab="quiz">Quiz (5)</button>
-        <button class="tab" data-tab="progress">Progresso</button>
-      </nav>
-      <section id="lessonView" class="view"></section>
-      <section id="caseView" class="view hidden"></section>
-      <section id="quizView" class="view hidden"></section>
-      <section id="progressView" class="view hidden"></section>
+        <div class="head-actions">
+          <div class="date-pill" id="todayLabel"></div>
+          <button class="icon-btn" id="refreshBtn" title="Atualizar">↻</button>
+        </div>
+      </header>
+      <section id="contentArea" class="content-area"></section>
     </main>
   </div>
 
-  <footer>Conteúdo desenhado para 10–15 minutos por dia. Alíquotas, thresholds, deadlines e regras específicas da Irlanda devem ser atualizados periodicamente até a mudança.</footer>
-  <script src="toolkit.js?v=10"></script>
-  <script src="toolkit-ui.js?v=10"></script>
-  <script src="bootstrap.js?v=10"></script>
+  <div id="toast" class="toast"></div>
+  <script type="module" src="premium.js?v=1"></script>
 </body>
 </html>
