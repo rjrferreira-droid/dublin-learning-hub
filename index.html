@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Dublin Learning Hub</title>
   <meta name="description" content="Rafael & Viviane — Dublin 2028/29 professional learning hub" />
-  <link rel="stylesheet" href="styles.css?v=4" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="topbar">
@@ -35,10 +35,10 @@
       <div class="lesson-head">
         <div>
           <div id="breadcrumb" class="small muted"></div>
-          <h2 id="lessonTitle">Carregando conteúdo...</h2>
+          <h2 id="lessonTitle"></h2>
           <p id="weekFocus" class="muted"></p>
         </div>
-        <div id="status" class="status">Aguarde</div>
+        <div id="status" class="status">Não concluída</div>
       </div>
 
       <div id="dayNav" class="day-nav"></div>
@@ -50,7 +50,7 @@
         <button class="tab" data-tab="progress">Progresso</button>
       </nav>
 
-      <section id="lessonView" class="view"><p class="muted">Carregando as microaulas do Mês 1...</p></section>
+      <section id="lessonView" class="view"></section>
       <section id="caseView" class="view hidden"></section>
       <section id="quizView" class="view hidden"></section>
       <section id="progressView" class="view hidden"></section>
@@ -61,6 +61,7 @@
     Conteúdo desenhado para 10–15 minutos por dia. Alíquotas, thresholds, deadlines e regras específicas da Irlanda devem ser atualizados periodicamente até a mudança.
   </footer>
 
-  <script src="bootstrap.js?v=4"></script>
+  <script src="bootstrap.js"></script>
+  <script src="toolkit.js"></script>
 </body>
 </html>
