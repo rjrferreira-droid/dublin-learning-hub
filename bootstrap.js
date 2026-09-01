@@ -8,15 +8,11 @@
   };
 
   try {
-    const response = await fetch('data.js?v=4', { cache: 'no-store' });
+    const response = await fetch('data.js?v=9', { cache: 'no-store' });
     if (!response.ok) throw new Error('Não foi possível baixar data.js (' + response.status + ').');
 
     let source = await response.text();
-
-    // The original content file was published with one extra closing brace at the end.
-    // Preserve all lesson content and fix only that final syntax issue in memory.
     source = source.replace(/\n\};\s*$/, ';');
-
     (0, eval)(source);
 
     if (!window.DATA || !window.DATA.rafael || !window.DATA.viviane) {
@@ -24,7 +20,7 @@
     }
 
     const script = document.createElement('script');
-    script.src = 'app.js?v=4';
+    script.src = 'app.js?v=9';
     script.onload = () => console.log('Dublin Learning Hub loaded successfully.');
     script.onerror = () => errorBox('O conteúdo foi carregado, mas app.js não iniciou.');
     document.body.appendChild(script);
