@@ -11,6 +11,13 @@
   <link rel="stylesheet" href="premium.css?v=3" />
   <link rel="stylesheet" href="visual-challenge.css?v=2" />
   <link rel="stylesheet" href="premium-ai.css?v=1" />
+  <script type="importmap">
+  {
+    "imports": {
+      "https://esm.sh/@supabase/supabase-js@2": "./supabase-safe.js?v=1"
+    }
+  }
+  </script>
 </head>
 <body>
   <div id="authScreen" class="auth-screen">
@@ -89,8 +96,7 @@
   </div>
 
   <div id="toast" class="toast"></div>
-  <script src="lesson-navigation-guard.js?v=1"></script>
   <script src="webrtc-bridge.js?v=3"></script>
-  <script type="module" src="premium-v2.js?v=4"></script>
+  <script type="module" src="premium-v2.js?v=5"></script>
 </body>
 </html>
