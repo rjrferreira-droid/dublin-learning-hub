@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Learning Hub — AI Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="lab.css?v=1">
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div class="mark">LH</div>
+      <div>
+        <div class="eyebrow">ISOLATED PREVIEW ENVIRONMENT</div>
+        <h1>Learning Hub — AI Lab</h1>
+        <p>Premium Audio + Professor testing. Nothing on this page changes the production navigation.</p>
+      </div>
+    </header>
+
+    <section id="authCard" class="card auth-card">
+      <h2>Entrar</h2>
+      <p class="muted">Use o mesmo acesso do Learning Hub.</p>
+      <label>E-mail</label>
+      <input id="email" type="email" autocomplete="email">
+      <label>Senha</label>
+      <input id="password" type="password" autocomplete="current-password">
+      <button id="loginBtn" class="btn primary">Entrar no laboratório</button>
+      <div id="authMessage" class="message"></div>
+    </section>
+
+    <section id="labApp" class="hidden">
+      <div class="status-row">
+        <div><strong id="profileName">Learner</strong><span id="trackName"></span></div>
+        <button id="logoutBtn" class="btn">Sair</button>
+      </div>
+
+      <div class="grid">
+        <section class="card">
+          <div class="pill good">ÁUDIO PREMIUM</div>
+          <h2>Lesson narration</h2>
+          <p class="muted">Gera uma narração profissional e salva o MP3 no Supabase. Se o áudio já existir, ele é reutilizado sem nova cobrança.</p>
+          <label>Aula</label>
+          <select id="lessonSelect"></select>
+          <button id="audioBtn" class="btn primary">Gerar / carregar áudio</button>
+          <div id="audioStatus" class="message"></div>
+          <div id="audioPlayer"></div>
+        </section>
+
+        <section class="card professor-card">
+          <div class="pill waiting">PROFESSOR LAB</div>
+          <h2>Professor em tempo real</h2>
+          <p class="muted">Esta área será conectada ao LiveKit + OpenAI. Ela fica propositalmente isolada até passar pelos testes de conexão, interrupção, reconexão e avaliação.</p>
+          <div class="checklist">
+            <div><span>✓</span> Supabase authentication</div>
+            <div><span>✓</span> Lesson context</div>
+            <div><span>✓</span> OpenAI backend</div>
+            <div><span>○</span> LiveKit project credentials</div>
+            <div><span>○</span> Realtime agent deployment</div>
+            <div><span>○</span> Automated voice smoke test</div>
+          </div>
+          <button class="btn" disabled>Professor aguardando LiveKit</button>
+        </section>
+      </div>
+
+      <section class="card safety">
+        <h3>Regra de segurança</h3>
+        <p>O laboratório não carrega <code>stable-v1.js</code>, não altera o roteamento do Learning Hub e não será promovido para produção enquanto os testes de regressão não estiverem verdes.</p>
+      </section>
+    </section>
+  </main>
+  <script type="module" src="lab.js?v=1"></script>
+</body>
+</html>
