@@ -4,7 +4,7 @@ test('production shell loads with Learning Hub branding', async ({page})=>{
   await page.goto('/');
   await expect(page).toHaveTitle(/Learning Hub/);
   await expect(page.getByRole('heading',{name:'Learning Hub'})).toBeVisible();
-  await expect(page.getByRole('button',{name:'Entrar'})).toBeVisible();
+  await expect(page.locator('#authSubmit')).toBeVisible();
 });
 
 test('isolated AI lab loads without touching production shell', async ({page})=>{
