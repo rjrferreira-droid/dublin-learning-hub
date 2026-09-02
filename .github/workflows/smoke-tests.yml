@@ -1,0 +1,26 @@
+name: Learning Hub Smoke Tests
+
+on:
+  push:
+    branches: [professor-lab]
+  pull_request:
+    branches: [main]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - name: Start static server
+        run: python3 -m http.server 4173 >/tmp/lh-server.log 2>&1 &
+      - name: Run smoke tests
+        env:
+          LH_TEST_EMAIL: ${{ secrets.LH_TEST_EMAIL }}
+          LH_TEST_PASSWORD: ${{ secrets.LH_TEST_PASSWORD }}
+        run: npm run test:e2e
