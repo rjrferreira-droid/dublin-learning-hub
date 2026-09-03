@@ -30,6 +30,18 @@ function nextReviewDate(observedAt: string, frequency: number, confidence: numbe
   return new Date(base.getTime() + days * DAY_MS).toISOString();
 }
 
+function assertSameErrorIdentity(current: ErrorBankState, observation: ErrorObservation, learnerId: string) {
+  if (current.learnerId !== learnerId) {
+    throw new Error('Error Bank learner mismatch: refusing to merge observations across learner profiles.');
+  }
+  if (current.domain !== observation.domain) {
+    throw new Error('Error Bank domain mismatch: refusing to merge different error domains.');
+  }
+  if (normalizeErrorPattern(current.pattern) !== normalizeErrorPattern(observation.pattern)) {
+    throw new Error('Error Bank pattern mismatch: refusing to merge different normalized patterns.');
+  }
+}
+
 export function observeError(
   current: ErrorBankState | null,
   observation: ErrorObservation,
@@ -53,6 +65,7 @@ export function observeError(
     };
   }
 
+  assertSameErrorIdentity(current, observation, learnerId);
   const frequency = current.frequency + 1;
   const confidence = Math.max(5, Math.round(current.confidence - 8 - severity * 0.12));
   return {

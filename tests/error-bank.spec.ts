@@ -23,6 +23,42 @@ test('repeated error lowers mastery confidence and resurfaces quickly', () => {
   expect(shouldResurface(second, new Date('2026-09-10T12:00:00.000Z'))).toBe(true);
 });
 
+test('Error Bank refuses to merge Rafael and Viviane observations', () => {
+  const rafaelError = observeError(
+    null,
+    { domain: 'technical', pattern: 'state conclusion before detail', observedAt: '2026-09-01T12:00:00.000Z' },
+    'rafael',
+    'rafael-error',
+  );
+
+  expect(() => observeError(
+    rafaelError,
+    { domain: 'technical', pattern: 'state conclusion before detail', observedAt: '2026-09-02T12:00:00.000Z' },
+    'viviane',
+  )).toThrow(/learner mismatch/i);
+});
+
+test('Error Bank refuses accidental merges across normalized patterns or domains', () => {
+  const item = observeError(
+    null,
+    { domain: 'grammar', pattern: 'since / for with present perfect', observedAt: '2026-09-01T12:00:00.000Z' },
+    'test-user',
+    'error-1',
+  );
+
+  expect(() => observeError(
+    item,
+    { domain: 'grammar', pattern: 'past simple vs present perfect', observedAt: '2026-09-02T12:00:00.000Z' },
+    'test-user',
+  )).toThrow(/pattern mismatch/i);
+
+  expect(() => observeError(
+    item,
+    { domain: 'vocabulary', pattern: 'since / for with present perfect', observedAt: '2026-09-02T12:00:00.000Z' },
+    'test-user',
+  )).toThrow(/domain mismatch/i);
+});
+
 test('strong retrieval raises confidence and can eventually mark an error mastered', () => {
   const item = {
     id: 'error-1',
