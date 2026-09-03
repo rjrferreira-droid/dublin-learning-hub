@@ -5,6 +5,7 @@ import App from './App';
 import './styles.css';
 import './british-premium.css';
 import './premium-audio.css';
+import './professor.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
