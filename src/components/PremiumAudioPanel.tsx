@@ -1,22 +1,18 @@
 import { useState } from 'react';
 import { isFeatureEnabled } from '../config/features';
-import { premiumAudioService } from '../services/premiumAudio';
+import { normalizePremiumAudioError, premiumAudioService, type PremiumAudioError, type PremiumAudioResult } from '../services/premiumAudio';
 
 type PremiumAudioPanelProps = {
   lessonId?: string;
   lessonTitle: string;
 };
 
-type AudioState = {
-  url: string;
-  cached: boolean;
-  estimatedCostUsd?: number;
-} | null;
+type AudioState = PremiumAudioResult | null;
 
 export function PremiumAudioPanel({ lessonId, lessonTitle }: PremiumAudioPanelProps) {
   const [audio, setAudio] = useState<AudioState>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<PremiumAudioError | null>(null);
 
   const enabled = isFeatureEnabled('premiumAudio');
   const available = enabled && Boolean(lessonId);
@@ -27,14 +23,9 @@ export function PremiumAudioPanel({ lessonId, lessonTitle }: PremiumAudioPanelPr
     setError(null);
     try {
       const result = await premiumAudioService.getOrCreateLessonAudio(lessonId);
-      setAudio({
-        url: result.audioUrl,
-        cached: result.cached,
-        estimatedCostUsd: result.estimatedCostUsd,
-      });
+      setAudio(result);
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : 'Premium Audio could not be loaded.';
-      setError(message);
+      setError(normalizePremiumAudioError(cause));
     } finally {
       setLoading(false);
     }
@@ -94,11 +85,11 @@ export function PremiumAudioPanel({ lessonId, lessonTitle }: PremiumAudioPanelPr
 
       {audio && (
         <div className="premium-audio-player">
-          <audio controls preload="metadata" src={audio.url}>
+          <audio controls preload="metadata" src={audio.audioUrl}>
             Your browser does not support audio playback.
           </audio>
           <div className="premium-audio-meta">
-            <span>{audio.cached ? 'Cached asset' : 'New asset'}</span>
+            <span>{audio.cached ? 'Cached asset • no new generation' : 'New asset • stored for future playback'}</span>
             {audio.estimatedCostUsd != null && !audio.cached && (
               <span>Estimated generation cost: US${audio.estimatedCostUsd.toFixed(4)}</span>
             )}
@@ -107,16 +98,16 @@ export function PremiumAudioPanel({ lessonId, lessonTitle }: PremiumAudioPanelPr
       )}
 
       {error && (
-        <div className="audio-error" role="alert">
-          <strong>Audio unavailable</strong>
-          <span>{error}</span>
-          <button className="secondary-btn" type="button" onClick={loadAudio}>Try again</button>
+        <div className={`audio-error ${error.retryable ? 'retryable' : 'blocked'}`} role="alert" aria-live="polite">
+          <strong>{error.code === 'budget-reached' ? 'Generation budget reached' : error.retryable ? 'Audio temporarily unavailable' : 'Audio unavailable'}</strong>
+          <span>{error.message}</span>
+          {error.retryable && <button className="secondary-btn" type="button" onClick={loadAudio}>Try again</button>}
         </div>
       )}
 
       <div className="callout">
-        <strong>Isolated by design</strong>
-        <span>Audio loading, failure or retry never changes the active lesson, tab or learner progress.</span>
+        <strong>Cost-safe and isolated by design</strong>
+        <span>Concurrent requests for the same lesson are deduplicated. Cached audio bypasses new generation, and audio failure never changes the active lesson, tab or learner progress.</span>
       </div>
     </div>
   );
