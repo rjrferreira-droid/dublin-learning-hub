@@ -94,17 +94,20 @@ export function rankAdaptivePriorities(input: {
   }
 
   for (const error of input.errors) {
+    if (error.status === 'mastered' || error.status === 'archived') continue;
     const overdue = daysOverdue(error.nextReviewAt, now);
     const lowConfidence = clamp(100 - error.confidence);
-    const priorityScore = clamp(28 + lowConfidence * 0.45 + Math.min(overdue, 21) * 1.7);
+    const repetitionBoost = Math.min(Math.max((error.frequency ?? 1) - 1, 0), 8) * 3;
+    const priorityScore = clamp(28 + lowConfidence * 0.45 + Math.min(overdue, 21) * 1.7 + repetitionBoost);
+    const repeated = (error.frequency ?? 1) > 1 ? ` It has recurred ${error.frequency} times.` : '';
     priorities.push({
       key: `error:${error.id}`,
       label: error.pattern,
       source: 'error-bank',
       score: Math.round(priorityScore),
       reason: overdue > 0
-        ? `Recurring ${error.domain} pattern is ${overdue} day${overdue === 1 ? '' : 's'} overdue for retrieval.`
-        : `Recurring ${error.domain} pattern remains below stable mastery confidence.`,
+        ? `Recurring ${error.domain} pattern is ${overdue} day${overdue === 1 ? '' : 's'} overdue for retrieval.${repeated}`
+        : `Recurring ${error.domain} pattern remains below stable mastery confidence.${repeated}`,
       recommendedAction: actionForError(error.domain),
     });
   }

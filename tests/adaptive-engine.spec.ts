@@ -54,6 +54,8 @@ test('recurring language error can become the next learning action', () => {
         domain: 'grammar',
         pattern: 'since/for with present perfect',
         confidence: 35,
+        frequency: 4,
+        status: 'active',
         lastSeenAt: '2026-09-01T12:00:00.000Z',
         nextReviewAt: '2026-09-03T12:00:00.000Z',
       },
@@ -63,4 +65,74 @@ test('recurring language error can become the next learning action', () => {
 
   expect(action?.source).toBe('error-bank');
   expect(action?.recommendedAction).toBe('speaking');
+  expect(action?.reason).toContain('recurred 4 times');
+});
+
+test('mastered and archived Error Bank patterns never compete for the next action', () => {
+  const priorities = rankAdaptivePriorities({
+    now: new Date('2026-09-10T12:00:00.000Z'),
+    competencies: [{ competencyId: 'finance', label: 'Finance judgement', score: 68, priority: true }],
+    errors: [
+      {
+        id: 'mastered',
+        learnerId: 'test',
+        domain: 'grammar',
+        pattern: 'already mastered pattern',
+        confidence: 95,
+        frequency: 7,
+        status: 'mastered',
+        lastSeenAt: '2026-08-01T12:00:00.000Z',
+        nextReviewAt: '2026-09-01T12:00:00.000Z',
+      },
+      {
+        id: 'archived',
+        learnerId: 'test',
+        domain: 'technical',
+        pattern: 'archived pattern',
+        confidence: 20,
+        frequency: 10,
+        status: 'archived',
+        lastSeenAt: '2026-08-01T12:00:00.000Z',
+        nextReviewAt: '2026-08-02T12:00:00.000Z',
+      },
+    ],
+    reviews: [],
+  });
+
+  expect(priorities.map((item) => item.key)).toEqual(['competency:finance']);
+});
+
+test('frequency increases Error Bank priority when confidence and due date are equal', () => {
+  const priorities = rankAdaptivePriorities({
+    now: new Date('2026-09-10T12:00:00.000Z'),
+    competencies: [],
+    errors: [
+      {
+        id: 'once',
+        learnerId: 'test',
+        domain: 'technical',
+        pattern: 'single occurrence',
+        confidence: 55,
+        frequency: 1,
+        status: 'active',
+        lastSeenAt: '2026-09-01T12:00:00.000Z',
+        nextReviewAt: '2026-09-08T12:00:00.000Z',
+      },
+      {
+        id: 'repeated',
+        learnerId: 'test',
+        domain: 'technical',
+        pattern: 'repeated occurrence',
+        confidence: 55,
+        frequency: 5,
+        status: 'active',
+        lastSeenAt: '2026-09-01T12:00:00.000Z',
+        nextReviewAt: '2026-09-08T12:00:00.000Z',
+      },
+    ],
+    reviews: [],
+  });
+
+  expect(priorities[0].key).toBe('error:repeated');
+  expect(priorities[0].score).toBeGreaterThan(priorities[1].score);
 });

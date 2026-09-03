@@ -15,6 +15,8 @@ export type ErrorBankItem = {
   domain: 'technical' | 'grammar' | 'vocabulary' | 'pronunciation' | 'fluency' | 'register';
   pattern: string;
   confidence: number;
+  frequency?: number;
+  status?: 'active' | 'mastered' | 'archived';
   lastSeenAt: string;
   nextReviewAt: string;
 };
