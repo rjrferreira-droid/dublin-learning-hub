@@ -8,7 +8,9 @@ export type LearningProfile = {
   initials: string;
   primaryTrack: 'rafael_finance' | 'viviane_payroll';
   destinationRoles: string[];
-  english: LearnerEnglishProfile;
+  english: LearnerEnglishProfile & {
+    placementStatus: 'provisional' | 'assessed';
+  };
   professor: {
     defaultLanguage: 'pt-BR' | 'en';
     style: string;
@@ -21,13 +23,14 @@ const englishProfile = (
   targetCefr: CefrBand,
   professorEnglishSharePct: number,
   weakSkills: LearnerEnglishProfile['weakSkills'],
-): LearnerEnglishProfile => ({
+): LearningProfile['english'] => ({
   cefr,
   targetCefr,
   weakSkills,
   recurringErrors: [],
   preferredCorrectionMode: 'delayed',
   professorEnglishSharePct,
+  placementStatus: 'provisional',
 });
 
 export const LEARNER_PROFILES: Record<LearnerKey, LearningProfile> = {
