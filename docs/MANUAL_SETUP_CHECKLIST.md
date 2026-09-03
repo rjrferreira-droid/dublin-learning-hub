@@ -3,12 +3,12 @@
 These are the only account/billing actions that require Rafael. Do not paste private keys, passwords or billing details into ChatGPT.
 
 ## 1. Vercel
-- Upgrade team `rjrferreira-2878` from Hobby to Pro.
-- Open existing project `dublin-learning-hub`.
-- Settings -> Git -> connect repository `rjrferreira-droid/dublin-learning-hub`.
-- Do not create a duplicate Vercel project.
-- Keep production branch as `main` until V2 launch approval.
-- Ensure branch `v2` produces Preview deployments, not Production.
+- [x] Upgrade team `rjrferreira-2878` from Hobby to Pro.
+- [x] Open existing project `dublin-learning-hub`.
+- [x] Settings -> Git -> connect repository `rjrferreira-droid/dublin-learning-hub`.
+- [x] Do not create a duplicate Vercel project.
+- [ ] Keep production branch as `main` until V2 launch approval.
+- [ ] Confirm branch `v2` produces Preview deployments, not Production.
 
 ## 2. Supabase
 - Existing project only: `qwvsrcgsfoguxdbcdrxq` / `Dublin Learning Hub`.
