@@ -45,7 +45,7 @@ test('Adaptive Curriculum, Error Bank and English Academy are visible product su
   await page.goto('/');
   await expect(page.getByTestId('adaptive-priority-stack')).toContainText(/priority/i);
 
-  await page.getByRole('button', { name: /Error Bank/ }).click();
+  await page.getByRole('button', { name: 'Open Error Bank →', exact: true }).click();
   await expect(page.getByTestId('error-bank-view')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Recurring mistakes become future curriculum' })).toBeVisible();
 
