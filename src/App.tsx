@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { PremiumAudioPanel } from './components/PremiumAudioPanel';
+import { ProfessorSessionPanel } from './components/ProfessorSessionPanel';
 
 type TrackKey = 'finance' | 'payroll' | 'english';
 type ViewKey = 'dashboard' | 'learn' | 'revision' | 'performance' | 'professor';
@@ -320,7 +321,7 @@ function SourcesPanel() {
 }
 
 function InlineProfessorPanel({ track }: { track: Track }) {
-  return <div className="reading-copy"><h2>Professor</h2><p className="lead">Live voice tutoring will run in its own boundary using LiveKit + OpenAI Realtime.</p><div className="professor-card"><div className="professor-orb">AI</div><div><strong>Professor ready for integration</strong><span>{track.key === 'english' ? 'Natural UK/US conversation with Irish exposure.' : 'Technical follow-up questions + professional English.'}</span></div><button className="primary-btn">Start session</button></div><div className="callout"><strong>Safety by design</strong><span>No raw learner voice stored by default. Session evaluation is handled independently after the conversation.</span></div></div>;
+  return <div className="reading-copy"><h2>Professor</h2><p className="lead">Live voice tutoring runs in its own resilient boundary using LiveKit + OpenAI Realtime.</p><ProfessorSessionPanel lessonId={track.lessonId} track={track.key} /><div className="callout"><strong>Safety by design</strong><span>No raw learner voice stored by default. Session evaluation is handled independently after the conversation.</span></div></div>;
 }
 
 function Signal({ label, value }: { label: string; value: number }) {
@@ -336,7 +337,7 @@ function PerformanceView() {
 }
 
 function ProfessorView() {
-  return <section className="page-stack"><div className="professor-hero"><div className="professor-orb large">AI</div><div><div className="eyebrow light">PROFESSOR LAB</div><h2>Natural voice. Persistent context. Independent evaluation.</h2><p>The Professor is intentionally isolated from core navigation. LiveKit will manage the voice session; OpenAI will manage intelligence; Supabase will store only the required learning record.</p><div className="hero-actions"><button className="primary-btn">Voice integration pending</button><button className="secondary-dark-btn">View architecture</button></div></div></div></section>;
+  return <section className="page-stack"><div className="professor-hero"><div className="professor-orb large">AI</div><div><div className="eyebrow light">PROFESSOR LAB</div><h2>Natural voice. Persistent context. Independent evaluation.</h2><p>The Professor is intentionally isolated from core navigation. LiveKit manages the voice session; OpenAI manages intelligence; Supabase stores only the required learning record.</p><div className="hero-actions"><button className="primary-btn">Open a Golden Lesson to start</button><button className="secondary-dark-btn">LiveKit integration staged</button></div></div></div></section>;
 }
 
 function titleForView(view: ViewKey) {
