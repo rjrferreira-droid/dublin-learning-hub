@@ -65,21 +65,23 @@ test('English Academy is general plus professional, not business-only', async ({
   await page.getByRole('tab', { name: 'Audio', exact: true }).click();
   await expect(page.getByText(/does not yet have a published lesson record/i)).toBeVisible();
   await page.getByRole('tab', { name: 'Professor', exact: true }).click();
-  await expect(page.getByText(/Natural UK\/US conversation with Irish exposure/i)).toBeVisible();
+  await expect(page.getByTestId('professor-session-panel')).toBeVisible();
+  await expect(page.getByText(/British \+ American English with deliberate Irish exposure/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'LiveKit setup required', exact: true })).toBeDisabled();
 });
 
 test('core navigation remains stable across revision, performance and Professor', async ({ page }) => {
   await page.goto('/');
 
-  await page.getByRole('button', { name: 'Revision', exact: true }).click();
+  await page.getByRole('button', { name: /Revision/ }).click();
   await expect(page.getByRole('heading', { name: 'Review what is most likely to be forgotten' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Performance', exact: true }).click();
+  await page.getByRole('button', { name: /Performance/ }).click();
   await expect(page.getByRole('heading', { name: 'Readiness by capability, not course completion' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Professor', exact: true }).first().click();
+  await page.getByRole('button', { name: /Professor/ }).first().click();
   await expect(page.getByRole('heading', { name: 'Natural voice. Persistent context. Independent evaluation.' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
+  await page.getByRole('button', { name: /Dashboard/ }).click();
   await expect(page.getByText('Your learning command centre')).toBeVisible();
 });
