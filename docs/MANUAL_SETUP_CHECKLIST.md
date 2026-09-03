@@ -28,10 +28,18 @@ These are the only account/billing actions that require Rafael. Do not paste pri
 - Purpose: reduce interruption during larger architecture, code, testing and review sessions.
 - This subscription does not replace OpenAI API billing used by the Learning Hub itself.
 
-## 5. LiveKit — when Professor build starts
-- Create/use a LiveKit Cloud project.
-- Start on an appropriate plan; Ship can be enabled for intensive testing/launch if approved.
-- API credentials must be stored directly in Vercel/LiveKit environment secrets, never pasted into chat.
+## 5. LiveKit + OpenAI Realtime — Professor activation gate
+The V2 code is designed for explicit LiveKit agent dispatch. Each session receives only pedagogical metadata (Finance / Payroll / English, lesson, mode and language guidance); names, emails and Supabase user IDs are not placed in LiveKit room identities or job metadata.
+
+Account/secret steps that cannot be completed from source code:
+- Create/use one LiveKit Cloud project.
+- Deploy the `professor-agent` worker to that LiveKit project (or another approved agent runtime) with dispatch name `learning-hub-professor`.
+- Store `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` in the Vercel Preview environment for V2. Never paste them into chat.
+- Store the same LiveKit credentials plus the OpenAI API credential required by the LiveKit OpenAI Realtime plugin in the Professor agent runtime.
+- Optional: set `LIVEKIT_PROFESSOR_AGENT_NAME` in both environments only if the dispatch name is intentionally changed from `learning-hub-professor`.
+- Keep `VITE_FEATURE_PROFESSOR=false` until the agent deployment and secrets are ready, then enable it in Preview first.
+
+Do not place LiveKit/OpenAI secrets in browser `VITE_*` variables.
 
 ## 6. GitHub authenticated smoke-test account
 Later, create a dedicated non-personal test learner account (not Rafael/Viviane primary login).

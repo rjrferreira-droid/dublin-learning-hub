@@ -9,14 +9,25 @@ type ProfessorTokenResponse = {
   participantIdentity: string;
   lessonId: string | null;
   mode: TutorSessionRequest['mode'];
+  professorProfile: 'finance' | 'payroll' | 'english';
+  dispatchId?: string | null;
 };
 
 export type ProfessorConnection = {
   room: Room;
   roomName: string;
   participantIdentity: string;
+  professorProfile: ProfessorTokenResponse['professorProfile'];
   disconnect: () => Promise<void>;
 };
+
+function errorMessage(code: string): string {
+  if (code === 'professor_not_configured') return 'Professor voice infrastructure is not configured yet.';
+  if (code === 'professor_agent_dispatch_failed') return 'The Professor agent could not be started. Please try again.';
+  if (code === 'invalid_professor_request') return 'This Professor session request is not valid.';
+  if (code === 'invalid_authentication' || code === 'missing_authentication') return 'Sign in again before starting the Professor.';
+  return code || 'Professor connection failed.';
+}
 
 async function requestProfessorToken(request: TutorSessionRequest): Promise<ProfessorTokenResponse> {
   const { data, error } = await supabase.auth.getSession();
@@ -30,13 +41,18 @@ async function requestProfessorToken(request: TutorSessionRequest): Promise<Prof
       'content-type': 'application/json',
       authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify({ lessonId: request.lessonId, mode: request.mode }),
+    body: JSON.stringify({
+      lessonId: request.lessonId,
+      track: request.track,
+      mode: request.mode,
+      languageProfile: request.languageProfile,
+    }),
   });
 
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const code = typeof body?.error === 'string' ? body.error : 'professor_connection_failed';
-    throw new Error(code === 'professor_not_configured' ? 'Professor voice infrastructure is not configured yet.' : code);
+    throw new Error(errorMessage(code));
   }
 
   return body as ProfessorTokenResponse;
@@ -65,6 +81,7 @@ export async function connectProfessor(
     room,
     roomName: credentials.roomName,
     participantIdentity: credentials.participantIdentity,
+    professorProfile: credentials.professorProfile,
     disconnect: async () => {
       await room.localParticipant.setMicrophoneEnabled(false).catch(() => undefined);
       room.disconnect();

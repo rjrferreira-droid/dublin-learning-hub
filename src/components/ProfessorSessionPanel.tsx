@@ -58,6 +58,8 @@ export function ProfessorSessionPanel({ lessonId, track, learnerKey = track === 
             preferredMix: 'uk-us-mix',
             includeIrishExposure: true,
             correctionMode: learnerProfile.english.preferredCorrectionMode,
+            professorEnglishSharePct: learnerProfile.english.professorEnglishSharePct,
+            supportLanguage: learnerProfile.professor.defaultLanguage,
           },
         },
         {

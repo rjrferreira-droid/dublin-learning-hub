@@ -19,16 +19,20 @@ export type ErrorBankItem = {
   nextReviewAt: string;
 };
 
+export type TutorLanguageProfile = {
+  preferredMix: 'uk-us-mix';
+  includeIrishExposure: boolean;
+  correctionMode: 'immediate' | 'delayed' | 'minimal';
+  professorEnglishSharePct?: number;
+  supportLanguage?: 'pt-BR' | 'en';
+};
+
 export type TutorSessionRequest = {
   lessonId: string;
   learnerId: string;
   track: LearnerTrack;
   mode: 'chapter_conversation' | 'case_feedback' | 'oral_mock' | 'english_drill' | 'general_conversation';
-  languageProfile?: {
-    preferredMix: 'uk-us-mix';
-    includeIrishExposure: boolean;
-    correctionMode: 'immediate' | 'delayed' | 'minimal';
-  };
+  languageProfile?: TutorLanguageProfile;
 };
 
 export type TutorSessionResult = {
