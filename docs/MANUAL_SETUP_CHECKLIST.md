@@ -7,8 +7,8 @@ These are the only account/billing actions that require Rafael. Do not paste pri
 - [x] Open existing project `dublin-learning-hub`.
 - [x] Settings -> Git -> connect repository `rjrferreira-droid/dublin-learning-hub`.
 - [x] Do not create a duplicate Vercel project.
-- [ ] Keep production branch as `main` until V2 launch approval.
-- [ ] Confirm branch `v2` produces Preview deployments, not Production.
+- [x] Keep production isolated from the V2 working branch until launch approval.
+- [x] Confirm branch `v2` produces Preview deployments, not Production.
 
 ## 2. Supabase
 - Existing project only: `qwvsrcgsfoguxdbcdrxq` / `Dublin Learning Hub`.
@@ -16,22 +16,24 @@ These are the only account/billing actions that require Rafael. Do not paste pri
 - Do not create another database/project.
 - Do not rotate or paste secrets unless explicitly required in the provider dashboard.
 
-## 3. Lovable — optional development accelerator
-Current workspace: `Rafael's Lovable`.
-Current state detected during V2 preparation: Free workspace with no remaining credits.
+## 3. Lovable — development accelerator
+- [x] Workspace `Rafael's Lovable` upgraded to Pro.
+- [x] Create an isolated visual-only V2 design prototype using mock data.
+- [x] Confirm no Lovable/Supabase database is enabled for the visual prototype.
+- [x] Keep GitHub + existing Supabase as the source of truth.
+- Lovable is used for visual/component acceleration only; approved patterns are ported into the real `v2` branch.
 
-If Lovable is approved as a temporary accelerator:
-- upgrade/add credits directly in Lovable Billing;
-- no new database should be provisioned there;
-- Lovable is used primarily for visual/component acceleration;
-- source of truth remains GitHub + existing Supabase.
+## 4. ChatGPT Pro — intensive build sprint
+- [x] Pro enabled for the intensive V2 development period.
+- Purpose: reduce interruption during larger architecture, code, testing and review sessions.
+- This subscription does not replace OpenAI API billing used by the Learning Hub itself.
 
-## 4. LiveKit — when Professor build starts
+## 5. LiveKit — when Professor build starts
 - Create/use a LiveKit Cloud project.
 - Start on an appropriate plan; Ship can be enabled for intensive testing/launch if approved.
 - API credentials must be stored directly in Vercel/LiveKit environment secrets, never pasted into chat.
 
-## 5. GitHub authenticated smoke-test account
+## 6. GitHub authenticated smoke-test account
 Later, create a dedicated non-personal test learner account (not Rafael/Viviane primary login).
 Store credentials directly as GitHub Actions repository secrets:
 - `LH_TEST_EMAIL`
