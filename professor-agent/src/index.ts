@@ -8,6 +8,18 @@ dotenv.config({ path: '.env.local' });
 
 const PROFESSOR_AGENT_NAME = process.env.LIVEKIT_PROFESSOR_AGENT_NAME || 'learning-hub-professor';
 
+type LessonContext = {
+  title?: string;
+  objectives?: string[];
+  technicalBrief?: string;
+  globalCore?: string;
+  irelandOverlay?: string;
+  workedExample?: string;
+  interviewAngle?: string;
+  vocabulary?: string[];
+  practiceScenario?: string;
+};
+
 type ProfessorJobMetadata = {
   professorProfile?: ProfessorProfile;
   track?: 'rafael_finance' | 'viviane_payroll' | 'english_academy';
@@ -20,6 +32,7 @@ type ProfessorJobMetadata = {
     professorEnglishSharePct?: number;
     supportLanguage?: 'pt-BR' | 'en';
   };
+  lessonContext?: LessonContext;
 };
 
 function defaultProfile(): ProfessorProfile {
@@ -54,17 +67,38 @@ function languageGuidance(metadata: ProfessorJobMetadata): string {
   return `\nSession adaptation: ${share == null ? 'adapt English share to performance' : `aim for approximately ${share}% English`}. Support language is ${support}. Correction mode is ${correction}. Irish exposure is ${exposure}.`;
 }
 
+function lessonGuidance(metadata: ProfessorJobMetadata): string {
+  const lesson = metadata.lessonContext;
+  if (!lesson?.title) return '';
+  const lines = [
+    `\nAUTHORITATIVE LESSON CONTEXT — use it to teach and question, but do not read it out as a source dump.`,
+    `Lesson: ${lesson.title}`,
+    lesson.objectives?.length ? `Objectives: ${lesson.objectives.join(' | ')}` : '',
+    lesson.technicalBrief ? `Technical brief: ${lesson.technicalBrief}` : '',
+    lesson.globalCore ? `Global/core context: ${lesson.globalCore}` : '',
+    lesson.irelandOverlay ? `Ireland overlay: ${lesson.irelandOverlay}` : '',
+    lesson.workedExample ? `Worked example: ${lesson.workedExample}` : '',
+    lesson.interviewAngle ? `Professional/interview transfer: ${lesson.interviewAngle}` : '',
+    lesson.vocabulary?.length ? `Useful vocabulary: ${lesson.vocabulary.join(' | ')}` : '',
+    lesson.practiceScenario ? `Practice scenario: ${lesson.practiceScenario}` : '',
+    `Teaching sequence: verify understanding, require retrieval, apply to a realistic scenario, challenge judgement, then finish with one concise take-away.`,
+    `Never invent a current Irish rule or rate outside this supplied context.`,
+  ];
+  return `\n${lines.filter(Boolean).join('\n')}`;
+}
+
 function openingInstruction(profile: ProfessorProfile, metadata: ProfessorJobMetadata): string {
   const share = metadata.languageProfile?.professorEnglishSharePct;
+  const lesson = metadata.lessonContext?.title ? ` The session topic is “${metadata.lessonContext.title}”.` : '';
   if (profile === 'payroll') {
-    return 'Cumprimente de forma breve e profissional. Pergunte qual parte do cenário de payroll a aluna quer explicar primeiro. Use English progressively according to the session language target.';
+    return `Cumprimente de forma breve e profissional.${lesson} Pergunte qual parte do cenário a aluna quer explicar primeiro. Use English progressively according to the session language target.`;
   }
   if (profile === 'english') {
     return typeof share === 'number' && share < 70
-      ? 'Greet the learner with accessible natural English, then ask one open everyday-life question. Keep the first turn short and allow brief Portuguese support only if needed.'
-      : 'Greet the learner naturally and start with one open everyday-life question. Do not sound like an exam.';
+      ? `Greet the learner with accessible natural English.${lesson} Ask one open question that immediately starts the task. Keep the first turn short and allow brief Portuguese support only if needed.`
+      : `Greet the learner naturally.${lesson} Start with one open question that immediately starts the task. Do not sound like an exam.`;
   }
-  return 'Greet the learner briefly as a senior finance coach and ask for a concise explanation of today’s case or lesson objective.';
+  return `Greet the learner briefly as a senior finance coach.${lesson} Ask for a concise explanation of the central issue before giving any teaching.`;
 }
 
 export default defineAgent({
@@ -75,7 +109,7 @@ export default defineAgent({
     const voiceName = process.env.OPENAI_REALTIME_VOICE || 'marin';
 
     const agent = voice.Agent.create({
-      instructions: `${professorInstructions(profile)}${languageGuidance(metadata)}`,
+      instructions: `${professorInstructions(profile)}${languageGuidance(metadata)}${lessonGuidance(metadata)}`,
     });
 
     const session = new voice.AgentSession({

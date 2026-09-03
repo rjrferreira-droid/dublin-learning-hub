@@ -20,9 +20,30 @@ const allowedSupportLanguages = new Set(['pt-BR', 'en']);
 
 type ProfessorTrack = 'rafael_finance' | 'viviane_payroll' | 'english_academy';
 type ProfessorProfile = 'finance' | 'payroll' | 'english';
+type LessonContext = {
+  title: string;
+  objectives: string[];
+  technicalBrief?: string;
+  globalCore?: string;
+  irelandOverlay?: string;
+  workedExample?: string;
+  interviewAngle?: string;
+  vocabulary?: string[];
+  practiceScenario?: string;
+};
+type TechnicalLesson = { track: string; context: LessonContext };
 
 function send(res: any, status: number, body: unknown) {
   res.status(status).setHeader('content-type', 'application/json; charset=utf-8').send(JSON.stringify(body));
+}
+
+function clip(value: unknown, max: number): string {
+  return typeof value === 'string' ? value.trim().slice(0, max) : '';
+}
+
+function stringList(value: unknown, maxItems = 8): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === 'string').map((item) => item.trim()).filter(Boolean).slice(0, maxItems);
 }
 
 function liveKitHttpUrl(url: string): string {
@@ -73,13 +94,32 @@ function normalizeLanguageProfile(value: unknown) {
   };
 }
 
-async function publishedLessonTrack(supabase: ReturnType<typeof createClient>, lessonId: string): Promise<string | null> {
+function englishGoldenLessonContext(): LessonContext {
+  return {
+    title: 'Tell a story naturally: past forms, rhythm & follow-up questions',
+    objectives: [
+      'Tell a short everyday story with a clear beginning, turning point and outcome.',
+      'Choose past simple, past continuous and present perfect naturally.',
+      'Reduce overuse of connectors such as “and then”.',
+      'Respond to spontaneous follow-up questions without reverting to rehearsed speech.',
+    ],
+    technicalBrief: 'Prioritise natural spoken interaction over grammar recitation. Correct tense choice when it changes meaning or repeatedly damages naturalness.',
+    globalCore: 'British and American variants are both valid. Use a balanced international-English approach and vary vocabulary/register naturally.',
+    irelandOverlay: 'Use Dublin-life follow-ups when useful: housing, school, transport, services, neighbours, weather, work and family routines.',
+    workedExample: 'Ask the learner for a 30–60 second real or plausible story, then probe one missing detail, one feeling/reaction and one consequence.',
+    interviewAngle: 'Professional transfer: concise storytelling is also trained for behavioural interview examples, but the session must remain general-English-first.',
+    vocabulary: ['follow-up question', 'natural phrasing', 'word stress', 'story arc', 'register'],
+    practiceScenario: 'The learner describes an unexpected everyday event in Dublin and handles natural clarification questions from the Professor.',
+  };
+}
+
+async function publishedTechnicalLesson(supabase: ReturnType<typeof createClient>, lessonId: string): Promise<TechnicalLesson | null> {
   const { data: lesson, error: lessonError } = await supabase
     .from('lessons')
-    .select('module_id')
+    .select('module_id,title,learning_objectives,technical_brief_pt,global_core_pt,ireland_overlay_pt,worked_example_pt,interview_angle_pt')
     .eq('id', lessonId)
     .maybeSingle();
-  if (lessonError || !lesson?.module_id) return null;
+  if (lessonError || !lesson?.module_id || typeof lesson.title !== 'string') return null;
 
   const { data: module, error: moduleError } = await supabase
     .from('modules')
@@ -94,7 +134,39 @@ async function publishedLessonTrack(supabase: ReturnType<typeof createClient>, l
     .eq('id', module.course_id)
     .maybeSingle();
   if (courseError || typeof course?.learner_track !== 'string') return null;
-  return course.learner_track;
+
+  const [{ data: terms }, { data: cases }] = await Promise.all([
+    supabase.from('lesson_terms').select('term_en,definition_en').eq('lesson_id', lessonId).order('sequence').limit(8),
+    supabase.from('cases').select('title,scenario_pt,prompt_pt').eq('lesson_id', lessonId).order('sequence').limit(1),
+  ]);
+
+  const vocabulary = (terms ?? [])
+    .map((term) => {
+      const label = clip(term.term_en, 120);
+      const definition = clip(term.definition_en, 260);
+      return label ? `${label}${definition ? ` — ${definition}` : ''}` : '';
+    })
+    .filter(Boolean)
+    .slice(0, 8);
+  const practice = cases?.[0];
+  const scenario = practice
+    ? [clip(practice.title, 200), clip(practice.scenario_pt, 1800), clip(practice.prompt_pt, 900)].filter(Boolean).join(' — ')
+    : '';
+
+  return {
+    track: course.learner_track,
+    context: {
+      title: clip(lesson.title, 300),
+      objectives: stringList(lesson.learning_objectives),
+      technicalBrief: clip(lesson.technical_brief_pt, 5000),
+      globalCore: clip(lesson.global_core_pt, 3200),
+      irelandOverlay: clip(lesson.ireland_overlay_pt, 3200),
+      workedExample: clip(lesson.worked_example_pt, 2400),
+      interviewAngle: clip(lesson.interview_angle_pt, 1800),
+      vocabulary,
+      practiceScenario: scenario,
+    },
+  };
 }
 
 export default async function handler(req: any, res: any) {
@@ -128,7 +200,6 @@ export default async function handler(req: any, res: any) {
   const mode = typeof body?.mode === 'string' && allowedModes.has(body.mode) ? body.mode : null;
   if (!body || !lessonId || !track || !mode) return send(res, 400, { error: 'invalid_professor_request' });
 
-  // The authenticated profile, never a browser-selected toggle, is authoritative for track access.
   const { data: learnerProfile, error: profileError } = await supabase
     .from('profiles')
     .select('learner_track')
@@ -138,29 +209,27 @@ export default async function handler(req: any, res: any) {
     return send(res, 403, { error: 'professor_track_forbidden' });
   }
 
-  // Finance/Payroll Professor sessions must point to a currently readable published lesson
-  // whose course track matches the requested track. English Academy can use unpublished
-  // Golden Lesson placeholders while its dedicated course content is being staged.
+  let lessonContext: LessonContext;
   if (requiresPublishedTechnicalLesson(track)) {
-    const lessonTrack = await publishedLessonTrack(supabase, lessonId);
-    if (lessonTrack !== track) return send(res, 403, { error: 'professor_lesson_forbidden' });
+    const technicalLesson = await publishedTechnicalLesson(supabase, lessonId);
+    if (!technicalLesson || technicalLesson.track !== track) return send(res, 403, { error: 'professor_lesson_forbidden' });
+    lessonContext = technicalLesson.context;
+  } else {
+    lessonContext = englishGoldenLessonContext();
   }
 
   const professorProfile = profileForTrack(track);
   const languageProfile = normalizeLanguageProfile(body.languageProfile);
-
-  // Deliberately random: no names, emails or Supabase IDs are exposed in LiveKit room/participant identity.
   const roomName = `lh-${randomUUID()}`;
   const participantIdentity = `learner-${randomUUID()}`;
 
-  // Explicit dispatch gives every room the correct Professor profile and session metadata.
-  // The authenticated Supabase user ID is intentionally not included in third-party metadata.
   const jobMetadata = JSON.stringify({
     professorProfile,
     track,
     lessonId,
     mode,
     languageProfile,
+    lessonContext,
   });
 
   try {
