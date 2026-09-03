@@ -1,6 +1,6 @@
 # Learning Hub V2 — Master Blueprint
 
-Status: BUILD PREPARATION
+Status: ACTIVE BUILD SPRINT — started 2026-09-03
 Owner: Rafael Ferreira
 Target: premium private learning platform for Rafael and Viviane, Dublin 2028/29 preparation.
 
@@ -24,6 +24,8 @@ Irish Payroll / Payroll Specialist / HR Operations. PAYE, USC, PRSI, Revenue, RP
 ### English Academy
 Full general + professional English. Not a Business-English-only course. British and American English mix, with deliberate Irish exposure. Everyday conversation, listening, reading, grammar, writing, vocabulary, pronunciation, storytelling, debate, role-play, professional communication and real-world Dublin scenarios. Accept UK and US variants and teach the distinction. UK/Irish conventions may be preferred for professional Dublin writing.
 
+Target exposure mix for listening and real-world English: approximately 40% British, 40% American and 20% Irish, adjusted by learner needs and relocation context.
+
 ## 3. Visual identity — fixed
 
 Premium British academic / modern executive product.
@@ -36,6 +38,12 @@ Core palette:
 - Cool greys: neutral hierarchy.
 
 Union-Jack inspiration must be subtle: restrained diagonal/geometric motifs, never literal flag wallpaper or novelty styling. The identity must remain consistent across login, dashboard, lessons, Professor, audio, quizzes, assessments, performance and English Academy.
+
+Visual acceleration workflow:
+- Lovable Pro is used only as an isolated design/component studio with mock data.
+- No Lovable database/backend is used for the real product.
+- Best patterns are selectively ported to the real React `v2` branch.
+- GitHub + existing Supabase remain the source of truth.
 
 ## 4. Pedagogy architecture
 
@@ -78,191 +86,104 @@ Recommended feature modules:
 - lesson
 - audio
 - professor
-- assessment
-- practice
+- evaluation
+- error-bank
 - revision
 - performance
 - english-academy
 - settings
 
-Professor and Audio must be isolated feature boundaries. A voice/audio failure must never clear lesson state or navigate the learner away from the lesson.
+### Backend
+Reuse the existing Supabase project `qwvsrcgsfoguxdbcdrxq`.
 
-### Backend/data
-Existing Supabase project remains the source of truth. Do not create a duplicate production database.
+Do not create a second database merely to support V2.
 
-Responsibilities:
-- authentication
-- learner profiles
-- courses/modules/lessons
-- progress
-- questions/cases/visual challenges
-- competency scores
-- spaced reviews
-- AI tutor sessions/turns
-- usage/cost logs
-- cached audio metadata/assets
+Existing useful domains include profiles, courses/modules/lessons, questions/cases, progress, competencies, spaced reviews, monthly challenges, AI tutor sessions/turns, AI usage and budget controls.
 
 ### AI
-OpenAI responsibilities:
-- Realtime Professor intelligence/voice
-- premium TTS where used
-- independent evaluation
-- case feedback
-- adaptive content assistance
+- Premium Audio: existing `premium-lesson-audio` Edge Function is reusable.
+- Independent evaluator: existing `ai-tutor-evaluate` backend is reusable and will evolve toward stricter blind/independent assessment.
+- Professor: new production target is LiveKit + OpenAI Realtime. Do not revive the old custom browser-SDP signaling architecture.
+- Default privacy: do not store raw learner voice unless later explicitly approved; persist transcript/evaluation where pedagogically necessary.
 
-Tutor and Evaluator must be separate calls/models/contexts.
+### Environments
+- V1 production: frozen.
+- V2 development: `v2` branch.
+- Vercel Preview: automatic from `v2` and future feature branches.
+- Production promotion: explicit approval only.
 
-### Voice
-Target: LiveKit + OpenAI Realtime. Do not revive custom browser-to-OpenAI SDP/WebRTC signaling from V1 experiments.
+## 7. Release gates
 
-Requirements:
-- start/connect
-- first audio latency
-- learner interruption
-- VAD/turn-taking
-- reconnect
-- graceful stop
-- transcript/evaluation handoff
-- budget hard stop
-- no raw learner voice storage by default
+A feature is not complete merely because it renders.
 
-### Deployment
-Target pipeline:
-GitHub -> Vercel Preview -> Playwright -> approval gate -> Production.
+Required gates before V2 production:
+1. TypeScript/build green.
+2. Playwright smoke/regression suite green.
+3. Authenticated learner journey green using a dedicated test learner.
+4. Lesson navigation remains stable during token refresh/background auth events.
+5. Premium Audio works, caches and respects AI budget hard-stop.
+6. Professor passes connect / first audio / interruption / reconnect / stop / evaluation tests.
+7. Error Bank and spaced-review writes verified.
+8. Finance, Payroll and English Golden Lessons each complete end-to-end.
+9. Desktop and mobile visual QA.
+10. Rafael approves the release candidate.
 
-V1 remains frozen until V2 passes launch gates.
+## 8. Build sequence
 
-## 7. English Academy specification
+### Sprint A — Foundation
+- stable React shell and design system
+- Supabase auth/session boundary
+- routing/state ownership
+- feature flags
+- dashboard/academy/lesson shells
+- automated tests
 
-Approximate curriculum balance, adaptive by learner:
-- 35% everyday conversation / diverse general topics
-- 20% listening
-- 15% grammar and accuracy
-- 10% vocabulary, collocations, idioms, phrasal verbs
-- 10% professional/business communication
-- 10% pronunciation/fluency
-
-Listening exposure target:
-- ~40% American
-- ~40% British
-- ~20% Irish
-
-External material is allowed and encouraged. Copyrighted textbooks such as English Grammar in Use are referenced by unit/page only; Learning Hub creates original exercises and speaking applications rather than copying textbook content.
-
-English modes:
-- free conversation
-- thematic conversation
-- debate
-- role-play
-- storytelling
-- UK session
-- US session
-- international meeting
-- Dublin life
-- intensive grammar correction
-- delayed correction
-- interview/professional
-- shadowing/pronunciation
-
-Error Bank examples:
-- grammar pattern
-- vocabulary/collocation
-- pronunciation
-- hesitation/fluency
-- register/naturalness
-- professional concision
-
-## 8. Reliability gates
-
-Minimum automated learner journey:
-1. Login.
-2. Dashboard loads.
-3. Continue Learning opens lesson.
-4. Lesson remains open across navigation and background auth refresh.
-5. Notes/English/Practice/Case/Test work.
-6. Progress persists.
-7. Dashboard return works.
-8. Reopening lesson restores expected state.
-
-Voice gates before production:
-1. Connect succeeds.
-2. Professor speaks.
-3. Learner speaks.
-4. Interruption works.
-5. Reconnect works.
-6. Stop works.
-7. Transcript is captured.
-8. Independent evaluation succeeds.
-9. Cost is logged.
-10. Hard budget stop is respected.
-
-No production release if a critical gate fails.
-
-## 9. Cost strategy
-
-Pay for reliability and learner quality, not unnecessary enterprise complexity.
-
-Expected core:
-- Vercel Pro
-- Supabase Pro
-- OpenAI API usage
-- LiveKit (free during light build or Ship when intensive testing/launch warrants it)
-
-Optional only after quality tests:
-- ElevenLabs for long-form narration if blind comparison proves a meaningful advantage
-- specialised pronunciation provider for objective pronunciation assessment
-
-Keep GitHub, GitHub Actions, Playwright and error monitoring on free tiers while sufficient.
-
-## 10. Build order
-
-Phase A — foundation
-- freeze V1
-- V2 branch/environment
-- design system
-- routing/state boundaries
-- Supabase client/auth/data adapters
-- Vercel preview pipeline
-- Playwright critical flow
-
-Phase B — core learning engine
-- dashboard
-- lessons
-- progress
-- spaced review
-- competency model
+### Sprint B — Adaptive learning engine
+- progress contract
+- competency evidence
+- spaced reviews
 - Error Bank
-- assessments
+- curriculum priority rules (<70% and recurring errors)
+- assessment/result surfaces
 
-Phase C — premium AI
-- cached Premium Audio
-- Professor LiveKit/OpenAI
-- independent Evaluator
-- case feedback
-- cost controls
+### Sprint C — Premium AI
+- Premium Audio in real V2
+- Professor LiveKit token/session architecture
+- OpenAI Realtime conversation
+- evaluator/result pipeline
+- AI spend telemetry and hard stops
 
-Phase D — Golden Lessons
-- Finance
-- Payroll
-- English
-- complete end-to-end validation
+### Sprint D — Golden Lessons
+- Finance Golden Lesson
+- Payroll Golden Lesson
+- General English Golden Lesson
+- complete learner journeys and QA
 
-Phase E — scale curriculum
-- 4–8 weeks ahead rather than bulk-generating all 24 months
-- adapt based on real scores and error history
+### Sprint E — English Academy
+- placement / CEFR profile
+- General English core
+- UK + US + Irish exposure
+- listening / reading / grammar / vocabulary / speaking / writing / pronunciation
+- external assignment model without copying proprietary content
+- Professor conversation modes
+- Error Bank adaptation
 
-## 11. Definition of done for V2 launch
+### Sprint F — polish and release candidate
+- accessibility
+- mobile/responsive
+- observability
+- backup/rollback validation
+- learner acceptance
 
-V2 can replace V1 only when:
-- all critical Playwright flows pass
-- no known navigation/auth regression exists
-- all three Golden Lessons pass end-to-end
-- Premium Audio is stable and cached
-- Professor passes the voice gates
-- Evaluator and cost logging work
-- mobile and desktop journeys are usable
-- British visual system is consistent
-- learner data is preserved
-- rollback path is confirmed
+## 9. Current sprint state — 2026-09-03
 
-Until then, `main`/V1 is not used as an experimental branch.
+Completed prerequisites:
+- V1 frozen and V2 isolated.
+- Vercel Pro active and existing Vercel project connected to `rjrferreira-droid/dublin-learning-hub`.
+- `v2` confirmed to generate Preview rather than Production deployment.
+- GitHub Actions + Playwright V2 pipeline established and previously green.
+- Lovable Pro enabled; isolated British Premium visual prototype created with mock data only and no database enabled.
+- ChatGPT Pro enabled for the intensive development period.
+- Existing Supabase, Premium Audio and independent evaluator contracts are already available for reuse.
+
+Next owner intervention is intentionally deferred until LiveKit/account credentials or a dedicated authenticated test learner are required. Secrets are never pasted into chat.
