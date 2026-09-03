@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { PremiumAudioPanel } from './components/PremiumAudioPanel';
 
 type TrackKey = 'finance' | 'payroll' | 'english';
 type ViewKey = 'dashboard' | 'learn' | 'revision' | 'performance' | 'professor';
@@ -12,6 +13,7 @@ type Track = {
   readiness: number;
   accent: string;
   lesson: string;
+  lessonId?: string;
   focus: string;
 };
 
@@ -25,6 +27,7 @@ const tracks: Track[] = [
     readiness: 74,
     accent: 'FINANCE',
     lesson: 'IFRS 18, Group Reporting & Irish Statutory Accounts',
+    lessonId: '15358b9f-01e0-4c3b-afad-07a493b961f5f',
     focus: 'Executive finance judgement, reporting and Dublin readiness',
   },
   {
@@ -36,6 +39,7 @@ const tracks: Track[] = [
     readiness: 61,
     accent: 'PAYROLL',
     lesson: 'Gross-to-Net: RPN, PAYE, USC & PRSI',
+    lessonId: '3ea8155e-a952-4039-87dc-1dd42851f16e',
     focus: 'Irish payroll operations, controls and professional English',
   },
   {
@@ -263,7 +267,7 @@ function LessonView({ track, activeTab, setActiveTab, close }: { track: Track; a
           <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">Premium lesson</span></div>
           <div className="eyebrow">{activeTab.toUpperCase()}</div>
           {activeTab === 'Learn' && <LearnPanel track={track} />}
-          {activeTab === 'Audio' && <AudioPanel />}
+          {activeTab === 'Audio' && <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} />}
           {activeTab === 'English' && <EnglishPanel track={track} />}
           {activeTab === 'Practice' && <PracticePanel track={track} />}
           {activeTab === 'Visual' && <VisualPanel />}
@@ -288,10 +292,6 @@ function LessonView({ track, activeTab, setActiveTab, close }: { track: Track; a
 
 function LearnPanel({ track }: { track: Track }) {
   return <div className="reading-copy"><h2>{track.lesson}</h2><p className="lead">A Golden Lesson proves the complete Learning Hub experience before the curriculum scales.</p><h3>Learning objective</h3><p>Understand the core concept, explain it clearly, apply it to a realistic decision and defend your reasoning in a short professional conversation.</p><div className="callout"><strong>Active learning rule</strong><span>You will be asked to retrieve and apply the concept before the system shows model reasoning.</span></div><h3>Why this matters</h3><p>{track.focus}. The final goal is employability and practical confidence, not passive completion.</p></div>;
-}
-
-function AudioPanel() {
-  return <div className="reading-copy"><h2>Premium Audio</h2><p className="lead">Long-form narration with caching, transcript support and playback controls.</p><div className="audio-demo"><button className="audio-play">▶</button><div><strong>Lesson commentary</strong><span>Cached audio service placeholder</span></div><div className="audio-wave">▁▃▅▂▆▃▇▅▂▆▃▅▁</div><span>0:00 / 8:42</span></div><div className="callout"><strong>Architecture boundary</strong><span>Audio errors will never reset lesson navigation or learner progress.</span></div></div>;
 }
 
 function EnglishPanel({ track }: { track: Track }) {
