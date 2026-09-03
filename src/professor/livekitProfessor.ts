@@ -24,6 +24,8 @@ export type ProfessorConnection = {
 function errorMessage(code: string): string {
   if (code === 'professor_not_configured') return 'Professor voice infrastructure is not configured yet.';
   if (code === 'professor_agent_dispatch_failed') return 'The Professor agent could not be started. Please try again.';
+  if (code === 'professor_track_forbidden') return 'This Professor track is not available for the authenticated learner profile.';
+  if (code === 'professor_lesson_forbidden') return 'This lesson is not available to the authenticated learner profile.';
   if (code === 'invalid_professor_request') return 'This Professor session request is not valid.';
   if (code === 'invalid_authentication' || code === 'missing_authentication') return 'Sign in again before starting the Professor.';
   return code || 'Professor connection failed.';

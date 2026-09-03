@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { AccessToken, LiveKitAPI } from 'livekit-server-sdk';
+import { isProfessorTrackAllowed, requiresPublishedTechnicalLesson } from '../src/professor/accessPolicy';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://qwvsrcgsfoguxdbcdrxq.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_k1VAFbFj5ARYfOOUYhQacQ_wSruDD_Z';
@@ -17,6 +18,7 @@ const allowedTracks = new Set(['rafael_finance', 'viviane_payroll', 'english_aca
 const allowedCorrectionModes = new Set(['immediate', 'delayed', 'minimal']);
 const allowedSupportLanguages = new Set(['pt-BR', 'en']);
 
+type ProfessorTrack = 'rafael_finance' | 'viviane_payroll' | 'english_academy';
 type ProfessorProfile = 'finance' | 'payroll' | 'english';
 
 function send(res: any, status: number, body: unknown) {
@@ -71,6 +73,30 @@ function normalizeLanguageProfile(value: unknown) {
   };
 }
 
+async function publishedLessonTrack(supabase: ReturnType<typeof createClient>, lessonId: string): Promise<string | null> {
+  const { data: lesson, error: lessonError } = await supabase
+    .from('lessons')
+    .select('module_id')
+    .eq('id', lessonId)
+    .maybeSingle();
+  if (lessonError || !lesson?.module_id) return null;
+
+  const { data: module, error: moduleError } = await supabase
+    .from('modules')
+    .select('course_id')
+    .eq('id', lesson.module_id)
+    .maybeSingle();
+  if (moduleError || !module?.course_id) return null;
+
+  const { data: course, error: courseError } = await supabase
+    .from('courses')
+    .select('learner_track')
+    .eq('id', module.course_id)
+    .maybeSingle();
+  if (courseError || typeof course?.learner_track !== 'string') return null;
+  return course.learner_track;
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     res.setHeader('allow', 'POST');
@@ -91,15 +117,34 @@ export default async function handler(req: any, res: any) {
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: { headers: { Authorization: `Bearer ${jwt}` } },
   });
   const { data, error } = await supabase.auth.getUser(jwt);
   if (error || !data.user) return send(res, 401, { error: 'invalid_authentication' });
 
   const body = safeBody(req);
   const lessonId = safeLessonId(body?.lessonId);
-  const track = typeof body?.track === 'string' && allowedTracks.has(body.track) ? body.track : null;
+  const track = typeof body?.track === 'string' && allowedTracks.has(body.track) ? body.track as ProfessorTrack : null;
   const mode = typeof body?.mode === 'string' && allowedModes.has(body.mode) ? body.mode : null;
   if (!body || !lessonId || !track || !mode) return send(res, 400, { error: 'invalid_professor_request' });
+
+  // The authenticated profile, never a browser-selected toggle, is authoritative for track access.
+  const { data: learnerProfile, error: profileError } = await supabase
+    .from('profiles')
+    .select('learner_track')
+    .eq('id', data.user.id)
+    .maybeSingle();
+  if (profileError || !learnerProfile || !isProfessorTrackAllowed(learnerProfile.learner_track, track)) {
+    return send(res, 403, { error: 'professor_track_forbidden' });
+  }
+
+  // Finance/Payroll Professor sessions must point to a currently readable published lesson
+  // whose course track matches the requested track. English Academy can use unpublished
+  // Golden Lesson placeholders while its dedicated course content is being staged.
+  if (requiresPublishedTechnicalLesson(track)) {
+    const lessonTrack = await publishedLessonTrack(supabase, lessonId);
+    if (lessonTrack !== track) return send(res, 403, { error: 'professor_lesson_forbidden' });
+  }
 
   const professorProfile = profileForTrack(track);
   const languageProfile = normalizeLanguageProfile(body.languageProfile);
