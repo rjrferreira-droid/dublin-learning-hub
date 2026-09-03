@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type { RemoteAudioTrack } from 'livekit-client';
 import { isFeatureEnabled } from '../config/features';
+import { getLearnerProfile, type LearnerKey } from '../learners/profiles';
 import { connectProfessor, type ProfessorConnection } from '../professor/livekitProfessor';
 import type { LearnerTrack, TutorSessionRequest } from '../services/contracts';
 
 type ProfessorSessionPanelProps = {
   lessonId?: string;
   track: 'finance' | 'payroll' | 'english';
+  learnerKey?: LearnerKey;
 };
 
 type SessionState = 'ready' | 'connecting' | 'listening' | 'ended' | 'error';
@@ -17,8 +19,9 @@ function trackContract(track: ProfessorSessionPanelProps['track']): { learnerTra
   return { learnerTrack: 'rafael_finance', mode: 'chapter_conversation' };
 }
 
-export function ProfessorSessionPanel({ lessonId, track }: ProfessorSessionPanelProps) {
+export function ProfessorSessionPanel({ lessonId, track, learnerKey = track === 'payroll' ? 'viviane' : 'rafael' }: ProfessorSessionPanelProps) {
   const enabled = isFeatureEnabled('professor');
+  const learnerProfile = getLearnerProfile(learnerKey);
   const [state, setState] = useState<SessionState>('ready');
   const [error, setError] = useState<string | null>(null);
   const connectionRef = useRef<ProfessorConnection | null>(null);
@@ -31,8 +34,8 @@ export function ProfessorSessionPanel({ lessonId, track }: ProfessorSessionPanel
     attachedElementsRef.current = [];
   }, []);
 
-  function attachRemoteAudio(track: RemoteAudioTrack) {
-    const element = track.attach();
+  function attachRemoteAudio(remoteTrack: RemoteAudioTrack) {
+    const element = remoteTrack.attach();
     element.autoplay = true;
     element.setAttribute('data-professor-audio', 'true');
     audioHostRef.current?.appendChild(element);
@@ -48,13 +51,13 @@ export function ProfessorSessionPanel({ lessonId, track }: ProfessorSessionPanel
       const connection = await connectProfessor(
         {
           lessonId: lessonId ?? 'unpublished-golden-lesson',
-          learnerId: 'authenticated-learner',
+          learnerId: learnerKey,
           track: contract.learnerTrack,
           mode: contract.mode,
           languageProfile: {
             preferredMix: 'uk-us-mix',
             includeIrishExposure: true,
-            correctionMode: track === 'payroll' ? 'delayed' : 'minimal',
+            correctionMode: learnerProfile.english.preferredCorrectionMode,
           },
         },
         {
@@ -86,10 +89,10 @@ export function ProfessorSessionPanel({ lessonId, track }: ProfessorSessionPanel
         <span className="professor-state-label">
           {!enabled ? 'PROFESSOR LOCKED FOR SETUP' : state === 'connecting' ? 'CONNECTING' : state === 'listening' ? 'LISTENING' : state === 'ended' ? 'SESSION ENDED' : state === 'error' ? 'CONNECTION ERROR' : 'READY'}
         </span>
-        <h3>{track === 'english' ? 'Natural conversation tutor' : track === 'payroll' ? 'Irish Payroll Professor' : 'Finance Professor'}</h3>
+        <h3>{track === 'english' ? `${learnerProfile.displayName}'s conversation tutor` : track === 'payroll' ? 'Irish Payroll Professor' : 'Finance Professor'}</h3>
         <p>
           {track === 'english'
-            ? 'British + American English with deliberate Irish exposure and real everyday conversation.'
+            ? `British + American English with deliberate Irish exposure. Current English share target: ${learnerProfile.english.professorEnglishSharePct}%.`
             : track === 'payroll'
               ? 'Patient payroll coaching with progressively more professional English.'
               : 'Executive finance coaching focused on judgement, business partnering and Dublin readiness.'}

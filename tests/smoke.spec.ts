@@ -8,6 +8,7 @@ test('V2 shell and British premium identity load', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Finance Ireland', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Irish Payroll', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'English Academy', exact: true })).toBeVisible();
+  await expect(page.getByTestId('adaptive-priority-stack')).toBeVisible();
 
   const palette = await page.evaluate(() => {
     const css = getComputedStyle(document.documentElement);
@@ -24,6 +25,34 @@ test('V2 shell and British premium identity load', async ({ page }) => {
     red: '#c7203f',
     white: '#fbfcff',
   });
+});
+
+test('learner profiles switch Rafael and Viviane without mixing primary tracks', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByTestId('active-learner-card')).toContainText('Rafael');
+  await expect(page.getByRole('button', { name: 'Continue Finance', exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Viviane', exact: true }).click();
+  await expect(page.getByTestId('active-learner-card')).toContainText('Viviane');
+  await expect(page.getByRole('button', { name: 'Continue Payroll', exact: true })).toBeVisible();
+  await expect(page.getByText(/English B1\+ → B2\+/)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Rafael', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Continue Finance', exact: true })).toBeVisible();
+});
+
+test('Adaptive Curriculum, Error Bank and English Academy are visible product surfaces', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByTestId('adaptive-priority-stack')).toContainText(/priority/i);
+
+  await page.getByRole('button', { name: /Error Bank/ }).click();
+  await expect(page.getByTestId('error-bank-view')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Recurring mistakes become future curriculum' })).toBeVisible();
+
+  await page.getByRole('button', { name: /English Academy/ }).first().click();
+  await expect(page.getByTestId('english-academy-view')).toBeVisible();
+  await expect(page.getByText(/40 \/ 40 \/ 20/)).toBeVisible();
+  await expect(page.getByText(/General English first/i)).toBeVisible();
 });
 
 test('Golden Lesson stays open while switching tabs', async ({ page }) => {
@@ -50,7 +79,6 @@ test('Premium Audio is on-demand and cannot kick learner out of lesson', async (
   await expect(page.getByRole('button', { name: 'Load audio', exact: true })).toBeVisible();
   await expect(lesson).toBeVisible();
 
-  // Do not click the button in smoke tests: no AI/API spend is needed to prove UI isolation.
   await page.getByRole('tab', { name: 'English', exact: true }).click();
   await page.waitForTimeout(500);
   await expect(lesson).toBeVisible();
