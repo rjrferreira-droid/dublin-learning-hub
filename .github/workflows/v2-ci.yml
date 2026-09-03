@@ -31,3 +31,24 @@ jobs:
 
       - name: Run smoke tests
         run: npm run test:e2e
+
+  professor-agent-typecheck:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Professor agent dependencies
+        working-directory: professor-agent
+        run: npm install
+
+      - name: Typecheck Professor agent
+        working-directory: professor-agent
+        run: npm run typecheck
