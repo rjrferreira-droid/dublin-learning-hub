@@ -1,94 +1,14 @@
 <!doctype html>
 <html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Learning Hub</title>
-  <meta name="description" content="Learning platform for ACCA, Global Finance, Ireland and Irish Payroll." />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="premium.css?v=3" />
-  <link rel="stylesheet" href="visual-challenge.css?v=2" />
-  <link rel="stylesheet" href="premium-ai.css?v=1" />
-</head>
-<body>
-  <div id="authScreen" class="auth-screen">
-    <div class="auth-brand">
-      <div class="brand-mark">LH</div>
-      <div>
-        <div class="eyebrow">DUBLIN 2028/29</div>
-        <h1>Learning Hub</h1>
-        <p>ACCA • Global Finance • Ireland • Irish Payroll</p>
-      </div>
-    </div>
-    <div class="auth-card">
-      <div class="auth-tabs">
-        <button class="auth-tab active" data-auth-mode="signin">Entrar</button>
-        <button class="auth-tab" data-auth-mode="signup">Criar acesso</button>
-      </div>
-      <form id="authForm">
-        <div id="signupFields" class="hidden">
-          <label>Nome</label>
-          <input id="displayName" type="text" placeholder="Ex.: Rafael" />
-          <label>Trilha</label>
-          <select id="learnerTrack">
-            <option value="rafael_finance">Rafael — Global Finance / ACCA / Ireland</option>
-            <option value="viviane_payroll">Viviane — Irish Payroll / HR Operations</option>
-          </select>
-        </div>
-        <label>E-mail</label>
-        <input id="email" type="email" autocomplete="email" required placeholder="seu@email.com" />
-        <label>Senha</label>
-        <input id="password" type="password" autocomplete="current-password" required minlength="6" placeholder="••••••••" />
-        <button id="authSubmit" class="btn primary wide" type="submit">Entrar</button>
-        <div id="authMessage" class="form-message"></div>
-      </form>
-      <p class="privacy-note">Seu progresso fica salvo no banco privado do projeto. Cada usuário acessa apenas o próprio histórico.</p>
-    </div>
-  </div>
-
-  <div id="appShell" class="app-shell hidden">
-    <aside class="sidebar">
-      <div class="side-brand">
-        <div class="brand-mark small">LH</div>
-        <div><strong>Learning Hub</strong><span>Premium Learning</span></div>
-      </div>
-      <div class="profile-box">
-        <div class="avatar" id="avatar">RF</div>
-        <div><strong id="profileName">Learner</strong><span id="profileTrack">Track</span></div>
-      </div>
-      <nav class="side-nav">
-        <button class="nav-item active" data-view="dashboard"><span>⌂</span> Dashboard</button>
-        <button class="nav-item" data-view="study"><span>▤</span> Study</button>
-        <button class="nav-item" data-view="practice"><span>✦</span> Practice</button>
-        <button class="nav-item" data-view="revision"><span>↻</span> Revision</button>
-        <button class="nav-item" data-view="assessments"><span>✓</span> Assessments</button>
-        <button class="nav-item" data-view="performance"><span>◫</span> Performance</button>
-      </nav>
-      <div class="side-bottom">
-        <div class="sync-state"><span class="dot"></span> Supabase sync ativo</div>
-        <button id="logoutBtn" class="nav-item subtle"><span>↪</span> Sair</button>
-      </div>
-    </aside>
-
-    <main class="workspace">
-      <header class="workspace-head">
-        <div>
-          <div id="pageEyebrow" class="eyebrow dark">LEARNING HUB</div>
-          <h2 id="pageTitle">Dashboard</h2>
-          <p id="pageSubtitle">Seu plano adaptativo para Dublin 2028/29.</p>
-        </div>
-        <div class="head-actions">
-          <div class="date-pill" id="todayLabel"></div>
-          <button class="icon-btn" id="refreshBtn" title="Atualizar">↻</button>
-        </div>
-      </header>
-      <section id="contentArea" class="content-area"></section>
-    </main>
-  </div>
-
-  <div id="toast" class="toast"></div>
-  <script type="module" src="stable-v1.js?v=1"></script>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#071b3d" />
+    <meta name="description" content="Learning Hub — premium adaptive learning for Finance, Irish Payroll and English." />
+    <title>Learning Hub V2</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
