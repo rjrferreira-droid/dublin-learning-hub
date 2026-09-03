@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { AccessToken, LiveKitAPI } from 'livekit-server-sdk';
-import { isProfessorTrackAllowed, requiresPublishedTechnicalLesson } from '../src/professor/accessPolicy';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://qwvsrcgsfoguxdbcdrxq.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_k1VAFbFj5ARYfOOUYhQacQ_wSruDD_Z';
@@ -33,6 +32,8 @@ type LessonContext = {
 };
 type TechnicalLesson = { track: string; context: LessonContext };
 
+type UntypedSupabaseClient = ReturnType<typeof createClient<any>>;
+
 function send(res: any, status: number, body: unknown) {
   res.status(status).setHeader('content-type', 'application/json; charset=utf-8').send(JSON.stringify(body));
 }
@@ -44,6 +45,15 @@ function clip(value: unknown, max: number): string {
 function stringList(value: unknown, maxItems = 8): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === 'string').map((item) => item.trim()).filter(Boolean).slice(0, maxItems);
+}
+
+function isProfessorTrackAllowed(profileTrack: unknown, requestedTrack: ProfessorTrack): boolean {
+  if (profileTrack !== 'rafael_finance' && profileTrack !== 'viviane_payroll') return false;
+  return requestedTrack === 'english_academy' || profileTrack === requestedTrack;
+}
+
+function requiresPublishedTechnicalLesson(track: ProfessorTrack): boolean {
+  return track !== 'english_academy';
 }
 
 function liveKitHttpUrl(url: string): string {
@@ -113,22 +123,23 @@ function englishGoldenLessonContext(): LessonContext {
   };
 }
 
-async function publishedTechnicalLesson(supabase: ReturnType<typeof createClient>, lessonId: string): Promise<TechnicalLesson | null> {
-  const { data: lesson, error: lessonError } = await supabase
+async function publishedTechnicalLesson(supabase: UntypedSupabaseClient, lessonId: string): Promise<TechnicalLesson | null> {
+  const db = supabase as any;
+  const { data: lesson, error: lessonError } = await db
     .from('lessons')
     .select('module_id,title,learning_objectives,technical_brief_pt,global_core_pt,ireland_overlay_pt,worked_example_pt,interview_angle_pt')
     .eq('id', lessonId)
     .maybeSingle();
   if (lessonError || !lesson?.module_id || typeof lesson.title !== 'string') return null;
 
-  const { data: module, error: moduleError } = await supabase
+  const { data: module, error: moduleError } = await db
     .from('modules')
     .select('course_id')
     .eq('id', lesson.module_id)
     .maybeSingle();
   if (moduleError || !module?.course_id) return null;
 
-  const { data: course, error: courseError } = await supabase
+  const { data: course, error: courseError } = await db
     .from('courses')
     .select('learner_track')
     .eq('id', module.course_id)
@@ -136,19 +147,19 @@ async function publishedTechnicalLesson(supabase: ReturnType<typeof createClient
   if (courseError || typeof course?.learner_track !== 'string') return null;
 
   const [{ data: terms }, { data: cases }] = await Promise.all([
-    supabase.from('lesson_terms').select('term_en,definition_en').eq('lesson_id', lessonId).order('sequence').limit(8),
-    supabase.from('cases').select('title,scenario_pt,prompt_pt').eq('lesson_id', lessonId).order('sequence').limit(1),
+    db.from('lesson_terms').select('term_en,definition_en').eq('lesson_id', lessonId).order('sequence').limit(8),
+    db.from('cases').select('title,scenario_pt,prompt_pt').eq('lesson_id', lessonId).order('sequence').limit(1),
   ]);
 
-  const vocabulary = (terms ?? [])
-    .map((term) => {
-      const label = clip(term.term_en, 120);
-      const definition = clip(term.definition_en, 260);
+  const vocabulary = (Array.isArray(terms) ? terms : [])
+    .map((term: any) => {
+      const label = clip(term?.term_en, 120);
+      const definition = clip(term?.definition_en, 260);
       return label ? `${label}${definition ? ` — ${definition}` : ''}` : '';
     })
     .filter(Boolean)
     .slice(0, 8);
-  const practice = cases?.[0];
+  const practice = Array.isArray(cases) ? cases[0] : null;
   const scenario = practice
     ? [clip(practice.title, 200), clip(practice.scenario_pt, 1800), clip(practice.prompt_pt, 900)].filter(Boolean).join(' — ')
     : '';
@@ -191,6 +202,7 @@ export default async function handler(req: any, res: any) {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     global: { headers: { Authorization: `Bearer ${jwt}` } },
   });
+  const db = supabase as any;
   const { data, error } = await supabase.auth.getUser(jwt);
   if (error || !data.user) return send(res, 401, { error: 'invalid_authentication' });
 
@@ -200,7 +212,7 @@ export default async function handler(req: any, res: any) {
   const mode = typeof body?.mode === 'string' && allowedModes.has(body.mode) ? body.mode : null;
   if (!body || !lessonId || !track || !mode) return send(res, 400, { error: 'invalid_professor_request' });
 
-  const { data: learnerProfile, error: profileError } = await supabase
+  const { data: learnerProfile, error: profileError } = await db
     .from('profiles')
     .select('learner_track')
     .eq('id', data.user.id)
@@ -211,7 +223,7 @@ export default async function handler(req: any, res: any) {
 
   let lessonContext: LessonContext;
   if (requiresPublishedTechnicalLesson(track)) {
-    const technicalLesson = await publishedTechnicalLesson(supabase, lessonId);
+    const technicalLesson = await publishedTechnicalLesson(supabase as UntypedSupabaseClient, lessonId);
     if (!technicalLesson || technicalLesson.track !== track) return send(res, 403, { error: 'professor_lesson_forbidden' });
     lessonContext = technicalLesson.context;
   } else {
