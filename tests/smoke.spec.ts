@@ -40,11 +40,30 @@ test('Golden Lesson stays open while switching tabs', async ({ page }) => {
   }
 });
 
+test('Premium Audio is on-demand and cannot kick learner out of lesson', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: /Continue Finance/i }).click();
+  const lesson = page.getByTestId('lesson-shell');
+  await page.getByRole('tab', { name: 'Audio', exact: true }).click();
+
+  await expect(page.getByTestId('premium-audio-panel')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Load audio', exact: true })).toBeVisible();
+  await expect(lesson).toBeVisible();
+
+  // Do not click the button in smoke tests: no AI/API spend is needed to prove UI isolation.
+  await page.getByRole('tab', { name: 'English', exact: true }).click();
+  await page.waitForTimeout(500);
+  await expect(lesson).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'English', exact: true })).toHaveAttribute('aria-selected', 'true');
+});
+
 test('English Academy is general plus professional, not business-only', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: /Start English practice/i }).click();
   await expect(page.getByTestId('lesson-shell')).toBeVisible();
   await expect(page.getByText(/Tell a story naturally/i).first()).toBeVisible();
+  await page.getByRole('tab', { name: 'Audio', exact: true }).click();
+  await expect(page.getByText(/does not yet have a published lesson record/i)).toBeVisible();
   await page.getByRole('tab', { name: 'Professor', exact: true }).click();
   await expect(page.getByText(/Natural UK\/US conversation with Irish exposure/i)).toBeVisible();
 });
