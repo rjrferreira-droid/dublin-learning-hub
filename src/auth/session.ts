@@ -6,7 +6,7 @@ export type SessionState = {
   user: User | null;
 };
 
-export type SessionListener = (state: SessionState, event: AuthChangeEvent | 'INITIAL_SESSION') => void;
+export type SessionListener = (state: SessionState, event: AuthChangeEvent) => void;
 
 export async function readSession(): Promise<SessionState> {
   const { data, error } = await supabase.auth.getSession();
@@ -38,7 +38,7 @@ export function subscribeToSession(listener: SessionListener): () => void {
 }
 
 export function eventMayChangeAuthScreen(event: AuthChangeEvent): boolean {
-  return event === 'SIGNED_OUT' || event === 'PASSWORD_RECOVERY' || event === 'USER_DELETED';
+  return event === 'SIGNED_OUT' || event === 'PASSWORD_RECOVERY';
 }
 
 export function eventMustNotChangeLearningRoute(event: AuthChangeEvent): boolean {
