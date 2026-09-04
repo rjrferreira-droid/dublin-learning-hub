@@ -5,7 +5,7 @@ import { AccessToken, LiveKitAPI } from 'livekit-server-sdk';
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const PROFESSOR_AGENT_NAME = process.env.LIVEKIT_PROFESSOR_AGENT_NAME || 'learning-hub-professor';
-const PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS = 900;
+const PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS = 1200;
 
 const allowedModes = new Set([
   'chapter_conversation',
