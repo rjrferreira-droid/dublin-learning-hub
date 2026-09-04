@@ -57,6 +57,35 @@ type TranscriptTurn = {
   interrupted: boolean;
 };
 
+type LearningMemoryContext = {
+  priorSessions?: Array<{
+    lessonTitle?: string;
+    summary?: string;
+    improvements?: string[];
+    nextSessionFocus?: string[];
+    scores?: Record<string, number | null>;
+  }>;
+  activeErrors?: Array<{
+    domain?: string;
+    pattern?: string;
+    frequency?: number;
+    confidence?: number;
+  }>;
+  competencyProfile?: Array<{
+    name?: string;
+    category?: string;
+    score?: number;
+    confidence?: number;
+    evidenceCount?: number;
+  }>;
+  upcomingReviews?: Array<{
+    stage?: string;
+    dueDate?: string;
+    status?: string;
+    lessonTitle?: string;
+  }>;
+};
+
 function defaultProfile(): ProfessorProfile {
   const value = process.env.DEFAULT_PROFESSOR_PROFILE;
   return value === 'payroll' || value === 'english' ? value : 'finance';
@@ -123,6 +152,68 @@ function lessonGuidance(metadata: ProfessorJobMetadata): string {
     lesson.practiceScenario ? `Practice scenario: ${lesson.practiceScenario}` : '',
     `Teaching sequence: verify understanding, require retrieval, apply to a realistic scenario, challenge judgement, then finish with one concise take-away.`,
     `Never invent a current Irish rule or rate outside this supplied context.`,
+  ];
+  return `\n${lines.filter(Boolean).join('\n')}`;
+}
+
+async function loadLearningMemory(metadata: ProfessorJobMetadata): Promise<LearningMemoryContext | null> {
+  const persistence = metadata.persistence;
+  if (!persistence?.sessionId || !persistence.callbackToken || !persistence.completionUrl) return null;
+  const url = persistence.completionUrl.replace(/professor-session-complete\/?$/, 'professor-memory-context');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+  timeout.unref?.();
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(persistence.publishableKey ? { apikey: persistence.publishableKey } : {}),
+      },
+      body: JSON.stringify({ sessionId: persistence.sessionId, callbackToken: persistence.callbackToken }),
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      console.error('Professor learning memory unavailable', response.status);
+      return null;
+    }
+    const value = await response.json() as unknown;
+    return value && typeof value === 'object' && !Array.isArray(value) ? value as LearningMemoryContext : null;
+  } catch (cause) {
+    console.error('Professor learning memory error', cause instanceof Error ? cause.message : 'unknown_error');
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function learningMemoryGuidance(memory: LearningMemoryContext | null): string {
+  if (!memory) return '';
+  const errors = (memory.activeErrors ?? [])
+    .filter((item) => item.pattern)
+    .slice(0, 4)
+    .map((item) => `${item.domain ?? 'learning'}: ${item.pattern} (${Math.round(item.confidence ?? 0)}% confidence)`);
+  const competencies = (memory.competencyProfile ?? [])
+    .filter((item) => item.name && typeof item.score === 'number')
+    .slice(0, 4)
+    .map((item) => `${item.name}: ${Math.round(item.score ?? 0)}% from ${item.evidenceCount ?? 0} evidence item(s)`);
+  const previousFocus = (memory.priorSessions ?? [])
+    .flatMap((item) => item.nextSessionFocus ?? item.improvements ?? [])
+    .filter(Boolean)
+    .slice(0, 4);
+  const dueReviews = (memory.upcomingReviews ?? [])
+    .filter((item) => item.status === 'due')
+    .slice(0, 3)
+    .map((item) => `${item.stage ?? 'review'}: ${item.lessonTitle ?? 'adaptive review'}`);
+
+  if (!errors.length && !competencies.length && !previousFocus.length && !dueReviews.length) return '';
+  const lines = [
+    `\nPRIVATE LEARNING MEMORY — use this silently to adapt the session. Never mention a database, stored profile, score table or memory system to the learner.`,
+    errors.length ? `Recurring teachable patterns: ${errors.join(' | ')}` : '',
+    competencies.length ? `Measured capabilities (still provisional when evidence is low): ${competencies.join(' | ')}` : '',
+    previousFocus.length ? `Previous evaluator focus: ${previousFocus.join(' | ')}` : '',
+    dueReviews.length ? `Due retrieval opportunities: ${dueReviews.join(' | ')}` : '',
+    `Use at most one or two relevant memory signals naturally in this session. Prefer current-session evidence over historical scores. Do not overcorrect. If a prior weakness has improved, acknowledge the improvement naturally and move on.`,
   ];
   return `\n${lines.filter(Boolean).join('\n')}`;
 }
@@ -259,9 +350,10 @@ export default defineAgent({
     let closeReason = 'session_closed';
     let persistencePromise: Promise<void> | null = null;
     let sessionTimer: ReturnType<typeof setTimeout> | null = null;
+    const learningMemory = await loadLearningMemory(metadata);
 
     const agent = voice.Agent.create({
-      instructions: `${professorInstructions(profile)}${languageGuidance(metadata)}${lessonGuidance(metadata)}`,
+      instructions: `${professorInstructions(profile)}${languageGuidance(metadata)}${lessonGuidance(metadata)}${learningMemoryGuidance(learningMemory)}`,
     });
 
     const session = new voice.AgentSession({
