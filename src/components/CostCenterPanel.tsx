@@ -13,6 +13,9 @@ type CostCenterPayload = {
   };
   usage: {
     professorReservedUsd: number;
+    professorActualUsd?: number;
+    professorCommittedUsd?: number;
+    professorEvaluationUsd?: number;
     premiumAudioUsd: number;
     aiCommittedUsd: number;
     totalCommittedWithReserveUsd: number;
@@ -26,6 +29,7 @@ type CostCenterPayload = {
     premiumAudio: number;
   };
   professorSessions: number;
+  professorActiveReservations?: number;
   generatedAt: string;
 };
 
@@ -74,6 +78,8 @@ export function CostCenterPanel() {
   }, [open, data, loading, load]);
 
   const totalPct = Math.min(100, data?.utilizationPct.total ?? 0);
+  const professorCommitted = data?.usage.professorCommittedUsd ?? data?.usage.professorReservedUsd ?? 0;
+  const liveReservations = data?.professorActiveReservations ?? 0;
 
   return (
     <div className={`cost-center-shell ${open ? 'open' : ''}`} data-testid="cost-center">
@@ -118,11 +124,11 @@ export function CostCenterPanel() {
                   <strong>{money(data.usage.aiCommittedUsd)} / {money(data.budget.aiHardCapUsd)}</strong>
                 </div>
                 <div>
-                  <span>Professor</span>
-                  <strong>{money(data.usage.professorReservedUsd)} / {money(data.budget.professorCapUsd)}</strong>
+                  <span>Professor • actual + live reserve</span>
+                  <strong>{money(professorCommitted)} / {money(data.budget.professorCapUsd)}</strong>
                 </div>
                 <div>
-                  <span>Premium Audio</span>
+                  <span>Evaluation & Audio</span>
                   <strong>{money(data.usage.premiumAudioUsd)} / {money(data.budget.premiumAudioCapUsd)}</strong>
                 </div>
               </div>
@@ -133,7 +139,7 @@ export function CostCenterPanel() {
               </div>
 
               <div className="cost-center-foot">
-                <span>{data.professorSessions} Professor session{data.professorSessions === 1 ? '' : 's'} reserved this month</span>
+                <span>{data.professorSessions} session{data.professorSessions === 1 ? '' : 's'} this month • {liveReservations} live reserve{liveReservations === 1 ? '' : 's'}</span>
                 <button onClick={() => void load()} disabled={loading}>Refresh</button>
               </div>
             </>
