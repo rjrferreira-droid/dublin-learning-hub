@@ -1,0 +1,72 @@
+name: Deploy Learning Hub Professor
+
+on:
+  push:
+    branches: [v2]
+    paths:
+      - 'professor-agent/**'
+      - '!professor-agent/livekit.toml'
+      - '!professor-agent/**/*.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  deploy-professor:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: learning-hub-professor-v2
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout V2
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Decide create or deploy
+        id: mode
+        shell: bash
+        run: |
+          if [ -f professor-agent/livekit.toml ]; then
+            echo "operation=deploy" >> "$GITHUB_OUTPUT"
+          else
+            echo "operation=create" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create or deploy Professor on LiveKit Cloud
+        uses: livekit/deploy-action@v2.12.2
+        env:
+          LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
+          LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
+          LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
+          SECRET_LIST: ${{ secrets.SECRET_LIST }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          OPERATION: ${{ steps.mode.outputs.operation }}
+          WORKING_DIRECTORY: professor-agent
+
+      - name: Persist generated LiveKit agent config
+        if: steps.mode.outputs.operation == 'create'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add professor-agent/livekit.toml
+          if ! git diff --cached --quiet; then
+            git commit -m "Track LiveKit Professor agent config"
+            git push origin HEAD:v2
+          fi
+
+      - name: Wait for Professor to become healthy
+        uses: livekit/deploy-action@v2.12.2
+        env:
+          LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
+          LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
+          LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
+        with:
+          OPERATION: status-retry
+          WORKING_DIRECTORY: professor-agent
+          TIMEOUT: 5m
