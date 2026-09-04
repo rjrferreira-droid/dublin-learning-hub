@@ -5,6 +5,7 @@ import { AccessToken, LiveKitAPI } from 'livekit-server-sdk';
 const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://qwvsrcgsfoguxdbcdrxq.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_k1VAFbFj5ARYfOOUYhQacQ_wSruDD_Z';
 const PROFESSOR_AGENT_NAME = process.env.LIVEKIT_PROFESSOR_AGENT_NAME || 'learning-hub-professor';
+const PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS = 900;
 
 const allowedModes = new Set([
   'chapter_conversation',
@@ -31,6 +32,14 @@ type LessonContext = {
   practiceScenario?: string;
 };
 type TechnicalLesson = { track: string; context: LessonContext };
+type ProfessorBudgetReservation = {
+  allowed: boolean;
+  reservationId: string | null;
+  monthlyBudgetUsd: number;
+  reservedBeforeUsd: number;
+  reservedAfterUsd: number;
+  maxSessionSeconds: number;
+};
 
 type UntypedSupabaseClient = ReturnType<typeof createClient<any>>;
 
@@ -45,6 +54,15 @@ function clip(value: unknown, max: number): string {
 function stringList(value: unknown, maxItems = 8): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === 'string').map((item) => item.trim()).filter(Boolean).slice(0, maxItems);
+}
+
+function numeric(value: unknown, fallback = 0): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return fallback;
 }
 
 function isProfessorTrackAllowed(profileTrack: unknown, requestedTrack: ProfessorTrack): boolean {
@@ -180,6 +198,25 @@ async function publishedTechnicalLesson(supabase: UntypedSupabaseClient, lessonI
   };
 }
 
+async function reserveProfessorBudget(db: any): Promise<ProfessorBudgetReservation | null> {
+  const { data, error } = await db.rpc('reserve_professor_budget');
+  if (error) return null;
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row || typeof row.allowed !== 'boolean') return null;
+
+  return {
+    allowed: row.allowed,
+    reservationId: typeof row.reservation_id === 'string' ? row.reservation_id : null,
+    monthlyBudgetUsd: numeric(row.monthly_budget_usd),
+    reservedBeforeUsd: numeric(row.reserved_before_usd),
+    reservedAfterUsd: numeric(row.reserved_after_usd),
+    maxSessionSeconds: Math.max(
+      60,
+      Math.min(PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS, Math.round(numeric(row.max_session_seconds, PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS))),
+    ),
+  };
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     res.setHeader('allow', 'POST');
@@ -230,6 +267,18 @@ export default async function handler(req: any, res: any) {
     lessonContext = englishGoldenLessonContext();
   }
 
+  // Cost safety is fail-closed: a Professor session is never dispatched when
+  // the V2 budget guard is missing, unavailable, or exhausted.
+  const budget = await reserveProfessorBudget(db);
+  if (!budget) return send(res, 503, { error: 'professor_budget_guard_unavailable' });
+  if (!budget.allowed || !budget.reservationId) {
+    return send(res, 429, {
+      error: 'professor_monthly_budget_reached',
+      monthlyBudgetUsd: budget.monthlyBudgetUsd,
+      reservedUsd: budget.reservedBeforeUsd,
+    });
+  }
+
   const professorProfile = profileForTrack(track);
   const languageProfile = normalizeLanguageProfile(body.languageProfile);
   const roomName = `lh-${randomUUID()}`;
@@ -242,6 +291,8 @@ export default async function handler(req: any, res: any) {
     mode,
     languageProfile,
     lessonContext,
+    budgetReservationId: budget.reservationId,
+    maxSessionSeconds: budget.maxSessionSeconds,
   });
 
   try {
@@ -276,6 +327,9 @@ export default async function handler(req: any, res: any) {
       lessonId,
       mode,
       professorProfile,
+      maxSessionSeconds: budget.maxSessionSeconds,
+      monthlyBudgetUsd: budget.monthlyBudgetUsd,
+      reservedAfterUsd: budget.reservedAfterUsd,
       dispatchId: typeof dispatch?.id === 'string' ? dispatch.id : null,
     });
   } catch (cause) {
