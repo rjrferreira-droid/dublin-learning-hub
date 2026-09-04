@@ -166,12 +166,40 @@ function safeJson(value: unknown): unknown {
   }
 }
 
+async function postProfessorCallback(url: string, publishableKey: string | undefined, body: Record<string, unknown>, label: string): Promise<boolean> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  timeout.unref?.();
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(publishableKey ? { apikey: publishableKey } : {}),
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      console.error(`${label} failed`, response.status, await response.text().catch(() => ''));
+      return false;
+    }
+    return true;
+  } catch (cause) {
+    console.error(`${label} error`, cause instanceof Error ? cause.message : 'unknown_error');
+    return false;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function persistSessionCompletion(
   metadata: ProfessorJobMetadata,
   transcript: TranscriptTurn[],
   session: any,
   startedAt: number,
   closeReason: string,
+  realtimeModel: string,
 ): Promise<void> {
   const persistence = metadata.persistence;
   if (!persistence?.sessionId || !persistence.callbackToken || !persistence.completionUrl) return;
@@ -186,35 +214,36 @@ async function persistSessionCompletion(
     lessonContext: metadata.lessonContext,
   });
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
-  timeout.unref?.();
-  try {
-    const response = await fetch(persistence.completionUrl, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        ...(persistence.publishableKey ? { apikey: persistence.publishableKey } : {}),
-      },
-      body: JSON.stringify({
-        sessionId: persistence.sessionId,
-        callbackToken: persistence.callbackToken,
-        transcript: turns,
-        modelUsage,
-        durationSeconds,
-        closeReason: closeReason.slice(0, 120),
-        evaluation,
-      }),
-      signal: controller.signal,
-    });
-    if (!response.ok) {
-      console.error('Professor session completion callback failed', response.status, await response.text().catch(() => ''));
-    }
-  } catch (cause) {
-    console.error('Professor session completion callback error', cause instanceof Error ? cause.message : 'unknown_error');
-  } finally {
-    clearTimeout(timeout);
-  }
+  const callbackBody = {
+    sessionId: persistence.sessionId,
+    callbackToken: persistence.callbackToken,
+    transcript: turns,
+    modelUsage,
+    durationSeconds,
+    closeReason: closeReason.slice(0, 120),
+    evaluation,
+  };
+
+  await postProfessorCallback(
+    persistence.completionUrl,
+    persistence.publishableKey,
+    callbackBody,
+    'Professor session completion callback',
+  );
+
+  const settlementUrl = persistence.completionUrl.replace(/professor-session-complete\/?$/, 'professor-usage-settle');
+  await postProfessorCallback(
+    settlementUrl,
+    persistence.publishableKey,
+    {
+      sessionId: persistence.sessionId,
+      callbackToken: persistence.callbackToken,
+      modelUsage,
+      realtimeModel,
+      evaluation,
+    },
+    'Professor usage settlement callback',
+  );
 }
 
 export default defineAgent({
@@ -249,7 +278,7 @@ export default defineAgent({
 
     const persistOnce = () => {
       if (!persistencePromise) {
-        persistencePromise = persistSessionCompletion(metadata, transcript, session, startedAt, closeReason);
+        persistencePromise = persistSessionCompletion(metadata, transcript, session, startedAt, closeReason, model);
       }
       return persistencePromise;
     };
