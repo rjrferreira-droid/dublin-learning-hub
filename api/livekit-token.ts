@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { AccessToken, LiveKitAPI } from 'livekit-server-sdk';
 
-const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || 'https://qwvsrcgsfoguxdbcdrxq.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_k1VAFbFj5ARYfOOUYhQacQ_wSruDD_Z';
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 const PROFESSOR_AGENT_NAME = process.env.LIVEKIT_PROFESSOR_AGENT_NAME || 'learning-hub-professor';
 const PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS = 900;
 
@@ -20,6 +20,7 @@ const allowedSupportLanguages = new Set(['pt-BR', 'en']);
 
 type ProfessorTrack = 'rafael_finance' | 'viviane_payroll' | 'english_academy';
 type ProfessorProfile = 'finance' | 'payroll' | 'english';
+type ProfessorQualityTier = 'standard' | 'premium';
 type LessonContext = {
   title: string;
   objectives: string[];
@@ -39,6 +40,10 @@ type ProfessorBudgetReservation = {
   reservedBeforeUsd: number;
   reservedAfterUsd: number;
   maxSessionSeconds: number;
+  qualityTier: ProfessorQualityTier;
+  reservationUsd: number;
+  globalAiCapUsd: number;
+  globalCommittedBeforeUsd: number;
 };
 
 type UntypedSupabaseClient = ReturnType<typeof createClient<any>>;
@@ -84,6 +89,12 @@ function profileForTrack(track: string): ProfessorProfile {
   if (track === 'viviane_payroll') return 'payroll';
   if (track === 'english_academy') return 'english';
   return 'finance';
+}
+
+function qualityTierForMode(mode: string): ProfessorQualityTier {
+  return mode === 'chapter_conversation' || mode === 'case_feedback' || mode === 'oral_mock'
+    ? 'premium'
+    : 'standard';
 }
 
 function safeBody(req: any): Record<string, any> | null {
@@ -198,12 +209,13 @@ async function publishedTechnicalLesson(supabase: UntypedSupabaseClient, lessonI
   };
 }
 
-async function reserveProfessorBudget(db: any): Promise<ProfessorBudgetReservation | null> {
-  const { data, error } = await db.rpc('reserve_professor_budget');
+async function reserveProfessorBudget(db: any, qualityTier: ProfessorQualityTier): Promise<ProfessorBudgetReservation | null> {
+  const { data, error } = await db.rpc('reserve_professor_budget', { p_quality_tier: qualityTier });
   if (error) return null;
   const row = Array.isArray(data) ? data[0] : data;
   if (!row || typeof row.allowed !== 'boolean') return null;
 
+  const tier: ProfessorQualityTier = row.quality_tier === 'premium' ? 'premium' : 'standard';
   return {
     allowed: row.allowed,
     reservationId: typeof row.reservation_id === 'string' ? row.reservation_id : null,
@@ -214,6 +226,10 @@ async function reserveProfessorBudget(db: any): Promise<ProfessorBudgetReservati
       60,
       Math.min(PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS, Math.round(numeric(row.max_session_seconds, PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS))),
     ),
+    qualityTier: tier,
+    reservationUsd: numeric(row.reservation_usd),
+    globalAiCapUsd: numeric(row.global_ai_cap_usd),
+    globalCommittedBeforeUsd: numeric(row.global_committed_before_usd),
   };
 }
 
@@ -223,10 +239,15 @@ export default async function handler(req: any, res: any) {
     return send(res, 405, { error: 'method_not_allowed' });
   }
 
+  const supabaseUrl = SUPABASE_URL;
+  const supabasePublishableKey = SUPABASE_PUBLISHABLE_KEY;
+  if (!supabaseUrl || !supabasePublishableKey) {
+    return send(res, 503, { error: 'v2_data_backend_not_configured' });
+  }
+
   const livekitUrl = process.env.LIVEKIT_URL;
   const livekitApiKey = process.env.LIVEKIT_API_KEY;
   const livekitApiSecret = process.env.LIVEKIT_API_SECRET;
-
   if (!livekitUrl || !livekitApiKey || !livekitApiSecret) {
     return send(res, 503, { error: 'professor_not_configured' });
   }
@@ -235,7 +256,7 @@ export default async function handler(req: any, res: any) {
   const jwt = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
   if (!jwt) return send(res, 401, { error: 'missing_authentication' });
 
-  const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  const supabase = createClient(supabaseUrl, supabasePublishableKey, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
     global: { headers: { Authorization: `Bearer ${jwt}` } },
   });
@@ -267,15 +288,19 @@ export default async function handler(req: any, res: any) {
     lessonContext = englishGoldenLessonContext();
   }
 
+  const requestedQualityTier = qualityTierForMode(mode);
+
   // Cost safety is fail-closed: a Professor session is never dispatched when
   // the V2 budget guard is missing, unavailable, or exhausted.
-  const budget = await reserveProfessorBudget(db);
+  const budget = await reserveProfessorBudget(db, requestedQualityTier);
   if (!budget) return send(res, 503, { error: 'professor_budget_guard_unavailable' });
   if (!budget.allowed || !budget.reservationId) {
     return send(res, 429, {
       error: 'professor_monthly_budget_reached',
       monthlyBudgetUsd: budget.monthlyBudgetUsd,
+      globalAiCapUsd: budget.globalAiCapUsd,
       reservedUsd: budget.reservedBeforeUsd,
+      globalCommittedUsd: budget.globalCommittedBeforeUsd,
     });
   }
 
@@ -289,9 +314,12 @@ export default async function handler(req: any, res: any) {
     track,
     lessonId,
     mode,
+    qualityTier: budget.qualityTier,
     languageProfile,
     lessonContext,
     budgetReservationId: budget.reservationId,
+    budgetReservationUsd: budget.reservationUsd,
+    globalAiCapUsd: budget.globalAiCapUsd,
     maxSessionSeconds: budget.maxSessionSeconds,
   });
 
@@ -327,8 +355,10 @@ export default async function handler(req: any, res: any) {
       lessonId,
       mode,
       professorProfile,
+      qualityTier: budget.qualityTier,
       maxSessionSeconds: budget.maxSessionSeconds,
       monthlyBudgetUsd: budget.monthlyBudgetUsd,
+      globalAiCapUsd: budget.globalAiCapUsd,
       reservedAfterUsd: budget.reservedAfterUsd,
       dispatchId: typeof dispatch?.id === 'string' ? dispatch.id : null,
     });
