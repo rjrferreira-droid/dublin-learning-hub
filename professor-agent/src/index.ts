@@ -2,12 +2,13 @@ import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { type JobContext, ServerOptions, cli, defineAgent, voice } from '@livekit/agents';
 import * as openai from '@livekit/agents-plugin-openai';
+import { evaluateProfessorSession } from './evaluation.js';
 import { professorInstructions, type ProfessorProfile } from './prompts.js';
 
 dotenv.config({ path: '.env.local' });
 
 const PROFESSOR_AGENT_NAME = process.env.LIVEKIT_PROFESSOR_AGENT_NAME || 'learning-hub-professor';
-const PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS = 900;
+const PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS = 1200;
 
 type ProfessorQualityTier = 'standard' | 'premium';
 type LessonContext = {
@@ -178,6 +179,12 @@ async function persistSessionCompletion(
   const turns = transcript.length > 0 ? transcript.slice(0, 200) : historyTranscript(session);
   const modelUsage = safeJson(session?.usage?.modelUsage ?? []);
   const durationSeconds = Math.max(0, Math.min(PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS, Math.round((Date.now() - startedAt) / 1000)));
+  const evaluation = await evaluateProfessorSession(turns, {
+    track: metadata.track,
+    mode: metadata.mode,
+    professorProfile: metadata.professorProfile,
+    lessonContext: metadata.lessonContext,
+  });
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
@@ -196,6 +203,7 @@ async function persistSessionCompletion(
         modelUsage,
         durationSeconds,
         closeReason: closeReason.slice(0, 120),
+        evaluation,
       }),
       signal: controller.signal,
     });
