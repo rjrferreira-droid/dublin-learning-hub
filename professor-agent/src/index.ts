@@ -11,6 +11,7 @@ const PROFESSOR_AGENT_NAME = process.env.LIVEKIT_PROFESSOR_AGENT_NAME || 'learni
 const PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS = 1200;
 
 type ProfessorQualityTier = 'standard' | 'premium';
+type CoachingIntensity = 'normal' | 'coach' | 'pressure';
 type LessonContext = {
   title?: string;
   objectives?: string[];
@@ -124,6 +125,31 @@ function maxSessionSeconds(metadata: ProfessorJobMetadata): number {
   return Math.max(60, Math.min(PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS, requested));
 }
 
+function coachingIntensity(profile: ProfessorProfile, metadata: ProfessorJobMetadata): CoachingIntensity {
+  if (metadata.mode === 'oral_mock') return 'pressure';
+  if (metadata.mode === 'case_feedback') return profile === 'english' ? 'coach' : 'pressure';
+  if (metadata.mode === 'english_drill' || metadata.mode === 'chapter_conversation') return 'coach';
+  if (metadata.mode === 'general_conversation') return 'normal';
+  return profile === 'english' ? 'normal' : 'coach';
+}
+
+function coachingGuidance(profile: ProfessorProfile, metadata: ProfessorJobMetadata): string {
+  const intensity = coachingIntensity(profile, metadata);
+  const level = intensity === 'pressure'
+    ? `PRESSURE mode: simulate a demanding but fair high-stakes conversation. Interrupt vague or overlong reasoning when useful, challenge assumptions, ask for the conclusion first, change the angle unexpectedly, and require concise restatements. Do not become hostile or theatrical.`
+    : intensity === 'coach'
+      ? `COACH mode: be actively involved. Ask follow-ups instead of accepting first-pass answers, correct important errors quickly, ask for rephrasing, examples and causal links, and occasionally cut in when the learner circles the point. Aim for productive friction, not constant interruption.`
+      : `NORMAL mode: keep the conversation warm and natural, but still behave like a real tutor. Clarify vague answers, make selective corrections, ask spontaneous follow-ups and occasionally request a second phrasing. Interrupt only when the learner is clearly overlong or stuck.`;
+
+  const profileRule = profile === 'english'
+    ? `English coaching: favour brief spoken recasts for meaningful or recurring errors. After a useful correction, sometimes ask the learner to repeat only the corrected phrase or sentence, then continue. If wording is understandable but unnatural, ask for another version before giving your own. Do not correct every minor error and do not treat valid UK/US variants as mistakes.`
+    : profile === 'finance'
+      ? `Finance coaching: if a technical assumption is questionable, stop the chain before it compounds. Ask the learner to defend the assumption, connect the accounting point to business impact, and periodically demand a 20–30 second executive answer.`
+      : `Payroll coaching: if an explanation skips a control, dependency, employee impact or sequencing step, ask for the missing link. Use concise English reformulation practice for employee-facing explanations without confusing language accuracy with payroll accuracy.`;
+
+  return `\nACTIVE COACHING MODE: ${intensity.toUpperCase()}.\n${level}\n${profileRule}\nThe learner may interrupt you naturally; keep your own spoken turns concise and responsive.`;
+}
+
 function languageGuidance(metadata: ProfessorJobMetadata): string {
   const language = metadata.languageProfile;
   if (!language) return '';
@@ -133,7 +159,7 @@ function languageGuidance(metadata: ProfessorJobMetadata): string {
   const support = language.supportLanguage === 'pt-BR' ? 'Brazilian Portuguese' : 'English';
   const correction = language.correctionMode ?? 'delayed';
   const exposure = language.includeIrishExposure === false ? 'not required' : 'deliberately included when natural';
-  return `\nSession adaptation: ${share == null ? 'adapt English share to performance' : `aim for approximately ${share}% English`}. Support language is ${support}. Correction mode is ${correction}. Irish exposure is ${exposure}.`;
+  return `\nSession adaptation: ${share == null ? 'adapt English share to performance' : `aim for approximately ${share}% English`}. Support language is ${support}. Correction mode is ${correction}; even with delayed correction, a brief immediate recast is appropriate for a meaning-changing, target-skill or clearly recurring error. Irish exposure is ${exposure}.`;
 }
 
 function lessonGuidance(metadata: ProfessorJobMetadata): string {
@@ -221,15 +247,17 @@ function learningMemoryGuidance(memory: LearningMemoryContext | null): string {
 function openingInstruction(profile: ProfessorProfile, metadata: ProfessorJobMetadata): string {
   const share = metadata.languageProfile?.professorEnglishSharePct;
   const lesson = metadata.lessonContext?.title ? ` The session topic is “${metadata.lessonContext.title}”.` : '';
+  const intensity = coachingIntensity(profile, metadata);
+  const tone = intensity === 'pressure' ? ' Set a demanding pace from the first question.' : intensity === 'coach' ? ' Be actively curious and ready to challenge the first answer.' : '';
   if (profile === 'payroll') {
-    return `Cumprimente de forma breve e profissional.${lesson} Pergunte qual parte do cenário a aluna quer explicar primeiro. Use English progressively according to the session language target.`;
+    return `Cumprimente de forma breve e profissional.${lesson} Pergunte qual parte do cenário a aluna quer explicar primeiro. Use English progressively according to the session language target.${tone}`;
   }
   if (profile === 'english') {
     return typeof share === 'number' && share < 70
-      ? `Greet the learner with accessible natural English.${lesson} Ask one open question that immediately starts the task. Keep the first turn short and allow brief Portuguese support only if needed.`
-      : `Greet the learner naturally.${lesson} Start with one open question that immediately starts the task. Do not sound like an exam.`;
+      ? `Greet the learner with accessible natural English.${lesson} Ask one open question that immediately starts the task. Keep the first turn short and allow brief Portuguese support only if needed.${tone}`
+      : `Greet the learner naturally.${lesson} Start with one open question that immediately starts the task. Do not sound like an exam.${tone}`;
   }
-  return `Greet the learner briefly as a senior finance coach.${lesson} Ask for a concise explanation of the central issue before giving any teaching.`;
+  return `Greet the learner briefly as a senior finance coach.${lesson} Ask for a concise explanation of the central issue before giving any teaching.${tone}`;
 }
 
 function transcriptTurnFromItem(item: any): TranscriptTurn | null {
@@ -255,6 +283,47 @@ function safeJson(value: unknown): unknown {
   } catch {
     return [];
   }
+}
+
+function mergeStreamingTranscript(current: string, next: string): string {
+  const a = current.trim();
+  const b = next.trim();
+  if (!b) return a;
+  if (!a) return b;
+  if (b.startsWith(a)) return b;
+  if (a.endsWith(b)) return a;
+  return `${a} ${b}`.replace(/\s+/g, ' ').slice(-1800);
+}
+
+function spokenWordCount(value: string): number {
+  return value.trim() ? value.trim().split(/\s+/).length : 0;
+}
+
+function interruptionThresholdWords(profile: ProfessorProfile, intensity: CoachingIntensity): number {
+  if (intensity === 'pressure') return 48;
+  if (intensity === 'coach') return profile === 'english' ? 58 : 66;
+  return 88;
+}
+
+function maxMidTurnInterruptions(intensity: CoachingIntensity): number {
+  if (intensity === 'pressure') return 3;
+  if (intensity === 'coach') return 2;
+  return 1;
+}
+
+function interruptionLead(profile: ProfessorProfile, intensity: CoachingIntensity): string {
+  if (profile === 'english') {
+    if (intensity === 'pressure') return `Stop there for a second. Start that answer again: main point first, in about twenty seconds.`;
+    if (intensity === 'coach') return `Can I stop you there? Give me the same point again in one or two clearer, more natural sentences.`;
+    return `Hang on a second. Give me the main point again, a little more simply.`;
+  }
+  if (profile === 'payroll') {
+    if (intensity === 'pressure') return `Let me stop you there. Give me the decision or control point first, then one reason.`;
+    return `Can I pause you there? What is the key payroll point? Give me that first, then the supporting step.`;
+  }
+  if (intensity === 'pressure') return `Stop there. Give me the conclusion first, then the single reason that matters most.`;
+  if (intensity === 'coach') return `Let me stop you there. What is the core point? Give me the executive answer first.`;
+  return `Can I pause you there? Give me the main conclusion first.`;
 }
 
 async function postProfessorCallback(url: string, publishableKey: string | undefined, body: Record<string, unknown>, label: string): Promise<boolean> {
@@ -345,15 +414,20 @@ export default defineAgent({
     const model = modelForQualityTier(qualityTier);
     const voiceName = process.env.OPENAI_REALTIME_VOICE || 'marin';
     const sessionLimitSeconds = maxSessionSeconds(metadata);
+    const intensity = coachingIntensity(profile, metadata);
     const startedAt = Date.now();
     const transcript: TranscriptTurn[] = [];
     let closeReason = 'session_closed';
     let persistencePromise: Promise<void> | null = null;
     let sessionTimer: ReturnType<typeof setTimeout> | null = null;
+    let partialUserTranscript = '';
+    let midTurnInterruptions = 0;
+    let midTurnInterrupting = false;
+    let lastMidTurnInterruptAt = 0;
     const learningMemory = await loadLearningMemory(metadata);
 
     const agent = voice.Agent.create({
-      instructions: `${professorInstructions(profile)}${languageGuidance(metadata)}${lessonGuidance(metadata)}${learningMemoryGuidance(learningMemory)}`,
+      instructions: `${professorInstructions(profile)}${coachingGuidance(profile, metadata)}${languageGuidance(metadata)}${lessonGuidance(metadata)}${learningMemoryGuidance(learningMemory)}`,
     });
 
     const session = new voice.AgentSession({
@@ -366,6 +440,38 @@ export default defineAgent({
     session.on(voice.AgentSessionEventTypes.ConversationItemAdded, (event: any) => {
       const turn = transcriptTurnFromItem(event?.item);
       if (turn && transcript.length < 200) transcript.push(turn);
+    });
+
+    session.on(voice.AgentSessionEventTypes.UserInputTranscribed, (event: any) => {
+      const spoken = typeof event?.transcript === 'string' ? event.transcript.trim() : '';
+      if (!spoken) return;
+      if (event?.isFinal) {
+        partialUserTranscript = '';
+        return;
+      }
+
+      partialUserTranscript = mergeStreamingTranscript(partialUserTranscript, spoken);
+      const threshold = interruptionThresholdWords(profile, intensity);
+      const cooldownMs = intensity === 'pressure' ? 18000 : 26000;
+      const now = Date.now();
+      if (spokenWordCount(partialUserTranscript) < threshold) return;
+      if (midTurnInterrupting || midTurnInterruptions >= maxMidTurnInterruptions(intensity)) return;
+      if (now - lastMidTurnInterruptAt < cooldownMs) return;
+
+      partialUserTranscript = '';
+      midTurnInterrupting = true;
+      midTurnInterruptions += 1;
+      lastMidTurnInterruptAt = now;
+
+      void (async () => {
+        try {
+          await session.say(interruptionLead(profile, intensity), { allowInterruptions: false });
+        } catch (cause) {
+          console.error('Professor mid-turn coaching interruption failed', cause instanceof Error ? cause.message : 'unknown_error');
+        } finally {
+          midTurnInterrupting = false;
+        }
+      })();
     });
 
     const persistOnce = () => {
