@@ -33,7 +33,7 @@ Deno.serve(async (req: Request) => {
   const monthStartIso = monthStartDate.toISOString();
   const monthStartDay = monthStartIso.slice(0, 10);
 
-  const [budgetResult, usageResult, professorResult] = await Promise.all([
+  const [budgetResult, usageResult, professorResult, sessionsResult] = await Promise.all([
     admin.from("learning_hub_budget_settings")
       .select("absolute_total_budget_usd,infrastructure_reserve_usd,ai_hard_cap_usd,professor_cap_usd,premium_audio_cap_usd")
       .eq("id", 1)
@@ -42,18 +42,21 @@ Deno.serve(async (req: Request) => {
       .select("feature,estimated_cost_usd,created_at")
       .gte("created_at", monthStartIso),
     admin.from("professor_budget_reservations")
-      .select("reserved_usd,created_at")
+      .select("reserved_usd,status,actual_cost_usd,created_at")
       .eq("month_start", monthStartDay),
+    admin.from("ai_tutor_sessions")
+      .select("id,status,started_at")
+      .gte("started_at", monthStartIso),
   ]);
 
   if (budgetResult.error || !budgetResult.data) {
     console.error("cost center budget read failed", budgetResult.error?.message ?? "missing_settings");
     return json({ error: "cost_center_unavailable" }, 503);
   }
-  if (usageResult.error || professorResult.error) {
+  if (usageResult.error || professorResult.error || sessionsResult.error) {
     console.error(
       "cost center usage read failed",
-      usageResult.error?.message ?? professorResult.error?.message ?? "unknown_usage_error",
+      usageResult.error?.message ?? professorResult.error?.message ?? sessionsResult.error?.message ?? "unknown_usage_error",
     );
     return json({ error: "cost_center_unavailable" }, 503);
   }
@@ -61,6 +64,7 @@ Deno.serve(async (req: Request) => {
   const settings = budgetResult.data;
   const usageRows = usageResult.data ?? [];
   const professorRows = professorResult.data ?? [];
+  const sessionRows = sessionsResult.data ?? [];
 
   const usageByFeature = usageRows.reduce<Record<string, number>>((acc, row) => {
     const feature = String(row.feature ?? "other");
@@ -68,15 +72,25 @@ Deno.serve(async (req: Request) => {
     return acc;
   }, {});
 
-  const loggedAiUsd = Object.values(usageByFeature).reduce((sum, value) => sum + value, 0);
-  const professorReservedUsd = professorRows.reduce((sum, row) => sum + Number(row.reserved_usd ?? 0), 0);
-  const aiCommittedUsd = loggedAiUsd + professorReservedUsd;
-  const premiumAudioUsd = Number(usageByFeature.lesson_audio ?? 0);
+  const actualAiSpendUsd = Object.values(usageByFeature).reduce((sum, value) => sum + value, 0);
+  const activeRows = professorRows.filter((row) => row.status === "active");
+  const unresolvedRows = professorRows.filter((row) => row.status === "unresolved");
+  const activeReservationUsd = activeRows.reduce((sum, row) => sum + Number(row.reserved_usd ?? 0), 0);
+  const unresolvedReservationUsd = unresolvedRows.reduce((sum, row) => sum + Number(row.reserved_usd ?? 0), 0);
+  const protectedReservationUsd = activeReservationUsd + unresolvedReservationUsd;
+
+  const professorActualUsd = Number(usageByFeature.professor_livekit ?? 0);
+  const professorCommittedUsd = professorActualUsd + protectedReservationUsd;
+  const evaluationUsd = Number(usageByFeature.professor_evaluation ?? 0);
+  const premiumAudioOnlyUsd = Number(usageByFeature.lesson_audio ?? 0) + Number(usageByFeature.lesson_tts ?? 0);
+  const evaluationAndAudioUsd = evaluationUsd + premiumAudioOnlyUsd;
+  const aiCommittedUsd = actualAiSpendUsd + protectedReservationUsd;
+
   const infrastructureReserveUsd = Number(settings.infrastructure_reserve_usd ?? 70);
-  const absoluteBudgetUsd = Number(settings.absolute_total_budget_usd ?? 150);
-  const aiHardCapUsd = Number(settings.ai_hard_cap_usd ?? 80);
-  const professorCapUsd = Number(settings.professor_cap_usd ?? 55);
-  const premiumAudioCapUsd = Number(settings.premium_audio_cap_usd ?? 15);
+  const absoluteBudgetUsd = Number(settings.absolute_total_budget_usd ?? 200);
+  const aiHardCapUsd = Number(settings.ai_hard_cap_usd ?? 130);
+  const professorCapUsd = Number(settings.professor_cap_usd ?? 110);
+  const evaluationAudioCapUsd = Number(settings.premium_audio_cap_usd ?? 20);
   const totalCommittedWithReserveUsd = infrastructureReserveUsd + aiCommittedUsd;
   const safetyBufferUsd = Math.max(0, absoluteBudgetUsd - totalCommittedWithReserveUsd);
   const aiRemainingUsd = Math.max(0, aiHardCapUsd - aiCommittedUsd);
@@ -96,25 +110,35 @@ Deno.serve(async (req: Request) => {
       infrastructureReserveUsd,
       aiHardCapUsd,
       professorCapUsd,
-      premiumAudioCapUsd,
+      premiumAudioCapUsd: evaluationAudioCapUsd,
     },
     usage: {
-      loggedAiUsd: Number(loggedAiUsd.toFixed(4)),
-      professorReservedUsd: Number(professorReservedUsd.toFixed(4)),
-      premiumAudioUsd: Number(premiumAudioUsd.toFixed(4)),
-      aiCommittedUsd: Number(aiCommittedUsd.toFixed(4)),
-      totalCommittedWithReserveUsd: Number(totalCommittedWithReserveUsd.toFixed(4)),
-      aiRemainingUsd: Number(aiRemainingUsd.toFixed(4)),
-      safetyBufferUsd: Number(safetyBufferUsd.toFixed(4)),
+      actualAiSpendUsd: Number(actualAiSpendUsd.toFixed(6)),
+      loggedAiUsd: Number(actualAiSpendUsd.toFixed(6)),
+      professorReservedUsd: Number(protectedReservationUsd.toFixed(6)),
+      professorActiveReservedUsd: Number(activeReservationUsd.toFixed(6)),
+      professorUnresolvedReservedUsd: Number(unresolvedReservationUsd.toFixed(6)),
+      professorActualUsd: Number(professorActualUsd.toFixed(6)),
+      professorCommittedUsd: Number(professorCommittedUsd.toFixed(6)),
+      professorEvaluationUsd: Number(evaluationUsd.toFixed(6)),
+      premiumAudioOnlyUsd: Number(premiumAudioOnlyUsd.toFixed(6)),
+      premiumAudioUsd: Number(evaluationAndAudioUsd.toFixed(6)),
+      aiCommittedUsd: Number(aiCommittedUsd.toFixed(6)),
+      totalCommittedWithReserveUsd: Number(totalCommittedWithReserveUsd.toFixed(6)),
+      aiRemainingUsd: Number(aiRemainingUsd.toFixed(6)),
+      safetyBufferUsd: Number(safetyBufferUsd.toFixed(6)),
     },
     utilizationPct: {
       total: pct(totalCommittedWithReserveUsd, absoluteBudgetUsd),
       ai: pct(aiCommittedUsd, aiHardCapUsd),
-      professor: pct(professorReservedUsd, professorCapUsd),
-      premiumAudio: pct(premiumAudioUsd, premiumAudioCapUsd),
+      professor: pct(professorCommittedUsd, professorCapUsd),
+      premiumAudio: pct(evaluationAndAudioUsd, evaluationAudioCapUsd),
     },
     features: usageByFeature,
-    professorSessions: professorRows.length,
+    professorSessions: sessionRows.length,
+    professorCompletedSessions: sessionRows.filter((row) => row.status === "completed").length,
+    professorActiveReservations: activeRows.length,
+    professorUnresolvedReservations: unresolvedRows.length,
     generatedAt: new Date().toISOString(),
   });
 });
