@@ -118,6 +118,7 @@ end;
 $$;
 
 revoke all on function public.reserve_professor_budget() from public;
+revoke execute on function public.reserve_professor_budget() from anon;
 grant execute on function public.reserve_professor_budget() to authenticated;
 
 comment on table public.professor_budget_settings is
