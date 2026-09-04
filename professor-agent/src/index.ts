@@ -9,6 +9,7 @@ dotenv.config({ path: '.env.local' });
 const PROFESSOR_AGENT_NAME = process.env.LIVEKIT_PROFESSOR_AGENT_NAME || 'learning-hub-professor';
 const PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS = 900;
 
+type ProfessorQualityTier = 'standard' | 'premium';
 type LessonContext = {
   title?: string;
   objectives?: string[];
@@ -26,7 +27,10 @@ type ProfessorJobMetadata = {
   track?: 'rafael_finance' | 'viviane_payroll' | 'english_academy';
   lessonId?: string;
   mode?: 'chapter_conversation' | 'case_feedback' | 'oral_mock' | 'english_drill' | 'general_conversation';
+  qualityTier?: ProfessorQualityTier;
   budgetReservationId?: string;
+  budgetReservationUsd?: number;
+  globalAiCapUsd?: number;
   maxSessionSeconds?: number;
   languageProfile?: {
     preferredMix?: 'uk-us-mix';
@@ -56,6 +60,17 @@ function sessionProfile(metadata: ProfessorJobMetadata): ProfessorProfile {
   return metadata.professorProfile === 'finance' || metadata.professorProfile === 'payroll' || metadata.professorProfile === 'english'
     ? metadata.professorProfile
     : defaultProfile();
+}
+
+function sessionQualityTier(metadata: ProfessorJobMetadata): ProfessorQualityTier {
+  return metadata.qualityTier === 'premium' ? 'premium' : 'standard';
+}
+
+function modelForQualityTier(qualityTier: ProfessorQualityTier): string {
+  if (qualityTier === 'premium') {
+    return process.env.OPENAI_REALTIME_MODEL_PREMIUM || 'gpt-realtime-2.1';
+  }
+  return process.env.OPENAI_REALTIME_MODEL_STANDARD || process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime-2.1-mini';
 }
 
 function maxSessionSeconds(metadata: ProfessorJobMetadata): number {
@@ -115,7 +130,8 @@ export default defineAgent({
   entry: async (ctx: JobContext) => {
     const metadata = sessionMetadata(ctx);
     const profile = sessionProfile(metadata);
-    const model = process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime-2.1-mini';
+    const qualityTier = sessionQualityTier(metadata);
+    const model = modelForQualityTier(qualityTier);
     const voiceName = process.env.OPENAI_REALTIME_VOICE || 'marin';
     const sessionLimitSeconds = maxSessionSeconds(metadata);
 
