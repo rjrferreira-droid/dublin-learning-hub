@@ -7,6 +7,7 @@ import { professorInstructions, type ProfessorProfile } from './prompts.js';
 dotenv.config({ path: '.env.local' });
 
 const PROFESSOR_AGENT_NAME = process.env.LIVEKIT_PROFESSOR_AGENT_NAME || 'learning-hub-professor';
+const PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS = 900;
 
 type LessonContext = {
   title?: string;
@@ -25,6 +26,8 @@ type ProfessorJobMetadata = {
   track?: 'rafael_finance' | 'viviane_payroll' | 'english_academy';
   lessonId?: string;
   mode?: 'chapter_conversation' | 'case_feedback' | 'oral_mock' | 'english_drill' | 'general_conversation';
+  budgetReservationId?: string;
+  maxSessionSeconds?: number;
   languageProfile?: {
     preferredMix?: 'uk-us-mix';
     includeIrishExposure?: boolean;
@@ -53,6 +56,13 @@ function sessionProfile(metadata: ProfessorJobMetadata): ProfessorProfile {
   return metadata.professorProfile === 'finance' || metadata.professorProfile === 'payroll' || metadata.professorProfile === 'english'
     ? metadata.professorProfile
     : defaultProfile();
+}
+
+function maxSessionSeconds(metadata: ProfessorJobMetadata): number {
+  const requested = typeof metadata.maxSessionSeconds === 'number' && Number.isFinite(metadata.maxSessionSeconds)
+    ? Math.round(metadata.maxSessionSeconds)
+    : PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS;
+  return Math.max(60, Math.min(PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS, requested));
 }
 
 function languageGuidance(metadata: ProfessorJobMetadata): string {
@@ -105,8 +115,9 @@ export default defineAgent({
   entry: async (ctx: JobContext) => {
     const metadata = sessionMetadata(ctx);
     const profile = sessionProfile(metadata);
-    const model = process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime';
+    const model = process.env.OPENAI_REALTIME_MODEL || 'gpt-realtime-2.1-mini';
     const voiceName = process.env.OPENAI_REALTIME_VOICE || 'marin';
+    const sessionLimitSeconds = maxSessionSeconds(metadata);
 
     const agent = voice.Agent.create({
       instructions: `${professorInstructions(profile)}${languageGuidance(metadata)}${lessonGuidance(metadata)}`,
@@ -124,6 +135,12 @@ export default defineAgent({
       agent,
       room: ctx.room,
     });
+
+    const sessionTimer = setTimeout(() => {
+      session.shutdown({ drain: true, reason: 'professor_session_time_limit' });
+      void ctx.deleteRoom().catch(() => undefined);
+    }, sessionLimitSeconds * 1000);
+    sessionTimer.unref?.();
 
     await session.generateReply({
       instructions: openingInstruction(profile, metadata),
