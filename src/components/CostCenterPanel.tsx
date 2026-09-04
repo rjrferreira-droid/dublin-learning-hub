@@ -81,7 +81,7 @@ export function CostCenterPanel() {
         <button className="cost-center-launcher" onClick={() => setOpen(true)} aria-label="Open Learning Hub Cost Center">
           <span className="cost-center-dot" />
           <span>Budget</span>
-          <strong>{data ? money(data.usage.totalCommittedWithReserveUsd) : '$150 cap'}</strong>
+          <strong>{data ? money(data.usage.totalCommittedWithReserveUsd) : '$200 cap'}</strong>
         </button>
       ) : (
         <section className="cost-center-card" aria-label="Learning Hub Cost Center">
