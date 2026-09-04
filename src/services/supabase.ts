@@ -1,7 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
 
-const fallbackUrl = 'https://qwvsrcgsfoguxdbcdrxq.supabase.co';
-const fallbackPublishableKey = 'sb_publishable_k1VAFbFj5ARYfOOUYhQacQ_wSruDD_Z';
+// V2 fallback intentionally points to the isolated Supabase development branch.
+// These are browser-safe publishable values; privileged secrets never live here.
+const fallbackUrl = 'https://aazfyosqqeujureksqjs.supabase.co';
+const fallbackPublishableKey = 'sb_publishable_lHyxF76DtXFGPtvOfgw-iQ_f0v91cNV';
 
 type RuntimeImportMeta = ImportMeta & {
   env?: Record<string, string | boolean | undefined>;
