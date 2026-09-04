@@ -13,6 +13,19 @@ type ProfessorSessionPanelProps = {
 
 type SessionState = 'ready' | 'connecting' | 'listening' | 'ended' | 'error';
 
+const seededTechnicalLessonIds: Record<'finance' | 'payroll', string> = {
+  finance: 'b3639582-3c32-4147-a4b3-84237d11a66e',
+  payroll: '6ffda415-3b18-46ab-afaa-414f81a7eb31',
+};
+
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function resolvedLessonId(track: ProfessorSessionPanelProps['track'], lessonId?: string): string {
+  if (track === 'english') return lessonId ?? 'english-golden-lesson';
+  if (lessonId && uuidPattern.test(lessonId)) return lessonId;
+  return seededTechnicalLessonIds[track];
+}
+
 function trackContract(track: ProfessorSessionPanelProps['track']): { learnerTrack: LearnerTrack; mode: TutorSessionRequest['mode'] } {
   if (track === 'payroll') return { learnerTrack: 'viviane_payroll', mode: 'chapter_conversation' };
   if (track === 'english') return { learnerTrack: 'english_academy', mode: 'general_conversation' };
@@ -50,7 +63,7 @@ export function ProfessorSessionPanel({ lessonId, track, learnerKey = track === 
       const contract = trackContract(track);
       const connection = await connectProfessor(
         {
-          lessonId: lessonId ?? 'unpublished-golden-lesson',
+          lessonId: resolvedLessonId(track, lessonId),
           learnerId: learnerKey,
           track: contract.learnerTrack,
           mode: contract.mode,
