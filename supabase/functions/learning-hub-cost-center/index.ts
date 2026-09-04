@@ -42,12 +42,19 @@ Deno.serve(async (req: Request) => {
       .select("feature,estimated_cost_usd,created_at")
       .gte("created_at", monthStartIso),
     admin.from("professor_budget_reservations")
-      .select("reserved_usd,quality_tier,created_at")
+      .select("reserved_usd,created_at")
       .eq("month_start", monthStartDay),
   ]);
 
   if (budgetResult.error || !budgetResult.data) {
     console.error("cost center budget read failed", budgetResult.error?.message ?? "missing_settings");
+    return json({ error: "cost_center_unavailable" }, 503);
+  }
+  if (usageResult.error || professorResult.error) {
+    console.error(
+      "cost center usage read failed",
+      usageResult.error?.message ?? professorResult.error?.message ?? "unknown_usage_error",
+    );
     return json({ error: "cost_center_unavailable" }, 503);
   }
 
