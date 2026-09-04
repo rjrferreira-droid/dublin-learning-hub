@@ -22,6 +22,13 @@ type LessonContext = {
   practiceScenario?: string;
 };
 
+type ProfessorPersistenceMetadata = {
+  sessionId?: string;
+  callbackToken?: string;
+  completionUrl?: string;
+  publishableKey?: string;
+};
+
 type ProfessorJobMetadata = {
   professorProfile?: ProfessorProfile;
   track?: 'rafael_finance' | 'viviane_payroll' | 'english_academy';
@@ -40,6 +47,13 @@ type ProfessorJobMetadata = {
     supportLanguage?: 'pt-BR' | 'en';
   };
   lessonContext?: LessonContext;
+  persistence?: ProfessorPersistenceMetadata;
+};
+
+type TranscriptTurn = {
+  role: 'user' | 'assistant';
+  text: string;
+  interrupted: boolean;
 };
 
 function defaultProfile(): ProfessorProfile {
@@ -126,6 +140,75 @@ function openingInstruction(profile: ProfessorProfile, metadata: ProfessorJobMet
   return `Greet the learner briefly as a senior finance coach.${lesson} Ask for a concise explanation of the central issue before giving any teaching.`;
 }
 
+function transcriptTurnFromItem(item: any): TranscriptTurn | null {
+  if (!item || item.type !== 'message') return null;
+  const role = item.role === 'assistant' ? 'assistant' : item.role === 'user' ? 'user' : null;
+  const text = typeof item.textContent === 'string' ? item.textContent.trim() : '';
+  if (!role || !text) return null;
+  return {
+    role,
+    text: text.slice(0, 4000),
+    interrupted: Boolean(item.interrupted),
+  };
+}
+
+function historyTranscript(session: any): TranscriptTurn[] {
+  const items = Array.isArray(session?.history?.items) ? session.history.items : [];
+  return items.map(transcriptTurnFromItem).filter((item: TranscriptTurn | null): item is TranscriptTurn => Boolean(item)).slice(0, 200);
+}
+
+function safeJson(value: unknown): unknown {
+  try {
+    return JSON.parse(JSON.stringify(value, (_key, inner) => typeof inner === 'bigint' ? Number(inner) : inner));
+  } catch {
+    return [];
+  }
+}
+
+async function persistSessionCompletion(
+  metadata: ProfessorJobMetadata,
+  transcript: TranscriptTurn[],
+  session: any,
+  startedAt: number,
+  closeReason: string,
+): Promise<void> {
+  const persistence = metadata.persistence;
+  if (!persistence?.sessionId || !persistence.callbackToken || !persistence.completionUrl) return;
+
+  const turns = transcript.length > 0 ? transcript.slice(0, 200) : historyTranscript(session);
+  const modelUsage = safeJson(session?.usage?.modelUsage ?? []);
+  const durationSeconds = Math.max(0, Math.min(PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS, Math.round((Date.now() - startedAt) / 1000)));
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  timeout.unref?.();
+  try {
+    const response = await fetch(persistence.completionUrl, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(persistence.publishableKey ? { apikey: persistence.publishableKey } : {}),
+      },
+      body: JSON.stringify({
+        sessionId: persistence.sessionId,
+        callbackToken: persistence.callbackToken,
+        transcript: turns,
+        modelUsage,
+        durationSeconds,
+        closeReason: closeReason.slice(0, 120),
+      }),
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      console.error('Professor session completion callback failed', response.status, await response.text().catch(() => ''));
+    }
+  } catch (cause) {
+    console.error('Professor session completion callback error', cause instanceof Error ? cause.message : 'unknown_error');
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export default defineAgent({
   entry: async (ctx: JobContext) => {
     const metadata = sessionMetadata(ctx);
@@ -134,6 +217,11 @@ export default defineAgent({
     const model = modelForQualityTier(qualityTier);
     const voiceName = process.env.OPENAI_REALTIME_VOICE || 'marin';
     const sessionLimitSeconds = maxSessionSeconds(metadata);
+    const startedAt = Date.now();
+    const transcript: TranscriptTurn[] = [];
+    let closeReason = 'session_closed';
+    let persistencePromise: Promise<void> | null = null;
+    let sessionTimer: ReturnType<typeof setTimeout> | null = null;
 
     const agent = voice.Agent.create({
       instructions: `${professorInstructions(profile)}${languageGuidance(metadata)}${lessonGuidance(metadata)}`,
@@ -146,13 +234,36 @@ export default defineAgent({
       }),
     });
 
+    session.on(voice.AgentSessionEventTypes.ConversationItemAdded, (event: any) => {
+      const turn = transcriptTurnFromItem(event?.item);
+      if (turn && transcript.length < 200) transcript.push(turn);
+    });
+
+    const persistOnce = () => {
+      if (!persistencePromise) {
+        persistencePromise = persistSessionCompletion(metadata, transcript, session, startedAt, closeReason);
+      }
+      return persistencePromise;
+    };
+
+    session.on(voice.AgentSessionEventTypes.Close, (event: any) => {
+      closeReason = typeof event?.reason === 'string' ? event.reason : 'session_closed';
+      void persistOnce();
+    });
+
+    ctx.addShutdownCallback(async () => {
+      if (sessionTimer) clearTimeout(sessionTimer);
+      await persistOnce();
+    });
+
     await ctx.connect();
     await session.start({
       agent,
       room: ctx.room,
     });
 
-    const sessionTimer = setTimeout(() => {
+    sessionTimer = setTimeout(() => {
+      closeReason = 'professor_session_time_limit';
       session.shutdown({ drain: true, reason: 'professor_session_time_limit' });
       void ctx.deleteRoom().catch(() => undefined);
     }, sessionLimitSeconds * 1000);
