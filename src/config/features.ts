@@ -21,7 +21,7 @@ function envFlag(name: string, fallback: boolean): boolean {
  */
 export const featureFlags: FeatureFlags = {
   premiumAudio: envFlag('VITE_FEATURE_PREMIUM_AUDIO', true),
-  professor: envFlag('VITE_FEATURE_PROFESSOR', false),
+  professor: envFlag('VITE_FEATURE_PROFESSOR', true),
   independentEvaluation: envFlag('VITE_FEATURE_EVALUATION', true),
   errorBank: envFlag('VITE_FEATURE_ERROR_BANK', true),
   adaptiveCurriculum: envFlag('VITE_FEATURE_ADAPTIVE_CURRICULUM', true),
