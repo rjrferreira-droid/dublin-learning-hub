@@ -45,6 +45,10 @@ type ProfessorBudgetReservation = {
   globalAiCapUsd: number;
   globalCommittedBeforeUsd: number;
 };
+type ProfessorPersistence = {
+  sessionId: string;
+  callbackToken: string;
+};
 
 type UntypedSupabaseClient = ReturnType<typeof createClient<any>>;
 
@@ -209,6 +213,37 @@ async function publishedTechnicalLesson(supabase: UntypedSupabaseClient, lessonI
   };
 }
 
+async function resolvePersistenceLessonId(db: any, track: ProfessorTrack, requestedLessonId: string): Promise<string | null> {
+  if (track !== 'english_academy') return requestedLessonId;
+
+  const { data: course, error: courseError } = await db
+    .from('courses')
+    .select('id')
+    .eq('learner_track', 'english_academy')
+    .eq('is_active', true)
+    .maybeSingle();
+  if (courseError || !course?.id) return null;
+
+  const { data: module, error: moduleError } = await db
+    .from('modules')
+    .select('id')
+    .eq('course_id', course.id)
+    .eq('slug', 'spoken-fluency')
+    .eq('is_published', true)
+    .maybeSingle();
+  if (moduleError || !module?.id) return null;
+
+  const { data: lesson, error: lessonError } = await db
+    .from('lessons')
+    .select('id')
+    .eq('module_id', module.id)
+    .eq('slug', 'story-past-forms-rhythm-follow-up')
+    .eq('is_published', true)
+    .maybeSingle();
+  if (lessonError || typeof lesson?.id !== 'string') return null;
+  return lesson.id;
+}
+
 async function reserveProfessorBudget(db: any, qualityTier: ProfessorQualityTier): Promise<ProfessorBudgetReservation | null> {
   const { data, error } = await db.rpc('reserve_professor_budget', { p_quality_tier: qualityTier });
   if (error) return null;
@@ -231,6 +266,30 @@ async function reserveProfessorBudget(db: any, qualityTier: ProfessorQualityTier
     globalAiCapUsd: numeric(row.global_ai_cap_usd),
     globalCommittedBeforeUsd: numeric(row.global_committed_before_usd),
   };
+}
+
+async function startProfessorPersistence(
+  db: any,
+  lessonId: string,
+  mode: string,
+  roomName: string,
+  qualityTier: ProfessorQualityTier,
+  reservationId: string,
+): Promise<ProfessorPersistence | null> {
+  const { data, error } = await db.rpc('start_professor_session', {
+    p_lesson_id: lessonId,
+    p_mode: mode,
+    p_room_name: roomName,
+    p_quality_tier: qualityTier,
+    p_budget_reservation_id: reservationId,
+  });
+  if (error) {
+    console.error('Professor session persistence start failed', error.message);
+    return null;
+  }
+  const row = Array.isArray(data) ? data[0] : data;
+  if (!row || typeof row.session_id !== 'string' || typeof row.callback_token !== 'string') return null;
+  return { sessionId: row.session_id, callbackToken: row.callback_token };
 }
 
 export default async function handler(req: any, res: any) {
@@ -288,6 +347,9 @@ export default async function handler(req: any, res: any) {
     lessonContext = englishGoldenLessonContext();
   }
 
+  const persistenceLessonId = await resolvePersistenceLessonId(db, track, lessonId);
+  if (!persistenceLessonId) return send(res, 503, { error: 'professor_session_persistence_unavailable' });
+
   const requestedQualityTier = qualityTierForMode(mode);
 
   // Cost safety is fail-closed: a Professor session is never dispatched when
@@ -309,10 +371,20 @@ export default async function handler(req: any, res: any) {
   const roomName = `lh-${randomUUID()}`;
   const participantIdentity = `learner-${randomUUID()}`;
 
+  const persistence = await startProfessorPersistence(
+    db,
+    persistenceLessonId,
+    mode,
+    roomName,
+    budget.qualityTier,
+    budget.reservationId,
+  );
+  if (!persistence) return send(res, 503, { error: 'professor_session_persistence_unavailable' });
+
   const jobMetadata = JSON.stringify({
     professorProfile,
     track,
-    lessonId,
+    lessonId: persistenceLessonId,
     mode,
     qualityTier: budget.qualityTier,
     languageProfile,
@@ -321,6 +393,12 @@ export default async function handler(req: any, res: any) {
     budgetReservationUsd: budget.reservationUsd,
     globalAiCapUsd: budget.globalAiCapUsd,
     maxSessionSeconds: budget.maxSessionSeconds,
+    persistence: {
+      sessionId: persistence.sessionId,
+      callbackToken: persistence.callbackToken,
+      completionUrl: `${supabaseUrl.replace(/\/$/, '')}/functions/v1/professor-session-complete`,
+      publishableKey: supabasePublishableKey,
+    },
   });
 
   try {
@@ -332,6 +410,14 @@ export default async function handler(req: any, res: any) {
     const dispatch = await api.agentDispatch.createDispatch(roomName, PROFESSOR_AGENT_NAME, {
       metadata: jobMetadata,
     });
+    const dispatchId = typeof dispatch?.id === 'string' ? dispatch.id : null;
+
+    if (dispatchId) {
+      await db
+        .from('ai_tutor_sessions')
+        .update({ dispatch_id: dispatchId })
+        .eq('id', persistence.sessionId);
+    }
 
     const token = new AccessToken(livekitApiKey, livekitApiSecret, {
       identity: participantIdentity,
@@ -352,7 +438,7 @@ export default async function handler(req: any, res: any) {
       token: jwtToken,
       roomName,
       participantIdentity,
-      lessonId,
+      lessonId: persistenceLessonId,
       mode,
       professorProfile,
       qualityTier: budget.qualityTier,
@@ -360,9 +446,18 @@ export default async function handler(req: any, res: any) {
       monthlyBudgetUsd: budget.monthlyBudgetUsd,
       globalAiCapUsd: budget.globalAiCapUsd,
       reservedAfterUsd: budget.reservedAfterUsd,
-      dispatchId: typeof dispatch?.id === 'string' ? dispatch.id : null,
+      dispatchId,
+      sessionId: persistence.sessionId,
     });
   } catch (cause) {
+    await db
+      .from('ai_tutor_sessions')
+      .update({
+        status: 'abandoned',
+        completed_at: new Date().toISOString(),
+        close_reason: 'livekit_dispatch_failed',
+      })
+      .eq('id', persistence.sessionId);
     console.error('Professor LiveKit dispatch failed', cause instanceof Error ? cause.message : 'unknown_error');
     return send(res, 503, { error: 'professor_agent_dispatch_failed' });
   }
