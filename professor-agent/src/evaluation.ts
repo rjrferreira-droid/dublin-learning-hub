@@ -54,6 +54,14 @@ function score(value: unknown): number | null {
   return Math.max(0, Math.min(100, Math.round(n * 10) / 10));
 }
 
+function confidenceScore(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  const normalized = n > 0 && n <= 1 ? n * 100 : n;
+  return Math.max(0, Math.min(100, Math.round(normalized * 10) / 10));
+}
+
 function text(value: unknown, max = 1000): string {
   return typeof value === 'string' ? value.trim().slice(0, max) : '';
 }
@@ -91,7 +99,7 @@ function parseEvaluation(raw: unknown, model: string, estimatedCostUsd: number):
           domain: domain as EvaluationError['domain'],
           pattern,
           normalizedPattern: normalized(text(row.normalizedPattern, 220) || pattern),
-          confidence: score(row.confidence) ?? 60,
+          confidence: confidenceScore(row.confidence) ?? 60,
           example: text(row.example, 900),
           correction: text(row.correction, 900),
         }];
@@ -209,7 +217,7 @@ export async function evaluateProfessorSession(
 
   const model = process.env.OPENAI_EVALUATION_MODEL || 'gpt-5.6-terra';
   const lesson = context.lessonContext;
-  const rubric = `You are the independent evaluator for an adult-learning voice tutor. Evaluate only evidence actually demonstrated by the learner. Do not reward or punish the tutor.\n\nScores are 0-100 or null when there is not enough evidence. pronunciationScore MUST be null because this evaluation receives transcript text rather than acoustic evidence. technicalScore must be null when the learner did not demonstrate technical knowledge. englishScore should reflect the learner's overall spoken-English evidence, not subject-matter knowledge. professionalCommunicationScore measures concise, structured, professional communication. assessmentConfidence is 0-100 and should be lower for short conversations.\n\nDo not create pronunciation errors from transcript text. Record only meaningful, teachable patterns; ignore harmless transcription noise or obviously corrupted speech-to-text fragments. A technical uncertainty explicitly admitted by the learner may be recorded as technical. normalizedPattern should be a short reusable label, not the full sentence.\n\nSet needsSpacedReview true when there is a meaningful weakness, a technical gap, or a score below roughly 75. Keep feedback concise and practical.`;
+  const rubric = `You are the independent evaluator for an adult-learning voice tutor. Evaluate only evidence actually demonstrated by the learner. Do not reward or punish the tutor.\n\nScores are 0-100 or null when there is not enough evidence. pronunciationScore MUST be null because this evaluation receives transcript text rather than acoustic evidence. technicalScore must be null when the learner did not demonstrate technical knowledge. englishScore should reflect the learner's overall spoken-English evidence, not subject-matter knowledge. professionalCommunicationScore measures concise, structured, professional communication. assessmentConfidence is 0-100 and should be lower for short conversations. Error-item confidence must also use a 0-100 percentage scale, never a 0-1 probability.\n\nDo not create pronunciation errors from transcript text. Record only meaningful, teachable patterns; ignore harmless transcription noise or obviously corrupted speech-to-text fragments. A technical uncertainty explicitly admitted by the learner may be recorded as technical. normalizedPattern should be a short reusable label, not the full sentence.\n\nSet needsSpacedReview true when there is a meaningful weakness, a technical gap, or a score below roughly 75. Keep feedback concise and practical.`;
 
   const contextPayload = {
     track: context.track ?? null,
