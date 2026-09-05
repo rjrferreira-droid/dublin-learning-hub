@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 type Word = {
   word: string;
   emoji: string;
+  say?: string;
 };
 
 type World = {
@@ -18,12 +19,12 @@ const WORLDS: World[] = [
     label: 'Animals',
     emoji: '🐶',
     words: [
-      { word: 'Dog', emoji: '🐶' },
-      { word: 'Cat', emoji: '🐱' },
-      { word: 'Bird', emoji: '🐦' },
-      { word: 'Fish', emoji: '🐟' },
-      { word: 'Lion', emoji: '🦁' },
-      { word: 'Rabbit', emoji: '🐰' },
+      { word: 'Dog', emoji: '🐶', say: 'Dog! Woof woof!' },
+      { word: 'Cat', emoji: '🐱', say: 'Cat! Meow!' },
+      { word: 'Bird', emoji: '🐦', say: 'Bird! Tweet tweet!' },
+      { word: 'Fish', emoji: '🐟', say: 'Fish! Splash splash!' },
+      { word: 'Lion', emoji: '🦁', say: 'Lion! Roar!' },
+      { word: 'Rabbit', emoji: '🐰', say: 'Rabbit! Hop hop!' },
     ],
   },
   {
@@ -44,12 +45,12 @@ const WORLDS: World[] = [
     label: 'Food',
     emoji: '🍎',
     words: [
-      { word: 'Apple', emoji: '🍎' },
-      { word: 'Banana', emoji: '🍌' },
+      { word: 'Apple', emoji: '🍎', say: 'Apple! Yummy!' },
+      { word: 'Banana', emoji: '🍌', say: 'Banana! Yummy!' },
       { word: 'Milk', emoji: '🥛' },
       { word: 'Water', emoji: '💧' },
       { word: 'Bread', emoji: '🍞' },
-      { word: 'Strawberry', emoji: '🍓' },
+      { word: 'Strawberry', emoji: '🍓', say: 'Strawberry! Yummy!' },
     ],
   },
   {
@@ -58,11 +59,37 @@ const WORLDS: World[] = [
     emoji: '🧸',
     words: [
       { word: 'Ball', emoji: '⚽' },
-      { word: 'Car', emoji: '🚗' },
+      { word: 'Car', emoji: '🚗', say: 'Car! Beep beep!' },
       { word: 'Book', emoji: '📘' },
       { word: 'Teddy', emoji: '🧸' },
       { word: 'Star', emoji: '⭐' },
       { word: 'Moon', emoji: '🌙' },
+    ],
+  },
+  {
+    key: 'body',
+    label: 'My Body',
+    emoji: '👀',
+    words: [
+      { word: 'Eyes', emoji: '👀', say: 'Eyes! Blink blink!' },
+      { word: 'Nose', emoji: '👃' },
+      { word: 'Mouth', emoji: '👄' },
+      { word: 'Ears', emoji: '👂', say: 'Ears! Listen!' },
+      { word: 'Hands', emoji: '👐', say: 'Hands! Clap clap!' },
+      { word: 'Feet', emoji: '🦶', say: 'Feet! Stomp stomp!' },
+    ],
+  },
+  {
+    key: 'move',
+    label: 'Move!',
+    emoji: '💃',
+    words: [
+      { word: 'Clap', emoji: '👏', say: 'Clap clap clap!' },
+      { word: 'Jump', emoji: '🦘', say: 'Jump jump jump!' },
+      { word: 'Wave', emoji: '👋', say: 'Wave! Hello!' },
+      { word: 'Dance', emoji: '💃', say: 'Dance dance dance!' },
+      { word: 'Spin', emoji: '🌀', say: 'Spin around!' },
+      { word: 'Stomp', emoji: '👣', say: 'Stomp stomp stomp!' },
     ],
   },
 ];
@@ -93,6 +120,7 @@ export function LittleEnglish({ standalone = false }: { standalone?: boolean }) 
   const [targetIndex, setTargetIndex] = useState(0);
   const [roundSeed, setRoundSeed] = useState(0);
   const [message, setMessage] = useState('');
+  const [celebrating, setCelebrating] = useState(false);
 
   const world = WORLDS.find((item) => item.key === worldKey) ?? null;
   const target = world ? world.words[targetIndex % world.words.length] : null;
@@ -101,7 +129,14 @@ export function LittleEnglish({ standalone = false }: { standalone?: boolean }) 
   function openWorld(key: string) {
     setWorldKey(key);
     setGameMode(false);
+    setCelebrating(false);
     setMessage('Tap anything to hear it!');
+  }
+
+  function playWord(item: Word) {
+    setMessage(item.word);
+    setCelebrating(false);
+    speak(item.say ?? item.word);
   }
 
   function startFindIt() {
@@ -110,6 +145,7 @@ export function LittleEnglish({ standalone = false }: { standalone?: boolean }) 
     setTargetIndex(nextIndex);
     setRoundSeed((value) => value + 1);
     setGameMode(true);
+    setCelebrating(false);
     setMessage('');
     window.setTimeout(() => speak(`Where is the ${world.words[nextIndex].word}?`), 120);
   }
@@ -118,11 +154,16 @@ export function LittleEnglish({ standalone = false }: { standalone?: boolean }) 
     if (!target) return;
     if (item.word === target.word) {
       setMessage('Yay! ⭐');
+      setCelebrating(true);
       speak(`Yes! ${target.word}!`);
-      window.setTimeout(() => startFindIt(), 900);
+      window.setTimeout(() => {
+        setCelebrating(false);
+        startFindIt();
+      }, 1050);
     } else {
-      setMessage(`That is ${item.word}. Try again!`);
-      speak(`That is ${item.word}. Try again.`);
+      setMessage(`${item.emoji} ${item.word}`);
+      setCelebrating(false);
+      speak(`${item.word}. Try another one!`);
     }
   }
 
@@ -150,6 +191,9 @@ export function LittleEnglish({ standalone = false }: { standalone?: boolean }) 
   return (
     <div className="little-english-overlay" role="dialog" aria-modal="true" aria-label="Manuzinha">
       <div className="little-english-sky" aria-hidden="true"><span>☁️</span><span>⭐</span><span>☁️</span></div>
+      <div className="little-floaters" aria-hidden="true"><span>✨</span><span>🫧</span><span>⭐</span><span>🫧</span><span>✨</span></div>
+      {celebrating ? <div className="little-celebration" aria-hidden="true"><span>⭐</span><span>🎉</span><span>✨</span><span>🌟</span><span>🎈</span></div> : null}
+
       <header className="little-english-head">
         <button type="button" onClick={() => world ? setWorldKey(null) : close()}>{world ? '← Worlds' : '← Back'}</button>
         <div><span>✨</span><strong>Manuzinha</strong><span>✨</span></div>
@@ -158,10 +202,11 @@ export function LittleEnglish({ standalone = false }: { standalone?: boolean }) 
 
       {!world ? (
         <main className="little-english-home">
-          <div className="little-hello">
+          <button className="little-hello" type="button" onClick={() => speak(`Hi Manuzinha! Let's play!`)} aria-label="Say hello to Manuzinha">
             <span className="little-mascot">🐻</span>
-            <div><h2>Come play, Manuzinha!</h2><p>Tap a world and listen to the words.</p></div>
-          </div>
+            <div><h2>Hi, Manuzinha! 👋</h2><p>Tap the bear or pick something fun.</p></div>
+            <span className="little-speaker">🔊</span>
+          </button>
           <div className="little-world-grid">
             {WORLDS.map((item) => (
               <button type="button" key={item.key} onClick={() => openWorld(item.key)}>
@@ -178,10 +223,10 @@ export function LittleEnglish({ standalone = false }: { standalone?: boolean }) 
 
           {!gameMode ? (
             <>
-              <p className="little-instruction">Tap a picture. It will say the word!</p>
+              <p className="little-instruction">Tap a picture ✨</p>
               <div className="little-word-grid">
                 {world.words.map((item) => (
-                  <button type="button" key={item.word} onClick={() => { setMessage(item.word); speak(item.word); }}>
+                  <button type="button" key={item.word} onClick={() => playWord(item)}>
                     <span>{item.emoji}</span>
                     <strong>{item.word}</strong>
                   </button>
@@ -194,8 +239,8 @@ export function LittleEnglish({ standalone = false }: { standalone?: boolean }) 
             <>
               <button className="little-question" type="button" onClick={() => target && speak(`Where is the ${target.word}?`)}>
                 <span>🔊</span>
-                <strong>Where is the {target?.word}?</strong>
-                <small>Tap to hear again</small>
+                <strong>Listen again</strong>
+                <small>Where is the {target?.word}?</small>
               </button>
               <div className="little-choice-grid">
                 {options.map((item) => (
@@ -204,8 +249,8 @@ export function LittleEnglish({ standalone = false }: { standalone?: boolean }) 
                   </button>
                 ))}
               </div>
-              <div className="little-message big" aria-live="polite">{message || 'Which one? 👀'}</div>
-              <button className="little-back-to-words" type="button" onClick={() => { setGameMode(false); setMessage('Tap anything to hear it!'); }}>🎈 Just play</button>
+              <div className={`little-message big ${celebrating ? 'celebrating' : ''}`} aria-live="polite">{message || 'Which one? 👀'}</div>
+              <button className="little-back-to-words" type="button" onClick={() => { setGameMode(false); setCelebrating(false); setMessage('Tap anything to hear it!'); }}>🎈 Just play</button>
             </>
           )}
         </main>
