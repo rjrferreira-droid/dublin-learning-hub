@@ -136,19 +136,19 @@ export function LittleEnglish() {
 
   if (!open) {
     return (
-      <button className="little-english-launcher" type="button" onClick={() => setOpen(true)} aria-label="Open Little English">
+      <button className="little-english-launcher" type="button" onClick={() => setOpen(true)} aria-label="Open Manuzinha">
         <span>⭐</span>
-        <strong>Little English</strong>
+        <strong>Manuzinha</strong>
       </button>
     );
   }
 
   return (
-    <div className="little-english-overlay" role="dialog" aria-modal="true" aria-label="Little English">
+    <div className="little-english-overlay" role="dialog" aria-modal="true" aria-label="Manuzinha">
       <div className="little-english-sky" aria-hidden="true"><span>☁️</span><span>⭐</span><span>☁️</span></div>
       <header className="little-english-head">
         <button type="button" onClick={() => world ? setWorldKey(null) : close()}>{world ? '← Worlds' : '← Back'}</button>
-        <div><span>✨</span><strong>Little English</strong><span>✨</span></div>
+        <div><span>✨</span><strong>Manuzinha</strong><span>✨</span></div>
         <button type="button" className="little-exit" onClick={close}>Done</button>
       </header>
 
@@ -156,7 +156,7 @@ export function LittleEnglish() {
         <main className="little-english-home">
           <div className="little-hello">
             <span className="little-mascot">🐻</span>
-            <div><h2>Come play!</h2><p>Tap a world and listen to the words.</p></div>
+            <div><h2>Come play, Manuzinha!</h2><p>Tap a world and listen to the words.</p></div>
           </div>
           <div className="little-world-grid">
             {WORLDS.map((item) => (
