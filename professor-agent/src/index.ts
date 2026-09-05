@@ -439,16 +439,15 @@ export default defineAgent({
 
     session.on(voice.AgentSessionEventTypes.ConversationItemAdded, (event: any) => {
       const turn = transcriptTurnFromItem(event?.item);
-      if (turn && transcript.length < 200) transcript.push(turn);
+      if (turn && transcript.length < 200) {
+        transcript.push(turn);
+        if (turn.role === 'assistant') partialUserTranscript = '';
+      }
     });
 
     session.on(voice.AgentSessionEventTypes.UserInputTranscribed, (event: any) => {
       const spoken = typeof event?.transcript === 'string' ? event.transcript.trim() : '';
       if (!spoken) return;
-      if (event?.isFinal) {
-        partialUserTranscript = '';
-        return;
-      }
 
       partialUserTranscript = mergeStreamingTranscript(partialUserTranscript, spoken);
       const threshold = interruptionThresholdWords(profile, intensity);
