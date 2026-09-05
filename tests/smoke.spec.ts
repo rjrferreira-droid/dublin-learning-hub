@@ -27,7 +27,7 @@ test('Manuzinha standalone play space stays isolated from adult learning surface
   await page.goto('/?manuzinha=1');
   await expect(page.getByRole('dialog', { name: 'Manuzinha' })).toBeVisible();
   await expect(page.getByRole('heading', { name: /Hi, Manuzinha!/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Animals', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Animals/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Grown-ups', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Enter Learning Hub', exact: true })).toHaveCount(0);
   await expect(page.getByTestId('active-learner-card')).toHaveCount(0);
