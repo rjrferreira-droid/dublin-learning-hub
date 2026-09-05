@@ -16,15 +16,21 @@ import './cost-center.css';
 import './auth.css';
 import './little-english.css';
 
+const manuzinhaMode = new URLSearchParams(window.location.search).get('manuzinha') === '1';
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <AuthGate>
-        <App />
-        <LittleEnglish />
-        <LearningMemoryPanel />
-        <CostCenterPanel />
-      </AuthGate>
+      {manuzinhaMode ? (
+        <LittleEnglish standalone />
+      ) : (
+        <AuthGate>
+          <App />
+          <LittleEnglish />
+          <LearningMemoryPanel />
+          <CostCenterPanel />
+        </AuthGate>
+      )}
     </BrowserRouter>
   </React.StrictMode>,
 );
