@@ -86,8 +86,8 @@ function sampleOptions(words: Word[], target: Word): Word[] {
   return [target, ...others].sort(() => Math.random() - 0.5);
 }
 
-export function LittleEnglish() {
-  const [open, setOpen] = useState(false);
+export function LittleEnglish({ standalone = false }: { standalone?: boolean }) {
+  const [open, setOpen] = useState(standalone);
   const [worldKey, setWorldKey] = useState<string | null>(null);
   const [gameMode, setGameMode] = useState(false);
   const [targetIndex, setTargetIndex] = useState(0);
@@ -128,6 +128,10 @@ export function LittleEnglish() {
 
   function close() {
     window.speechSynthesis?.cancel();
+    if (standalone) {
+      window.location.assign(`${window.location.origin}${window.location.pathname}`);
+      return;
+    }
     setOpen(false);
     setWorldKey(null);
     setGameMode(false);
@@ -149,7 +153,7 @@ export function LittleEnglish() {
       <header className="little-english-head">
         <button type="button" onClick={() => world ? setWorldKey(null) : close()}>{world ? '← Worlds' : '← Back'}</button>
         <div><span>✨</span><strong>Manuzinha</strong><span>✨</span></div>
-        <button type="button" className="little-exit" onClick={close}>Done</button>
+        <button type="button" className="little-exit" onClick={close}>{standalone ? 'Grown-ups' : 'Done'}</button>
       </header>
 
       {!world ? (
