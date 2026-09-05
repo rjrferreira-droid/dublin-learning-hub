@@ -1,10 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { PremiumAudioPanel } from './components/PremiumAudioPanel';
 import { ProfessorSessionPanel } from './components/ProfessorSessionPanel';
 import { getLearnerProfile, type LearnerKey, type LearningProfile } from './learners/profiles';
 import { DEFAULT_WEEK, PROFESSOR_MODES } from './learning/englishAcademy';
 import { rankAdaptivePriorities, type AdaptivePriority, type ReviewSignal } from './learning/adaptiveEngine';
 import type { CompetencySignal, ErrorBankItem } from './services/contracts';
+import {
+  loadLearningMemory,
+  type LearningMemorySession,
+  type LearningMemorySnapshot,
+} from './services/learningMemory';
+import { supabase } from './services/supabase';
 
 type TrackKey = 'finance' | 'payroll' | 'english';
 type ViewKey = 'dashboard' | 'learn' | 'revision' | 'performance' | 'professor' | 'error-bank' | 'english-academy';
@@ -14,11 +20,9 @@ type Track = {
   name: string;
   subtitle: string;
   learner: string;
-  progress: number;
-  readiness: number;
   accent: string;
   lesson: string;
-  lessonId?: string;
+  lessonId: string;
   focus: string;
 };
 
@@ -28,11 +32,9 @@ const tracks: Track[] = [
     name: 'Finance Ireland',
     subtitle: 'Corporate Finance • ACCA • Dublin',
     learner: 'Rafael',
-    progress: 18,
-    readiness: 74,
     accent: 'FINANCE',
     lesson: 'IFRS 18, Group Reporting & Irish Statutory Accounts',
-    lessonId: '15358b9f-01e0-4c3b-afad-07a493b961f5f',
+    lessonId: 'b3639582-3c32-4147-a4b3-84237d11a66e',
     focus: 'Executive finance judgement, reporting and Dublin readiness',
   },
   {
@@ -40,11 +42,9 @@ const tracks: Track[] = [
     name: 'Irish Payroll',
     subtitle: 'PAYE • USC • PRSI • Revenue',
     learner: 'Viviane',
-    progress: 11,
-    readiness: 61,
     accent: 'PAYROLL',
     lesson: 'Gross-to-Net: RPN, PAYE, USC & PRSI',
-    lessonId: '3ea8155e-a952-4039-87dc-1dd42851f16e',
+    lessonId: '6ffda415-3b18-46ab-afaa-414f81a7eb31',
     focus: 'Irish payroll operations, controls and professional English',
   },
   {
@@ -52,62 +52,83 @@ const tracks: Track[] = [
     name: 'English Academy',
     subtitle: 'General • Professional • UK + US + Ireland',
     learner: 'Rafael & Viviane',
-    progress: 6,
-    readiness: 68,
     accent: 'ENGLISH',
     lesson: 'Tell a story naturally: past forms, rhythm & follow-up questions',
+    lessonId: 'f455a740-f50f-4eb7-95a7-9e4129ca4a68',
     focus: 'Everyday fluency, listening, grammar, pronunciation and work English',
   },
 ];
 
 const lessonTabs = ['Learn', 'Audio', 'English', 'Practice', 'Visual', 'Case', 'Test', 'Sources', 'Professor'];
+const reviewIntervals = new Set(['D+1', 'D+7', 'D+30', 'D+90']);
+const errorDomains = new Set(['technical', 'grammar', 'vocabulary', 'pronunciation', 'fluency', 'register']);
 
-function isoOffset(days: number) {
-  return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+type MemoryStatus = 'loading' | 'ready' | 'empty' | 'unavailable' | 'other-profile';
+
+function scorePairs(session: LearningMemorySession) {
+  return [
+    ['Technical Accuracy', session.technicalScore],
+    ['English', session.englishScore],
+    ['Grammar', session.grammarScore],
+    ['Vocabulary', session.vocabularyScore],
+    ['Fluency', session.fluencyScore],
+    ['Pronunciation', session.pronunciationScore],
+    ['Professional Communication', session.professionalCommunicationScore],
+  ].filter((pair): pair is [string, number] => typeof pair[1] === 'number');
 }
 
-function intelligenceFor(learnerKey: LearnerKey): {
+function sessionAverage(session: LearningMemorySession | null | undefined): number | null {
+  if (!session) return null;
+  const values = scorePairs(session).map(([, value]) => value);
+  if (values.length === 0) return null;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function shortDate(value: string | null | undefined) {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat('en-IE', { day: '2-digit', month: 'short' }).format(date);
+}
+
+function realIntelligence(snapshot: LearningMemorySnapshot | null, learnerKey: LearnerKey): {
   competencies: CompetencySignal[];
   errors: ErrorBankItem[];
   reviews: ReviewSignal[];
 } {
-  if (learnerKey === 'viviane') {
-    return {
-      competencies: [
-        { competencyId: 'payroll-prsi', label: 'PRSI categories & treatment', score: 58, priority: true },
-        { competencyId: 'payroll-rpn', label: 'RPN interpretation', score: 67, priority: true },
-        { competencyId: 'english-listening', label: 'Listening under natural speed', score: 63, priority: true },
-        { competencyId: 'english-writing', label: 'Professional writing', score: 72, priority: false },
-      ],
-      errors: [
-        { id: 'viv-err-1', learnerId: 'viviane', domain: 'grammar', pattern: 'Past simple vs present perfect in work updates', confidence: 46, lastSeenAt: isoOffset(-2), nextReviewAt: isoOffset(-1) },
-        { id: 'viv-err-2', learnerId: 'viviane', domain: 'pronunciation', pattern: 'Final consonants in payroll vocabulary', confidence: 52, lastSeenAt: isoOffset(-3), nextReviewAt: isoOffset(0) },
-        { id: 'viv-err-3', learnerId: 'viviane', domain: 'technical', pattern: 'Distinguish employee PRSI class before calculation', confidence: 61, lastSeenAt: isoOffset(-5), nextReviewAt: isoOffset(1) },
-      ],
-      reviews: [
-        { id: 'viv-rev-1', label: 'RPN and tax credits', dueAt: isoOffset(0), interval: 'D+7', score: 64, competencyId: 'payroll-rpn' },
-        { id: 'viv-rev-2', label: 'Explaining a payroll variance in English', dueAt: isoOffset(1), interval: 'D+1', score: 68 },
-      ],
-    };
-  }
+  if (!snapshot) return { competencies: [], errors: [], reviews: [] };
 
-  return {
-    competencies: [
-      { competencyId: 'finance-judgement', label: 'Executive finance judgement', score: 68, priority: true },
-      { competencyId: 'finance-recall', label: 'Technical recall strength', score: 64, priority: true },
-      { competencyId: 'english-fluency', label: 'Spoken fluency under pressure', score: 66, priority: true },
-      { competencyId: 'business-partnering', label: 'Business partnering narrative', score: 78, priority: false },
-    ],
-    errors: [
-      { id: 'raf-err-1', learnerId: 'rafael', domain: 'technical', pattern: 'Connect EBITDA movement to working-capital cash impact', confidence: 57, lastSeenAt: isoOffset(-2), nextReviewAt: isoOffset(-1) },
-      { id: 'raf-err-2', learnerId: 'rafael', domain: 'fluency', pattern: 'Overlong answers before stating the executive conclusion', confidence: 62, lastSeenAt: isoOffset(-4), nextReviewAt: isoOffset(0) },
-      { id: 'raf-err-3', learnerId: 'rafael', domain: 'pronunciation', pattern: 'Stress in statutory / reconciliation / subsidiary', confidence: 69, lastSeenAt: isoOffset(-8), nextReviewAt: isoOffset(1) },
-    ],
-    reviews: [
-      { id: 'raf-rev-1', label: 'Working-capital narrative', dueAt: isoOffset(0), interval: 'D+1', score: 66, competencyId: 'finance-judgement' },
-      { id: 'raf-rev-2', label: 'IFRS 18 presentation logic', dueAt: isoOffset(1), interval: 'D+7', score: 73, competencyId: 'finance-recall' },
-    ],
-  };
+  const competencies: CompetencySignal[] = snapshot.competencies.map((item) => ({
+    competencyId: item.code,
+    label: item.name,
+    score: Math.round(item.score),
+    priority: item.score < 70,
+  }));
+
+  const errors: ErrorBankItem[] = snapshot.errors.map((item) => ({
+    id: item.id,
+    learnerId: learnerKey,
+    domain: errorDomains.has(item.domain) ? item.domain as ErrorBankItem['domain'] : 'technical',
+    pattern: item.pattern,
+    confidence: Math.round(item.confidence),
+    frequency: item.frequency,
+    status: item.status === 'mastered' || item.status === 'archived' ? item.status : 'active',
+    lastSeenAt: item.lastSeenAt,
+    nextReviewAt: item.nextReviewAt,
+  }));
+
+  const reviews: ReviewSignal[] = snapshot.reviews.flatMap((item) => {
+    if (!reviewIntervals.has(item.stage)) return [];
+    return [{
+      id: item.id,
+      label: item.label,
+      dueAt: item.dueDate,
+      interval: item.stage as ReviewSignal['interval'],
+      score: item.score ?? undefined,
+    }];
+  });
+
+  return { competencies, errors, reviews };
 }
 
 function App() {
@@ -116,9 +137,58 @@ function App() {
   const [lessonOpen, setLessonOpen] = useState(false);
   const [lessonTab, setLessonTab] = useState('Learn');
   const [learnerKey, setLearnerKey] = useState<LearnerKey>('rafael');
+  const [accountLearnerKey, setAccountLearnerKey] = useState<LearnerKey | null>(null);
+  const [memory, setMemory] = useState<LearningMemorySnapshot | null>(null);
+  const [memoryLoading, setMemoryLoading] = useState(true);
+  const [memoryError, setMemoryError] = useState(false);
 
   const profile = useMemo(() => getLearnerProfile(learnerKey), [learnerKey]);
   const activeTrack = useMemo(() => tracks.find((t) => t.key === trackKey) ?? tracks[0], [trackKey]);
+
+  const refreshMemory = useCallback(async () => {
+    setMemoryLoading(true);
+    setMemoryError(false);
+    try {
+      const result = await loadLearningMemory();
+      setMemory(result);
+    } catch {
+      setMemory(null);
+      setMemoryError(true);
+    } finally {
+      setMemoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void supabase.auth.getUser().then(async ({ data }) => {
+      if (cancelled || !data.user) return;
+      const { data: profileRow } = await supabase
+        .from('profiles')
+        .select('learner_track')
+        .eq('id', data.user.id)
+        .maybeSingle();
+      if (cancelled || !profileRow) return;
+      const key: LearnerKey = profileRow.learner_track === 'viviane_payroll' ? 'viviane' : 'rafael';
+      setAccountLearnerKey(key);
+      setLearnerKey(key);
+      setTrackKey(key === 'viviane' ? 'payroll' : 'finance');
+    });
+    void refreshMemory();
+    return () => { cancelled = true; };
+  }, [refreshMemory]);
+
+  const privateDataVisible = accountLearnerKey == null || learnerKey === accountLearnerKey;
+  const visibleMemory = privateDataVisible ? memory : null;
+  const memoryStatus: MemoryStatus = !privateDataVisible
+    ? 'other-profile'
+    : memoryLoading
+      ? 'loading'
+      : memoryError
+        ? 'unavailable'
+        : visibleMemory?.latest
+          ? 'ready'
+          : 'empty';
 
   const openLesson = (key: TrackKey) => {
     setTrackKey(key);
@@ -181,7 +251,7 @@ function App() {
 
         <div className="side-footer">
           <div className="environment-pill">V2 BUILD • PREVIEW</div>
-          <span>V1 frozen and protected</span>
+          <span>Measured evidence only</span>
         </div>
       </aside>
 
@@ -194,27 +264,27 @@ function App() {
           </div>
           <div className="top-actions">
             <span className="cefr-pill">English {profile.english.cefr} → {profile.english.targetCefr}</span>
-            <button className="ghost-btn">Today</button>
-            <button className="round-btn" aria-label="Notifications">•</button>
+            <button className="ghost-btn" onClick={() => { setView('dashboard'); setLessonOpen(false); }}>Today</button>
+            <button className="round-btn" aria-label="Refresh measured learning" onClick={() => void refreshMemory()}>↻</button>
           </div>
         </header>
 
         {lessonOpen ? (
-          <LessonView track={activeTrack} learnerKey={learnerKey} activeTab={lessonTab} setActiveTab={setLessonTab} close={() => { setLessonOpen(false); setView('dashboard'); }} />
+          <LessonView track={activeTrack} learnerKey={learnerKey} memory={visibleMemory} activeTab={lessonTab} setActiveTab={setLessonTab} close={() => { setLessonOpen(false); setView('dashboard'); }} />
         ) : view === 'dashboard' ? (
-          <Dashboard learnerKey={learnerKey} profile={profile} openLesson={openLesson} openView={setView} />
+          <Dashboard learnerKey={learnerKey} profile={profile} memory={visibleMemory} memoryStatus={memoryStatus} openLesson={openLesson} openView={setView} />
         ) : view === 'learn' ? (
           <LearningLibrary learnerKey={learnerKey} openLesson={openLesson} />
         ) : view === 'english-academy' ? (
           <EnglishAcademyView profile={profile} learnerKey={learnerKey} openLesson={() => openLesson('english')} />
         ) : view === 'revision' ? (
-          <RevisionView learnerKey={learnerKey} />
+          <RevisionView memory={visibleMemory} memoryStatus={memoryStatus} />
         ) : view === 'error-bank' ? (
-          <ErrorBankView learnerKey={learnerKey} />
+          <ErrorBankView memory={visibleMemory} memoryStatus={memoryStatus} />
         ) : view === 'performance' ? (
-          <PerformanceView learnerKey={learnerKey} />
+          <PerformanceView memory={visibleMemory} memoryStatus={memoryStatus} />
         ) : (
-          <ProfessorView learnerKey={learnerKey} profile={profile} />
+          <ProfessorView learnerKey={learnerKey} profile={profile} openLesson={openLesson} />
         )}
       </main>
     </div>
@@ -230,19 +300,49 @@ function NavButton({ label, icon, active, onClick }: { label: string; icon: stri
   );
 }
 
-function Dashboard({ learnerKey, profile, openLesson, openView }: { learnerKey: LearnerKey; profile: LearningProfile; openLesson: (key: TrackKey) => void; openView: (view: ViewKey) => void }) {
-  const intelligence = useMemo(() => intelligenceFor(learnerKey), [learnerKey]);
+function evidenceMessage(status: MemoryStatus) {
+  if (status === 'loading') return 'Reading measured learning evidence…';
+  if (status === 'unavailable') return 'Measured learning evidence is temporarily unavailable. No placeholder scores are being substituted.';
+  if (status === 'other-profile') return 'This profile has separate private learning evidence. Sign in with that learner account to see measured results.';
+  return 'Complete a Professor session to establish a measured baseline. Until then, the Learning Hub will not invent scores or priorities.';
+}
+
+function EmptyEvidence({ status }: { status: MemoryStatus }) {
+  return (
+    <article className="adaptive-priority-card">
+      <div className="priority-rank">—</div>
+      <div className="priority-copy">
+        <div className="priority-meta"><span>MEASURED EVIDENCE</span><b>No synthetic priority</b></div>
+        <h3>Baseline pending</h3>
+        <p>{evidenceMessage(status)}</p>
+      </div>
+      <span className="action-chip">REAL DATA ONLY</span>
+    </article>
+  );
+}
+
+function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, openView }: {
+  learnerKey: LearnerKey;
+  profile: LearningProfile;
+  memory: LearningMemorySnapshot | null;
+  memoryStatus: MemoryStatus;
+  openLesson: (key: TrackKey) => void;
+  openView: (view: ViewKey) => void;
+}) {
+  const intelligence = useMemo(() => realIntelligence(memory, learnerKey), [memory, learnerKey]);
   const priorities = useMemo(() => rankAdaptivePriorities({ ...intelligence, now: new Date(), limit: 4 }), [intelligence]);
   const primaryTrack: TrackKey = learnerKey === 'viviane' ? 'payroll' : 'finance';
   const primaryLabel = learnerKey === 'viviane' ? 'Continue Payroll' : 'Continue Finance';
-  const priorityCount = priorities.filter((item) => item.score >= 50).length;
+  const dueReviews = memory?.reviews.filter((item) => item.status === 'due').length ?? 0;
+  const measuredCompetencies = memory?.competencies.length ?? 0;
+  const evaluatedSessions = memory?.history.length ?? 0;
 
   return (
     <section className="content-grid dashboard-grid">
       <div className="hero-panel">
         <div className="hero-kicker">TODAY'S FOCUS • {profile.displayName.toUpperCase()}</div>
         <h2>Build capability, not just knowledge.</h2>
-        <p>The next action is selected from competency scores, recurring errors and spaced-review timing — not from a fixed chapter list.</p>
+        <p>Measured Professor sessions, recurring errors and spaced reviews determine adaptive priorities. When evidence is missing, the portal says so instead of filling the gap with demo scores.</p>
         <div className="hero-actions">
           <button className="primary-btn" onClick={() => openLesson(primaryTrack)}>{primaryLabel}</button>
           <button className="secondary-btn" onClick={() => openLesson('english')}>Start English practice</button>
@@ -252,18 +352,18 @@ function Dashboard({ learnerKey, profile, openLesson, openView }: { learnerKey: 
 
       <div className="metric-card">
         <div className="metric-label">REVIEWS DUE</div>
-        <div className="metric-value">{intelligence.reviews.length}</div>
-        <div className="metric-foot danger-text">{priorityCount} high priority signals</div>
+        <div className="metric-value">{dueReviews}</div>
+        <div className="metric-foot">{memory?.reviews.length ?? 0} scheduled in memory</div>
       </div>
       <div className="metric-card">
-        <div className="metric-label">ENGLISH PATH</div>
-        <div className="metric-value metric-small">{profile.english.cefr}</div>
-        <div className="metric-foot">target {profile.english.targetCefr}</div>
+        <div className="metric-label">MEASURED COMPETENCIES</div>
+        <div className="metric-value">{measuredCompetencies}</div>
+        <div className="metric-foot">from evaluated evidence</div>
       </div>
       <div className="metric-card">
-        <div className="metric-label">PROFESSOR ENGLISH</div>
-        <div className="metric-value">{profile.english.professorEnglishSharePct}%</div>
-        <div className="metric-foot">adaptive conversation share</div>
+        <div className="metric-label">EVALUATED SESSIONS</div>
+        <div className="metric-value">{evaluatedSessions}</div>
+        <div className="metric-foot">private learner history</div>
       </div>
 
       <div className="section-heading full-span">
@@ -275,7 +375,9 @@ function Dashboard({ learnerKey, profile, openLesson, openView }: { learnerKey: 
       </div>
 
       <div className="adaptive-priority-stack full-span" data-testid="adaptive-priority-stack">
-        {priorities.map((priority, index) => <PriorityCard key={priority.key} priority={priority} rank={index + 1} />)}
+        {priorities.length > 0
+          ? priorities.map((priority, index) => <PriorityCard key={priority.key} priority={priority} rank={index + 1} />)
+          : <EmptyEvidence status={memoryStatus} />}
       </div>
 
       <div className="section-heading full-span">
@@ -283,32 +385,36 @@ function Dashboard({ learnerKey, profile, openLesson, openView }: { learnerKey: 
           <div className="eyebrow">YOUR PROGRAMMES</div>
           <h2>Three connected learning tracks</h2>
         </div>
-        <span>Adaptive • D+1 / D+7 / D+30 / D+90</span>
+        <span>Measured sessions • Error Bank • spaced review</span>
       </div>
 
-      {tracks.map((track) => (
-        <article className={`track-card ${track.key === primaryTrack ? 'primary-track-card' : ''}`} key={track.key}>
-          <div className="track-card-head">
-            <span className={`track-badge ${track.key}`}>{track.accent}</span>
-            <span className="readiness-pill">{track.readiness}% ready</span>
-          </div>
-          <h3>{track.name}</h3>
-          <p className="track-subtitle">{track.subtitle}</p>
-          <p className="next-label">NEXT GOLDEN LESSON</p>
-          <strong className="lesson-name">{track.lesson}</strong>
-          <div className="progress-row">
-            <div className="progress-track"><span style={{ width: `${track.progress}%` }} /></div>
-            <span>{track.progress}%</span>
-          </div>
-          <button className="card-action" onClick={() => openLesson(track.key)}>Continue learning →</button>
-        </article>
-      ))}
+      {tracks.map((track) => {
+        const trackSessions = memory?.history.filter((session) => session.lessonId === track.lessonId) ?? [];
+        const latestTrackSession = trackSessions[0] ?? null;
+        const measuredAverage = sessionAverage(latestTrackSession);
+        return (
+          <article className={`track-card ${track.key === primaryTrack ? 'primary-track-card' : ''}`} key={track.key}>
+            <div className="track-card-head">
+              <span className={`track-badge ${track.key}`}>{track.accent}</span>
+              <span className="readiness-pill">{measuredAverage == null ? 'Awaiting evidence' : `${Math.round(measuredAverage)}% measured`}</span>
+            </div>
+            <h3>{track.name}</h3>
+            <p className="track-subtitle">{track.subtitle}</p>
+            <p className="next-label">NEXT GOLDEN LESSON</p>
+            <strong className="lesson-name">{track.lesson}</strong>
+            <div className="progress-row">
+              <span>{trackSessions.length === 0 ? 'No evaluated session yet' : `${trackSessions.length} evaluated session${trackSessions.length === 1 ? '' : 's'} • latest ${shortDate(latestTrackSession?.completedAt ?? latestTrackSession?.startedAt)}`}</span>
+            </div>
+            <button className="card-action" onClick={() => openLesson(track.key)}>Continue learning →</button>
+          </article>
+        );
+      })}
 
       <div className="wide-card full-span">
         <div>
           <div className="eyebrow">LEARNING LOOP</div>
-          <h3>Every result changes what happens next.</h3>
-          <p>Professor conversations, tests and cases feed independent evaluation. Weak competencies and recurring mistakes return through the Error Bank and spaced reviews.</p>
+          <h3>Every measured result changes what happens next.</h3>
+          <p>Professor conversations feed independent evaluation. Weak competencies and recurring mistakes return through the Error Bank and spaced reviews.</p>
         </div>
         <div className="engine-flow">
           <span>Tutor</span><b>→</b><span>Evaluator</span><b>→</b><span>Error Bank</span><b>→</b><span>Curriculum Engine</span><b>→</b><span>Next action</span>
@@ -357,12 +463,22 @@ function LearningLibrary({ learnerKey, openLesson }: { learnerKey: LearnerKey; o
   );
 }
 
-function LessonView({ track, learnerKey, activeTab, setActiveTab, close }: { track: Track; learnerKey: LearnerKey; activeTab: string; setActiveTab: (tab: string) => void; close: () => void }) {
+function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close }: {
+  track: Track;
+  learnerKey: LearnerKey;
+  memory: LearningMemorySnapshot | null;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  close: () => void;
+}) {
+  const measuredSession = memory?.history.find((session) => session.lessonId === track.lessonId) ?? null;
+  const measuredScores = measuredSession ? scorePairs(measuredSession) : [];
+
   return (
     <section className="lesson-shell" data-testid="lesson-shell">
       <div className="lesson-toolbar">
         <button className="back-btn" onClick={close}>← Dashboard</button>
-        <div className="lesson-progress"><span>Golden Lesson</span><div className="progress-track"><span style={{ width: '32%' }} /></div><b>32%</b></div>
+        <div className="lesson-progress"><span>Golden Lesson</span><b>{measuredSession ? `Last evaluated ${shortDate(measuredSession.completedAt ?? measuredSession.startedAt)}` : 'Baseline not measured yet'}</b></div>
       </div>
       <div className="lesson-tabs" role="tablist">
         {lessonTabs.map((tab) => (
@@ -384,13 +500,12 @@ function LessonView({ track, learnerKey, activeTab, setActiveTab, close }: { tra
           {activeTab === 'Professor' && <InlineProfessorPanel learnerKey={learnerKey} track={track} />}
         </article>
         <aside className="lesson-side-card">
-          <div className="eyebrow">LEARNING SIGNALS</div>
-          <h3>What this lesson is training</h3>
-          <Signal label="Technical accuracy" value={78} />
-          <Signal label="Judgement" value={69} />
-          <Signal label="Professional English" value={72} />
-          <Signal label="Recall strength" value={64} />
-          <div className="priority-note"><strong>Priority detected</strong><span>Judgement and recall will return in D+1 and D+7 reviews.</span></div>
+          <div className="eyebrow">MEASURED LEARNING SIGNALS</div>
+          <h3>{measuredSession ? 'Latest evaluated evidence' : 'Baseline pending'}</h3>
+          {measuredScores.length > 0
+            ? measuredScores.map(([label, value]) => <Signal key={label} label={label} value={Math.round(value)} />)
+            : <div className="priority-note"><strong>No synthetic score</strong><span>Complete an evaluated Professor session for this lesson. Scores will appear only after measured evidence exists.</span></div>}
+          {measuredSession?.feedback?.summary ? <div className="priority-note"><strong>Evaluator summary</strong><span>{measuredSession.feedback.summary}</span></div> : null}
         </aside>
       </div>
     </section>
@@ -407,31 +522,31 @@ function EnglishPanel({ track }: { track: Track }) {
 }
 
 function PracticePanel({ track }: { track: Track }) {
-  return <div className="reading-copy"><h2>Quick retrieval</h2><p className="lead">Answer before seeing the model reasoning.</p><div className="question-box"><strong>{track.key === 'english' ? 'Tell the same story in 30 seconds without using “and then” more than once.' : 'What would you investigate first, and why?'}</strong><textarea placeholder="Write your answer here…" /><button className="primary-btn">Check reasoning</button></div></div>;
+  return <div className="reading-copy"><h2>Quick retrieval</h2><p className="lead">This practice surface is available for drafting; automatic scoring is not yet connected here.</p><div className="question-box"><strong>{track.key === 'english' ? 'Tell the same story in 30 seconds without using “and then” more than once.' : 'What would you investigate first, and why?'}</strong><textarea placeholder="Write your answer here…" /><button className="primary-btn" disabled>Scoring not connected yet</button></div></div>;
 }
 
 function VisualPanel() {
-  return <div className="reading-copy"><h2>Visual challenge</h2><p className="lead">Interpret the signal, identify the issue and explain your conclusion.</p><div className="visual-demo"><div className="visual-bar a"/><div className="visual-bar b"/><div className="visual-bar c"/><div className="visual-bar d"/><div className="visual-bar e"/></div><p>Which movement requires management attention first? Explain the business implication.</p></div>;
+  return <div className="reading-copy"><h2>Visual challenge</h2><p className="lead">Interpret the signal, identify the issue and explain your conclusion. This visual is a practice prompt, not a scored result.</p><div className="visual-demo"><div className="visual-bar a"/><div className="visual-bar b"/><div className="visual-bar c"/><div className="visual-bar d"/><div className="visual-bar e"/></div><p>Which movement requires management attention first? Explain the business implication.</p></div>;
 }
 
 function CasePanel({ track }: { track: Track }) {
-  return <div className="reading-copy"><h2>Manager case</h2><div className="case-box"><span>SCENARIO</span><p>{track.key === 'payroll' ? 'An employee says net pay unexpectedly fell after a payroll change. Revenue data, employee setup and deductions all need to be checked before responding.' : track.key === 'english' ? 'You have moved to Dublin and need to call a letting agent because the heating has stopped. Explain the issue clearly, ask what happens next and respond to follow-up questions.' : 'Month-end reporting is complete, but working capital deteriorated while EBITDA improved. The Regional CFO asks for a concise explanation and next actions.'}</p></div><textarea className="case-answer" placeholder="Build your response…" /><button className="primary-btn">Submit for independent evaluation</button></div>;
+  return <div className="reading-copy"><h2>Manager case</h2><div className="case-box"><span>SCENARIO</span><p>{track.key === 'payroll' ? 'An employee says net pay unexpectedly fell after a payroll change. Revenue data, employee setup and deductions all need to be checked before responding.' : track.key === 'english' ? 'You have moved to Dublin and need to call a letting agent because the heating has stopped. Explain the issue clearly, ask what happens next and respond to follow-up questions.' : 'Month-end reporting is complete, but working capital deteriorated while EBITDA improved. The Regional CFO asks for a concise explanation and next actions.'}</p></div><textarea className="case-answer" placeholder="Build your response…" /><button className="primary-btn" disabled>Independent case scoring not connected yet</button></div>;
 }
 
 function TestPanel() {
-  return <div className="reading-copy"><h2>Checkpoint</h2><p className="lead">A short assessment feeds the competency engine.</p><div className="question-box"><strong>Which answer demonstrates the strongest professional judgement?</strong>{['State the rule only.', 'State the rule and repeat the data.', 'Explain the conclusion, evidence, risk and next action.', 'Escalate immediately without analysis.'].map((x, i) => <label className="option-row" key={x}><input type="radio" name="q1"/><span>{String.fromCharCode(65+i)}. {x}</span></label>)}<button className="primary-btn">Submit answer</button></div></div>;
+  return <div className="reading-copy"><h2>Checkpoint</h2><p className="lead">The question is available for practice, but this surface does not write a competency score yet.</p><div className="question-box"><strong>Which answer demonstrates the strongest professional judgement?</strong>{['State the rule only.', 'State the rule and repeat the data.', 'Explain the conclusion, evidence, risk and next action.', 'Escalate immediately without analysis.'].map((x, i) => <label className="option-row" key={x}><input type="radio" name="q1"/><span>{String.fromCharCode(65+i)}. {x}</span></label>)}<button className="primary-btn" disabled>Measured scoring not connected yet</button></div></div>;
 }
 
 function SourcesPanel() {
-  return <div className="reading-copy"><h2>Sources & freshness</h2><p className="lead">Current Irish rules must be revalidated as the programme approaches 2028/29.</p><div className="source-row"><strong>Primary source</strong><span>Official / professional reference placeholder</span></div><div className="source-row"><strong>Freshness status</strong><span className="freshness">Review before production content scale</span></div></div>;
+  return <div className="reading-copy"><h2>Sources & freshness</h2><p className="lead">A production-grade source package has not yet been published on this lesson screen.</p><div className="source-row"><strong>Authority status</strong><span>Not yet displayed in this surface</span></div><div className="source-row"><strong>Freshness status</strong><span className="freshness">Do not treat placeholder lesson copy as authoritative source evidence</span></div></div>;
 }
 
 function InlineProfessorPanel({ learnerKey, track }: { learnerKey: LearnerKey; track: Track }) {
-  return <div className="reading-copy"><h2>Professor</h2><p className="lead">Live voice tutoring runs in its own resilient boundary using LiveKit + OpenAI Realtime.</p><ProfessorSessionPanel lessonId={track.lessonId} track={track.key} learnerKey={learnerKey} /><div className="callout"><strong>Safety by design</strong><span>No raw learner voice stored by default. Session evaluation is handled independently after the conversation.</span></div></div>;
+  return <div className="reading-copy"><h2>Professor</h2><p className="lead">Live voice tutoring uses the deployed LiveKit + OpenAI Realtime path. Completed sessions feed Learning Memory and independent evaluation.</p><ProfessorSessionPanel lessonId={track.lessonId} track={track.key} learnerKey={learnerKey} /><div className="callout"><strong>Safety by design</strong><span>No raw learner voice stored by default. The learning record is persisted for evaluation and adaptation.</span></div></div>;
 }
 
 function Signal({ label, value }: { label: string; value: number }) {
-  return <div className="signal-row"><div><span>{label}</span><b>{value}%</b></div><div className="progress-track"><span style={{ width: `${value}%` }} /></div></div>;
+  return <div className="signal-row"><div><span>{label}</span><b>{value}%</b></div><div className="progress-track"><span style={{ width: `${Math.max(0, Math.min(100, value))}%` }} /></div></div>;
 }
 
 function EnglishAcademyView({ profile, learnerKey, openLesson }: { profile: LearningProfile; learnerKey: LearnerKey; openLesson: () => void }) {
@@ -442,7 +557,7 @@ function EnglishAcademyView({ profile, learnerKey, openLesson }: { profile: Lear
           <div className="eyebrow light">ENGLISH ACADEMY • {profile.displayName.toUpperCase()}</div>
           <h2>General English first. Professional confidence built on top.</h2>
           <p>British and American English are both accepted, with deliberate Irish exposure for real life in Dublin. The programme adapts to the learner rather than forcing one fixed textbook path.</p>
-          <div className="hero-actions"><button className="primary-btn" onClick={openLesson}>Open English Golden Lesson</button><span className="academy-level">{profile.english.cefr} now • {profile.english.targetCefr} target</span></div>
+          <div className="hero-actions"><button className="primary-btn" onClick={openLesson}>Open English Golden Lesson</button><span className="academy-level">{profile.english.cefr} provisional • {profile.english.targetCefr} target</span></div>
         </div>
         <div className="exposure-ring" aria-label="Language exposure mix"><strong>40 / 40 / 20</strong><span>UK • US • Ireland</span></div>
       </div>
@@ -460,10 +575,10 @@ function EnglishAcademyView({ profile, learnerKey, openLesson }: { profile: Lear
           </div>
         </article>
         <article className="academy-card">
-          <div className="eyebrow">CURRENT WEAK SKILLS</div>
-          <h3>Adaptive focus</h3>
+          <div className="eyebrow">PROVISIONAL FOCUS</div>
+          <h3>Starting emphasis</h3>
           <div className="skill-chip-list">{profile.english.weakSkills.map((skill) => <span key={skill}>{skill}</span>)}</div>
-          <p>These skills receive more retrieval, Professor time and Error Bank resurfacing until evidence improves.</p>
+          <p>These are configured starting areas, not measured weaknesses. Evaluated sessions will replace assumptions with evidence.</p>
         </article>
         <article className="academy-card">
           <div className="eyebrow">PROFESSOR LANGUAGE</div>
@@ -480,42 +595,101 @@ function EnglishAcademyView({ profile, learnerKey, openLesson }: { profile: Lear
   );
 }
 
-function RevisionView({ learnerKey }: { learnerKey: LearnerKey }) {
-  const intelligence = intelligenceFor(learnerKey);
-  return <section className="page-stack"><div className="section-heading"><div><div className="eyebrow">SPACED REVIEW</div><h2>Review what is most likely to be forgotten</h2></div><span>D+1 • D+7 • D+30 • D+90</span></div><div className="review-list">{intelligence.reviews.map((review) => <div className="review-row" key={review.id}><span className="review-date">{review.interval}</span><div><strong>{review.label}</strong><span>{review.score != null && review.score < 70 ? 'Below 70% • priority' : 'Scheduled retrieval'}</span></div><button className="secondary-btn">Review</button></div>)}</div></section>;
-}
-
-function ErrorBankView({ learnerKey }: { learnerKey: LearnerKey }) {
-  const { errors } = intelligenceFor(learnerKey);
+function RevisionView({ memory, memoryStatus }: { memory: LearningMemorySnapshot | null; memoryStatus: MemoryStatus }) {
+  const reviews = memory?.reviews ?? [];
   return (
-    <section className="page-stack" data-testid="error-bank-view">
-      <div className="section-heading"><div><div className="eyebrow">ERROR BANK</div><h2>Recurring mistakes become future curriculum</h2></div><span>{errors.length} active patterns</span></div>
-      <div className="error-bank-summary"><strong>Mastery rule</strong><span>An error stays active until repeated successful retrieval raises confidence. Mastered patterns move to longer maintenance intervals instead of disappearing forever.</span></div>
-      <div className="error-bank-grid">
-        {errors.map((error) => (
-          <article className="error-bank-card" key={error.id}>
-            <div className="error-bank-head"><span className={`error-domain ${error.domain}`}>{error.domain}</span><b>{error.confidence}% confidence</b></div>
-            <h3>{error.pattern}</h3>
-            <div className="confidence-track"><span style={{ width: `${error.confidence}%` }} /></div>
-            <div className="error-meta"><span>Last seen {new Date(error.lastSeenAt).toLocaleDateString('en-GB')}</span><span>Next retrieval {new Date(error.nextReviewAt).toLocaleDateString('en-GB')}</span></div>
-            <button className="secondary-btn">Start retrieval</button>
-          </article>
-        ))}
-      </div>
+    <section className="page-stack">
+      <div className="section-heading"><div><div className="eyebrow">SPACED REVIEW</div><h2>Review what is most likely to be forgotten</h2></div><span>D+1 • D+7 • D+30 • D+90</span></div>
+      {reviews.length === 0 ? <div className="review-list"><EmptyEvidence status={memoryStatus} /></div> : (
+        <div className="review-list">
+          {reviews.map((review) => (
+            <div className="review-row" key={review.id}>
+              <span className="review-date">{review.stage}</span>
+              <div><strong>{review.label}</strong><span>{review.status === 'due' ? `Due ${shortDate(review.dueDate)}` : `Scheduled ${shortDate(review.dueDate)}`}</span></div>
+              <button className="secondary-btn" disabled>{review.status === 'due' ? 'Due' : 'Queued'}</button>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
 
-function PerformanceView({ learnerKey }: { learnerKey: LearnerKey }) {
-  const values: Array<[string, number]> = learnerKey === 'viviane'
-    ? [['Payroll Accuracy',72],['PRSI / PAYE Judgement',61],['Professional English',65],['Listening',63],['Recall Strength',69],['Interview Readiness',58]]
-    : [['Technical Accuracy',81],['Judgement',68],['Professional English',73],['Fluency',66],['Recall Strength',70],['Interview Readiness',62]];
-  return <section className="page-stack"><div className="section-heading"><div><div className="eyebrow">PERFORMANCE</div><h2>Readiness by capability, not course completion</h2></div><span>Adaptive benchmark</span></div><div className="performance-grid">{values.map(([label,val]) => <div className="performance-card" key={label}><span>{label}</span><strong>{val}%</strong><div className="progress-track"><span style={{width:`${val}%`}}/></div><small>{val<70?'Priority next cycle':'On track'}</small></div>)}</div></section>;
+function ErrorBankView({ memory, memoryStatus }: { memory: LearningMemorySnapshot | null; memoryStatus: MemoryStatus }) {
+  const errors = memory?.errors ?? [];
+  return (
+    <section className="page-stack" data-testid="error-bank-view">
+      <div className="section-heading"><div><div className="eyebrow">ERROR BANK</div><h2>Recurring mistakes become future curriculum</h2></div><span>{errors.length} active measured patterns</span></div>
+      <div className="error-bank-summary"><strong>Mastery rule</strong><span>An error is shown here only after it has been recorded from learner evidence. No sample errors are inserted to make the screen look populated.</span></div>
+      {errors.length === 0 ? <div className="adaptive-priority-stack"><EmptyEvidence status={memoryStatus} /></div> : (
+        <div className="error-bank-grid">
+          {errors.map((error) => (
+            <article className="error-bank-card" key={error.id}>
+              <div className="error-bank-head"><span className={`error-domain ${error.domain}`}>{error.domain}</span><b>{Math.round(error.confidence)}% confidence</b></div>
+              <h3>{error.pattern}</h3>
+              <div className="confidence-track"><span style={{ width: `${Math.max(0, Math.min(100, error.confidence))}%` }} /></div>
+              <div className="error-meta"><span>Last seen {shortDate(error.lastSeenAt)}</span><span>Next retrieval {shortDate(error.nextReviewAt)}</span></div>
+              <button className="secondary-btn" disabled>{error.frequency > 1 ? `${error.frequency} occurrences • queued` : 'Retrieval queued'}</button>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
 }
 
-function ProfessorView({ learnerKey, profile }: { learnerKey: LearnerKey; profile: LearningProfile }) {
+function PerformanceView({ memory, memoryStatus }: { memory: LearningMemorySnapshot | null; memoryStatus: MemoryStatus }) {
+  const competencyValues = (memory?.competencies ?? []).map((item) => ({
+    label: item.name,
+    value: item.score,
+    detail: `${item.evidenceCount} evidence • ${Math.round(item.confidence)}% confidence`,
+  }));
+  const latestValues = memory?.latest
+    ? scorePairs(memory.latest).map(([label, value]) => ({ label, value, detail: 'Latest evaluated Professor session' }))
+    : [];
+  const values = competencyValues.length > 0 ? competencyValues : latestValues;
+
+  return (
+    <section className="page-stack">
+      <div className="section-heading"><div><div className="eyebrow">PERFORMANCE</div><h2>Readiness by capability, not course completion</h2></div><span>{memory?.history.length ?? 0} evaluated session{(memory?.history.length ?? 0) === 1 ? '' : 's'}</span></div>
+      {values.length === 0 ? <div className="adaptive-priority-stack"><EmptyEvidence status={memoryStatus} /></div> : (
+        <div className="performance-grid">
+          {values.map(({ label, value, detail }) => (
+            <div className="performance-card" key={label}>
+              <span>{label}</span>
+              <strong>{Math.round(value)}%</strong>
+              <div className="progress-track"><span style={{width:`${Math.max(0, Math.min(100, value))}%`}}/></div>
+              <small>{detail}</small>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="error-bank-summary"><strong>Interpretation</strong><span>These are measured learning signals, not a validated external employability or exam-readiness benchmark. A formal benchmark layer has not been built yet.</span></div>
+    </section>
+  );
+}
+
+function ProfessorView({ learnerKey, profile, openLesson }: { learnerKey: LearnerKey; profile: LearningProfile; openLesson: (key: TrackKey) => void }) {
   const primaryTrack: TrackKey = learnerKey === 'viviane' ? 'payroll' : 'finance';
-  return <section className="page-stack"><div className="professor-hero"><div className="professor-orb large">AI</div><div><div className="eyebrow light">PROFESSOR LAB • {profile.displayName.toUpperCase()}</div><h2>Natural voice. Persistent context. Independent evaluation.</h2><p>{profile.professor.style} The live session boundary uses LiveKit + OpenAI Realtime, while Supabase receives only the learning record required for evaluation and adaptation.</p><div className="professor-focus-list">{profile.professor.technicalFocus.slice(0, 5).map((focus) => <span key={focus}>{focus}</span>)}</div><div className="hero-actions"><button className="primary-btn" onClick={() => void primaryTrack}>Open a Golden Lesson to start</button><button className="secondary-dark-btn">LiveKit integration staged</button></div></div></div></section>;
+  const track = tracks.find((item) => item.key === primaryTrack) ?? tracks[0];
+  return (
+    <section className="page-stack">
+      <div className="professor-hero">
+        <div className="professor-orb large">AI</div>
+        <div>
+          <div className="eyebrow light">PROFESSOR • {profile.displayName.toUpperCase()}</div>
+          <h2>Natural voice. Persistent context. Independent evaluation.</h2>
+          <p>{profile.professor.style} The deployed live path uses LiveKit + OpenAI Realtime, and completed sessions feed the private learning record used for evaluation and adaptation.</p>
+          <div className="professor-focus-list">{profile.professor.technicalFocus.slice(0, 5).map((focus) => <span key={focus}>{focus}</span>)}</div>
+          <div className="hero-actions"><button className="primary-btn" onClick={() => openLesson(primaryTrack)}>Open {track.name} lesson</button></div>
+        </div>
+      </div>
+      <div className="wide-card">
+        <div><div className="eyebrow">LIVE PROFESSOR</div><h3>{track.lesson}</h3><p>This is the same deployed Professor session boundary used inside the Golden Lesson.</p></div>
+        <ProfessorSessionPanel lessonId={track.lessonId} track={track.key} learnerKey={learnerKey} />
+      </div>
+    </section>
+  );
 }
 
 function titleForView(view: ViewKey) {
@@ -529,13 +703,13 @@ function titleForView(view: ViewKey) {
 }
 
 function subtitleForView(view: ViewKey, profile: LearningProfile) {
-  if (view === 'dashboard') return `One adaptive system tuned for ${profile.displayName}, with English Academy connected to the technical track.`;
+  if (view === 'dashboard') return `One adaptive system tuned for ${profile.displayName}, with measured learning evidence kept private to the signed-in account.`;
   if (view === 'learn') return 'Start with three Golden Lessons before scaling the curriculum.';
   if (view === 'english-academy') return 'General English, professional communication and real-world Dublin exposure in one adaptive programme.';
-  if (view === 'revision') return 'The system prioritises what you are most likely to forget or misunderstand.';
-  if (view === 'error-bank') return 'Recurring technical and language mistakes are converted into deliberate future practice.';
-  if (view === 'performance') return 'Scores below 70% become an explicit learning priority.';
-  return 'Premium live tutoring designed as a separate, resilient feature boundary.';
+  if (view === 'revision') return 'Only scheduled reviews from real evaluated sessions appear here.';
+  if (view === 'error-bank') return 'Only recurring technical and language mistakes recorded from learner evidence appear here.';
+  if (view === 'performance') return 'Measured scores are shown without inventing an external readiness benchmark.';
+  return 'Premium live tutoring on the deployed LiveKit + OpenAI Realtime path.';
 }
 
 export default App;
