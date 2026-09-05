@@ -37,6 +37,7 @@ export function ProfessorSessionPanel({ lessonId, track, learnerKey = track === 
   const learnerProfile = getLearnerProfile(learnerKey);
   const [state, setState] = useState<SessionState>('ready');
   const [error, setError] = useState<string | null>(null);
+  const [audioBlocked, setAudioBlocked] = useState(false);
   const connectionRef = useRef<ProfessorConnection | null>(null);
   const audioHostRef = useRef<HTMLDivElement | null>(null);
   const attachedElementsRef = useRef<HTMLMediaElement[]>([]);
@@ -53,12 +54,14 @@ export function ProfessorSessionPanel({ lessonId, track, learnerKey = track === 
     element.setAttribute('data-professor-audio', 'true');
     audioHostRef.current?.appendChild(element);
     attachedElementsRef.current.push(element);
+    void element.play().catch(() => setAudioBlocked(true));
   }
 
   async function start() {
     if (!enabled || state === 'connecting' || state === 'listening') return;
     setState('connecting');
     setError(null);
+    setAudioBlocked(false);
     try {
       const contract = trackContract(track);
       const connection = await connectProfessor(
@@ -77,14 +80,29 @@ export function ProfessorSessionPanel({ lessonId, track, learnerKey = track === 
         },
         {
           onRemoteAudio: attachRemoteAudio,
+          onAudioPlaybackStatusChanged: (canPlaybackAudio) => setAudioBlocked(!canPlaybackAudio),
           onDisconnected: () => setState('ended'),
         },
       );
       connectionRef.current = connection;
+      setAudioBlocked(!connection.room.canPlaybackAudio);
       setState('listening');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Professor connection failed.');
       setState('error');
+    }
+  }
+
+  async function enableAudio() {
+    const room = connectionRef.current?.room;
+    if (!room) return;
+    try {
+      await room.startAudio();
+      setAudioBlocked(!room.canPlaybackAudio);
+      if (room.canPlaybackAudio) setError(null);
+    } catch {
+      setAudioBlocked(true);
+      setError('Your browser is blocking Professor audio. Tap Enable sound again or allow sound for this site.');
     }
   }
 
@@ -94,6 +112,7 @@ export function ProfessorSessionPanel({ lessonId, track, learnerKey = track === 
     if (connection) await connection.disconnect();
     for (const element of attachedElementsRef.current) element.remove();
     attachedElementsRef.current = [];
+    setAudioBlocked(false);
     setState('ended');
   }
 
@@ -120,10 +139,18 @@ export function ProfessorSessionPanel({ lessonId, track, learnerKey = track === 
             {!enabled ? 'LiveKit setup required' : state === 'connecting' ? 'Connecting…' : 'Start voice session'}
           </button>
         ) : (
-          <button className="primary-btn professor-stop" type="button" onClick={stop}>End session</button>
+          <>
+            {audioBlocked && (
+              <button className="primary-btn professor-enable-audio" type="button" onClick={enableAudio}>🔊 Enable sound</button>
+            )}
+            <button className="primary-btn professor-stop" type="button" onClick={stop}>End session</button>
+          </>
         )}
       </div>
 
+      {audioBlocked && state === 'listening' && (
+        <div className="professor-audio-warning" role="status">Your browser blocked voice playback. Tap <strong>Enable sound</strong> once.</div>
+      )}
       {error && <div className="professor-live-error" role="alert">{error}</div>}
       <div ref={audioHostRef} className="professor-audio-host" aria-hidden="true" />
       <div className="professor-privacy-note">Raw learner voice is not stored by the Learning Hub by default.</div>
