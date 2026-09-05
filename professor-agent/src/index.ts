@@ -133,6 +133,17 @@ function coachingIntensity(profile: ProfessorProfile, metadata: ProfessorJobMeta
   return profile === 'english' ? 'normal' : 'coach';
 }
 
+function semanticVadEagerness(intensity: CoachingIntensity): 'low' | 'medium' {
+  // Give learners room to hesitate and self-correct in normal/coaching sessions.
+  // Pressure mode stays balanced so oral mocks still feel responsive.
+  return intensity === 'pressure' ? 'medium' : 'low';
+}
+
+function baseSpeechSpeed(profile: ProfessorProfile, intensity: CoachingIntensity): number {
+  const base = profile === 'payroll' ? 0.94 : profile === 'english' ? 0.97 : 0.96;
+  return intensity === 'pressure' ? Math.min(1, base + 0.03) : base;
+}
+
 function coachingGuidance(profile: ProfessorProfile, metadata: ProfessorJobMetadata): string {
   const intensity = coachingIntensity(profile, metadata);
   const level = intensity === 'pressure'
@@ -144,7 +155,7 @@ function coachingGuidance(profile: ProfessorProfile, metadata: ProfessorJobMetad
   const profileRule = profile === 'english'
     ? `English coaching: favour brief spoken recasts for meaningful or recurring errors. After a useful correction, sometimes ask the learner to repeat only the corrected phrase or sentence, then continue. If wording is understandable but unnatural, ask for another version before giving your own. Do not correct every minor error and do not treat valid UK/US variants as mistakes.`
     : profile === 'finance'
-      ? `Finance coaching: if a technical assumption is questionable, stop the chain before it compounds. Ask the learner to defend the assumption, connect the accounting point to business impact, and periodically demand a 20–30 second executive answer.`
+      ? `Finance coaching: if a technical assumption is questionable, stop the chain before it compounds. Ask the learner to defend the assumption, connect the accounting point to business impact, and periodically demand a concise executive answer.`
       : `Payroll coaching: if an explanation skips a control, dependency, employee impact or sequencing step, ask for the missing link. Use concise English reformulation practice for employee-facing explanations without confusing language accuracy with payroll accuracy.`;
 
   return `\nACTIVE COACHING MODE: ${intensity.toUpperCase()}.\n${level}\n${profileRule}\nThe learner may interrupt you naturally; keep your own spoken turns concise and responsive.`;
@@ -434,6 +445,13 @@ export default defineAgent({
       llm: new openai.realtime.RealtimeModel({
         model,
         voice: voiceName,
+        speed: baseSpeechSpeed(profile, intensity),
+        turnDetection: {
+          type: 'semantic_vad',
+          eagerness: semanticVadEagerness(intensity),
+          create_response: true,
+          interrupt_response: true,
+        },
       }),
     });
 
