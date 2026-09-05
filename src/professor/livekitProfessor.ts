@@ -10,6 +10,7 @@ type ProfessorTokenResponse = {
   lessonId: string | null;
   mode: TutorSessionRequest['mode'];
   professorProfile: 'finance' | 'payroll' | 'english';
+  validationMode?: boolean;
   dispatchId?: string | null;
 };
 
@@ -18,6 +19,7 @@ export type ProfessorConnection = {
   roomName: string;
   participantIdentity: string;
   professorProfile: ProfessorTokenResponse['professorProfile'];
+  validationMode: boolean;
   disconnect: () => Promise<void>;
 };
 
@@ -48,6 +50,7 @@ async function requestProfessorToken(request: TutorSessionRequest): Promise<Prof
       track: request.track,
       mode: request.mode,
       languageProfile: request.languageProfile,
+      validationMode: request.validationMode === true,
     }),
   });
 
@@ -96,6 +99,7 @@ export async function connectProfessor(
     roomName: credentials.roomName,
     participantIdentity: credentials.participantIdentity,
     professorProfile: credentials.professorProfile,
+    validationMode: credentials.validationMode === true,
     disconnect: async () => {
       await room.localParticipant.setMicrophoneEnabled(false).catch(() => undefined);
       room.disconnect();
