@@ -32,9 +32,15 @@ function trackContract(track: ProfessorSessionPanelProps['track']): { learnerTra
   return { learnerTrack: 'rafael_finance', mode: 'chapter_conversation' };
 }
 
+function professorValidationMode(): boolean {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).get('validation') === '1';
+}
+
 export function ProfessorSessionPanel({ lessonId, track, learnerKey = track === 'payroll' ? 'viviane' : 'rafael' }: ProfessorSessionPanelProps) {
   const enabled = isFeatureEnabled('professor');
   const learnerProfile = getLearnerProfile(learnerKey);
+  const validationMode = professorValidationMode();
   const [state, setState] = useState<SessionState>('ready');
   const [error, setError] = useState<string | null>(null);
   const [audioBlocked, setAudioBlocked] = useState(false);
@@ -70,6 +76,7 @@ export function ProfessorSessionPanel({ lessonId, track, learnerKey = track === 
           learnerId: learnerKey,
           track: contract.learnerTrack,
           mode: contract.mode,
+          validationMode,
           languageProfile: {
             preferredMix: 'uk-us-mix',
             includeIrishExposure: true,
@@ -121,6 +128,7 @@ export function ProfessorSessionPanel({ lessonId, track, learnerKey = track === 
       <div className={`professor-live-orb ${state}`} aria-hidden="true"><span>AI</span></div>
       <div className="professor-live-copy">
         <span className="professor-state-label">
+          {validationMode ? 'VALIDATION MODE · ' : ''}
           {!enabled ? 'PROFESSOR LOCKED FOR SETUP' : state === 'connecting' ? 'CONNECTING' : state === 'listening' ? 'LISTENING' : state === 'ended' ? 'SESSION ENDED' : state === 'error' ? 'CONNECTION ERROR' : 'READY'}
         </span>
         <h3>{track === 'english' ? `${learnerProfile.displayName}'s conversation tutor` : track === 'payroll' ? 'Irish Payroll Professor' : 'Finance Professor'}</h3>
@@ -136,7 +144,7 @@ export function ProfessorSessionPanel({ lessonId, track, learnerKey = track === 
       <div className="professor-live-actions">
         {state !== 'listening' ? (
           <button className="primary-btn" type="button" onClick={start} disabled={!enabled || state === 'connecting'}>
-            {!enabled ? 'LiveKit setup required' : state === 'connecting' ? 'Connecting…' : 'Start voice session'}
+            {!enabled ? 'LiveKit setup required' : state === 'connecting' ? 'Connecting…' : validationMode ? 'Start validation session' : 'Start voice session'}
           </button>
         ) : (
           <>
@@ -152,8 +160,11 @@ export function ProfessorSessionPanel({ lessonId, track, learnerKey = track === 
         <div className="professor-audio-warning" role="status">Your browser blocked voice playback. Tap <strong>Enable sound</strong> once.</div>
       )}
       {error && <div className="professor-live-error" role="alert">{error}</div>}
+      {validationMode && (
+        <div className="professor-privacy-note">Validation session: transcript, evaluator and cost metering stay active, but Learning Memory, Error Bank and spaced reviews are not updated.</div>
+      )}
       <div ref={audioHostRef} className="professor-audio-host" aria-hidden="true" />
-      <div className="professor-privacy-note">Raw learner voice is not stored by the Learning Hub by default.</div>
+      {!validationMode && <div className="professor-privacy-note">Raw learner voice is not stored by the Learning Hub by default.</div>}
     </div>
   );
 }
