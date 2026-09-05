@@ -35,6 +35,7 @@ export type TutorSessionRequest = {
   track: LearnerTrack;
   mode: 'chapter_conversation' | 'case_feedback' | 'oral_mock' | 'english_drill' | 'general_conversation';
   languageProfile?: TutorLanguageProfile;
+  validationMode?: boolean;
 };
 
 export type TutorSessionResult = {
