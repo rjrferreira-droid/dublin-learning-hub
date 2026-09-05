@@ -5,6 +5,7 @@ import App from './App';
 import { AuthGate } from './components/AuthGate';
 import { CostCenterPanel } from './components/CostCenterPanel';
 import { LearningMemoryPanel } from './components/LearningMemoryPanel';
+import { LittleEnglish } from './components/LittleEnglish';
 import './styles.css';
 import './british-premium.css';
 import './premium-audio.css';
@@ -13,12 +14,14 @@ import './learning-intelligence.css';
 import './learning-memory-panel.css';
 import './cost-center.css';
 import './auth.css';
+import './little-english.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <AuthGate>
         <App />
+        <LittleEnglish />
         <LearningMemoryPanel />
         <CostCenterPanel />
       </AuthGate>
