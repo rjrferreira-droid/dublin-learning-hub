@@ -44,7 +44,9 @@ export type LearningMemoryError = {
   pattern: string;
   frequency: number;
   confidence: number;
+  lastSeenAt: string;
   nextReviewAt: string;
+  status: string;
 };
 
 export type LearningMemoryReview = {
@@ -52,6 +54,7 @@ export type LearningMemoryReview = {
   stage: string;
   dueDate: string;
   status: string;
+  score: number | null;
   label: string;
 };
 
@@ -138,24 +141,24 @@ export async function loadLearningMemory(): Promise<LearningMemorySnapshot> {
       .select('id,lesson_id,mode,status,started_at,completed_at,duration_seconds,quality_tier,technical_score,english_score,grammar_score,vocabulary_score,fluency_score,pronunciation_score,professional_communication_score,final_feedback,lessons(title)')
       .eq('status', 'completed')
       .order('started_at', { ascending: false })
-      .limit(8),
+      .limit(12),
     supabase
       .from('user_competency_scores')
       .select('score,confidence,evidence_count,last_assessed_at,competencies(code,name,category)')
       .order('score', { ascending: true })
-      .limit(12),
+      .limit(16),
     supabase
       .from('user_error_bank')
-      .select('id,domain,pattern,frequency,confidence,next_review_at,status')
+      .select('id,domain,pattern,frequency,confidence,last_seen_at,next_review_at,status')
       .eq('status', 'active')
       .order('next_review_at', { ascending: true })
-      .limit(8),
+      .limit(12),
     supabase
       .from('spaced_reviews')
-      .select('id,review_stage,due_date,status,lessons(title),competencies(name)')
+      .select('id,review_stage,due_date,status,score,lessons(title),competencies(name)')
       .in('status', ['due', 'scheduled'])
       .order('due_date', { ascending: true })
-      .limit(8),
+      .limit(12),
   ]);
 
   const firstError = sessionsResult.error ?? competenciesResult.error ?? errorsResult.error ?? reviewsResult.error;
@@ -178,11 +181,13 @@ export async function loadLearningMemory(): Promise<LearningMemorySnapshot> {
 
   const errors = (errorsResult.data ?? []).map((row: any) => ({
     id: String(row.id),
-    domain: String(row.domain ?? 'general'),
+    domain: String(row.domain ?? 'technical'),
     pattern: String(row.pattern ?? ''),
     frequency: Math.max(1, Math.round(numberOrZero(row.frequency) || 1)),
     confidence: Math.max(0, Math.min(100, numberOrZero(row.confidence))),
-    nextReviewAt: String(row.next_review_at),
+    lastSeenAt: String(row.last_seen_at ?? row.next_review_at ?? ''),
+    nextReviewAt: String(row.next_review_at ?? row.last_seen_at ?? ''),
+    status: String(row.status ?? 'active'),
   }));
 
   const reviews = (reviewsResult.data ?? []).map((row: any) => {
@@ -198,6 +203,7 @@ export async function loadLearningMemory(): Promise<LearningMemorySnapshot> {
       stage: String(row.review_stage ?? 'review'),
       dueDate: String(row.due_date),
       status: String(row.status ?? 'scheduled'),
+      score: numberOrNull(row.score),
       label,
     };
   });
