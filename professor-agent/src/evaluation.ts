@@ -125,6 +125,75 @@ function compactTranscript(turns: TranscriptTurn[]): string {
     .join('\n');
 }
 
+function extractOutputText(payload: any): string {
+  if (typeof payload?.output_text === 'string') return payload.output_text;
+  for (const item of payload?.output ?? []) {
+    for (const content of item?.content ?? []) {
+      if (content?.type === 'output_text' && typeof content.text === 'string') return content.text;
+    }
+  }
+  return '';
+}
+
+const nullableScoreSchema = {
+  anyOf: [
+    { type: 'number', minimum: 0, maximum: 100 },
+    { type: 'null' },
+  ],
+};
+
+const evaluationSchema = {
+  type: 'object',
+  properties: {
+    technicalScore: nullableScoreSchema,
+    englishScore: nullableScoreSchema,
+    grammarScore: nullableScoreSchema,
+    vocabularyScore: nullableScoreSchema,
+    fluencyScore: nullableScoreSchema,
+    pronunciationScore: nullableScoreSchema,
+    professionalCommunicationScore: nullableScoreSchema,
+    summary: { type: 'string' },
+    strengths: { type: 'array', items: { type: 'string' } },
+    improvements: { type: 'array', items: { type: 'string' } },
+    nextSessionFocus: { type: 'array', items: { type: 'string' } },
+    errors: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          domain: { type: 'string', enum: ['technical', 'grammar', 'vocabulary', 'pronunciation', 'fluency', 'register'] },
+          pattern: { type: 'string' },
+          normalizedPattern: { type: 'string' },
+          confidence: { type: 'number', minimum: 0, maximum: 100 },
+          example: { type: 'string' },
+          correction: { type: 'string' },
+        },
+        required: ['domain', 'pattern', 'normalizedPattern', 'confidence', 'example', 'correction'],
+        additionalProperties: false,
+      },
+    },
+    needsSpacedReview: { type: 'boolean' },
+    assessmentConfidence: nullableScoreSchema,
+  },
+  required: [
+    'technicalScore',
+    'englishScore',
+    'grammarScore',
+    'vocabularyScore',
+    'fluencyScore',
+    'pronunciationScore',
+    'professionalCommunicationScore',
+    'summary',
+    'strengths',
+    'improvements',
+    'nextSessionFocus',
+    'errors',
+    'needsSpacedReview',
+    'assessmentConfidence',
+  ],
+  additionalProperties: false,
+};
+
 export async function evaluateProfessorSession(
   turns: TranscriptTurn[],
   context: EvaluationContext,
@@ -133,11 +202,14 @@ export async function evaluateProfessorSession(
   if (learnerTurns.length === 0) return null;
 
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) return null;
+  if (!apiKey) {
+    console.error('Professor evaluation unavailable: OPENAI_API_KEY is missing');
+    return null;
+  }
 
-  const model = process.env.OPENAI_EVALUATION_MODEL || 'gpt-5-mini';
+  const model = process.env.OPENAI_EVALUATION_MODEL || 'gpt-5.6-terra';
   const lesson = context.lessonContext;
-  const rubric = `You are the independent evaluator for an adult-learning voice tutor. Evaluate only evidence actually demonstrated by the learner. Do not reward or punish the tutor.\n\nReturn one JSON object only with these keys:\ntechnicalScore, englishScore, grammarScore, vocabularyScore, fluencyScore, pronunciationScore, professionalCommunicationScore, summary, strengths, improvements, nextSessionFocus, errors, needsSpacedReview, assessmentConfidence.\n\nScores are 0-100 or null when there is not enough evidence. pronunciationScore MUST be null because this evaluation receives transcript text rather than acoustic evidence. technicalScore must be null when the learner did not demonstrate technical knowledge. englishScore should reflect the learner's overall spoken-English evidence, not subject-matter knowledge. professionalCommunicationScore measures concise, structured, professional communication. assessmentConfidence is 0-100 and should be lower for short conversations.\n\nEach errors item must have: domain, pattern, normalizedPattern, confidence, example, correction. domain must be one of technical, grammar, vocabulary, pronunciation, fluency, register. Do not create pronunciation errors from transcript text. Record only meaningful, teachable patterns; ignore harmless transcription noise. A technical uncertainty explicitly admitted by the learner may be recorded as technical. normalizedPattern should be a short reusable label, not the full sentence.\n\nSet needsSpacedReview true when there is a meaningful weakness, a technical gap, or a score below roughly 75. Keep feedback concise and practical.`;
+  const rubric = `You are the independent evaluator for an adult-learning voice tutor. Evaluate only evidence actually demonstrated by the learner. Do not reward or punish the tutor.\n\nScores are 0-100 or null when there is not enough evidence. pronunciationScore MUST be null because this evaluation receives transcript text rather than acoustic evidence. technicalScore must be null when the learner did not demonstrate technical knowledge. englishScore should reflect the learner's overall spoken-English evidence, not subject-matter knowledge. professionalCommunicationScore measures concise, structured, professional communication. assessmentConfidence is 0-100 and should be lower for short conversations.\n\nDo not create pronunciation errors from transcript text. Record only meaningful, teachable patterns; ignore harmless transcription noise or obviously corrupted speech-to-text fragments. A technical uncertainty explicitly admitted by the learner may be recorded as technical. normalizedPattern should be a short reusable label, not the full sentence.\n\nSet needsSpacedReview true when there is a meaningful weakness, a technical gap, or a score below roughly 75. Keep feedback concise and practical.`;
 
   const contextPayload = {
     track: context.track ?? null,
@@ -153,11 +225,11 @@ export async function evaluateProfessorSession(
   };
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+  const timeout = setTimeout(() => controller.abort(), 20000);
   timeout.unref?.();
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
         authorization: `Bearer ${apiKey}`,
@@ -165,16 +237,22 @@ export async function evaluateProfessorSession(
       },
       body: JSON.stringify({
         model,
-        messages: [
+        store: false,
+        input: [
           { role: 'system', content: rubric },
           {
             role: 'user',
             content: `SESSION CONTEXT\n${JSON.stringify(contextPayload)}\n\nTRANSCRIPT\n${compactTranscript(turns)}`,
           },
         ],
-        response_format: { type: 'json_object' },
-        reasoning_effort: 'low',
-        max_completion_tokens: 1800,
+        text: {
+          format: {
+            type: 'json_schema',
+            name: 'professor_evaluation',
+            strict: true,
+            schema: evaluationSchema,
+          },
+        },
       }),
       signal: controller.signal,
     });
@@ -185,8 +263,11 @@ export async function evaluateProfessorSession(
     }
 
     const payload = await response.json() as any;
-    const content = payload?.choices?.[0]?.message?.content;
-    if (typeof content !== 'string' || !content.trim()) return null;
+    const content = extractOutputText(payload);
+    if (!content.trim()) {
+      console.error('Professor evaluation returned no output text');
+      return null;
+    }
 
     let parsed: unknown;
     try {
@@ -196,10 +277,10 @@ export async function evaluateProfessorSession(
       return null;
     }
 
-    const promptTokens = Number(payload?.usage?.prompt_tokens) || 0;
-    const completionTokens = Number(payload?.usage?.completion_tokens) || 0;
-    const estimatedCostUsd = model === 'gpt-5-mini'
-      ? (promptTokens * 0.25 + completionTokens * 2.0) / 1_000_000
+    const inputTokens = Number(payload?.usage?.input_tokens) || 0;
+    const outputTokens = Number(payload?.usage?.output_tokens) || 0;
+    const estimatedCostUsd = model === 'gpt-5.6-terra'
+      ? (inputTokens * 2 + outputTokens * 12) / 1_000_000
       : 0;
 
     return parseEvaluation(parsed, model, Math.round(estimatedCostUsd * 1_000_000) / 1_000_000);
