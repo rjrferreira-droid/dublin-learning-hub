@@ -327,6 +327,7 @@ export default async function handler(req: any, res: any) {
   const lessonId = safeLessonId(body?.lessonId);
   const track = typeof body?.track === 'string' && allowedTracks.has(body.track) ? body.track as ProfessorTrack : null;
   const mode = typeof body?.mode === 'string' && allowedModes.has(body.mode) ? body.mode : null;
+  const validationMode = body?.validationMode === true;
   if (!body || !lessonId || !track || !mode) return send(res, 400, { error: 'invalid_professor_request' });
 
   const { data: learnerProfile, error: profileError } = await db
@@ -368,7 +369,7 @@ export default async function handler(req: any, res: any) {
 
   const professorProfile = profileForTrack(track);
   const languageProfile = normalizeLanguageProfile(body.languageProfile);
-  const roomName = `lh-${randomUUID()}`;
+  const roomName = `${validationMode ? 'validation:' : ''}lh-${randomUUID()}`;
   const participantIdentity = `learner-${randomUUID()}`;
 
   const persistence = await startProfessorPersistence(
@@ -386,6 +387,7 @@ export default async function handler(req: any, res: any) {
     track,
     lessonId: persistenceLessonId,
     mode,
+    validationMode,
     qualityTier: budget.qualityTier,
     languageProfile,
     lessonContext,
@@ -441,6 +443,7 @@ export default async function handler(req: any, res: any) {
       lessonId: persistenceLessonId,
       mode,
       professorProfile,
+      validationMode,
       qualityTier: budget.qualityTier,
       maxSessionSeconds: budget.maxSessionSeconds,
       monthlyBudgetUsd: budget.monthlyBudgetUsd,
@@ -455,7 +458,7 @@ export default async function handler(req: any, res: any) {
       .update({
         status: 'abandoned',
         completed_at: new Date().toISOString(),
-        close_reason: 'livekit_dispatch_failed',
+        close_reason: validationMode ? 'validation:livekit_dispatch_failed' : 'livekit_dispatch_failed',
       })
       .eq('id', persistence.sessionId);
     console.error('Professor LiveKit dispatch failed', cause instanceof Error ? cause.message : 'unknown_error');
