@@ -62,21 +62,33 @@ async function requestProfessorToken(request: TutorSessionRequest): Promise<Prof
 
 export async function connectProfessor(
   request: TutorSessionRequest,
-  options?: { onRemoteAudio?: (track: RemoteAudioTrack) => void; onDisconnected?: () => void },
+  options?: {
+    onRemoteAudio?: (track: RemoteAudioTrack) => void;
+    onDisconnected?: () => void;
+    onAudioPlaybackStatusChanged?: (canPlaybackAudio: boolean) => void;
+  },
 ): Promise<ProfessorConnection> {
-  const credentials = await requestProfessorToken(request);
-
+  // Create the room and unlock its audio context before the first network await.
+  // That keeps startAudio inside the original click/tap gesture, which browsers
+  // (especially Safari/iOS and some Chrome configurations) require for playback.
   const room = new Room({
     adaptiveStream: true,
     dynacast: true,
   });
+  const initialAudioUnlock = room.startAudio().catch(() => undefined);
 
   room.on(RoomEvent.TrackSubscribed, (track) => {
     if (track.kind === Track.Kind.Audio) options?.onRemoteAudio?.(track as RemoteAudioTrack);
   });
+  room.on(RoomEvent.AudioPlaybackStatusChanged, () => {
+    options?.onAudioPlaybackStatusChanged?.(room.canPlaybackAudio);
+  });
   room.on(RoomEvent.Disconnected, () => options?.onDisconnected?.());
 
+  const credentials = await requestProfessorToken(request);
   await room.connect(credentials.serverUrl, credentials.token);
+  await initialAudioUnlock;
+  options?.onAudioPlaybackStatusChanged?.(room.canPlaybackAudio);
   await room.localParticipant.setMicrophoneEnabled(true);
 
   return {
