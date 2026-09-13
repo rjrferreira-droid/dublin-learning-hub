@@ -1,5 +1,6 @@
 import { startProfessorAtomically, ProfessorStartupError } from '../server/professor-start.js';
 import { randomUUID } from 'node:crypto';
+import { requestedLearnerMatchesAccount } from '../src/auth/identity.js';
 import { createClient } from '@supabase/supabase-js';
 import { AccessToken, LiveKitAPI } from 'livekit-server-sdk';
 
@@ -291,6 +292,8 @@ export default async function handler(req: any, res: any) {
   if (profileError || !learnerProfile || !isProfessorTrackAllowed(learnerProfile.learner_track, track)) {
     return send(res, 403, { error: 'professor_track_forbidden' });
   }
+
+  if (!requestedLearnerMatchesAccount(learnerProfile.learner_track,body.learnerId)) return send(res,403,{error:'professor_learner_mismatch'});
 
   let lessonContext: LessonContext;
   if (requiresPublishedTechnicalLesson(track)) {

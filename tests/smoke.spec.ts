@@ -1,8 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
-const e2eEmail = process.env.E2E_EMAIL;
-const e2ePassword = process.env.E2E_PASSWORD;
-const authenticatedFixtureAvailable = Boolean(e2eEmail && e2ePassword);
+import {resolveAuthFixture} from './helpers/auth-fixture';
+const {email:e2eEmail,password:e2ePassword,available:authenticatedFixtureAvailable} = resolveAuthFixture(process.env);
 
 async function signIn(page: Page) {
   if (!e2eEmail || !e2ePassword) throw new Error('Authenticated E2E fixture is not configured.');

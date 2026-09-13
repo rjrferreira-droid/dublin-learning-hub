@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
+import { LearnerSessionContext } from '../auth/LearnerSession';
+import { learnerKeyFromTrack } from '../auth/identity';
 
 type LearnerKey = 'rafael' | 'viviane';
 type LearnerTrack = 'rafael_finance' | 'viviane_payroll';
@@ -39,7 +41,10 @@ async function readOrCreateProfile(user: User): Promise<ProfileRow | null> {
     .maybeSingle();
 
   if (error) throw error;
-  if (data) return data as ProfileRow;
+  if (data) {
+    if (!learnerKeyFromTrack(data.learner_track)) throw new Error('Unsupported learner profile.');
+    return data as ProfileRow;
+  }
 
   const metadataTrack = user.user_metadata?.learner_track;
   if (metadataTrack !== 'rafael_finance' && metadataTrack !== 'viviane_payroll') return null;
@@ -66,6 +71,9 @@ async function readOrCreateProfile(user: User): Promise<ProfileRow | null> {
 export function AuthGate({ children }: AuthGateProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [profileUserId, setProfileUserId] = useState<string | null>(null);
+  const [profileFailed, setProfileFailed] = useState(false);
+  const [profileAttempt, setProfileAttempt] = useState(0);
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
@@ -78,59 +86,42 @@ export function AuthGate({ children }: AuthGateProps) {
 
   useEffect(() => {
     let mounted = true;
-
-    void supabase.auth.getSession().then(({ data, error }) => {
+    let authRevision = 0;
+    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!mounted) return;
+      authRevision++;
+      setSession(nextSession);
+      setLoading(false);
+      if (!nextSession) { setProfile(null); setProfileUserId(null); }
+    });
+    const revision = authRevision;
+    void supabase.auth.getSession().then(({data,error}) => {
+      if (!mounted || revision !== authRevision) return;
       if (error) setErrorMessage(error.message);
       setSession(data.session);
       setLoading(false);
+    }).catch(() => {
+      if (mounted && revision === authRevision) { setSession(null); setLoading(false); }
     });
-
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      if (!mounted) return;
-      setSession(nextSession);
-      if (!nextSession) setProfile(null);
-    });
-
-    return () => {
-      mounted = false;
-      data.subscription.unsubscribe();
-    };
+    return () => { mounted=false; data.subscription.unsubscribe(); };
   }, []);
 
   useEffect(() => {
     if (!session?.user) return;
-    let cancelled = false;
+    let cancelled=false;
+    const user=session.user;
     setProfileLoading(true);
+    setProfileFailed(false);
     setErrorMessage(null);
-
-    void readOrCreateProfile(session.user)
-      .then((row) => {
-        if (!cancelled) setProfile(row);
-      })
-      .catch((error: unknown) => {
-        if (!cancelled) setErrorMessage(error instanceof Error ? error.message : 'Unable to load your Learning Hub profile.');
-      })
-      .finally(() => {
-        if (!cancelled) setProfileLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [session?.user?.id]);
+    void readOrCreateProfile(user).then(row => {
+      if (!cancelled) { setProfile(row); setProfileUserId(user.id); }
+    }).catch(() => {
+      if (!cancelled) { setProfile(null); setProfileUserId(user.id); setProfileFailed(true); }
+    }).finally(() => { if (!cancelled) setProfileLoading(false); });
+    return () => { cancelled=true; };
+  }, [session?.user?.id,profileAttempt]);
 
   const activeLearner = useMemo(() => profile ? learnerFromTrack(profile.learner_track) : learnerKey, [profile, learnerKey]);
-
-  useEffect(() => {
-    if (!profile) return;
-    const timer = window.setTimeout(() => {
-      const buttons = Array.from(document.querySelectorAll<HTMLButtonElement>('.learner-switch button'));
-      const desired = activeLearner === 'viviane' ? buttons[1] : buttons[0];
-      if (desired && !desired.classList.contains('active')) desired.click();
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [profile, activeLearner]);
 
   async function submitAuth(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -184,6 +175,7 @@ export function AuthGate({ children }: AuthGateProps) {
         .single();
       if (error) throw error;
       setProfile(data as ProfileRow);
+      setProfileUserId(session.user.id);
     } catch (error: unknown) {
       setErrorMessage(error instanceof Error ? error.message : 'Não foi possível criar o perfil.');
     } finally {
@@ -280,7 +272,7 @@ export function AuthGate({ children }: AuthGateProps) {
     );
   }
 
-  if (profileLoading) {
+  if (profileLoading || profileUserId !== session.user.id) {
     return (
       <div className="auth-screen auth-loading-screen">
         <div className="auth-loading-card">
@@ -290,6 +282,14 @@ export function AuthGate({ children }: AuthGateProps) {
         </div>
       </div>
     );
+  }
+
+  if (profileFailed) {
+    return <div className="auth-screen auth-loading-screen"><div className="auth-profile-setup" role="alert" data-testid="profile-load-failure">
+      <h2>Your profile could not be loaded</h2><p>Your learning history has not been replaced or reset. Retry the connection or sign out.</p>
+      <button type="button" className="auth-submit" onClick={() => setProfileAttempt(n=>n+1)}>Retry profile</button>
+      <button type="button" onClick={() => void logout()}>Sair</button>
+    </div></div>;
   }
 
   if (!profile) {
@@ -315,9 +315,11 @@ export function AuthGate({ children }: AuthGateProps) {
   }
 
   return (
+    <LearnerSessionContext.Provider key={session.user.id} value={{userId:session.user.id,learnerKey:activeLearner}}>
     <div className={`auth-app learner-${activeLearner}`}>
       {children}
       <button className="auth-signout" type="button" onClick={() => void logout()} title="Sign out of Learning Hub">Sair</button>
     </div>
+    </LearnerSessionContext.Provider>
   );
 }
