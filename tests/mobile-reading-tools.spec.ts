@@ -19,7 +19,12 @@ async function login(page: Page) {
   await route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify(body)});
  });
  await page.routeWebSocket('**/*',ws=>{const u=new URL(ws.url());if(['localhost','127.0.0.1'].includes(u.hostname))ws.connectToServer();else ws.close();});
- await page.goto('/');await page.getByLabel('E-mail').fill('mobile-fixture@example.invalid');await page.getByLabel('Senha').fill('Fictional-mobile-only-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();await page.getByTestId('active-learner-card').waitFor();
+ await page.goto('/');await page.getByLabel('E-mail').fill('mobile-fixture@example.invalid');await page.getByLabel('Senha').fill('Fictional-mobile-only-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
+ // The existing responsive sidebar/profile card is deliberately hidden on mobile.
+ // Require the authenticated workspace and its correct identity without unhiding desktop chrome.
+ await expect(page.locator('.auth-app')).toHaveClass(/learner-rafael/);
+ await expect(page.getByTestId('active-learner-card')).toContainText('Rafael');
+ await expect(page.getByRole('button',{name:'Continue Finance',exact:true})).toBeVisible();
  return ()=>sensitive;
 }
 for(const width of [320,390,760])test(`adult utilities at ${width}px do not float over reading or each other`,async({page},info)=>{
