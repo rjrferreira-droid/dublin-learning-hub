@@ -168,7 +168,7 @@ export function CostCenterPanel() {
 
               <div className="cost-center-foot">
                 <span>
-                  {completedSessions} measured session{completedSessions === 1 ? '' : 's'} • {liveReservations} live reserve{liveReservations === 1 ? '' : 's'}
+                  {completedSessions} measured session{completedSessions === 1 ? '' : 's'} • {liveReservations} active reserve{liveReservations === 1 ? '' : 's'}
                   {unresolvedReservations > 0 ? ` • ${unresolvedReservations} unresolved` : ''}
                 </span>
                 <button onClick={() => void load()} disabled={loading}>Refresh</button>
