@@ -1,0 +1,58 @@
+name: Budget integrity verification
+on:
+  push:
+    branches: [fix/core-consolidation-2026-09-13]
+    paths: ['.github/workflows/budget-integrity.yml','server/professor-start.ts','scripts/budget-consolidation-apply.mjs','scripts/fix-budget-sql-names.mjs','tests/professor-start.test.ts','supabase/tests/fixture-budget.sql','supabase/tests/budget-integrity.sql','supabase/pending/**','supabase/migrations/*lh_usage_settlement_integrity.sql']
+permissions:
+  contents: write
+jobs:
+  verify-budget-integrity:
+    if: github.ref == 'refs/heads/fix/core-consolidation-2026-09-13'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ephemeral-test-only
+          POSTGRES_DB: learning_hub_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGDATABASE: learning_hub_test
+      PGUSER: postgres
+      PGPASSWORD: ephemeral-test-only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Patch only isolated API startup
+        run: node scripts/budget-consolidation-apply.mjs && node scripts/fix-budget-sql-names.mjs
+      - name: API startup contract tests without external services
+        run: node --experimental-strip-types --test tests/professor-start.test.ts tests/completion-contract.test.ts
+      - name: Prepare synthetic disposable Postgres, no live credentials
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/fixture-budget.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913153700_lh_professor_completion_integrity.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913154315_lh_serialize_learning_updates.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913155850_lh_usage_settlement_integrity.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/pending/lh_atomic_professor_start.sql
+      - name: Verify transactional accounting on fictional records
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/budget-integrity.sql
+      - name: Install locked dependencies and compile
+        run: npm ci && npm run build
+      - name: Commit verified API patch only, never merge or deploy production
+        run: |
+          test "$GITHUB_REF_NAME" = "fix/core-consolidation-2026-09-13"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add api/livekit-token.ts supabase/pending/lh_atomic_professor_start.sql
+          if ! git diff --cached --quiet; then
+            git commit -m 'Wire verified atomic Professor startup in repair branch'
+            git push origin HEAD:fix/core-consolidation-2026-09-13
+          fi
+      - name: Acceptance boundary
+        run: echo 'Local disposable SQL and build tests are not a live authenticated browser or LiveKit acceptance test.'
