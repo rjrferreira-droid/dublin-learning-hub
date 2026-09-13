@@ -1,7 +1,7 @@
 import {test,expect,type Page,type Route} from '@playwright/test';
 
-// Real browser and real application components; all Auth/REST responses below are FICTIONAL.
-// This suite is NOT proof that production Supabase credentials, RLS or LiveKit are working.
+// Real Chromium and application components; Auth/REST responses are FICTIONAL.
+// Not a live credentials, RLS or voice-acceptance test. All external requests are blocked.
 const learners = {
   rafael:{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',email:'finance-fixture@example.invalid',track:'rafael_finance',name:'Rafael'},
   viviane:{id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',email:'payroll-fixture@example.invalid',track:'viviane_payroll',name:'Viviane'},
@@ -28,10 +28,7 @@ async function setup(page:Page):Promise<Fixture>{
      }
      await route.continue();return;
    }
-   if(url.hostname!=='lh-ui.invalid'){
-     // No external request is ever forwarded. Missing font/image resources are irrelevant here.
-     await route.abort('blockedbyclient');return;
-   }
+   if(url.hostname!=='lh-ui.invalid'){await route.abort('blockedbyclient');return;}
    if(req.method()==='OPTIONS'){await route.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,OPTIONS'}});return;}
    if(url.pathname==='/auth/v1/token'){
      const data=req.postDataJSON();current=data.email===learners.viviane.email?'viviane':'rafael';
@@ -58,7 +55,6 @@ async function setup(page:Page):Promise<Fixture>{
      }
      await fulfill(route,[]);return;
    }
-   // Any unplanned function (including paid lesson audio) is denied, never contacted.
    fixture.writes++;
    await fulfill(route,{error:'unexpected_endpoint'},503);
  });
@@ -79,6 +75,13 @@ async function openEnglish(page:Page){
  await page.getByRole('button',{name:'Open English Golden Lesson',exact:true}).click();
  await page.getByRole('tab',{name:'Professor',exact:true}).click();
 }
+async function triggerLegacyHiddenSelector(page:Page,key:Key){
+ const selector=page.locator('.learner-switch');
+ await expect(selector).toBeHidden();
+ // This is deliberate programmatic exercise of obsolete internal UI state, NOT an ordinary click.
+ // Keep the account-selection CSS restriction intact, just as it was before this repair.
+ await selector.locator('button').filter({hasText:learners[key].name}).evaluate((button:HTMLButtonElement)=>button.click());
+}
 
 test.describe('simulated account-bound browser journeys',()=>{
  test('delayed Viviane profile does not flash Rafael private workspace',async({page})=>{
@@ -90,20 +93,21 @@ test.describe('simulated account-bound browser journeys',()=>{
    await expect(page.getByRole('button',{name:'Continue Payroll',exact:true})).toBeVisible();
    expect(fixture.writes).toBe(0);
  });
- test('profile outage has retry/logout and never offers to overwrite the profile',async({page})=>{
+ test('profile outage has retry/logout after SDK retries and never offers to overwrite the profile',async({page})=>{
    const fixture=await setup(page);fixture.profileFail=true;
    await page.goto('/');await signIn(page);
-   await expect(page.getByTestId('profile-load-failure')).toBeVisible();
+   // supabase-js retries transient GET 503s with exponential backoff. Do not disable those retries.
+   await expect(page.getByTestId('profile-load-failure')).toBeVisible({timeout:20_000});
    await expect(page.getByRole('heading',{name:'Who is using this account?'})).toHaveCount(0);
    expect(fixture.writes).toBe(0);fixture.profileFail=false;
    await page.getByRole('button',{name:'Retry profile'}).click();
    await expect(page.getByTestId('active-learner-card')).toContainText('Rafael');
  });
- test('visual preview hides private evidence and prevents starting English under another displayed learner',async({page})=>{
+ test('programmatic legacy hidden selector cannot expose another learner history or start personalised actions',async({page})=>{
    const fixture=await setup(page);await page.goto('/');await signIn(page);
    await page.getByRole('button',{name:'Open Error Bank →',exact:true}).click();
    await expect(page.getByTestId('error-bank-view')).toContainText('FICTIONAL_PRIVATE_RAFAEL');
-   await page.locator('.learner-switch').getByRole('button',{name:'Viviane',exact:true}).click();
+   await triggerLegacyHiddenSelector(page,'viviane');
    await expect(page.getByTestId('account-preview-notice')).toContainText('signed in as Rafael');
    await page.getByRole('button',{name:'Open Error Bank →',exact:true}).click();
    await expect(page.getByTestId('error-bank-view')).not.toContainText('FICTIONAL_PRIVATE_RAFAEL');
@@ -114,11 +118,13 @@ test.describe('simulated account-bound browser journeys',()=>{
    await expect(page.getByTestId('audio-account-mismatch')).toBeVisible();
    expect(fixture.apiCalls).toBe(0);expect(fixture.writes).toBe(0);
  });
- test('returning to the signed-in profile restores permitted actions without a paid call',async({page})=>{
+ test('returning from programmatically induced preview restores permitted actions without unhiding account controls',async({page})=>{
    const fixture=await setup(page);await page.goto('/');await signIn(page);
-   await page.locator('.learner-switch').getByRole('button',{name:'Viviane',exact:true}).click();
-   await page.locator('.learner-switch').getByRole('button',{name:'Rafael',exact:true}).click();
+   await expect(page.getByTestId('active-learner-card')).toContainText('Rafael');
+   await triggerLegacyHiddenSelector(page,'viviane');
+   await triggerLegacyHiddenSelector(page,'rafael');
    await openEnglish(page);
+   await expect(page.locator('.learner-switch')).toBeHidden();
    await expect(page.getByTestId('account-preview-notice')).toHaveCount(0);
    await expect(page.getByRole('button',{name:'Start voice session',exact:true})).toBeEnabled();
    expect(fixture.apiCalls).toBe(0);
@@ -147,10 +153,10 @@ test.describe('simulated account-bound browser journeys',()=>{
    }
    expect(fixture.apiCalls).toBe(0);expect(fixture.writes).toBe(0);
  });
- test('history outage is explicit rather than replaced with invented results',async({page})=>{
+ test('history outage is explicit after SDK retries rather than replaced with invented results',async({page})=>{
    const fixture=await setup(page);fixture.memoryFail=true;
    await page.goto('/');await signIn(page);
-   await expect(page.getByText(/Measured learning evidence is temporarily unavailable/)).toBeVisible();
+   await expect(page.getByText(/Measured learning evidence is temporarily unavailable/)).toBeVisible({timeout:20_000});
    await expect(page.getByText('FICTIONAL_PRIVATE_RAFAEL',{exact:true})).toHaveCount(0);
    expect(fixture.writes).toBe(0);
  });
