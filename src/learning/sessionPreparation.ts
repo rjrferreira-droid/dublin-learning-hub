@@ -18,8 +18,8 @@ export function parseSessionPreparation(value: unknown): SessionPreparation {
   if(!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('invalid_session_preparation');
   const v=value as Record<string,unknown>;
   if(Object.keys(v).some(k=>!['version','goal','pace','support'].includes(k)) || v.version!==1
-      || !GOAL_OPTIONS.some(o=>o.value===v.goal) || !['patient','balanced'].includes(String(v.pace))
-      || !['profile','pt-BR','en'].includes(String(v.support))) throw new Error('invalid_session_preparation');
+      || !GOAL_OPTIONS.some(o=>o.value===v.goal) || typeof v.pace!=='string' || !['patient','balanced'].includes(v.pace)
+      || typeof v.support!=='string' || !['profile','pt-BR','en'].includes(v.support)) throw new Error('invalid_session_preparation');
   return {version:1,goal:v.goal as SessionPreparation['goal'],pace:v.pace as SessionPreparation['pace'],support:v.support as SessionPreparation['support']};
 }
 export function sameSessionPreparation(a:unknown,b:unknown):boolean {

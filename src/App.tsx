@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLearnerSession } from './auth/LearnerSession';
 import { canUseLearnerActions } from './auth/identity';
 import { PremiumAudioPanel } from './components/PremiumAudioPanel';
-import { ProfessorSessionPanel } from './components/ProfessorSessionPanel';
+import { ProfessorSessionPanel } from './components/DeferredProfessorPanel';
 import { getLearnerProfile, type LearnerKey, type LearningProfile } from './learners/profiles';
 import { DEFAULT_WEEK, PROFESSOR_MODES } from './learning/englishAcademy';
 import { rankAdaptivePriorities, type AdaptivePriority, type ReviewSignal } from './learning/adaptiveEngine';

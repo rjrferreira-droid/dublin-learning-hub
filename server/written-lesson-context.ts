@@ -12,6 +12,8 @@ export type WrittenLessonContext = {
 export type WrittenContextInput = {
   profileTrack: unknown; requestedTrack: string;
   requestedLessonId: string; resolvedLessonId: string;
+  /** Generated from enum-only choices by the server; never supplied verbatim by a browser. */
+  approachBrief?: string;
 };
 const tracks: Readonly<Record<string, StudyTrack>> = {
   rafael_finance: 'finance', viviane_payroll: 'payroll', english_academy: 'english',
@@ -71,7 +73,7 @@ export function buildWrittenLessonContext(
   ).join('\n');
   // The deployed evaluator reads technicalBrief but not workedExample/practiceScenario.
   // Put the common scope, explanations, case facts AND reference criteria into this shared field.
-  const technicalBrief = [scope, sections, caseReference, `OFFICIAL SOURCE REFERENCES\n${references}`].join('\n\n');
+  const technicalBrief = [scope, input.approachBrief ?? '', sections, caseReference, `OFFICIAL SOURCE REFERENCES\n${references}`].filter(Boolean).join('\n\n');
   const context: WrittenLessonContext = {
     title: module.title,
     objectives: [module.goal, ...pack.skills.map(skill => `Apply: ${skill}`)],

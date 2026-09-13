@@ -1,3 +1,4 @@
+import type {SessionPreparation} from '../learning/sessionPreparation.js';
 export type LearnerTrack = 'rafael_finance' | 'viviane_payroll' | 'english_academy';
 
 export type ReviewInterval = 'D+1' | 'D+7' | 'D+30' | 'D+90';
@@ -39,6 +40,7 @@ export type TutorSessionRequest = {
   mode: 'chapter_conversation' | 'case_feedback' | 'oral_mock' | 'english_drill' | 'general_conversation';
   languageProfile?: TutorLanguageProfile;
   validationMode?: boolean;
+  sessionPreparation?: SessionPreparation;
 };
 
 export type TutorSessionResult = {

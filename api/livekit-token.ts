@@ -1,4 +1,5 @@
 import { voiceValidationPlan } from '../server/voice-validation.js';
+import {parseSessionPreparation,teachingApproachBrief} from '../src/learning/sessionPreparation.js';
 import { buildWrittenLessonContext } from '../server/written-lesson-context.js';
 import { LESSON_MODULES } from '../src/learning/lessonModules.js';
 import { STUDY_PACKS } from '../src/learning/teachingPacks.js';
@@ -287,6 +288,9 @@ export default async function handler(req: any, res: any) {
   const mode = typeof body?.mode === 'string' && allowedModes.has(body.mode) ? body.mode : null;
   const validationMode = body?.validationMode === true;
   if (!body || !lessonId || !track || !mode) return send(res, 400, { error: 'invalid_professor_request' });
+  let sessionPreparation: ReturnType<typeof parseSessionPreparation>;
+  try { sessionPreparation=parseSessionPreparation(body.sessionPreparation); }
+  catch { return send(res,400,{error:'invalid_session_preparation'}); }
 
   const { data: learnerProfile, error: profileError } = await db
     .from('profiles')
@@ -318,7 +322,9 @@ export default async function handler(req: any, res: any) {
     writtenLesson = buildWrittenLessonContext({
       profileTrack: learnerProfile.learner_track, requestedTrack: track,
       requestedLessonId: lessonId, resolvedLessonId: persistenceLessonId,
+      approachBrief: teachingApproachBrief(sessionPreparation,profileForTrack(track)),
     }, LESSON_MODULES, STUDY_PACKS);
+    if (body.sessionPreparation!==undefined && !writtenLesson) return send(res,409,{error:'session_preparation_unavailable'});
     if (writtenLesson) lessonContext = writtenLesson.context;
   } catch {
     return send(res, 503, {error:'written_lesson_context_unavailable'});
@@ -327,6 +333,8 @@ export default async function handler(req: any, res: any) {
 
   const professorProfile = profileForTrack(track);
   const languageProfile = normalizeLanguageProfile(body.languageProfile);
+  if(sessionPreparation.support==='pt-BR') languageProfile.supportLanguage='pt-BR';
+  if(sessionPreparation.support==='en') { languageProfile.supportLanguage='en'; languageProfile.professorEnglishSharePct=100; }
   const requestedRoomName = `${validationMode ? 'validation:' : ''}lh-${randomUUID()}`;
   const participantIdentity = `learner-${randomUUID()}`;
   let startup: Awaited<ReturnType<typeof startProfessorAtomically>>;
@@ -349,6 +357,7 @@ export default async function handler(req: any, res: any) {
     languageProfile,
     lessonContext,
     teachingContent: writtenLesson?.descriptor ?? null,
+    sessionPreparation,
     budgetReservationId: budget.reservationId,
     budgetReservationUsd: budget.reservationUsd,
     globalAiCapUsd: budget.globalAiCapUsd,
@@ -410,6 +419,7 @@ export default async function handler(req: any, res: any) {
       dispatchId,
       sessionId: persistence.sessionId,
       teachingContent: writtenLesson?.descriptor ?? null,
+      sessionPreparation: writtenLesson ? sessionPreparation : null,
     });
   } catch (cause) {
     // An HTTP failure is not proof that no agent was dispatched: preserve its reserve.

@@ -8,6 +8,9 @@ import { connectProfessor, type ProfessorConnection } from '../professor/livekit
 import { professorVoiceLabel, type ProfessorVoiceState } from '../professor/voiceState';
 import type { LearnerTrack, TutorSessionRequest } from '../services/contracts';
 import { ProfessorLearningGuide } from './ProfessorLearningGuide';
+import {SessionPreparationPanel} from './SessionPreparationPanel';
+import {SessionOutcomePanel} from './SessionOutcomePanel';
+import {DEFAULT_PREPARATION,type SessionPreparation} from '../learning/sessionPreparation';
 import '../professor/voice-validation.css';
 
 type Props={lessonId?:string;track:'finance'|'payroll'|'english';learnerKey?:LearnerKey};
@@ -27,6 +30,9 @@ export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payrol
  const requestedValidation=typeof window!=='undefined'&&new URLSearchParams(window.location.search).get('validation')==='1';
  const learner=getLearnerProfile(learnerKey);
  const [state,setState]=useState<SessionState>('ready');
+ const [sessionPreparation,setSessionPreparation]=useState<SessionPreparation>({...DEFAULT_PREPARATION});
+ const [microphoneEnabled,setMicrophoneEnabled]=useState(true);
+ const [microphoneBusy,setMicrophoneBusy]=useState(false);
  const [voiceState,setVoiceState]=useState<ProfessorVoiceState>('awaiting_professor');
  const [validationConsent,setValidationConsent]=useState(false);
  const [details,setDetails]=useState<{sessionId:string;validationMode:boolean;maxSessionSeconds:number}|null>(null);
@@ -53,7 +59,7 @@ export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payrol
   setState('connecting');setVoiceState('awaiting_professor');setDetails(null);setError(null);setAudioBlocked(false);
   try{
    const contract=contractFor(track);
-   const connection=await connectProfessor({lessonId:resolvedLessonId(track,lessonId),learnerId:learnerKey,track:contract.learnerTrack,mode:contract.mode,validationMode:requestedValidation,languageProfile:{preferredMix:'uk-us-mix',includeIrishExposure:true,correctionMode:learner.english.preferredCorrectionMode,professorEnglishSharePct:learner.english.professorEnglishSharePct,supportLanguage:learner.professor.defaultLanguage}},{
+   const connection=await connectProfessor({lessonId:resolvedLessonId(track,lessonId),learnerId:learnerKey,track:contract.learnerTrack,mode:contract.mode,validationMode:requestedValidation,sessionPreparation,languageProfile:{preferredMix:'uk-us-mix',includeIrishExposure:true,correctionMode:learner.english.preferredCorrectionMode,professorEnglishSharePct:learner.english.professorEnglishSharePct,supportLanguage:learner.professor.defaultLanguage}},{
     signal:controller.signal,expectedUserId:account.userId,
     onRemoteAudio:remote=>{if(!controller.signal.aborted)attachAudio(remote);},
     onAudioPlaybackStatusChanged:allowed=>{if(!controller.signal.aborted)setAudioBlocked(!allowed);},
@@ -63,7 +69,7 @@ export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payrol
    if(controller.signal.aborted){await connection.disconnect();return;}
    connectionRef.current=connection;
    setDetails({sessionId:connection.sessionId,validationMode:connection.validationMode,maxSessionSeconds:connection.maxSessionSeconds});
-   setAudioBlocked(!connection.room.canPlaybackAudio);setState('connected');
+   setAudioBlocked(!connection.room.canPlaybackAudio);setMicrophoneEnabled(true);setMicrophoneBusy(false);setState('connected');
   }catch(cause){if(controller.signal.aborted)return;setError(cause instanceof Error?cause.message:'Professor connection failed.');setState('error');}
  }
  async function stop(){
@@ -71,6 +77,16 @@ export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payrol
   const connection=connectionRef.current;connectionRef.current=null;
   if(connection)await connection.disconnect().catch(()=>undefined);
   elements.current.forEach(e=>e.remove());elements.current=[];setAudioBlocked(false);setState('ended');
+ }
+ async function toggleMicrophone(){
+  const connection=connectionRef.current;const controller=connectionAbortRef.current;
+  if(!connection||!controller||controller.signal.aborted||microphoneBusy)return;
+  setMicrophoneBusy(true);
+  try{
+   await connection.setMicrophoneEnabled(!microphoneEnabled);
+   if(!controller.signal.aborted&&connectionRef.current===connection)setMicrophoneEnabled(v=>!v);
+  }catch{if(!controller.signal.aborted)setError('The microphone setting could not be changed.');}
+  finally{if(!controller.signal.aborted)setMicrophoneBusy(false);}
  }
  async function enableAudio(){
   const room=connectionRef.current?.room;if(!room)return;
@@ -85,6 +101,7 @@ export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payrol
    <h3>{track==='english'?`${learner.displayName}'s conversation tutor`:track==='payroll'?'Irish Payroll Professor':'Finance Professor'}</h3>
    <p>{track==='english'?`British + American English with deliberate Irish exposure. Current English share target: ${learner.english.professorEnglishSharePct}%.`:track==='payroll'?'Patient payroll coaching with progressively more professional English.':'Executive finance coaching focused on judgement, business partnering and Dublin readiness.'}</p>
   </div>
+  {accountMatches&&!active&&state!=='connecting'&&<SessionPreparationPanel value={sessionPreparation} onChange={setSessionPreparation}/>}
   {requestedValidation&&!active&&state!=='connecting'&&<div className="professor-validation-card" data-testid="voice-validation-consent">
    <strong>Short validation · up to 5 minutes</strong>
    <p>This is a paid voice session, not a free simulation. Transcript, evaluation and cost records are retained. Your learning profile, Error Bank and spaced reviews are not updated.</p>
@@ -95,14 +112,17 @@ export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payrol
   <div className="professor-live-actions">
    {!active?<button className="primary-btn" type="button" onClick={()=>void start()} disabled={!enabled||!accountMatches||state==='connecting'||(requestedValidation&&!validationConsent)}>{!enabled?'LiveKit setup required':state==='connecting'?'Connecting…':requestedValidation?'Start validation session':'Start voice session'}</button>:<>
     {audioBlocked&&<button className="primary-btn professor-enable-audio" type="button" onClick={()=>void enableAudio()}>🔊 Enable sound</button>}
+    <button className="secondary-btn professor-mute" type="button" disabled={microphoneBusy} aria-pressed={!microphoneEnabled} onClick={()=>void toggleMicrophone()}>{microphoneEnabled?'Mute microphone':'Unmute microphone'}</button>
     <button className="primary-btn professor-stop" type="button" onClick={()=>void stop()}>End session</button>
    </>}
   </div>
+  {active&&!microphoneEnabled&&<p className="professor-mic-state" role="status">Microphone muted. The session timer and usage charges continue; use End session to leave.</p>}
   {audioBlocked&&active&&<div className="professor-audio-warning" role="status">Your browser blocked voice playback. Tap <strong>Enable sound</strong> once.</div>}
   {active&&voiceState==='awaiting_professor'&&<p className="professor-privacy-note">The room is connected. Waiting for the Professor to report its state; this does not yet confirm that voice is ready.</p>}
   {details&&<p className="professor-session-reference" data-testid="professor-session-reference">Session {details.sessionId.slice(0,8)} · {details.validationMode?'Validation':'Learning'} · maximum {Math.round(details.maxSessionSeconds/60)} min</p>}
   {error&&<div className="professor-live-error" role="alert">{error}</div>}
   {state==='ended'&&details&&<p className="professor-privacy-note">Connection ended. Evaluation and cost settlement may still be processing; this screen does not confirm they were saved.</p>}
+  {state==='ended'&&details&&<SessionOutcomePanel key={details.sessionId} sessionId={details.sessionId} validation={details.validationMode}/>}
   <div ref={audioHostRef} className="professor-audio-host" aria-hidden="true"/>
   <div className="professor-privacy-note">AI voice tutor · Raw learner voice is not stored by the Learning Hub by default.</div>
   {accountMatches&&!active&&state!=='connecting'&&<ProfessorLearningGuide track={track} lessonId={lessonId} phase={state==='ended'?'ended':'ready'}/>}
