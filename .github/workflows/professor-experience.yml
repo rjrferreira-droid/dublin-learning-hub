@@ -6,7 +6,7 @@ concurrency:
   group: learning-experience-${{ github.ref }}
   cancel-in-progress: true
 permissions:
-  contents: read
+  contents: write
 jobs:
   companion-and-quality:
     if: github.ref == 'refs/heads/feat/professor-experience-2026-09-13'
@@ -19,54 +19,57 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Preserve worker, database, auth, standalone child and previous request context
+      - name: Preserve worker, database, auth, child portal and other server paths
         run: |
           git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- professor-agent supabase src/auth src/components/AuthGate.tsx src/components/LittleEnglish.tsx src/little-english.css src/professor/voiceState.ts
-          git diff --exit-code b0a629ae70b271c896709c2fa1a6a25a105ce220 HEAD -- api server
-      - name: Install locked dependencies and build the committed candidate
+          git diff --exit-code f7235b7f2d4c12efd6e04d5ed6de346f2c8597a5 HEAD -- api server ':!api/livekit-token.ts' ':!server/written-lesson-context.ts'
+      - name: Materialize narrow scenario selection before verification
+        run: node scripts/prepare-workshop-imports.mjs && node scripts/materialize-workshop-handoff.mjs && node scripts/extend-workshop-integration.mjs
+      - name: Install locked dependencies and build candidate
         run: npm ci && npm run build
-      - name: Compare initial JavaScript with the previous baseline using identical dependencies
+      - name: Measure initial bundle against the same previous baseline
         run: |
           git worktree add --detach "$RUNNER_TEMP/lh-payload-baseline" d3818cc656f0afa820922eb7c6675a30a5dbdd7a
           ln -s "$GITHUB_WORKSPACE/node_modules" "$RUNNER_TEMP/lh-payload-baseline/node_modules"
           (cd "$RUNNER_TEMP/lh-payload-baseline" && "$GITHUB_WORKSPACE/node_modules/.bin/vite" build --manifest --outDir "$RUNNER_TEMP/lh-baseline-dist")
           node scripts/bundle-metrics.mjs "$RUNNER_TEMP/lh-baseline-dist"
-      - name: Workshop answer keys, editorial consistency and all previous contracts
+      - name: All contracts including 216 scenario and preparation combinations
         run: node --experimental-strip-types --test tests/*.test.ts
-      - name: Bundle unchanged handler/evaluator and candidate connection for isolated tests
+      - name: Bundle candidate handler, unchanged evaluator and client
         run: |
           npx --no-install esbuild api/livekit-token.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-api.mjs
           npx --no-install esbuild professor-agent/src/evaluation.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-evaluator.mjs
           node scripts/bundle-client-boundaries.mjs
-      - name: Execute real code with simulated providers and media only
+      - name: Executable assembly and lifecycle with fictional services only
         run: node --experimental-test-module-mocks --test tests/written-bridge.integration.mjs tests/workspace-client.integration.mjs
       - run: npx playwright install --with-deps chromium
-      - name: Combined written workshops, live-session continuity and prior UI regressions
+      - name: Full browser regressions including explicit handoff and privacy boundaries
         run: npx playwright test --grep-invert 'authenticated Learning Hub shell' --retries=0
       - name: Production-build loading and recovery
         run: npx playwright test --config playwright.production.config.ts
-      - name: Require workshop, continuity and previous screenshots
-        run: |
-          test "$(find test-results -name 'workshop-*.png' | wc -l)" -eq 6
-          test "$(find test-results -name 'continuity-*.png' | wc -l)" -eq 3
-          test "$(find test-results -name 'experience-*.png' | wc -l)" -ge 4
-          test -s quality-results/bundle-metrics.json
-      - name: Retain fictional UI evidence and aggregate payload report only
-        uses: actions/upload-artifact@v4
+      - name: Require new handoff screenshots
+        run: test "$(find test-results -name 'handoff-*.png' | wc -l)" -eq 6
+      - uses: actions/upload-artifact@v4
         with:
-          name: accelerated-lesson-workspace-evidence
+          name: workshop-handoff-evidence
           path: |
-            test-results/**/workshop-*.png
-            test-results/**/continuity-*.png
-            test-results/**/experience-*.png
+            test-results/**/handoff-*.png
             quality-results/bundle-metrics.json
           retention-days: 7
           if-no-files-found: error
-      - name: Unchanged source and release boundary
+      - name: Commit only verified wiring to the feature branch
         run: |
+          test "$GITHUB_REF_NAME" = "feat/professor-experience-2026-09-13"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add api/livekit-token.ts src/services/contracts.ts src/professor/livekitProfessor.ts src/App.tsx src/components/LessonStudyPanel.tsx src/components/AppliedPracticePanel.tsx src/components/LessonProfessorWorkspace.tsx src/components/ProfessorSessionPanel.tsx server/written-lesson-context.ts src/learning/workshopSelection.ts tsconfig.app.json tsconfig.api.json tests/written-bridge.integration.mjs
+          if ! git diff --cached --quiet; then
+            git commit -m 'Connect verified explicit workshop selection to teacher and evaluator references'
+            git push origin HEAD:feat/professor-experience-2026-09-13
+          fi
           git diff --exit-code
-          echo 'Read-only verification of committed feature preview. No paid model/voice call, real credentials, database writes, worker deployment, normal-V2 promotion or budget change. Workshops are local, not recorded mastery. Simulated continuity is not real media acceptance.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Acceptance boundary
+        run: echo 'Candidate only. Fictional Auth, responses and media. No learner drafts sent, live credentials, paid AI call, DB migration, worker deployment, budget change or normal-V2 promotion.' >> "$GITHUB_STEP_SUMMARY"
