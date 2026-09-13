@@ -40,7 +40,7 @@ for(const course of courses)for(const viewport of [{name:'desktop',width:1440,he
  await tab('Test');for(let i=0;i<5;i++){const q=panel.getByTestId('checkpoint-question-'+i);await q.getByRole('radio').nth(course.answers[i]).check();await q.getByRole('button',{name:'Check answer',exact:true}).click();}
  await expect(panel.getByTestId('local-checkpoint-result')).toHaveText('5 of 5 checked · 5 correct in this attempt · not saved to your profile');
  await panel.getByRole('button',{name:'Restart this local checkpoint',exact:true}).click();await expect(panel.getByTestId('local-checkpoint-result')).toContainText('0 of 5 checked');await expect(panel.locator('input:checked')).toHaveCount(0);
- await tab('Sources');await expect(panel.getByTestId('lesson-sources')).toContainText('not yet supplied to the live Professor');for(const link of await panel.getByTestId('lesson-sources').getByRole('link').all())await expect(link).toHaveAttribute('rel','noopener noreferrer');
+ await tab('Sources');await expect(panel.getByTestId('lesson-sources')).toContainText('Local drafts and quiz results are not sent');for(const link of await panel.getByTestId('lesson-sources').getByRole('link').all())await expect(link).toHaveAttribute('rel','noopener noreferrer');
  await tab('Case');await panel.getByText('Worked case and review checklist',{exact:true}).click();
  expect(await panel.evaluate(e=>e.scrollWidth<=e.clientWidth+1)).toBe(true);const box=await panel.boundingBox();expect(box!.width).toBeLessThanOrEqual(viewport.width);expect(requests()).toBe(0);
  await panel.screenshot({path:info.outputPath(`lesson-${course.track}-${viewport.name}.png`)});

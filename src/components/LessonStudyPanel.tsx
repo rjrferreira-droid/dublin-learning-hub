@@ -84,7 +84,7 @@ function StudyContent({module,activeTab,onTabChange}:{module:NonNullable<ReturnT
    <h2>Sources, assumptions and coverage</h2><p>{module.scope}</p>
    <p>The linked pages support the stated concepts. Teaching explanations, control suggestions, cases and answer choices are original. The review date is an editorial check, not a guarantee that a source has not changed since.</p>
    {module.sources.map(s=><article key={s.id} className="lesson-source"><a href={s.url} target="_blank" rel="noopener noreferrer">{s.label}</a><p>{s.supports}</p><small>Reviewed {s.reviewedOn}</small></article>)}
-   <p className="lesson-study-note">Written content is not yet supplied to the live Professor. Audio, real conversation, persisted exercise assessment and complete curriculum coverage remain separate work. This lesson creates no learning-history entry.</p>
+   <p className="lesson-study-note">This preview prepares the matching written lesson on the server for the Professor and evaluator. Local drafts and quiz results are not sent. Live voice use, persisted assessment and complete curriculum coverage remain separate work.</p>
   </section>
  </div>;
 }

@@ -33,7 +33,7 @@ for(const course of courses)for(const viewport of [{name:'desktop',width:1440,he
  await guide.getByRole('button',{name:'Give me a hint',exact:true}).click();await expect(guide.locator('.study-hints p')).toHaveCount(2);await expect(guide.getByRole('button',{name:'Give me a hint',exact:true})).toBeDisabled();
  await guide.getByRole('button',{name:'Show worked answer',exact:true}).click();await expect(guide.getByTestId('study-worked-answer')).toBeVisible();
  await guide.getByRole('button',{name:'Next practice',exact:true}).click();await expect(guide).toContainText('Practice 2 of 3');await expect(guide.getByTestId('study-worked-answer')).toHaveCount(0);await expect(guide.locator('.study-hints p')).toHaveCount(0);
- await guide.getByText('Scope and checked sources',{exact:true}).click();await expect(guide).toContainText('not yet part of the live Professor');await expect(guide.locator('a').first()).toHaveAttribute('rel','noopener noreferrer');
+ await guide.getByText('Scope and checked sources',{exact:true}).click();await expect(guide).toContainText('Actual use in a voice conversation still needs validation');await expect(guide.locator('a').first()).toHaveAttribute('rel','noopener noreferrer');
  expect(await guide.evaluate(e=>e.scrollWidth<=e.clientWidth+1)).toBe(true);
  const box=await guide.boundingBox();expect(box).not.toBeNull();expect(box!.width).toBeLessThanOrEqual(viewport.width);
  const buttons=await guide.locator('button').all();for(const button of buttons){const b=await button.boundingBox();if(b)expect(b.height).toBeGreaterThanOrEqual(44);}

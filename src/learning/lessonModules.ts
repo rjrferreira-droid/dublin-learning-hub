@@ -1,4 +1,4 @@
-import type { StudyTrack } from './teachingPacks';
+import type { StudyTrack } from './teachingPacks.js';
 
 export type LessonSource={id:string;label:string;url:string;supports:string;reviewedOn:string};
 export type LessonSection={id:string;title:string;paragraphs:readonly string[];supportPt:string;sourceIds:readonly string[]};

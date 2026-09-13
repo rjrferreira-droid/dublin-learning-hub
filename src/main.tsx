@@ -15,6 +15,7 @@ import './learning-memory-panel.css';
 import './cost-center.css';
 import './auth.css';
 import './little-english.css';
+import './adult-mobile-utilities.css';
 
 const manuzinhaMode = new URLSearchParams(window.location.search).get('manuzinha') === '1';
 

@@ -1,4 +1,7 @@
 import { voiceValidationPlan } from '../server/voice-validation.js';
+import { buildWrittenLessonContext } from '../server/written-lesson-context.js';
+import { LESSON_MODULES } from '../src/learning/lessonModules.js';
+import { STUDY_PACKS } from '../src/learning/teachingPacks.js';
 import { startProfessorAtomically, ProfessorStartupError } from '../server/professor-start.js';
 import { randomUUID } from 'node:crypto';
 import { requestedLearnerMatchesAccount } from '../src/auth/identity.js';
@@ -308,6 +311,20 @@ export default async function handler(req: any, res: any) {
   const persistenceLessonId = await resolvePersistenceLessonId(db, track, lessonId);
   if (!persistenceLessonId) return send(res, 503, { error: 'professor_session_persistence_unavailable' });
 
+  // Choose authored content only after authenticated track/lesson resolution and BEFORE reserving.
+  // Browser-supplied lessonContext, answers and drafts are intentionally ignored.
+  let writtenLesson: ReturnType<typeof buildWrittenLessonContext>;
+  try {
+    writtenLesson = buildWrittenLessonContext({
+      profileTrack: learnerProfile.learner_track, requestedTrack: track,
+      requestedLessonId: lessonId, resolvedLessonId: persistenceLessonId,
+    }, LESSON_MODULES, STUDY_PACKS);
+    if (writtenLesson) lessonContext = writtenLesson.context;
+  } catch {
+    return send(res, 503, {error:'written_lesson_context_unavailable'});
+  }
+
+
   const professorProfile = profileForTrack(track);
   const languageProfile = normalizeLanguageProfile(body.languageProfile);
   const requestedRoomName = `${validationMode ? 'validation:' : ''}lh-${randomUUID()}`;
@@ -331,6 +348,7 @@ export default async function handler(req: any, res: any) {
     qualityTier: budget.qualityTier,
     languageProfile,
     lessonContext,
+    teachingContent: writtenLesson?.descriptor ?? null,
     budgetReservationId: budget.reservationId,
     budgetReservationUsd: budget.reservationUsd,
     globalAiCapUsd: budget.globalAiCapUsd,
@@ -391,6 +409,7 @@ export default async function handler(req: any, res: any) {
       reservedAfterUsd: budget.reservedAfterUsd,
       dispatchId,
       sessionId: persistence.sessionId,
+      teachingContent: writtenLesson?.descriptor ?? null,
     });
   } catch (cause) {
     // An HTTP failure is not proof that no agent was dispatched: preserve its reserve.
