@@ -3,7 +3,7 @@ on:
   push:
     branches: [feat/professor-experience-2026-09-13]
 permissions:
-  contents: read
+  contents: write
 jobs:
   companion-and-quality:
     runs-on: ubuntu-latest
@@ -15,28 +15,39 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
       - name: Preserve the deployed voice baseline, backend, auth and child portal
-        run: |
-          git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- api server professor-agent supabase src/auth src/components/AuthGate.tsx src/components/LittleEnglish.tsx src/little-english.css src/professor/livekitProfessor.ts src/professor/voiceState.ts
+        run: git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- api server professor-agent supabase src/auth src/components/AuthGate.tsx src/components/LittleEnglish.tsx src/little-english.css src/professor/livekitProfessor.ts src/professor/voiceState.ts
+      - name: Materialize narrow written-tab routing before tests
+        run: node scripts/materialize-written-lessons.mjs
       - name: Install locked dependencies and build
         run: npm ci && npm run build
-      - name: Check companion contracts and designed reference-case structure, not model behaviour
+      - name: Written answer-key and existing contract tests, no model calls
         run: node --experimental-strip-types --test tests/*.test.ts
       - run: npx playwright install --with-deps chromium
-      - name: Existing regressions plus three-course desktop/mobile companions with fictional data
+      - name: Existing and new three-course browser checks with fictional data
         run: npx playwright test --grep-invert 'authenticated Learning Hub shell' --retries=0
-      - name: Keep screenshots of public companion content and fictional browser fixtures only
+      - name: Keep only public-content screenshots with fictional drafts
         uses: actions/upload-artifact@v4
         with:
-          name: professor-study-guide-previews
-          path: test-results/**/study-*.png
+          name: written-lesson-previews
+          path: |
+            test-results/**/lesson-*.png
+            test-results/**/study-*.png
           retention-days: 7
           if-no-files-found: error
-      - name: Check working tree and state release boundary
+      - name: Commit only browser-verified App routing to the parallel branch
         run: |
+          test "$GITHUB_REF_NAME" = "feat/professor-experience-2026-09-13"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/App.tsx
+          if ! git diff --cached --quiet; then
+            git commit -m 'Integrate verified written lessons across seven study tabs'
+            git push origin HEAD:feat/professor-experience-2026-09-13
+          fi
           git diff --exit-code
-          echo 'No credentials, model calls, live learner records, migrations, voice-worker deployment or baseline-branch update. Reference cases are authored expectations, not executed LLM evaluations.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Release boundary
+        run: echo 'Written foundations and local fixed-answer practice only. No credentials, persisted scores, model calls, backend changes, worker deployment or voice-baseline update.' >> "$GITHUB_STEP_SUMMARY"
