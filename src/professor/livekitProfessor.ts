@@ -1,3 +1,4 @@
+import {sameWorkshopSelection} from '../learning/workshopSelection';
 import { Room, RoomEvent, type RemoteAudioTrack, Track } from 'livekit-client';
 import { supabase } from '../services/supabase';
 import type { TutorSessionRequest } from '../services/contracts';
@@ -30,12 +31,13 @@ async function requestProfessorToken(request:TutorSessionRequest,signal?:AbortSi
  if(error)throw error;
  if(!data.session?.access_token)throw new Error('Sign in before starting the Professor.');
  if(expectedUserId&&data.session.user.id!==expectedUserId)throw new Error('The signed-in account changed. Start again from the correct account.');
- const response=await fetch('/api/livekit-token',{method:'POST',signal,headers:{'content-type':'application/json',authorization:`Bearer ${data.session.access_token}`},body:JSON.stringify({lessonId:request.lessonId,learnerId:request.learnerId,track:request.track,mode:request.mode,languageProfile:request.languageProfile,validationMode:request.validationMode===true,sessionPreparation:request.sessionPreparation})});
+ const response=await fetch('/api/livekit-token',{method:'POST',signal,headers:{'content-type':'application/json',authorization:`Bearer ${data.session.access_token}`},body:JSON.stringify({lessonId:request.lessonId,learnerId:request.learnerId,track:request.track,mode:request.mode,languageProfile:request.languageProfile,validationMode:request.validationMode===true,sessionPreparation:request.sessionPreparation,workshopSelection:request.workshopSelection})});
  const body=await response.json().catch(()=>({}));requireNotAborted(signal);
  if(!response.ok)throw new Error(errorMessage(typeof body?.error==='string'?body.error:'professor_connection_failed'));
  if(typeof body.sessionId!=='string'||!Number.isInteger(body.maxSessionSeconds)||body.maxSessionSeconds<60||body.maxSessionSeconds>1200||typeof body.roomName!=='string'||typeof body.validationMode!=='boolean')throw new Error('Professor session confirmation is incomplete. No microphone was opened.');
  if(body.roomName.startsWith('validation:')!==body.validationMode||(request.validationMode===true&&!body.validationMode))throw new Error('Validation protection could not be confirmed. No microphone was opened.');
  if(request.sessionPreparation && (!body.sessionPreparation || !sameSessionPreparation(request.sessionPreparation,body.sessionPreparation)))throw new Error('Session preferences could not be confirmed. No microphone was opened.');
+ if(!sameWorkshopSelection(request.workshopSelection,body.workshopSelection))throw new Error('Workshop reference could not be confirmed. No microphone was opened.');
  return body as ProfessorTokenResponse;
 }
 export async function connectProfessor(request:TutorSessionRequest,options?:{

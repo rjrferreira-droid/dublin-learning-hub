@@ -1,3 +1,4 @@
+import type {WorkshopSelection} from '../learning/workshopSelection.js';
 import type {SessionPreparation} from '../learning/sessionPreparation.js';
 export type LearnerTrack = 'rafael_finance' | 'viviane_payroll' | 'english_academy';
 
@@ -41,6 +42,7 @@ export type TutorSessionRequest = {
   languageProfile?: TutorLanguageProfile;
   validationMode?: boolean;
   sessionPreparation?: SessionPreparation;
+  workshopSelection?: WorkshopSelection;
 };
 
 export type TutorSessionResult = {

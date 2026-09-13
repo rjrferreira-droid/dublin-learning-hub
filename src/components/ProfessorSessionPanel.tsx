@@ -1,3 +1,5 @@
+import {selectedWorkshop,type WorkshopSelection} from '../learning/workshopSelection';
+import {WorkshopSessionReference} from './WorkshopSessionReference';
 import {useEffect,useRef,useState} from 'react';
 import {useLearnerSession} from '../auth/LearnerSession';
 import {canUseLearnerActions} from '../auth/identity';
@@ -13,7 +15,7 @@ import {SessionOutcomePanel} from './SessionOutcomePanel';
 import {DEFAULT_PREPARATION,type SessionPreparation} from '../learning/sessionPreparation';
 import '../professor/voice-validation.css';
 
-type Props={lessonId?:string;track:'finance'|'payroll'|'english';learnerKey?:LearnerKey;compact?:boolean;onActivityChange?:(busy:boolean)=>void};
+type Props={lessonId?:string;track:'finance'|'payroll'|'english';learnerKey?:LearnerKey;compact?:boolean;onActivityChange?:(busy:boolean)=>void;workshopId?:string;onClearWorkshop?:()=>void};
 type SessionState='ready'|'connecting'|'connected'|'ending'|'ended'|'error';
 const lessons={finance:'b3639582-3c32-4147-a4b3-84237d11a66e',payroll:'6ffda415-3b18-46ab-afaa-414f81a7eb31'};
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -23,12 +25,14 @@ function contractFor(track:Props['track']):{learnerTrack:LearnerTrack;mode:Tutor
  if(track==='english')return {learnerTrack:'english_academy',mode:'general_conversation'};
  return {learnerTrack:'rafael_finance',mode:'chapter_conversation'};
 }
-export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payroll'?'viviane':'rafael',compact=false,onActivityChange}:Props){
+export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payroll'?'viviane':'rafael',compact=false,onActivityChange,workshopId,onClearWorkshop}:Props){
  const account=useLearnerSession();const accountMatches=canUseLearnerActions(account.learnerKey,learnerKey,track);
  const enabled=isFeatureEnabled('professor');
  const requestedValidation=typeof window!=='undefined'&&new URLSearchParams(window.location.search).get('validation')==='1';
  const learner=getLearnerProfile(learnerKey);
  const [state,setState]=useState<SessionState>('ready');
+ const pickedWorkshop=selectedWorkshop(track,workshopId?{version:1,id:workshopId}:null);
+ const [sessionWorkshop,setSessionWorkshop]=useState<WorkshopSelection|null>(null);
  const [sessionPreparation,setSessionPreparation]=useState<SessionPreparation>({...DEFAULT_PREPARATION});
  const [microphoneEnabled,setMicrophoneEnabled]=useState(true);const [microphoneBusy,setMicrophoneBusy]=useState(false);
  const [voiceState,setVoiceState]=useState<ProfessorVoiceState>('awaiting_professor');
@@ -62,10 +66,12 @@ export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payrol
   if(!mounted.current||!enabled||!accountMatches||busy||startLock.current||stopPromise.current||(requestedValidation&&!validationConsent))return;
   // A synchronous lock prevents duplicate requests before React has rendered the disabled button.
   startLock.current=true;const controller=new AbortController();connectionAbortRef.current=controller;
+  const workshopChoice:WorkshopSelection|undefined=pickedWorkshop?{version:1,id:pickedWorkshop.id}:undefined;
+  setSessionWorkshop(workshopChoice??null);
   clearAudio();setState('connecting');setVoiceState('awaiting_professor');setDetails(null);setError(null);setAudioBlocked(false);
   try{
    const contract=contractFor(track);
-   const connection=await connectProfessor({lessonId:resolvedLessonId(track,lessonId),learnerId:learnerKey,track:contract.learnerTrack,mode:contract.mode,validationMode:requestedValidation,sessionPreparation,languageProfile:{preferredMix:'uk-us-mix',includeIrishExposure:true,correctionMode:learner.english.preferredCorrectionMode,professorEnglishSharePct:learner.english.professorEnglishSharePct,supportLanguage:learner.professor.defaultLanguage}},{
+   const connection=await connectProfessor({lessonId:resolvedLessonId(track,lessonId),learnerId:learnerKey,track:contract.learnerTrack,mode:contract.mode,validationMode:requestedValidation,sessionPreparation,workshopSelection:workshopChoice,languageProfile:{preferredMix:'uk-us-mix',includeIrishExposure:true,correctionMode:learner.english.preferredCorrectionMode,professorEnglishSharePct:learner.english.professorEnglishSharePct,supportLanguage:learner.professor.defaultLanguage}},{
     signal:controller.signal,expectedUserId:account.userId,
     onRemoteAudio:remote=>attachAudio(remote,controller),
     onAudioPlaybackStatusChanged:allowed=>{if(current(controller))setAudioBlocked(!allowed);},
@@ -120,6 +126,7 @@ export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payrol
    <h3>{track==='english'?`${learner.displayName}'s conversation tutor`:track==='payroll'?'Irish Payroll Professor':'Finance Professor'}</h3>
    <p>{track==='english'?`British + American English with deliberate Irish exposure. Current English share target: ${learner.english.professorEnglishSharePct}%.`:track==='payroll'?'Patient payroll coaching with progressively more professional English.':'Executive finance coaching focused on judgement, business partnering and Dublin readiness.'}</p>
   </div>
+  <WorkshopSessionReference track={track} selection={busy?sessionWorkshop:pickedWorkshop?{version:1,id:pickedWorkshop.id}:null} busy={busy} onClear={onClearWorkshop}/>
   {accountMatches&&!busy&&!compact&&<SessionPreparationPanel value={sessionPreparation} onChange={setSessionPreparation}/>}
   {requestedValidation&&!busy&&!compact&&<div className="professor-validation-card" data-testid="voice-validation-consent">
    <strong>Short validation · up to 5 minutes</strong>

@@ -5,14 +5,14 @@ import { STUDY_PACKS, type StudyTrack } from '../learning/teachingPacks';
 import '../learning/lesson-study.css';
 
 const studyTabs=new Set(['Learn','English','Practice','Visual','Case','Test','Sources']);
-type Props={track:StudyTrack;lessonId:string;activeTab:string;onTabChange:(tab:string)=>void};
-export function LessonStudyPanel({track,lessonId,activeTab,onTabChange}:Props){
+type Props={track:StudyTrack;lessonId:string;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean};
+export function LessonStudyPanel({track,lessonId,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled}:Props){
  const module=lessonModuleFor(track,lessonId);
  if(!module)return studyTabs.has(activeTab)?<p role="status">No reviewed written module is available for this lesson yet.</p>:null;
  // Key includes the actual lesson. Drafts stay in component memory across tabs, never storage/server.
- return <StudyContent key={module.lessonId} module={module} activeTab={activeTab} onTabChange={onTabChange}/>;
+ return <StudyContent key={module.lessonId} module={module} activeTab={activeTab} onTabChange={onTabChange} onPrepareWorkshop={onPrepareWorkshop} handoffDisabled={handoffDisabled}/>;
 }
-function StudyContent({module,activeTab,onTabChange}:{module:NonNullable<ReturnType<typeof lessonModuleFor>>;activeTab:string;onTabChange:(tab:string)=>void}){
+function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled}:{module:NonNullable<ReturnType<typeof lessonModuleFor>>;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean}){
  const pack=STUDY_PACKS[module.track];
  const [drafts,setDrafts]=useState<Record<string,string>>({});
  const [hints,setHints]=useState<Record<string,number>>({});
@@ -48,7 +48,7 @@ function StudyContent({module,activeTab,onTabChange}:{module:NonNullable<ReturnT
    <p className="lesson-study-note">No microphone is opened here; reading an example is not a pronunciation or fluency result.</p>
   </section>
   <section className="lesson-study-section" hidden={activeTab!=='Practice'} data-testid="lesson-practice">
-   <AppliedPracticePanel key={module.track} track={module.track}/>
+   <AppliedPracticePanel key={module.track} track={module.track} onPrepare={onPrepareWorkshop} handoffDisabled={handoffDisabled}/>
    <h2>Retrieve, then compare</h2><p>Try each question before opening help. Drafts remain while you switch tabs, but disappear when this lesson closes, the page reloads or the account signs out. Avoid confidential information.</p>
    {pack.exercises.map((q,i)=><section className="lesson-exercise" key={q.id} data-testid={'written-practice-'+i}>
     <h3>{i+1}. {q.question}</h3><label htmlFor={'draft-'+q.id}>Your practice draft {i+1}</label>

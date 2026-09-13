@@ -1,7 +1,7 @@
 import {createHash} from 'node:crypto';
 import type {LessonModule} from '../src/learning/lessonModules.js';
 import type {StudyPack,StudyTrack} from '../src/learning/teachingPacks.js';
-import {parseWorkshopSelection,selectedWorkshop,workshopReference,type WorkshopSelection} from '../src/learning/workshopSelection.js';
+import {parseWorkshopSelection,selectedWorkshop,workshopReference,type WorkshopSelection} from '../src/learning/workshopSelection.ts';
 
 export const WRITTEN_CONTEXT_VERSION='written-foundation-2026-09-13-v1';
 export const MAX_WRITTEN_CONTEXT_BYTES=24000;

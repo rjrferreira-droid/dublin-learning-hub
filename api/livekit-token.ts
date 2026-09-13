@@ -1,3 +1,4 @@
+import {parseWorkshopSelection,selectedWorkshop} from '../src/learning/workshopSelection.js';
 import { voiceValidationPlan } from '../server/voice-validation.js';
 import {parseSessionPreparation,teachingApproachBrief} from '../src/learning/sessionPreparation.js';
 import { buildWrittenLessonContext } from '../server/written-lesson-context.js';
@@ -291,6 +292,9 @@ export default async function handler(req: any, res: any) {
   let sessionPreparation: ReturnType<typeof parseSessionPreparation>;
   try { sessionPreparation=parseSessionPreparation(body.sessionPreparation); }
   catch { return send(res,400,{error:'invalid_session_preparation'}); }
+  let workshopSelection: ReturnType<typeof parseWorkshopSelection>;
+  try { workshopSelection=parseWorkshopSelection(body.workshopSelection); }
+  catch { return send(res,400,{error:'invalid_workshop_selection'}); }
 
   const { data: learnerProfile, error: profileError } = await db
     .from('profiles')
@@ -302,6 +306,8 @@ export default async function handler(req: any, res: any) {
   }
 
   if (!requestedLearnerMatchesAccount(learnerProfile.learner_track,body.learnerId)) return send(res,403,{error:'professor_learner_mismatch'});
+  try { selectedWorkshop(profileForTrack(track),workshopSelection); }
+  catch { return send(res,403,{error:'workshop_track_mismatch'}); }
 
   let lessonContext: LessonContext;
   if (requiresPublishedTechnicalLesson(track)) {
@@ -322,11 +328,13 @@ export default async function handler(req: any, res: any) {
     writtenLesson = buildWrittenLessonContext({
       profileTrack: learnerProfile.learner_track, requestedTrack: track,
       requestedLessonId: lessonId, resolvedLessonId: persistenceLessonId,
+      workshopSelection,
       approachBrief: teachingApproachBrief(sessionPreparation,profileForTrack(track)),
     }, LESSON_MODULES, STUDY_PACKS);
     if (body.sessionPreparation!==undefined && !writtenLesson) return send(res,409,{error:'session_preparation_unavailable'});
     if (writtenLesson) lessonContext = writtenLesson.context;
-  } catch {
+  } catch (cause) {
+    if(cause instanceof Error && cause.message==='workshop_lesson_mismatch')return send(res,409,{error:'workshop_lesson_mismatch'});
     return send(res, 503, {error:'written_lesson_context_unavailable'});
   }
 
@@ -358,6 +366,7 @@ export default async function handler(req: any, res: any) {
     lessonContext,
     teachingContent: writtenLesson?.descriptor ?? null,
     sessionPreparation,
+    workshopSelection,
     budgetReservationId: budget.reservationId,
     budgetReservationUsd: budget.reservationUsd,
     globalAiCapUsd: budget.globalAiCapUsd,
@@ -420,6 +429,7 @@ export default async function handler(req: any, res: any) {
       sessionId: persistence.sessionId,
       teachingContent: writtenLesson?.descriptor ?? null,
       sessionPreparation: writtenLesson ? sessionPreparation : null,
+      workshopSelection,
     });
   } catch (cause) {
     // An HTTP failure is not proof that no agent was dispatched: preserve its reserve.

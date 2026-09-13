@@ -1,12 +1,16 @@
 import {useState} from 'react';
 import {WORKSHOP_CASES,checkWorkshopField,workedValue,type WorkshopTrack,type WorkshopCase} from '../learning/appliedPractice';
 import '../learning/applied-practice.css';
-export function AppliedPracticePanel({track}:{track:WorkshopTrack}){
+export function AppliedPracticePanel({track,onPrepare,handoffDisabled=false}:{track:WorkshopTrack;onPrepare?:(id:string)=>void;handoffDisabled?:boolean}){
  const cases=WORKSHOP_CASES[track];const [index,setIndex]=useState(0);
  return <section className="applied-practice" data-testid="applied-practice" aria-label="Applied practice workshop">
   <header><span>APPLICATION WORKSHOP</span><h2>Try it, inspect the feedback, then explain</h2><p>Three original scenarios for this course. Only the structured answers are checked locally. Your explanation is not automatically assessed.</p></header>
   <label className="workshop-case-picker">Choose a workshop scenario<select value={index} onChange={e=>setIndex(Number(e.target.value))}>{cases.map((c,i)=><option key={c.id} value={i}>{i+1}. {c.title}</option>)}</select></label>
-  <p className="workshop-scope">Changing scenario clears this workshop attempt. Switching lesson tabs keeps it; closing the lesson or reloading discards it. Nothing is saved to your learning profile or sent to the Professor.</p>
+  <p className="workshop-scope">Changing scenario clears this workshop attempt. Switching lesson tabs keeps it; closing the lesson or reloading discards it. Your answers and local results are not saved to your learning profile or sent to the Professor.</p>
+  {onPrepare&&<div className="workshop-handoff" data-testid="workshop-handoff">
+   <button type="button" disabled={handoffDisabled} onClick={()=>{if(!handoffDisabled)onPrepare(cases[index].id);}}>Prepare this scenario with Professor</button>
+   <p>{handoffDisabled?'A current session or account restriction prevents changing the Professor scenario. Local practice remains available.':'This prepares only the scenario identifier for your next Start. No call starts, and your written answers, hints used and local results are not sent.'}</p>
+  </div>}
   <WorkshopAttempt key={cases[index].id} exercise={cases[index]}/>
  </section>;
 }

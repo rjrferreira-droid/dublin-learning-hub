@@ -1,4 +1,4 @@
-import {WORKSHOP_CASES,WORKSHOP_VERSION,workedValue,type WorkshopCase,type WorkshopTrack} from './appliedPractice.js';
+import {WORKSHOP_CASES,WORKSHOP_VERSION,workedValue,type WorkshopCase,type WorkshopTrack} from './appliedPractice.ts';
 export type WorkshopSelection={version:1;id:string};
 const cases=Object.values(WORKSHOP_CASES).flat();
 /** Allowlisted identifier only; never accepts case text, answers, scores or instructions. */

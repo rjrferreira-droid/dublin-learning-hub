@@ -1,3 +1,4 @@
+import {WORKSHOP_CASES} from './learning/appliedPractice';
 import { LessonStudyPanel } from './components/LessonStudyPanel';
 import {LessonProfessorWorkspace} from './components/LessonProfessorWorkspace';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -473,6 +474,12 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close 
   const measuredSession = memory?.history.find((session) => session.lessonId === track.lessonId) ?? null;
   const measuredScores = measuredSession ? scorePairs(measuredSession) : [];
   const [conversationBusy,setConversationBusy]=useState(false);
+  const [workshopId,setWorkshopId]=useState<string|undefined>();
+  const prepareWorkshop=(id:string)=>{
+    if(conversationBusy||!canUseActions||!WORKSHOP_CASES[track.key].some(c=>c.id===id))return;
+    setWorkshopId(id);setActiveTab('Professor');
+  };
+  const clearWorkshop=()=>{if(!conversationBusy)setWorkshopId(undefined);};
 
   return (
     <section className="lesson-shell" data-testid="lesson-shell">
@@ -489,8 +496,8 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close 
         <article className="lesson-content-card">
           <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">Premium lesson</span></div>
           <div className="eyebrow">{activeTab.toUpperCase()}</div>
-          <LessonProfessorWorkspace track={track.key} lessonId={track.lessonId} learnerKey={learnerKey} activeTab={activeTab} onTabChange={setActiveTab} onActivityChange={setConversationBusy}/>
-          <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} activeTab={activeTab} onTabChange={setActiveTab} />
+          <LessonProfessorWorkspace track={track.key} lessonId={track.lessonId} learnerKey={learnerKey} activeTab={activeTab} onTabChange={setActiveTab} onActivityChange={setConversationBusy} workshopId={workshopId} onClearWorkshop={clearWorkshop}/>
+          <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} activeTab={activeTab} onTabChange={setActiveTab} onPrepareWorkshop={prepareWorkshop} handoffDisabled={conversationBusy||!canUseActions} />
           {conversationBusy && activeTab === 'Audio' ? <p role="status" data-testid="audio-conversation-guard">End the Professor session before playing lesson audio. Written tabs remain available.</p> : <>{activeTab === 'Audio' && (canUseActions ? <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} /> : <p role="status" data-testid="audio-account-mismatch">Audio actions require the matching signed-in learner account.</p>)}</>}
           {/* One persistent lesson-scoped Professor instance is rendered above; no duplicate tab mount. */}
         </article>
