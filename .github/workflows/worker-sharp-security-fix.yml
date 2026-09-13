@@ -1,0 +1,90 @@
+name: Targeted worker image-library security repair
+# Resolve GHSA-rgj7-g3m4-5g8c with the maintainer-patched sharp; never npm audit fix --force.
+on:
+  push:
+    branches: [fix/core-consolidation-2026-09-13]
+    paths: ['.github/workflows/worker-sharp-security-fix.yml']
+permissions:
+  contents: write
+jobs:
+  test-targeted-override:
+    if: github.repository == 'rjrferreira-droid/dublin-learning-hub' && github.ref == 'refs/heads/fix/core-consolidation-2026-09-13'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Add only the reviewed transitive override
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const p='professor-agent/package.json';
+          const value=JSON.parse(fs.readFileSync(p,'utf8'));
+          if(value.overrides && JSON.stringify(value.overrides)!==JSON.stringify({'@livekit/agents':{sharp:'0.35.4'}}))throw new Error('Unreviewed existing overrides');
+          value.overrides={'@livekit/agents':{sharp:'0.35.4'}};
+          fs.writeFileSync(p,JSON.stringify(value,null,2)+'\n');
+          JS
+          npm --prefix professor-agent install --package-lock-only --ignore-scripts --no-audit
+      - name: Assert direct SDK/dependency versions and application source remain unchanged
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';import assert from 'node:assert/strict';import {execFileSync} from 'node:child_process';
+          const before=JSON.parse(execFileSync('git',['show','HEAD:professor-agent/package-lock.json'],{encoding:'utf8'}));
+          const after=JSON.parse(fs.readFileSync('professor-agent/package-lock.json','utf8'));
+          const oldManifest=JSON.parse(execFileSync('git',['show','HEAD:professor-agent/package.json'],{encoding:'utf8'}));
+          const manifest=JSON.parse(fs.readFileSync('professor-agent/package.json','utf8'));
+          assert.deepEqual(manifest.dependencies,oldManifest.dependencies);
+          assert.deepEqual(manifest.devDependencies,oldManifest.devDependencies);
+          for(const name of Object.keys({...manifest.dependencies,...manifest.devDependencies}))assert.equal(after.packages['node_modules/'+name]?.version,before.packages['node_modules/'+name]?.version,'Unexpected direct dependency change: '+name);
+          const sharp=Object.entries(after.packages).filter(([p])=>p.endsWith('node_modules/sharp'));
+          assert.ok(sharp.length>0);for(const [,value] of sharp)assert.equal(value.version,'0.35.4');
+          console.log('Only transitive sharp override requested; all direct dependency versions retained.');
+          JS
+          git diff --exit-code -- professor-agent/src src api
+      - name: Install exact patched lock and require a clean high/critical advisory check
+        run: |
+          npm --prefix professor-agent ci
+          npm --prefix professor-agent audit --audit-level=high
+          npm --prefix professor-agent run typecheck
+      - name: Verify native library and SDK imports using synthetic pixels only
+        working-directory: professor-agent
+        run: |
+          node --input-type=module <<'JS'
+          import {createRequire} from 'node:module';import assert from 'node:assert/strict';
+          const require=createRequire(import.meta.resolve('@livekit/agents'));
+          const sharp=require('sharp');
+          assert.equal(sharp.versions.sharp,'0.35.4');
+          const heif=sharp.versions.heif.split('.').map(Number);
+          assert.ok(heif[0]>1 || (heif[0]===1 && (heif[1]>23 || (heif[1]===23 && heif[2]>=2))));
+          const jpeg=await sharp({create:{width:2,height:2,channels:3,background:{r:0,g:0,b:0}}}).resize(1,1).jpeg().toBuffer();
+          const meta=await sharp(jpeg).metadata();assert.equal(meta.width,1);assert.equal(meta.height,1);
+          await import('@livekit/agents');await import('@livekit/agents-plugin-openai');
+          console.log('Native sharp',sharp.versions.sharp,'libheif',sharp.versions.heif,'synthetic resize and SDK imports passed. No provider contacted.');
+          JS
+      - name: Rerun existing contracts and app build without provider configuration
+        env:
+          VITE_SUPABASE_URL: https://lh-ui.invalid
+          VITE_SUPABASE_PUBLISHABLE_KEY: fictional-offline-fixture
+        run: |
+          npm ci
+          node --experimental-strip-types --test tests/*.test.ts
+          npm run build
+      - name: Build patched worker image and import native library with network disabled
+        run: |
+          docker build --tag lh-worker-security-verified professor-agent
+          docker run --rm --network none lh-worker-security-verified npm run typecheck
+          docker run --rm --network none lh-worker-security-verified node --input-type=module -e "import {createRequire} from 'node:module';const r=createRequire(import.meta.resolve('@livekit/agents'));const s=r('sharp');if(s.versions.sharp!=='0.35.4')throw Error('Wrong image-library version');await import('@livekit/agents-plugin-openai');console.log('Patched native image library and SDK loaded without network.');"
+      - name: Commit only the verified worker manifest and lockfile
+        run: |
+          test "$GITHUB_REF_NAME" = "fix/core-consolidation-2026-09-13"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add professor-agent/package.json professor-agent/package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Pin patched sharp 0.35.4 for LiveKit without changing SDK versions'
+            git push origin HEAD:fix/core-consolidation-2026-09-13
+          fi
+      - name: Release boundary
+        run: echo 'Tested source only. No runtime deployment, credentials, voice session, model/persona change or budget change.'
