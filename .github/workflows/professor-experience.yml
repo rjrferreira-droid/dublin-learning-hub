@@ -3,9 +3,10 @@ on:
   push:
     branches: [feat/professor-experience-2026-09-13]
 permissions:
-  contents: read
+  contents: write
 jobs:
   companion-and-quality:
+    if: github.ref == 'refs/heads/feat/professor-experience-2026-09-13'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -15,29 +16,48 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Preserve the deployed voice baseline, backend, auth and child portal
-        run: git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- api server professor-agent supabase src/auth src/components/AuthGate.tsx src/components/LittleEnglish.tsx src/little-english.css src/professor/livekitProfessor.ts src/professor/voiceState.ts
-      - name: Install locked dependencies and build the committed app
+      - name: Preserve the voice baseline, deployed worker, database, auth and child portal
+        run: |
+          git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- professor-agent supabase src/auth src/components/AuthGate.tsx src/components/LittleEnglish.tsx src/little-english.css src/professor/livekitProfessor.ts src/professor/voiceState.ts
+          git diff --exit-code 032115ae9e93745b4acb8fffd373dab965318351 HEAD -- api server ':!api/livekit-token.ts' ':!server/written-lesson-context.ts'
+      - name: Materialize only reviewed candidate bridge and adult mobile wiring
+        run: node scripts/materialize-written-bridge.mjs
+      - name: Install locked dependencies and build the candidate app/API
         run: npm ci && npm run build
-      - name: Written answer-key and existing contract tests, no model calls
+      - name: Reference selection, size limits and previous contract checks
         run: node --experimental-strip-types --test tests/*.test.ts
+      - name: Bundle the real candidate handler and unchanged evaluator for isolated execution
+        run: |
+          npx --no-install esbuild api/livekit-token.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-api.mjs
+          npx --no-install esbuild professor-agent/src/evaluation.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-evaluator.mjs
+      - name: Execute actual handler/evaluator assembly with fictional dependencies, never provider calls
+        run: node --experimental-test-module-mocks --test tests/written-bridge.integration.mjs
       - run: npx playwright install --with-deps chromium
-      - name: Existing and new three-course browser checks with fictional data
+      - name: Existing regressions and mobile geometry with fictional auth and blocked providers
         run: npx playwright test --grep-invert 'authenticated Learning Hub shell' --retries=0
-      - name: Keep only public-content screenshots with fictional drafts
+      - name: Keep only authored content and fictional fixture screenshots
         uses: actions/upload-artifact@v4
         with:
-          name: written-lesson-previews
+          name: written-bridge-mobile-previews
           path: |
+            test-results/**/mobile-reading-*.png
             test-results/**/lesson-*.png
             test-results/**/study-*.png
           retention-days: 7
           if-no-files-found: error
-      - name: Verify unchanged working tree and release boundary
+      - name: Commit only tested wiring to the parallel branch
         run: |
+          test "$GITHUB_REF_NAME" = "feat/professor-experience-2026-09-13"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add api/livekit-token.ts src/main.tsx src/learning/lessonModules.ts src/components/ProfessorLearningGuide.tsx src/components/LessonStudyPanel.tsx tests/professor-study-guide.spec.ts tests/written-lessons.spec.ts
+          if ! git diff --cached --quiet; then
+            git commit -m 'Wire verified written context and non-overlapping mobile study tools'
+            git push origin HEAD:feat/professor-experience-2026-09-13
+          fi
           git diff --exit-code
-          echo 'Written foundations and local fixed-answer practice only. No credentials, persisted scores, model calls, backend changes, worker deployment or voice-baseline update.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Release boundary
+        run: echo 'Candidate preview only. No real credentials, live voice/model calls, database writes, agent deployment or changes to the voice-test baseline. Simulated evaluator requests are not model behaviour validation.' >> "$GITHUB_STEP_SUMMARY"

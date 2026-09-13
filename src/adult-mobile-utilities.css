@@ -1,0 +1,78 @@
+/* Only the signed-in adult shell. The standalone child portal has no .auth-app ancestor.
+   Utility launchers join normal document flow on small screens: no fixed dock over lesson text. */
+@media (max-width: 760px) {
+  .auth-app {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    align-content: flex-start;
+    gap: 8px;
+    padding: max(10px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) max(10px, env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px));
+    box-sizing: border-box;
+    min-width: 0;
+  }
+  .auth-app > .app-frame {
+    order: 10;
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 0;
+  }
+  .auth-app > .learning-memory-shell,
+  .auth-app > .cost-center-shell {
+    position: static;
+    inset: auto;
+    order: 0;
+    flex: 1 1 calc(50% - 4px);
+    width: calc(50% - 4px);
+    min-width: 0;
+    z-index: auto;
+  }
+  .auth-app > .learning-memory-shell.open,
+  .auth-app > .cost-center-shell.open {
+    flex-basis: 100%;
+    width: 100%;
+  }
+  .auth-app .learning-memory-launcher,
+  .auth-app .cost-center-launcher {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 6px;
+    box-shadow: none;
+    font-size: 11px;
+    line-height: 1.35;
+    white-space: normal;
+  }
+  .auth-app .cost-center-launcher strong { display: none; }
+  .auth-app .learning-memory-card,
+  .auth-app .cost-center-card {
+    width: 100%;
+    max-width: 100%;
+    max-height: min(700px, 75vh);
+    max-height: min(700px, 75dvh);
+    overflow: auto;
+    box-sizing: border-box;
+    padding: 15px;
+  }
+  .auth-app .learning-memory-close,
+  .auth-app .cost-center-close { min-width: 44px; min-height: 44px; }
+  /* Reposition only the existing child-portal entry button within the adult layout.
+     No child overlay, audio, state, standalone layout or component source is changed. */
+  .auth-app > .little-english-launcher,
+  .auth-app > .auth-signout {
+    position: static;
+    inset: auto;
+    order: 1;
+    flex: 1 1 calc(50% - 4px);
+    width: calc(50% - 4px);
+    min-width: 0;
+    min-height: 44px;
+    margin: 0;
+    padding: 9px 10px;
+    justify-content: center;
+    box-shadow: none;
+    box-sizing: border-box;
+    z-index: auto;
+  }
+}
