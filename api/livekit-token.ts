@@ -1,3 +1,4 @@
+import { voiceValidationPlan } from '../server/voice-validation.js';
 import { startProfessorAtomically, ProfessorStartupError } from '../server/professor-start.js';
 import { randomUUID } from 'node:crypto';
 import { requestedLearnerMatchesAccount } from '../src/auth/identity.js';
@@ -319,20 +320,21 @@ export default async function handler(req: any, res: any) {
     return send(res,failure.status,{error:failure.message});
   }
   const { budget,persistence,roomName } = startup;
+  const voicePlan = voiceValidationPlan(startup);
 
   const jobMetadata = JSON.stringify({
     professorProfile,
     track,
     lessonId: persistenceLessonId,
     mode,
-    validationMode,
+    validationMode: voicePlan.validationMode,
     qualityTier: budget.qualityTier,
     languageProfile,
     lessonContext,
     budgetReservationId: budget.reservationId,
     budgetReservationUsd: budget.reservationUsd,
     globalAiCapUsd: budget.globalAiCapUsd,
-    maxSessionSeconds: budget.maxSessionSeconds,
+    maxSessionSeconds: voicePlan.maxSessionSeconds,
     persistence: {
       sessionId: persistence.sessionId,
       callbackToken: persistence.callbackToken,
@@ -381,9 +383,9 @@ export default async function handler(req: any, res: any) {
       lessonId: persistenceLessonId,
       mode,
       professorProfile,
-      validationMode,
+      validationMode: voicePlan.validationMode,
       qualityTier: budget.qualityTier,
-      maxSessionSeconds: budget.maxSessionSeconds,
+      maxSessionSeconds: voicePlan.maxSessionSeconds,
       monthlyBudgetUsd: budget.monthlyBudgetUsd,
       globalAiCapUsd: budget.globalAiCapUsd,
       reservedAfterUsd: budget.reservedAfterUsd,
