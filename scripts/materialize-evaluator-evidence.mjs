@@ -20,13 +20,19 @@ function compactTranscript(turns:TranscriptTurn[]):string { return renderEvidenc
  replace("  const rubric = `", "  const rubric = EVIDENCE_RUBRIC + '\\n\\n' + `");
  replace('A technical uncertainty explicitly admitted by the learner may be recorded as technical.','An admitted uncertainty or request for help alone is not a demonstrated technical mistake; identify a substantive incorrect claim before recording an error.');
  replace('englishScore should reflect the learner\'s overall spoken-English evidence, not subject-matter knowledge.','englishScore should reflect demonstrated written-transcript language evidence, not unobserved acoustic fluency or subject-matter knowledge.');
+ replace('Set needsSpacedReview true when there is a meaningful weakness, a technical gap, or a score below roughly 75.','Set needsSpacedReview true only for a substantive demonstrated weakness or an evidence-supported score below 75; not for help-seeking or unassessed topics.');
  replace("console.error('Professor evaluation request failed', response.status, await response.text().catch(() => ''));","console.error('Professor evaluation request failed', response.status); // Never log provider bodies/transcripts.");
  replace('return parseEvaluation(parsed, model, Math.round(estimatedCostUsd * 1_000_000) / 1_000_000);','return parseEvaluation(parsed, model, Math.round(estimatedCostUsd * 1_000_000) / 1_000_000,turns);');
  replace("console.error('Professor evaluation failed', cause instanceof Error ? cause.message : 'unknown_error');","console.error('Professor evaluation failed', cause instanceof Error && cause.name==='AbortError' ? 'timeout' : 'request_or_output_failure');");
  fs.writeFileSync(path,s);
 }
 const tests='tests/written-bridge.integration.mjs';let t=fs.readFileSync(tests,'utf8');
-const old="assert.ok(text.endsWith('LEARNER: Fictional learner response, not the case answer.'));";
-const replacement="assert.ok(text.endsWith('#1 LEARNER: \\\"Fictional learner response, not the case answer.\\\"'));";
-if(t.includes(old)){t=t.replace(old,replacement);fs.writeFileSync(tests,t);}
-console.log('Candidate evaluator now verifies indexed learner quotes. No worker deployment, model call, new schema migration or pricing change.');
+for(const [variable,quote] of [['text','Fictional learner response, not the case answer.'],['content','FICTIONAL ACTUAL ANSWER']]){
+ const before=`assert.ok(${variable}.endsWith('LEARNER: ${quote}'));`;
+ const after=`assert.ok(${variable}.endsWith('#1 LEARNER: ${JSON.stringify(quote)}'));`;
+ if(t.includes(after))continue;
+ if(t.split(before).length!==2)throw new Error('transcript_assertion_anchor_not_unique');
+ t=t.replace(before,after);
+}
+fs.writeFileSync(tests,t);
+console.log('Candidate evaluator uses indexed quoted speech; both integration suites require the new exact transcript. No deployment or provider call.');
