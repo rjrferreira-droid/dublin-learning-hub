@@ -30,10 +30,10 @@ jobs:
         run: node scripts/prepare-recovery-batch.mjs
       - name: Pure contract and archived-source tests; no external API calls
         run: node --experimental-strip-types --test tests/callback-delivery.test.ts tests/legacy-session-boundary.test.ts tests/runtime-inventory.test.ts tests/completion-contract.test.ts tests/professor-start.test.ts
-      - name: Edge handler regression tests with network denied
-        run: deno test --no-lock --node-modules-dir=auto --allow-env=SUPABASE_URL,SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,OPENAI_API_KEY supabase/tests/edge-recovery.test.ts
-      - name: Typecheck all recovered Edge Function entrypoints
+      - name: Typecheck and cache all recovered Edge Function dependencies without executing handlers
         run: deno check --no-lock --node-modules-dir=auto supabase/functions/*/index.ts
+      - name: Edge handler regression tests with network denied
+        run: deno test --no-lock --node-modules-dir=auto --allow-read=supabase/functions,node_modules --allow-env=SUPABASE_URL,SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,OPENAI_API_KEY supabase/tests/edge-recovery.test.ts
       - name: Build application and API from locked dependencies
         run: npm ci && npm run build
       - name: Verify worker types including graceful shutdown configuration
