@@ -1,4 +1,5 @@
 import { LessonStudyPanel } from './components/LessonStudyPanel';
+import {LessonProfessorWorkspace} from './components/LessonProfessorWorkspace';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLearnerSession } from './auth/LearnerSession';
 import { canUseLearnerActions } from './auth/identity';
@@ -266,7 +267,7 @@ function App() {
         </header>
 
         {lessonOpen ? (
-          <LessonView track={activeTrack} learnerKey={learnerKey} memory={visibleMemory} activeTab={lessonTab} setActiveTab={setLessonTab} close={() => { setLessonOpen(false); setView('dashboard'); }} />
+          <LessonView key={account.userId+':'+learnerKey+':'+activeTrack.lessonId} track={activeTrack} learnerKey={learnerKey} memory={visibleMemory} activeTab={lessonTab} setActiveTab={setLessonTab} close={() => { setLessonOpen(false); setView('dashboard'); }} />
         ) : view === 'dashboard' ? (
           <Dashboard learnerKey={learnerKey} profile={profile} memory={visibleMemory} memoryStatus={memoryStatus} openLesson={openLesson} openView={setView} />
         ) : view === 'learn' ? (
@@ -471,6 +472,7 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close 
   const canUseActions = canUseLearnerActions(account.learnerKey,learnerKey,track.key);
   const measuredSession = memory?.history.find((session) => session.lessonId === track.lessonId) ?? null;
   const measuredScores = measuredSession ? scorePairs(measuredSession) : [];
+  const [conversationBusy,setConversationBusy]=useState(false);
 
   return (
     <section className="lesson-shell" data-testid="lesson-shell">
@@ -487,9 +489,10 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close 
         <article className="lesson-content-card">
           <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">Premium lesson</span></div>
           <div className="eyebrow">{activeTab.toUpperCase()}</div>
+          <LessonProfessorWorkspace track={track.key} lessonId={track.lessonId} learnerKey={learnerKey} activeTab={activeTab} onTabChange={setActiveTab} onActivityChange={setConversationBusy}/>
           <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} activeTab={activeTab} onTabChange={setActiveTab} />
-          {activeTab === 'Audio' && (canUseActions ? <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} /> : <p role="status" data-testid="audio-account-mismatch">Audio actions require the matching signed-in learner account.</p>)}
-          {activeTab === 'Professor' && <InlineProfessorPanel learnerKey={learnerKey} track={track} />}
+          {conversationBusy && activeTab === 'Audio' ? <p role="status" data-testid="audio-conversation-guard">End the Professor session before playing lesson audio. Written tabs remain available.</p> : <>{activeTab === 'Audio' && (canUseActions ? <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} /> : <p role="status" data-testid="audio-account-mismatch">Audio actions require the matching signed-in learner account.</p>)}</>}
+          {/* One persistent lesson-scoped Professor instance is rendered above; no duplicate tab mount. */}
         </article>
         <aside className="lesson-side-card">
           <div className="eyebrow">MEASURED LEARNING SIGNALS</div>
@@ -502,10 +505,6 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close 
       </div>
     </section>
   );
-}
-
-function InlineProfessorPanel({ learnerKey, track }: { learnerKey: LearnerKey; track: Track }) {
-  return <div className="reading-copy"><h2>Professor</h2><p className="lead">Live voice tutoring uses the deployed LiveKit + OpenAI Realtime path. Completed sessions feed Learning Memory and independent evaluation.</p><ProfessorSessionPanel lessonId={track.lessonId} track={track.key} learnerKey={learnerKey} /><div className="callout"><strong>Safety by design</strong><span>No raw learner voice stored by default. The learning record is persisted for evaluation and adaptation.</span></div></div>;
 }
 
 function Signal({ label, value }: { label: string; value: number }) {

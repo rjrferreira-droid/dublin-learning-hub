@@ -47,6 +47,7 @@ export async function connectProfessor(request:TutorSessionRequest,options?:{
  const room=new Room({adaptiveStream:true,dynacast:true});
  const initialAudioUnlock=room.startAudio().catch(()=>undefined);
  let closing=false;
+ let disconnectPromise:Promise<void>|null=null;
  const active=()=>!signal?.aborted&&!closing;
  const emitState=()=>{if(active())options?.onProfessorState?.(observedProfessorState([...room.remoteParticipants.values()]));};
  room.on(RoomEvent.TrackSubscribed,track=>{if(active()&&track.kind===Track.Kind.Audio)options?.onRemoteAudio?.(track as RemoteAudioTrack);});
@@ -57,10 +58,14 @@ export async function connectProfessor(request:TutorSessionRequest,options?:{
  room.on(RoomEvent.Reconnecting,()=>{if(active())options?.onProfessorState?.('reconnecting');});
  room.on(RoomEvent.Reconnected,emitState);
  room.on(RoomEvent.Disconnected,()=>{if(active())options?.onDisconnected?.();});
- async function disconnect(){
+ function disconnect():Promise<void>{
+  if(disconnectPromise)return disconnectPromise;
   closing=true;signal?.removeEventListener('abort',onAbort);
-  await room.localParticipant.setMicrophoneEnabled(false).catch(()=>undefined);
-  await room.disconnect();
+  disconnectPromise=(async()=>{
+   await room.localParticipant.setMicrophoneEnabled(false).catch(()=>undefined);
+   await room.disconnect();
+  })();
+  return disconnectPromise;
  }
  function onAbort(){void disconnect().catch(()=>undefined);}
  signal?.addEventListener('abort',onAbort,{once:true});

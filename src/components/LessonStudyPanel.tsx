@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import {AppliedPracticePanel} from './AppliedPracticePanel';
 import { lessonModuleFor, checkLocalChoice } from '../learning/lessonModules';
 import { STUDY_PACKS, type StudyTrack } from '../learning/teachingPacks';
 import '../learning/lesson-study.css';
@@ -47,6 +48,7 @@ function StudyContent({module,activeTab,onTabChange}:{module:NonNullable<ReturnT
    <p className="lesson-study-note">No microphone is opened here; reading an example is not a pronunciation or fluency result.</p>
   </section>
   <section className="lesson-study-section" hidden={activeTab!=='Practice'} data-testid="lesson-practice">
+   <AppliedPracticePanel key={module.track} track={module.track}/>
    <h2>Retrieve, then compare</h2><p>Try each question before opening help. Drafts remain while you switch tabs, but disappear when this lesson closes, the page reloads or the account signs out. Avoid confidential information.</p>
    {pack.exercises.map((q,i)=><section className="lesson-exercise" key={q.id} data-testid={'written-practice-'+i}>
     <h3>{i+1}. {q.question}</h3><label htmlFor={'draft-'+q.id}>Your practice draft {i+1}</label>
