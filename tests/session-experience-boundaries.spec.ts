@@ -25,10 +25,15 @@ test('real client refuses mismatched preference acknowledgement before microphon
 });
 
 test('saved feedback response for another identity is not rendered by the actual reader and panel',async({page})=>{
- const f=await experienceFixture(page,{fakeVoice:true});let scopedReads=0;
+ const f=await experienceFixture(page,{fakeVoice:true});let scopedReads=0,deliveredStatus=0;
+ page.on('response',response=>{
+  const url=new URL(response.url());
+  if(url.pathname==='/rest/v1/ai_tutor_sessions'&&url.searchParams.has('id')&&response.request().method()==='GET')deliveredStatus=response.status();
+ });
  await page.route('**/rest/v1/ai_tutor_sessions?**',async route=>{
   const url=new URL(route.request().url());
-  if(!url.searchParams.has('id')){await route.fallback();return;}
+  // Let the existing fixture answer CORS preflight; the identity test must exercise a GET body.
+  if(route.request().method()!=='GET'||!url.searchParams.has('id')){await route.fallback();return;}
   scopedReads++;expect(url.searchParams.get('id')).toBe('eq.'+SYNTHETIC_SESSION_ID);
   expect(url.searchParams.get('user_id')).toBe('eq.aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
   await route.fulfill({status:200,headers:{'access-control-allow-origin':'*'},contentType:'application/json',body:JSON.stringify({
@@ -37,6 +42,7 @@ test('saved feedback response for another identity is not rendered by the actual
   })});
  });
  await f.signIn();await f.openProfessor();await f.start();await page.getByRole('button',{name:'End session',exact:true}).click();
+ await expect.poll(()=>deliveredStatus).toBe(200);
  await expect(page.getByTestId('session-outcome')).toContainText('Session status could not be checked');
  await expect(page.getByTestId('session-outcome')).not.toContainText('FICTIONAL_OTHER_ACCOUNT_DO_NOT_RENDER');
  expect(scopedReads).toBe(1);expect(f.fixture.sensitive).toBe(0);
