@@ -7,7 +7,8 @@ export type ErrorObservation = {
   severity?: number;
 };
 
-export type ErrorBankState = ErrorBankItem & {
+export type ErrorBankState = Omit<ErrorBankItem, 'confidence'> & {
+  masteryConfidence: number;
   frequency: number;
   status: 'active' | 'mastered';
 };
@@ -22,11 +23,11 @@ export function normalizeErrorPattern(pattern: string): string {
     .replace(/\s+/g, ' ');
 }
 
-function nextReviewDate(observedAt: string, frequency: number, confidence: number): string {
+function nextReviewDate(observedAt: string, frequency: number, masteryConfidence: number): string {
   const base = new Date(observedAt);
   if (Number.isNaN(base.getTime())) throw new Error(`Invalid observation date: ${observedAt}`);
 
-  const days = confidence < 40 ? 1 : confidence < 60 ? 3 : confidence < 75 ? 7 : frequency >= 3 ? 14 : 30;
+  const days = masteryConfidence < 40 ? 1 : masteryConfidence < 60 ? 3 : masteryConfidence < 75 ? 7 : frequency >= 3 ? 14 : 30;
   return new Date(base.getTime() + days * DAY_MS).toISOString();
 }
 
@@ -51,53 +52,54 @@ export function observeError(
   const severity = Math.max(0, Math.min(100, observation.severity ?? 60));
 
   if (!current) {
-    const confidence = Math.max(5, Math.round(55 - severity * 0.35));
+    const masteryConfidence = Math.max(5, Math.round(55 - severity * 0.35));
     return {
       id: generatedId,
       learnerId,
       domain: observation.domain,
       pattern: observation.pattern,
-      confidence,
+      masteryConfidence,
       frequency: 1,
       lastSeenAt: observation.observedAt,
-      nextReviewAt: nextReviewDate(observation.observedAt, 1, confidence),
+      nextReviewAt: nextReviewDate(observation.observedAt, 1, masteryConfidence),
       status: 'active',
     };
   }
 
   assertSameErrorIdentity(current, observation, learnerId);
   const frequency = current.frequency + 1;
-  const confidence = Math.max(5, Math.round(current.confidence - 8 - severity * 0.12));
+  const masteryConfidence = Math.max(5, Math.round(current.masteryConfidence - 8 - severity * 0.12));
   return {
     ...current,
     pattern: observation.pattern,
-    confidence,
+    masteryConfidence,
     frequency,
     lastSeenAt: observation.observedAt,
-    nextReviewAt: nextReviewDate(observation.observedAt, frequency, confidence),
+    nextReviewAt: nextReviewDate(observation.observedAt, frequency, masteryConfidence),
     status: 'active',
   };
 }
 
 export function recordSuccessfulRetrieval(item: ErrorBankState, completedAt: string, score: number): ErrorBankState {
+  if (!Number.isFinite(score)) throw new Error('Invalid retrieval score');
   const clampedScore = Math.max(0, Math.min(100, score));
-  const gain = clampedScore >= 90 ? 20 : clampedScore >= 80 ? 14 : clampedScore >= 70 ? 8 : 2;
-  const confidence = Math.min(100, Math.round(item.confidence + gain));
-  const status = confidence >= 90 && clampedScore >= 85 ? 'mastered' : 'active';
+  const gain = clampedScore >= 90 ? 20 : clampedScore >= 80 ? 14 : clampedScore >= 70 ? 8 : -12;
+  const masteryConfidence = Math.max(5, Math.min(100, Math.round(item.masteryConfidence + gain)));
+  const status = masteryConfidence >= 90 && clampedScore >= 85 ? 'mastered' : 'active';
   const base = new Date(completedAt);
   if (Number.isNaN(base.getTime())) throw new Error(`Invalid completion date: ${completedAt}`);
-  const days = status === 'mastered' ? 90 : confidence >= 75 ? 30 : confidence >= 60 ? 14 : 7;
+  const days = clampedScore < 70 ? 1 : status === 'mastered' ? 90 : masteryConfidence >= 75 ? 30 : masteryConfidence >= 60 ? 14 : 7;
 
   return {
     ...item,
-    confidence,
+    masteryConfidence,
     status,
     nextReviewAt: new Date(base.getTime() + days * DAY_MS).toISOString(),
   };
 }
 
 export function shouldResurface(item: ErrorBankState, now = new Date()): boolean {
-  if (item.status === 'mastered') return false;
+  // Mastered items still return at their scheduled maintenance date.
   const due = new Date(item.nextReviewAt).getTime();
   return !Number.isNaN(due) && due <= now.getTime();
 }

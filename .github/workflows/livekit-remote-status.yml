@@ -1,0 +1,88 @@
+name: LiveKit remote agent status
+# Authorized continuation: inspect ONLY the existing agent. No deploy/create/restart/secrets/session calls.
+on:
+  push:
+    branches: [fix/core-consolidation-2026-09-13]
+    paths: ['.github/workflows/livekit-remote-status.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  remote-status:
+    if: github.repository == 'rjrferreira-droid/dublin-learning-hub' && github.ref == 'refs/heads/fix/core-consolidation-2026-09-13'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install pinned official CLI in disposable runner before providing credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/lh-livekit-cli"
+          cd "$RUNNER_TEMP/lh-livekit-cli"
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 90 --output lk.tar.gz https://github.com/livekit/livekit-cli/releases/download/v2.18.6/lk_2.18.6_linux_amd64.tar.gz
+          echo 'fa6441e315376a64fcfa173c64ee6c9dcf8bd25d40320aa99b690045832980fe  lk.tar.gz' | sha256sum --check
+          tar -xzf lk.tar.gz lk
+          chmod 755 lk
+          echo "$RUNNER_TEMP/lh-livekit-cli" >> "$GITHUB_PATH"
+          ./lk --version
+      - name: Read status and version identifiers without printing credentials or raw responses
+        env:
+          LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
+          LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
+          LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os, re, subprocess, sys, tomllib
+          from urllib.parse import urlsplit
+          AGENT='CA_T9kcWtn6Xki7'
+          SUBDOMAIN='dublin-learning-hub-v2-odgkxtya'
+          report={'scope':'existing_agent_read_only','agentId':AGENT,'authenticated':False,'agentMatched':False,'deployments':[],'versions':[],'agentPublished':False,'sessionStarted':False,'secretsChanged':False,'result':'failed'}
+          def field(obj,name,default=None):
+              if not isinstance(obj,dict): return default
+              for k,v in obj.items():
+                  if k.replace('_','').lower()==name.replace('_','').lower(): return v
+              return default
+          def safe(value):
+              return value if isinstance(value,str) and re.fullmatch(r'[A-Za-z0-9_.:/+ Z-]{1,100}',value) else None
+          def read(command):
+              result=subprocess.run(['lk','agent',command,'--id',AGENT,'--json','professor-agent'],capture_output=True,text=True,timeout=60,check=False)
+              if result.returncode:
+                  text=(result.stderr or '').lower()
+                  report['failureClass']='authentication_or_permission' if any(v in text for v in ['unauthorized','forbidden','permission','unauthenticated']) else 'cli_or_provider_error'
+                  raise RuntimeError('status_unavailable')
+              if len(result.stdout)>1_000_000: raise RuntimeError('unexpected_response_size')
+              return json.loads(result.stdout)
+          try:
+              if not all(os.environ.get(k,'').strip() for k in ['LIVEKIT_URL','LIVEKIT_API_KEY','LIVEKIT_API_SECRET']): raise RuntimeError('missing_configuration')
+              url=urlsplit(os.environ['LIVEKIT_URL'])
+              if url.scheme not in ('https','wss') or url.hostname!=SUBDOMAIN+'.livekit.cloud' or url.username or url.password or url.query or url.fragment or url.path not in ('','/'): raise RuntimeError('target_mismatch')
+              with open('professor-agent/livekit.toml','rb') as f: config=tomllib.load(f)
+              if config.get('project',{}).get('subdomain')!=SUBDOMAIN or config.get('agent',{}).get('id')!=AGENT: raise RuntimeError('config_mismatch')
+              status=read('status')
+              agents=field(status,'agents',[])
+              matching=[a for a in agents if field(a,'agent_id')==AGENT]
+              if len(matching)!=1: raise RuntimeError('agent_not_unique')
+              report['authenticated']=True;report['agentMatched']=True
+              agent=matching[0]
+              for row in field(agent,'agent_deployments',[]):
+                  report['deployments'].append({'name':safe(field(row,'agent_name')),'region':safe(field(row,'region')),'deployment':safe(field(row,'deployment','production')) or 'production','status':safe(field(row,'status')),'version':safe(field(row,'version') or field(agent,'version')),'replicas':field(row,'replicas'),'minReplicas':field(row,'min_replicas'),'maxReplicas':field(row,'max_replicas')})
+              versions=read('versions')
+              for row in field(versions,'versions',[])[:8]:
+                  report['versions'].append({'version':safe(field(row,'version')),'current':field(row,'current',False) is True,'active':field(row,'active',False) is True,'draining':field(row,'draining',False) is True,'status':safe(field(row,'status'))})
+              if not report['deployments'] or not report['versions']: raise RuntimeError('incomplete_status')
+              report['result']='status_verified'
+          except Exception:
+              report.setdefault('failureClass','configuration_or_response_unverified')
+          output=json.dumps(report,indent=2)
+          print('LIVEKIT_REMOTE_STATUS\n'+output)
+          if os.environ.get('GITHUB_STEP_SUMMARY'):
+              with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f: f.write('## Existing agent — read-only verification\n```json\n'+output+'\n```\n')
+          sys.exit(0 if report['result']=='status_verified' else 1)
+          PY
+      - name: Ensure no repository files were changed
+        if: always()
+        run: git diff --exit-code

@@ -1,0 +1,44 @@
+name: Account identity and browser integrity
+on:
+  push:
+    branches: [fix/core-consolidation-2026-09-13]
+    paths:
+      - '.github/workflows/account-integrity.yml'
+      - 'scripts/prepare-account-integrity.mjs'
+      - 'src/auth/**'
+      - 'src/professor/livekitProfessor.ts'
+      - 'tests/account-boundary.spec.ts'
+      - 'tests/account-contract.test.ts'
+      - 'tests/helpers/auth-fixture.ts'
+      - 'tests/smoke.spec.ts'
+      - 'playwright.config.ts'
+permissions:
+  contents: read
+jobs:
+  account-bound-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VITE_SUPABASE_URL: https://lh-ui.invalid
+      VITE_SUPABASE_PUBLISHABLE_KEY: fictional-browser-fixture-not-a-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify materialized account boundaries without modifying source
+        run: node scripts/prepare-account-integrity.mjs
+      - name: Verify account contracts and previous core contracts without providers
+        run: node --experimental-strip-types --test tests/*.test.ts
+      - name: Build application/API from locked dependencies
+        run: npm ci && npm run build
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Browser account and cancellation scenarios with fictional Auth/REST
+        run: npx playwright test tests/account-boundary.spec.ts tests/smoke.spec.ts --grep-invert 'authenticated Learning Hub shell' --retries=0
+      - name: Check voice worker types
+        run: npm --prefix professor-agent ci && npm --prefix professor-agent run typecheck
+      - name: Verify source tree remained unchanged
+        run: git diff --exit-code
+      - name: State acceptance boundary
+        run: echo 'Fictional Auth/REST only. No live credentials, RLS, voice quality, full historical reconstruction, deployment or merge has been verified by this job.'

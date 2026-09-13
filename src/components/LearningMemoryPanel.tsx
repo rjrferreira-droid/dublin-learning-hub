@@ -64,8 +64,8 @@ export function LearningMemoryPanel() {
   }, []);
 
   useEffect(() => {
-    if (open && !snapshot && !loading) void load();
-  }, [open, snapshot, loading, load]);
+    if (open && !snapshot && !loading && !message) void load();
+  }, [open, snapshot, loading, message, load]);
 
   const latest = snapshot?.latest ?? null;
   const latestScores = latest ? scorePairs(latest) : [];
@@ -101,7 +101,7 @@ export function LearningMemoryPanel() {
           {loading ? (
             <div className="learning-memory-state">Reading your learning history…</div>
           ) : message ? (
-            <div className="learning-memory-state">{message}</div>
+            <div className="learning-memory-state">{message}<button type="button" onClick={() => void load()}>Try again</button></div>
           ) : !snapshot || !latest ? (
             <div className="learning-memory-state">Complete a Professor session to start building a measured learning profile.</div>
           ) : (
@@ -165,7 +165,7 @@ export function LearningMemoryPanel() {
                     <div className="memory-error-row" key={item.id}>
                       <span>{titleCase(item.domain)}</span>
                       <p>{item.pattern}</p>
-                      <small>review {shortDate(item.nextReviewAt)} • confidence {Math.round(item.confidence)}%</small>
+                      <small>review {shortDate(item.nextReviewAt)} • diagnostic confidence {item.diagnosticConfidence == null ? "not measured" : `${Math.round(item.diagnosticConfidence)}%`}</small>
                     </div>
                   ))}
                   {snapshot.errors.length === 0 ? <p className="memory-muted">No active recurring errors.</p> : null}

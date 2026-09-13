@@ -1,0 +1,15 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {parseReservationExposure} from '../supabase/functions/_shared/reservation-exposure.ts';
+const month='2026-09-01';
+const zero=()=>({contractVersion:1,periodMonth:month,protectedReservationUsd:0,rawReservationUsd:0,knownCostUpliftUsd:0,activeReservedUsd:0,unresolvedReservedUsd:0,carriedReservedUsd:0,currentPeriodReservedUsd:0,futurePeriodReservedUsd:0,activeCount:0,unresolvedCount:0,staleCount:0,needsReconciliationCount:0,oldestPendingAt:null});
+test('genuine empty aggregate is accepted',()=>assert.equal(parseReservationExposure(zero(),month).protectedReservationUsd,0));
+test('missing aggregate is never inferred to be zero',()=>{for(const v of [null,undefined,{},[],false])assert.throws(()=>parseReservationExposure(v,month));});
+test('carried obligations remain part of the protected total',()=>{const v={...zero(),protectedReservationUsd:7,rawReservationUsd:7,activeReservedUsd:4,unresolvedReservedUsd:3,carriedReservedUsd:3,currentPeriodReservedUsd:4,activeCount:1,unresolvedCount:1,staleCount:1,needsReconciliationCount:1,oldestPendingAt:'2026-08-01T00:00:00Z'};assert.equal(parseReservationExposure(v,month).protectedReservationUsd,7);});
+test('known pending cost may exceed the original reservation without vanishing',()=>{const v={...zero(),protectedReservationUsd:6,rawReservationUsd:4,knownCostUpliftUsd:2,unresolvedReservedUsd:6,currentPeriodReservedUsd:6,unresolvedCount:1,needsReconciliationCount:1,oldestPendingAt:'2026-09-01T00:00:00Z'};assert.equal(parseReservationExposure(v,month).knownCostUpliftUsd,2);});
+test('wrong month fails closed during a month-boundary race',()=>assert.throws(()=>parseReservationExposure(zero(),'2026-10-01'),/period/));
+test('numeric strings and non-finite money are rejected',()=>{for(const n of ['4',NaN,Infinity,-1])assert.throws(()=>parseReservationExposure({...zero(),rawReservationUsd:n},month));});
+test('inconsistent status subtotals fail closed',()=>assert.throws(()=>parseReservationExposure({...zero(),activeReservedUsd:4},month),/inconsistent/));
+test('inconsistent period subtotals fail closed',()=>assert.throws(()=>parseReservationExposure({...zero(),carriedReservedUsd:4},month),/inconsistent/));
+test('inconsistent known-cost uplift fails closed',()=>assert.throws(()=>parseReservationExposure({...zero(),knownCostUpliftUsd:4},month),/inconsistent/));
+test('impossible stale counts are rejected',()=>assert.throws(()=>parseReservationExposure({...zero(),staleCount:1},month),/inconsistent/));
+test('unrecognized contract version is rejected',()=>assert.throws(()=>parseReservationExposure({...zero(),contractVersion:2},month)));

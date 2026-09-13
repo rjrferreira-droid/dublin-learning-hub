@@ -1,0 +1,46 @@
+name: Worker dependency advisory review
+# Read dependency advisories only. No credentials, provider invocation, automatic fix or deployment.
+on:
+  push:
+    branches: [fix/core-consolidation-2026-09-13]
+    paths: ['.github/workflows/worker-dependency-review.yml']
+permissions:
+  contents: read
+jobs:
+  inspect-advisories:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install locked worker dependencies without lifecycle scripts or secrets
+        run: npm --prefix professor-agent ci --ignore-scripts --no-audit
+      - name: Report advisory identifiers, affected packages and recommended versions
+        run: |
+          python3 - <<'PY'
+          import json, os, subprocess
+          report={'scope':'worker_advisory_inspection','sourceCommit':os.environ['GITHUB_SHA'],'automaticFixApplied':False,'deploymentPerformed':False,'audits':{}}
+          for name,args in [('runtime',['--omit=dev']),('all',[])]:
+              p=subprocess.run(['npm','audit','--json',*args],cwd='professor-agent',capture_output=True,text=True,timeout=90,check=False)
+              try: data=json.loads(p.stdout)
+              except Exception: raise SystemExit('Advisory response unavailable; audit is not passed.')
+              if 'error' in data: raise SystemExit('Advisory registry request failed; audit is not passed.')
+              findings=[]
+              for package,item in data.get('vulnerabilities',{}).items():
+                  advisories=[]
+                  for via in item.get('via',[]):
+                      if isinstance(via,dict): advisories.append({key:via.get(key) for key in ['source','name','title','url','severity','range']})
+                      else: advisories.append({'dependency':via})
+                  findings.append({'package':package,'severity':item.get('severity'),'direct':item.get('isDirect'),'range':item.get('range'),'fixAvailable':item.get('fixAvailable'),'advisories':advisories})
+              report['audits'][name]={'counts':data.get('metadata',{}).get('vulnerabilities'),'findings':findings}
+          out=json.dumps(report,indent=2)
+          print('WORKER_DEPENDENCY_ADVISORIES\n'+out)
+          if os.environ.get('GITHUB_STEP_SUMMARY'):
+              with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f: f.write('## Dependency review, not an all-clear\n```json\n'+out+'\n```\n')
+          PY
+      - name: Verify lockfile and source stayed unchanged
+        run: git diff --exit-code

@@ -1,0 +1,52 @@
+name: LiveKit cloud deployment readiness
+# Configuration-presence check only. Does not authenticate, deploy, create agents or invoke voice.
+on:
+  push:
+    branches: [fix/core-consolidation-2026-09-13]
+    paths: ['.github/workflows/livekit-cloud-readiness.yml']
+  workflow_dispatch:
+permissions: {}
+jobs:
+  configuration-only:
+    if: github.repository == 'rjrferreira-droid/dublin-learning-hub' && github.ref == 'refs/heads/fix/core-consolidation-2026-09-13'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check runner Git without installing anything on the owner computer
+        shell: bash
+        run: git --version
+      - name: Report only availability of existing LiveKit configuration
+        env:
+          LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
+          LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
+          LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from urllib.parse import urlsplit
+          names = ('LIVEKIT_URL', 'LIVEKIT_API_KEY', 'LIVEKIT_API_SECRET')
+          present = {name: bool(os.environ.get(name, '').strip()) for name in names}
+          target_matches = False
+          try:
+              u = urlsplit(os.environ.get('LIVEKIT_URL', ''))
+              target_matches = (u.scheme in ('wss', 'https') and u.hostname == 'dublin-learning-hub-v2-odgkxtya.livekit.cloud' and not u.username and not u.password and not u.query and not u.fragment and u.path in ('', '/'))
+          except Exception:
+              pass
+          result = {
+              'scope': 'configuration_presence_only',
+              'configurationAvailable': present,
+              'configuredProjectMatchesExpected': target_matches,
+              'liveCredentialsValidated': False,
+              'livekitCalled': False,
+              'agentPublished': False,
+              'ownerComputerModified': False,
+              'state': 'ready_for_authorized_status_check' if all(present.values()) and target_matches else 'configuration_missing_or_target_mismatch'
+          }
+          output = json.dumps(result, indent=2)
+          print('LIVEKIT_CLOUD_READINESS\n' + output)
+          if os.environ.get('GITHUB_STEP_SUMMARY'):
+              with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as f:
+                  f.write('## LiveKit cloud readiness\n```json\n' + output + '\n```\n')
+          raise SystemExit(0 if result['state'] == 'ready_for_authorized_status_check' else 1)
+          PY

@@ -1,0 +1,17 @@
+{
+  "capturedOn": "2026-09-13",
+  "environment": "existing V2 development",
+  "kind": "source inventory, not a database or credential backup",
+  "hashNote": "Provider bundle SHA256 and Git source blob SHA1 identify different objects.",
+  "functions": [
+    {"slug":"ai-tutor-session","version":3,"verifyJwt":true,"providerBundleSha256":"9b0aeca3a0217589ba13ca9bdccb0911d308c960ebb3f99b54101604156de448","archivePath":"supabase/runtime-baseline/edge/ai-tutor-session.v3.ts","gitBlobSha":"22f898daef08e3a5ea9623a7e398a707f8cb47a3"},
+    {"slug":"ai-tutor-evaluate","version":2,"verifyJwt":true,"providerBundleSha256":"30f7078d7890d63fd252fff033558fad7c6ca14914b11c10fd09f24b1b0186b4","archivePath":"supabase/runtime-baseline/edge/ai-tutor-evaluate.v2.ts","gitBlobSha":"25a47433b5ed354eb37a41440e70455199be10e7"},
+    {"slug":"ai-case-feedback","version":2,"verifyJwt":true,"providerBundleSha256":"60f487965f9d5cf2939ad7e17fff75a92051f6a1e4e7b6ae6012273b3213bca8","archivePath":"supabase/runtime-baseline/edge/ai-case-feedback.v2.ts","gitBlobSha":"160327627acfeb018eca0dbae1d284d74fe7829e"},
+    {"slug":"premium-lesson-audio","version":3,"verifyJwt":true,"providerBundleSha256":"a063a016300dd2787362a66f0f064ae590344ba4a3c4d58d9a3a4a6db9492af0","archivePath":"supabase/runtime-baseline/edge/premium-lesson-audio.v3.ts","gitBlobSha":"840a75ab6d4f5940b16d53c1e4b63fcbaafcf77e"},
+    {"slug":"webrtc-signal","version":3,"verifyJwt":true,"providerBundleSha256":"b8617c24c18b6772e33f29bfbd93c6018ff3646a843fd4a071dd52a886ccc9ee","archivePath":"supabase/runtime-baseline/edge/webrtc-signal.v3.ts","gitBlobSha":"096ce6d5ba4c00781cae46353aa256c84e2210c9"},
+    {"slug":"learning-hub-cost-center","version":5,"verifyJwt":true,"providerBundleSha256":"7cac7cba72e3bc6115a29deb3bcdaabb48d284e38cb4c9c8aa23a80d4217ff31","archivePath":"supabase/runtime-baseline/edge/learning-hub-cost-center.v5.ts","gitBlobSha":"d89f7598c88a0bfe5625429877b395c5e3918419"},
+    {"slug":"professor-session-complete","version":4,"verifyJwt":false,"customAuth":"session callback hash in service-only transaction","providerBundleSha256":"73e7b4d524ece21b8a053a579e2143039bde8700e4dba3a68f651e93da58c45a","archivePath":"supabase/runtime-baseline/edge/professor-session-complete/index.ts"},
+    {"slug":"professor-usage-settle","version":2,"verifyJwt":false,"customAuth":"session callback hash in service-only transaction","providerBundleSha256":"4b8c6562a05185c20200f2f9f52da98c56a931a2ad79af3a9cdeaa04b611ab88","archivePath":"supabase/runtime-baseline/edge/professor-usage-settle/index.ts"},
+    {"slug":"professor-memory-context","version":1,"verifyJwt":false,"customAuth":"session callback hash","providerBundleSha256":"64e4a01718165fd0f68e8afb3ee2e3441eeee35379d66f2761f739caa520728b","archivePath":"supabase/runtime-baseline/edge/professor-memory-context.v1.ts","gitBlobSha":"82d7d6bd8e45c8eccba22ca1fdc03141ae848d36"}
+  ]
+}

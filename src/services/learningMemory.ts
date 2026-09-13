@@ -44,6 +44,8 @@ export type LearningMemoryError = {
   pattern: string;
   frequency: number;
   confidence: number;
+  diagnosticConfidence: number | null;
+  masteryConfidence: number | null;
   lastSeenAt: string;
   nextReviewAt: string;
   status: string;
@@ -131,31 +133,37 @@ function sessionFrom(row: Record<string, any>): LearningMemorySession {
   };
 }
 
-export async function loadLearningMemory(): Promise<LearningMemorySnapshot> {
+export async function loadLearningMemory(expectedUserId?: string): Promise<LearningMemorySnapshot> {
   const { data: authData, error: authError } = await supabase.auth.getUser();
   if (authError || !authData.user) throw authError ?? new Error('authentication_required');
+  if (expectedUserId && authData.user.id !== expectedUserId) throw new Error('learner_account_changed');
+  const userId = authData.user.id;
 
   const [sessionsResult, competenciesResult, errorsResult, reviewsResult] = await Promise.all([
     supabase
       .from('ai_tutor_sessions')
       .select('id,lesson_id,mode,status,started_at,completed_at,duration_seconds,quality_tier,technical_score,english_score,grammar_score,vocabulary_score,fluency_score,pronunciation_score,professional_communication_score,final_feedback,lessons(title)')
+      .eq('user_id', userId)
       .eq('status', 'completed')
       .order('started_at', { ascending: false })
       .limit(12),
     supabase
       .from('user_competency_scores')
       .select('score,confidence,evidence_count,last_assessed_at,competencies(code,name,category)')
+      .eq('user_id', userId)
       .order('score', { ascending: true })
       .limit(16),
     supabase
       .from('user_error_bank')
-      .select('id,domain,pattern,frequency,confidence,last_seen_at,next_review_at,status')
+      .select('id,domain,pattern,frequency,confidence,diagnostic_confidence,mastery_confidence,last_seen_at,next_review_at,status')
+      .eq('user_id', userId)
       .eq('status', 'active')
       .order('next_review_at', { ascending: true })
       .limit(12),
     supabase
       .from('spaced_reviews')
       .select('id,review_stage,due_date,status,score,lessons(title),competencies(name)')
+      .eq('user_id', userId)
       .in('status', ['due', 'scheduled'])
       .order('due_date', { ascending: true })
       .limit(12),
@@ -185,6 +193,8 @@ export async function loadLearningMemory(): Promise<LearningMemorySnapshot> {
     pattern: String(row.pattern ?? ''),
     frequency: Math.max(1, Math.round(numberOrZero(row.frequency) || 1)),
     confidence: Math.max(0, Math.min(100, numberOrZero(row.confidence))),
+    diagnosticConfidence: numberOrNull(row.diagnostic_confidence),
+    masteryConfidence: numberOrNull(row.mastery_confidence),
     lastSeenAt: String(row.last_seen_at ?? row.next_review_at ?? ''),
     nextReviewAt: String(row.next_review_at ?? row.last_seen_at ?? ''),
     status: String(row.status ?? 'active'),
@@ -208,6 +218,8 @@ export async function loadLearningMemory(): Promise<LearningMemorySnapshot> {
     };
   });
 
+  const {data: currentSession} = await supabase.auth.getSession();
+  if (currentSession.session?.user.id !== userId) throw new Error('learner_account_changed');
   return {
     latest: history[0] ?? null,
     history,

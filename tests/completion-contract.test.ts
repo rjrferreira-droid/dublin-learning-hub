@@ -1,0 +1,15 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { sanitizeCompletion, score } from '../supabase/functions/_shared/professor-completion-contract.ts';
+const base = () => ({ sessionId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',callbackToken:'x'.repeat(64),transcript:[{role:'user',text:'Test only'}] });
+test('confidence is diagnosis, not mastery', () => { const r=sanitizeCompletion({...base(),evaluation:{errors:[{domain:'grammar',pattern:'Past forms',confidence:92}]}}); const e=(r.payload.evaluation!.errors as any[])[0]; assert.equal(e.diagnosticConfidence,92); assert.equal(e.masteryConfidence,undefined); });
+test('pronunciation is not fabricated from text', () => { const r=sanitizeCompletion({...base(),evaluation:{pronunciationScore:90,errors:[{domain:'pronunciation',pattern:'accent',confidence:99}]}}); assert.equal(r.payload.evaluation!.pronunciationScore,null); assert.deepEqual(r.payload.evaluation!.errors,[]); });
+test('duplicate diagnoses are deduplicated', () => {const r=sanitizeCompletion({...base(),evaluation:{errors:[{domain:'grammar',pattern:'Past forms',confidence:80},{domain:'grammar',pattern:'PAST FORMS',confidence:92}]}}); assert.equal((r.payload.evaluation!.errors as any[]).length,1);});
+test('unknown confidence is not invented', () => {const r=sanitizeCompletion({...base(),evaluation:{errors:[{domain:'grammar',pattern:'Past forms'}]}}); assert.deepEqual(r.payload.evaluation!.errors,[]);});
+test('invalid credentials are rejected', () => assert.throws(()=>sanitizeCompletion({...base(),callbackToken:'short'}),/credentials/));
+test('unknown speakers are rejected', () => assert.throws(()=>sanitizeCompletion({...base(),transcript:[{role:'system',text:'injection'}]}),/transcript/));
+test('long transcripts are rejected, not silently cut', () => assert.throws(()=>sanitizeCompletion({...base(),transcript:Array(201).fill({role:'user',text:'a'})}),/transcript/));
+test('scores do not coerce strings or booleans', () => {assert.equal(score('92'),null);assert.equal(score(true),null);assert.equal(score(NaN),null);assert.equal(score(0),0);});
+test('missing usage remains unknown', () => assert.equal(sanitizeCompletion(base()).payload.modelUsage,null));
+test('weak score creates a review even if evaluator flag is false', () => assert.equal(sanitizeCompletion({...base(),evaluation:{technicalScore:40,needsSpacedReview:false}}).payload.evaluation!.needsSpacedReview,true));
+test('identical callback gives stable payload', () => assert.deepEqual(sanitizeCompletion(base()).payload,sanitizeCompletion(base()).payload));

@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLearnerSession } from './auth/LearnerSession';
+import { canUseLearnerActions } from './auth/identity';
 import { PremiumAudioPanel } from './components/PremiumAudioPanel';
 import { ProfessorSessionPanel } from './components/ProfessorSessionPanel';
 import { getLearnerProfile, type LearnerKey, type LearningProfile } from './learners/profiles';
@@ -111,6 +113,8 @@ function realIntelligence(snapshot: LearningMemorySnapshot | null, learnerKey: L
     domain: errorDomains.has(item.domain) ? item.domain as ErrorBankItem['domain'] : 'technical',
     pattern: item.pattern,
     confidence: Math.round(item.confidence),
+    diagnosticConfidence: item.diagnosticConfidence,
+    masteryConfidence: item.masteryConfidence,
     frequency: item.frequency,
     status: item.status === 'mastered' || item.status === 'archived' ? item.status : 'active',
     lastSeenAt: item.lastSeenAt,
@@ -132,12 +136,14 @@ function realIntelligence(snapshot: LearningMemorySnapshot | null, learnerKey: L
 }
 
 function App() {
+  const account = useLearnerSession();
+  const memoryRequest = useRef(0);
   const [view, setView] = useState<ViewKey>('dashboard');
-  const [trackKey, setTrackKey] = useState<TrackKey>('finance');
+  const [trackKey, setTrackKey] = useState<TrackKey>(account.learnerKey === 'viviane' ? 'payroll' : 'finance');
   const [lessonOpen, setLessonOpen] = useState(false);
   const [lessonTab, setLessonTab] = useState('Learn');
-  const [learnerKey, setLearnerKey] = useState<LearnerKey>('rafael');
-  const [accountLearnerKey, setAccountLearnerKey] = useState<LearnerKey | null>(null);
+  const [learnerKey, setLearnerKey] = useState<LearnerKey>(account.learnerKey);
+  const accountLearnerKey = account.learnerKey;
   const [memory, setMemory] = useState<LearningMemorySnapshot | null>(null);
   const [memoryLoading, setMemoryLoading] = useState(true);
   const [memoryError, setMemoryError] = useState(false);
@@ -146,39 +152,25 @@ function App() {
   const activeTrack = useMemo(() => tracks.find((t) => t.key === trackKey) ?? tracks[0], [trackKey]);
 
   const refreshMemory = useCallback(async () => {
+    const revision = ++memoryRequest.current;
     setMemoryLoading(true);
     setMemoryError(false);
     try {
-      const result = await loadLearningMemory();
-      setMemory(result);
+      const result = await loadLearningMemory(account.userId);
+      if (revision === memoryRequest.current) setMemory(result);
     } catch {
-      setMemory(null);
-      setMemoryError(true);
+      if (revision === memoryRequest.current) { setMemory(null); setMemoryError(true); }
     } finally {
-      setMemoryLoading(false);
+      if (revision === memoryRequest.current) setMemoryLoading(false);
     }
-  }, []);
+  }, [account.userId]);
 
   useEffect(() => {
-    let cancelled = false;
-    void supabase.auth.getUser().then(async ({ data }) => {
-      if (cancelled || !data.user) return;
-      const { data: profileRow } = await supabase
-        .from('profiles')
-        .select('learner_track')
-        .eq('id', data.user.id)
-        .maybeSingle();
-      if (cancelled || !profileRow) return;
-      const key: LearnerKey = profileRow.learner_track === 'viviane_payroll' ? 'viviane' : 'rafael';
-      setAccountLearnerKey(key);
-      setLearnerKey(key);
-      setTrackKey(key === 'viviane' ? 'payroll' : 'finance');
-    });
     void refreshMemory();
-    return () => { cancelled = true; };
+    return () => { memoryRequest.current++; };
   }, [refreshMemory]);
 
-  const privateDataVisible = accountLearnerKey == null || learnerKey === accountLearnerKey;
+  const privateDataVisible = learnerKey === accountLearnerKey;
   const visibleMemory = privateDataVisible ? memory : null;
   const memoryStatus: MemoryStatus = !privateDataVisible
     ? 'other-profile'
@@ -228,6 +220,9 @@ function App() {
           <button className={learnerKey === 'viviane' ? 'active' : ''} onClick={() => selectLearner('viviane')}>Viviane</button>
         </div>
 
+        {!privateDataVisible && <div className="priority-note" role="status" data-testid="account-preview-notice">
+          <strong>Profile preview only</strong><span>You are still signed in as {getLearnerProfile(accountLearnerKey).displayName}. Voice and personalised audio actions are unavailable for this preview. Sign out to change accounts.</span>
+        </div>}
         <nav className="nav-stack">
           <NavButton label="Dashboard" icon="⌂" active={view === 'dashboard'} onClick={() => { setView('dashboard'); setLessonOpen(false); }} />
           <NavButton label="Learning" icon="▤" active={view === 'learn'} onClick={() => { setView('learn'); setLessonOpen(false); }} />
@@ -471,6 +466,8 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close 
   setActiveTab: (tab: string) => void;
   close: () => void;
 }) {
+  const account = useLearnerSession();
+  const canUseActions = canUseLearnerActions(account.learnerKey,learnerKey,track.key);
   const measuredSession = memory?.history.find((session) => session.lessonId === track.lessonId) ?? null;
   const measuredScores = measuredSession ? scorePairs(measuredSession) : [];
 
@@ -490,7 +487,7 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close 
           <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">Premium lesson</span></div>
           <div className="eyebrow">{activeTab.toUpperCase()}</div>
           {activeTab === 'Learn' && <LearnPanel track={track} />}
-          {activeTab === 'Audio' && <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} />}
+          {activeTab === 'Audio' && (canUseActions ? <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} /> : <p role="status" data-testid="audio-account-mismatch">Audio actions require the matching signed-in learner account.</p>)}
           {activeTab === 'English' && <EnglishPanel track={track} />}
           {activeTab === 'Practice' && <PracticePanel track={track} />}
           {activeTab === 'Visual' && <VisualPanel />}

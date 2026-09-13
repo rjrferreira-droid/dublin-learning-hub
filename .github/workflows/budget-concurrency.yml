@@ -1,0 +1,45 @@
+name: Budget concurrency and Edge checks
+on:
+  push:
+    branches: [fix/core-consolidation-2026-09-13]
+    paths: ['.github/workflows/budget-concurrency.yml','supabase/tests/concurrency-budget.sh','supabase/functions/professor-usage-settle/**','supabase/migrations/*lh_atomic_professor_start.sql']
+permissions:
+  contents: read
+jobs:
+  concurrent-accounting:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ephemeral-test-only
+          POSTGRES_DB: learning_hub_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGDATABASE: learning_hub_test
+      PGUSER: postgres
+      PGPASSWORD: ephemeral-test-only
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare entirely synthetic local database
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/fixture-budget.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913153700_lh_professor_completion_integrity.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913154315_lh_serialize_learning_updates.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913155850_lh_usage_settlement_integrity.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913161005_lh_atomic_professor_start.sql
+      - name: Overlapping requests must not duplicate reservations or charges
+        run: bash supabase/tests/concurrency-budget.sh
+  edge-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed
+        with:
+          deno-version: v2.9.6
+      - name: Typecheck deployed callback candidates without executing them
+        run: deno check --no-lock --node-modules-dir=auto supabase/functions/professor-usage-settle/index.ts supabase/functions/professor-session-complete/index.ts

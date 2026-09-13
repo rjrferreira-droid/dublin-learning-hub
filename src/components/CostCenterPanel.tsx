@@ -15,6 +15,8 @@ type CostCenterPayload = {
     actualAiSpendUsd?: number;
     loggedAiUsd?: number;
     professorReservedUsd: number;
+    professorCarriedReservedUsd?: number;
+    professorKnownCostUpliftUsd?: number;
     professorActiveReservedUsd?: number;
     professorUnresolvedReservedUsd?: number;
     professorActualUsd?: number;
@@ -33,6 +35,7 @@ type CostCenterPayload = {
     professor: number;
     premiumAudio: number;
   };
+  professorNeedsReconciliation?: number;
   professorSessions: number;
   professorCompletedSessions?: number;
   professorActiveReservations?: number;
@@ -81,8 +84,8 @@ export function CostCenterPanel() {
   }, []);
 
   useEffect(() => {
-    if (open && !data && !loading) void load();
-  }, [open, data, loading, load]);
+    if (open && !data && !loading && !message) void load();
+  }, [open, data, loading, message, load]);
 
   const totalPct = Math.min(100, data?.utilizationPct.total ?? 0);
   const actualAiSpend = data?.usage.actualAiSpendUsd ?? data?.usage.loggedAiUsd ?? 0;
@@ -106,7 +109,7 @@ export function CostCenterPanel() {
           <div className="cost-center-head">
             <div>
               <div className="cost-center-eyebrow">LEARNING HUB • COST CENTER</div>
-              <h3>{data ? `Actual AI spend ${money(actualAiSpend)}` : 'Monthly guardrail'}</h3>
+              <h3>{data ? `Estimated AI usage ${money(actualAiSpend)}` : 'Monthly guardrail'}</h3>
             </div>
             <button className="cost-center-close" onClick={() => setOpen(false)} aria-label="Close Cost Center">×</button>
           </div>
@@ -114,7 +117,7 @@ export function CostCenterPanel() {
           {loading ? (
             <div className="cost-center-state">Reading live budget…</div>
           ) : message ? (
-            <div className="cost-center-state">{message}</div>
+            <div className="cost-center-state">{message}<button type="button" onClick={() => void load()}>Try again</button></div>
           ) : data ? (
             <>
               <div className="cost-center-status-row">
@@ -132,27 +135,32 @@ export function CostCenterPanel() {
                   <strong>{money(data.budget.infrastructureReserveUsd)}</strong>
                 </div>
                 <div>
-                  <span>Actual AI spend</span>
+                  <span>Estimated AI usage</span>
                   <strong>{money(actualAiSpend)} / {money(data.budget.aiHardCapUsd)}</strong>
                 </div>
                 <div>
-                  <span>Professor voice • actual</span>
+                  <span>Professor voice • estimated</span>
                   <strong>{money(professorActual)} / {money(data.budget.professorCapUsd)}</strong>
                 </div>
                 <div>
-                  <span>Evaluation & Audio • actual</span>
+                  <span>Evaluation & Audio • estimated</span>
                   <strong>{money(data.usage.premiumAudioUsd)} / {money(data.budget.premiumAudioCapUsd)}</strong>
                 </div>
                 <div>
-                  <span>Live session reserve</span>
+                  <span>Active reserve • all periods</span>
                   <strong>{money(liveReserveUsd)}</strong>
                 </div>
                 <div>
-                  <span>Legacy unresolved reserve</span>
+                  <span>Unresolved reserve • all periods</span>
                   <strong>{money(unresolvedReserveUsd)}</strong>
                 </div>
               </div>
 
+              {(data.professorNeedsReconciliation ?? 0)>0 && (
+                <div className="cost-center-state">
+                  {data.professorNeedsReconciliation} reservation(s) need reconciliation. Prior-period holds: {money(data.usage.professorCarriedReservedUsd ?? 0)}. No automatic release is assumed.
+                </div>
+              )}
               <div className="cost-center-buffer">
                 <span>Safety buffer after protected commitments</span>
                 <strong>{money(data.usage.safetyBufferUsd)}</strong>
@@ -160,8 +168,8 @@ export function CostCenterPanel() {
 
               <div className="cost-center-foot">
                 <span>
-                  {completedSessions} measured session{completedSessions === 1 ? '' : 's'} • {liveReservations} live reserve{liveReservations === 1 ? '' : 's'}
-                  {unresolvedReservations > 0 ? ` • ${unresolvedReservations} legacy unresolved` : ''}
+                  {completedSessions} measured session{completedSessions === 1 ? '' : 's'} • {liveReservations} active reserve{liveReservations === 1 ? '' : 's'}
+                  {unresolvedReservations > 0 ? ` • ${unresolvedReservations} unresolved` : ''}
                 </span>
                 <button onClick={() => void load()} disabled={loading}>Refresh</button>
               </div>

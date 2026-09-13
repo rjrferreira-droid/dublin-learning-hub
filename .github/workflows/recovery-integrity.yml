@@ -1,0 +1,53 @@
+name: Runtime recovery and callback integrity
+on:
+  push:
+    branches: [fix/core-consolidation-2026-09-13]
+    paths:
+      - '.github/workflows/recovery-integrity.yml'
+      - 'scripts/prepare-recovery-batch.mjs'
+      - 'professor-agent/src/callbackDelivery.ts'
+      - 'tests/callback-delivery.test.ts'
+      - 'tests/legacy-session-boundary.test.ts'
+      - 'tests/runtime-inventory.test.ts'
+      - 'supabase/tests/edge-recovery.test.ts'
+      - 'supabase/runtime-baseline/**'
+      - 'supabase/functions/_shared/legacy-session-boundary.ts'
+permissions:
+  contents: write
+jobs:
+  verify-recovery:
+    if: github.ref == 'refs/heads/fix/core-consolidation-2026-09-13'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed
+        with:
+          deno-version: v2.9.6
+      - name: Materialize targeted branch-only recovery fixes
+        run: node scripts/prepare-recovery-batch.mjs
+      - name: Pure contract and archived-source tests; no external API calls
+        run: node --experimental-strip-types --test tests/callback-delivery.test.ts tests/legacy-session-boundary.test.ts tests/runtime-inventory.test.ts tests/completion-contract.test.ts tests/professor-start.test.ts
+      - name: Typecheck and cache all recovered Edge Function dependencies without executing handlers
+        run: deno check --no-lock --node-modules-dir=auto supabase/functions/*/index.ts
+      - name: Edge handler regression tests with network denied
+        run: deno test --no-lock --node-modules-dir=auto --allow-read=supabase/functions,node_modules --allow-env=SUPABASE_URL,SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,OPENAI_API_KEY supabase/tests/edge-recovery.test.ts
+      - name: Build application and API from locked dependencies
+        run: npm ci && npm run build
+      - name: Verify worker types including graceful shutdown configuration
+        working-directory: professor-agent
+        run: npm ci && npm run typecheck
+      - name: Commit only tested source repairs to the isolated branch
+        run: |
+          test "$GITHUB_REF_NAME" = "fix/core-consolidation-2026-09-13"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add professor-agent/src/index.ts supabase/functions/ai-tutor-evaluate/index.ts supabase/functions/webrtc-signal/index.ts supabase/functions/professor-memory-context/index.ts
+          if ! git diff --cached --quiet; then
+            git commit -m 'Apply verified callback recovery and legacy Professor isolation'
+            git push origin HEAD:fix/core-consolidation-2026-09-13
+          fi
+      - name: Acceptance boundary
+        run: echo 'This does not deploy the LiveKit worker, validate a real voice session, merge V2, or complete database migration recovery.'

@@ -1,0 +1,61 @@
+name: Owner-authorized read-only acceptance
+# The owner's one-off 2026-09-13 run is complete. Never reuse personal credentials on a push/PR.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_owner_read_only:
+        description: 'I authorize this reviewed run to use the configured account for login, reads and local logout only.'
+        type: boolean
+        required: true
+        default: false
+permissions:
+  contents: read
+jobs:
+  verify-before-owner-login:
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_owner_read_only && github.repository == 'rjrferreira-droid/dublin-learning-hub' && github.ref == 'refs/heads/fix/core-consolidation-2026-09-13'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      VITE_SUPABASE_URL: https://lh-ui.invalid
+      VITE_SUPABASE_PUBLISHABLE_KEY: fictional-browser-fixture-not-a-key
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci && npm run build
+      - name: Verify local logout and strict read-only allowlist
+        run: node --experimental-strip-types --test tests/*.test.ts
+      - run: npx playwright install --with-deps chromium
+      - name: Verify UI account regressions without any actual credentials
+        run: npx playwright test tests/account-boundary.spec.ts tests/smoke.spec.ts --grep-invert 'authenticated Learning Hub shell' --retries=0
+  actual-owner-login-and-navigation:
+    needs: verify-before-owner-login
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_owner_read_only && github.repository == 'rjrferreira-droid/dublin-learning-hub' && github.ref == 'refs/heads/fix/core-consolidation-2026-09-13'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install and build before making account credentials available
+        env:
+          VITE_SUPABASE_URL: https://aazfyosqqeujureksqjs.supabase.co
+        run: npm ci && npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Authorized actual login, read-only navigation and current-session-only logout
+        env:
+          LH_OWNER_READ_ONLY_AUTHORIZED: '1'
+          E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+          LH_TEST_EMAIL: ${{ secrets.LH_TEST_EMAIL }}
+          LH_TEST_PASSWORD: ${{ secrets.LH_TEST_PASSWORD }}
+        run: node scripts/owner-live-acceptance.mjs
+      - name: Confirm no source or authentication-state files were committed
+        if: always()
+        run: git diff --exit-code

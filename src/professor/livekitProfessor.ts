@@ -1,108 +1,74 @@
 import { Room, RoomEvent, type RemoteAudioTrack, Track } from 'livekit-client';
 import { supabase } from '../services/supabase';
 import type { TutorSessionRequest } from '../services/contracts';
+import { observedProfessorState, type ProfessorVoiceState } from './voiceState';
 
 type ProfessorTokenResponse = {
-  serverUrl: string;
-  token: string;
-  roomName: string;
-  participantIdentity: string;
-  lessonId: string | null;
-  mode: TutorSessionRequest['mode'];
-  professorProfile: 'finance' | 'payroll' | 'english';
-  validationMode?: boolean;
-  dispatchId?: string | null;
+ serverUrl:string;token:string;roomName:string;participantIdentity:string;
+ sessionId:string;maxSessionSeconds:number;lessonId:string|null;mode:TutorSessionRequest['mode'];
+ professorProfile:'finance'|'payroll'|'english';validationMode:boolean;dispatchId?:string|null;
 };
-
 export type ProfessorConnection = {
-  room: Room;
-  roomName: string;
-  participantIdentity: string;
-  professorProfile: ProfessorTokenResponse['professorProfile'];
-  validationMode: boolean;
-  disconnect: () => Promise<void>;
+ room:Room;roomName:string;participantIdentity:string;sessionId:string;maxSessionSeconds:number;
+ professorProfile:ProfessorTokenResponse['professorProfile'];validationMode:boolean;disconnect:()=>Promise<void>;
 };
-
-function errorMessage(code: string): string {
-  if (code === 'professor_not_configured') return 'Professor voice infrastructure is not configured yet.';
-  if (code === 'professor_agent_dispatch_failed') return 'The Professor agent could not be started. Please try again.';
-  if (code === 'professor_track_forbidden') return 'This Professor track is not available for the authenticated learner profile.';
-  if (code === 'professor_lesson_forbidden') return 'This lesson is not available to the authenticated learner profile.';
-  if (code === 'invalid_professor_request') return 'This Professor session request is not valid.';
-  if (code === 'invalid_authentication' || code === 'missing_authentication') return 'Sign in again before starting the Professor.';
-  return code || 'Professor connection failed.';
+function errorMessage(code:string):string {
+ if(code==='professor_not_configured')return 'Professor voice infrastructure is not configured yet.';
+ if(code==='professor_agent_dispatch_failed')return 'The Professor agent could not be started. Please try again.';
+ if(code==='professor_learner_mismatch')return 'The displayed learner does not match your signed-in account. Return to your own profile before starting.';
+ if(code==='professor_track_forbidden')return 'This Professor track is not available for the authenticated learner profile.';
+ if(code==='professor_lesson_forbidden')return 'This lesson is not available to the authenticated learner profile.';
+ if(code==='invalid_professor_request')return 'This Professor session request is not valid.';
+ if(code==='invalid_authentication'||code==='missing_authentication')return 'Sign in again before starting the Professor.';
+ return code||'Professor connection failed.';
 }
-
-async function requestProfessorToken(request: TutorSessionRequest): Promise<ProfessorTokenResponse> {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) throw error;
-  const accessToken = data.session?.access_token;
-  if (!accessToken) throw new Error('Sign in before starting the Professor.');
-
-  const response = await fetch('/api/livekit-token', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({
-      lessonId: request.lessonId,
-      track: request.track,
-      mode: request.mode,
-      languageProfile: request.languageProfile,
-      validationMode: request.validationMode === true,
-    }),
-  });
-
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const code = typeof body?.error === 'string' ? body.error : 'professor_connection_failed';
-    throw new Error(errorMessage(code));
-  }
-
-  return body as ProfessorTokenResponse;
+function requireNotAborted(signal?:AbortSignal){if(signal?.aborted)throw new DOMException('Professor connection cancelled.','AbortError');}
+async function requestProfessorToken(request:TutorSessionRequest,signal?:AbortSignal,expectedUserId?:string):Promise<ProfessorTokenResponse>{
+ requireNotAborted(signal);
+ const {data,error}=await supabase.auth.getSession();requireNotAborted(signal);
+ if(error)throw error;
+ if(!data.session?.access_token)throw new Error('Sign in before starting the Professor.');
+ if(expectedUserId&&data.session.user.id!==expectedUserId)throw new Error('The signed-in account changed. Start again from the correct account.');
+ const response=await fetch('/api/livekit-token',{method:'POST',signal,headers:{'content-type':'application/json',authorization:`Bearer ${data.session.access_token}`},body:JSON.stringify({lessonId:request.lessonId,learnerId:request.learnerId,track:request.track,mode:request.mode,languageProfile:request.languageProfile,validationMode:request.validationMode===true})});
+ const body=await response.json().catch(()=>({}));requireNotAborted(signal);
+ if(!response.ok)throw new Error(errorMessage(typeof body?.error==='string'?body.error:'professor_connection_failed'));
+ if(typeof body.sessionId!=='string'||!Number.isInteger(body.maxSessionSeconds)||body.maxSessionSeconds<60||body.maxSessionSeconds>1200||typeof body.roomName!=='string'||typeof body.validationMode!=='boolean')throw new Error('Professor session confirmation is incomplete. No microphone was opened.');
+ if(body.roomName.startsWith('validation:')!==body.validationMode||(request.validationMode===true&&!body.validationMode))throw new Error('Validation protection could not be confirmed. No microphone was opened.');
+ return body as ProfessorTokenResponse;
 }
-
-export async function connectProfessor(
-  request: TutorSessionRequest,
-  options?: {
-    onRemoteAudio?: (track: RemoteAudioTrack) => void;
-    onDisconnected?: () => void;
-    onAudioPlaybackStatusChanged?: (canPlaybackAudio: boolean) => void;
-  },
-): Promise<ProfessorConnection> {
-  // Create the room and unlock its audio context before the first network await.
-  // That keeps startAudio inside the original click/tap gesture, which browsers
-  // (especially Safari/iOS and some Chrome configurations) require for playback.
-  const room = new Room({
-    adaptiveStream: true,
-    dynacast: true,
-  });
-  const initialAudioUnlock = room.startAudio().catch(() => undefined);
-
-  room.on(RoomEvent.TrackSubscribed, (track) => {
-    if (track.kind === Track.Kind.Audio) options?.onRemoteAudio?.(track as RemoteAudioTrack);
-  });
-  room.on(RoomEvent.AudioPlaybackStatusChanged, () => {
-    options?.onAudioPlaybackStatusChanged?.(room.canPlaybackAudio);
-  });
-  room.on(RoomEvent.Disconnected, () => options?.onDisconnected?.());
-
-  const credentials = await requestProfessorToken(request);
-  await room.connect(credentials.serverUrl, credentials.token);
-  await initialAudioUnlock;
+export async function connectProfessor(request:TutorSessionRequest,options?:{
+ signal?:AbortSignal;expectedUserId?:string;onRemoteAudio?:(track:RemoteAudioTrack)=>void;
+ onDisconnected?:()=>void;onAudioPlaybackStatusChanged?:(canPlaybackAudio:boolean)=>void;
+ onProfessorState?:(state:ProfessorVoiceState)=>void;
+}):Promise<ProfessorConnection>{
+ const signal=options?.signal;requireNotAborted(signal);
+ const room=new Room({adaptiveStream:true,dynacast:true});
+ const initialAudioUnlock=room.startAudio().catch(()=>undefined);
+ let closing=false;
+ const active=()=>!signal?.aborted&&!closing;
+ const emitState=()=>{if(active())options?.onProfessorState?.(observedProfessorState([...room.remoteParticipants.values()]));};
+ room.on(RoomEvent.TrackSubscribed,track=>{if(active()&&track.kind===Track.Kind.Audio)options?.onRemoteAudio?.(track as RemoteAudioTrack);});
+ room.on(RoomEvent.AudioPlaybackStatusChanged,()=>{if(active())options?.onAudioPlaybackStatusChanged?.(room.canPlaybackAudio);});
+ room.on(RoomEvent.ParticipantAttributesChanged,emitState);
+ room.on(RoomEvent.ParticipantConnected,emitState);
+ room.on(RoomEvent.ParticipantDisconnected,emitState);
+ room.on(RoomEvent.Reconnecting,()=>{if(active())options?.onProfessorState?.('reconnecting');});
+ room.on(RoomEvent.Reconnected,emitState);
+ room.on(RoomEvent.Disconnected,()=>{if(active())options?.onDisconnected?.();});
+ async function disconnect(){
+  closing=true;signal?.removeEventListener('abort',onAbort);
+  await room.localParticipant.setMicrophoneEnabled(false).catch(()=>undefined);
+  await room.disconnect();
+ }
+ function onAbort(){void disconnect().catch(()=>undefined);}
+ signal?.addEventListener('abort',onAbort,{once:true});
+ try{
+  const credentials=await requestProfessorToken(request,signal,options?.expectedUserId);requireNotAborted(signal);
+  await room.connect(credentials.serverUrl,credentials.token);requireNotAborted(signal);
+  await initialAudioUnlock;requireNotAborted(signal);
   options?.onAudioPlaybackStatusChanged?.(room.canPlaybackAudio);
-  await room.localParticipant.setMicrophoneEnabled(true);
-
-  return {
-    room,
-    roomName: credentials.roomName,
-    participantIdentity: credentials.participantIdentity,
-    professorProfile: credentials.professorProfile,
-    validationMode: credentials.validationMode === true,
-    disconnect: async () => {
-      await room.localParticipant.setMicrophoneEnabled(false).catch(() => undefined);
-      room.disconnect();
-    },
-  };
+  emitState();
+  await room.localParticipant.setMicrophoneEnabled(true);requireNotAborted(signal);
+  return {room,roomName:credentials.roomName,participantIdentity:credentials.participantIdentity,sessionId:credentials.sessionId,maxSessionSeconds:credentials.maxSessionSeconds,professorProfile:credentials.professorProfile,validationMode:credentials.validationMode,disconnect};
+ }catch(cause){await disconnect().catch(()=>undefined);throw cause;}
 }

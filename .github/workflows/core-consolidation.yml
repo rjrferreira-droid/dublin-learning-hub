@@ -1,0 +1,48 @@
+name: Core consolidation verification
+on:
+  push:
+    branches: [fix/core-consolidation-2026-09-13]
+    paths:
+      - '.github/workflows/core-consolidation.yml'
+      - 'scripts/core-consolidation-apply.mjs'
+      - 'tests/core-integrity.spec.ts'
+      - 'tests/completion-contract.test.ts'
+      - 'supabase/functions/_shared/**'
+permissions:
+  contents: write
+jobs:
+  verify-isolated-repair:
+    if: github.ref == 'refs/heads/fix/core-consolidation-2026-09-13'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Apply exact, fail-on-drift source patches
+        run: node scripts/core-consolidation-apply.mjs
+      - name: Test callback contract without APIs
+        run: node --experimental-strip-types --test tests/completion-contract.test.ts
+      - name: Install existing application dependencies
+        run: npm install
+      - name: Typecheck and build application
+        run: npm run build
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Verify unit and public browser regressions
+        run: npx playwright test --grep-invert 'authenticated Learning Hub shell'
+      - name: Verify Professor agent types
+        working-directory: professor-agent
+        run: npm install && npm run typecheck
+      - name: Commit only verified source and dependency locks to isolated branch
+        run: |
+          test "$GITHUB_REF_NAME" = "fix/core-consolidation-2026-09-13"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src tests/error-bank.spec.ts tests/adaptive-engine.spec.ts package-lock.json professor-agent/package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Apply verified core integrity and panel retry fixes'
+            git push origin HEAD:fix/core-consolidation-2026-09-13
+          fi
+      - name: Mark live authenticated acceptance as still required
+        run: echo 'These checks do not constitute authenticated learner or live voice acceptance. No production release is authorized.'
