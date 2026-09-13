@@ -1,0 +1,75 @@
+name: Reservation lifecycle verification
+on:
+  push:
+    branches: [fix/core-consolidation-2026-09-13]
+    paths:
+      - '.github/workflows/reservation-lifecycle.yml'
+      - 'supabase/pending/lh_reservation_lifecycle.sql'
+      - 'scripts/prepare-reservation-lifecycle.mjs'
+      - 'supabase/functions/_shared/reservation-exposure.ts'
+      - 'tests/reservation-exposure.test.ts'
+      - 'supabase/tests/reservation-lifecycle.sql'
+      - 'supabase/tests/cost-center-lifecycle.test.ts'
+permissions:
+  contents: write
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ephemeral-test-only
+          POSTGRES_DB: learning_hub_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd 'pg_isready -U postgres' --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGDATABASE: learning_hub_test
+      PGUSER: postgres
+      PGPASSWORD: ephemeral-test-only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed
+        with:
+          deno-version: v2.9.6
+      - name: Apply targeted source edits only in repair branch
+        run: node scripts/prepare-reservation-lifecycle.mjs
+      - name: Test strict reservation contracts and previous core contracts
+        run: node --experimental-strip-types --test tests/reservation-exposure.test.ts tests/callback-delivery.test.ts tests/legacy-session-boundary.test.ts tests/runtime-inventory.test.ts tests/completion-contract.test.ts tests/professor-start.test.ts
+      - name: Build disposable fictional database
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/fixture-budget.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913153700_lh_professor_completion_integrity.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913154315_lh_serialize_learning_updates.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913155850_lh_usage_settlement_integrity.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913161005_lh_atomic_professor_start.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/pending/lh_reservation_lifecycle.sql
+      - name: Verify month rollover, aging, known costs and reservation gates
+        run: |
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/reservation-lifecycle.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/budget-integrity.sql
+          bash supabase/tests/concurrency-budget.sh
+      - name: Typecheck Edge source without executing handlers
+        run: deno check --no-lock --node-modules-dir=auto supabase/functions/*/index.ts
+      - name: Test Cost Center handler with runtime network denied
+        run: deno test --no-lock --node-modules-dir=auto --allow-read=supabase/functions,node_modules --allow-env=SUPABASE_URL,SUPABASE_ANON_KEY,SUPABASE_SERVICE_ROLE_KEY,OPENAI_API_KEY supabase/tests/cost-center-lifecycle.test.ts supabase/tests/edge-recovery.test.ts
+      - name: Build app/API and check voice worker
+        run: npm ci && npm run build && npm --prefix professor-agent ci && npm --prefix professor-agent run typecheck
+      - name: Commit verified source edits to repair branch, not V2/main
+        run: |
+          test "$GITHUB_REF_NAME" = "fix/core-consolidation-2026-09-13"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add supabase/pending/lh_reservation_lifecycle.sql supabase/functions/learning-hub-cost-center/index.ts src/components/CostCenterPanel.tsx
+          if ! git diff --cached --quiet; then
+            git commit -m 'Apply verified all-period reservation exposure and Cost Center labels'
+            git push origin HEAD:fix/core-consolidation-2026-09-13
+          fi
+      - name: Acceptance boundary
+        run: echo 'No live learner tests, provider calls, production promotion, or historical migration replay performed.'
