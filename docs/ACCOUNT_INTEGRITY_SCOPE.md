@@ -1,17 +1,19 @@
 # Account integrity — scope of the fifth repair batch
 
-The new browser suite exercises the real AuthGate, application and Professor panel in Chromium while returning fictional Auth/REST responses. External services and microphone capture are blocked. It is NOT a substitute for a real authenticated Supabase journey or voice acceptance.
+Chromium exercises the real AuthGate, application and Professor panel with FICTIONAL Auth/REST responses. External services and microphone capture are blocked. This does not establish live Supabase credential validity, RLS or voice acceptance.
 
-Source changes bind a resolved profile to its auth user, remount private UI across accounts, remove synthetic DOM-click profile synchronization, and distinguish profile failure from a genuinely missing profile. The App receives identity from AuthGate rather than a second asynchronous query; memory reads explicitly scope user_id in addition to backend RLS. Visual profile preview remains available but cannot start personalised audio or Professor actions under a different displayed learner.
+A resolved profile is bound to its auth user; account changes remount private UI. The previous timed DOM-click synchronization is removed. Profile load errors offer retry/logout rather than acting like a missing profile. App identity comes from AuthGate instead of a second independent lookup. Learning reads explicitly scope user_id as well as relying on backend RLS and verify account identity before and after retrieval.
 
-The token request carries the displayed learner; the candidate API compares it with the server-read account profile before reserving budget or dispatching a worker. Older clients that omit the optional learner field remain compatible. A display helper or mocked test is not a backend authorization mechanism.
+**The legacy profile selector was already hidden by auth.css. This batch does not unhide it or claim that normal users could click it.** Two defensive browser cases deliberately activate its hidden legacy event handler through JavaScript, then verify that mismatched presentation cannot reveal current private history under that other label or enable personalized audio/Professor actions. Normal account changes still require signout/signin.
 
-Pending voice connections support cancellation, account-change/unmount cleanup and failed-connect room cleanup. Cancelling a browser request does NOT prove that a server dispatch consumed nothing and does not automatically release any reservation. Durable server recovery remains separate.
+The candidate token API checks the supplied learner against its server-read account profile before reserving funds or dispatching the Professor. Old clients that omit this optional field remain compatible. UI helpers are not server authorization.
 
-The authenticated smoke fixture supports the two previously documented variable naming conventions. E2E_REQUIRE_AUTH=1 makes a missing dedicated test-account fixture an error rather than a skipped authenticated success. No real account credentials are embedded in tests or requested by this batch.
+Pending voice connections are cancellable and cleaned up on unmount/account change or failed connection. Browser cancellation is NOT proof that a server dispatch consumed nothing; no reserve is automatically released. Durable backend recovery remains open.
 
-No historical migration archival retry, database migration, runtime deployment, model/persona change, new subscription, production merge, or Manuzinha-source change is included.
+The dedicated authenticated fixture supports E2E_EMAIL/E2E_PASSWORD and LH_TEST_EMAIL/LH_TEST_PASSWORD. E2E_REQUIRE_AUTH=1 makes absent credentials fail instead of silently skip. No personal passwords are in source. The normal PR suite remains explicitly simulated; a separate manual live login/navigation job requires the dedicated fixture and blocks paid generation endpoints. Adding that job does not mean it ran or was made a required branch-protection check.
 
-Primary implementation references reviewed: React preserving/resetting state (https://react.dev/learn/preserving-and-resetting-state); Playwright mocked APIs (https://playwright.dev/docs/mock); Supabase auth state subscription (https://supabase.com/docs/reference/javascript/auth-onauthstatechange).
+The initial test attempt found two harness mistakes: it tried to click an already-hidden selector as though it were visible, and waited only five seconds despite the SDK's documented automatic 503 GET retries. The hidden-selector cases were labeled and executed as programmatic defensive tests; outage assertions retain the same 503 failures and permit the bounded retry interval. Neither the existing CSS restriction nor the SDK retries were disabled.
 
-This is a scope statement, not a successful-test report. Actual CI results must be recorded after execution.
+References reviewed: React preserving/resetting state (https://react.dev/learn/preserving-and-resetting-state), Playwright mocked APIs (https://playwright.dev/docs/mock), Supabase Auth state subscription (https://supabase.com/docs/reference/javascript/auth-onauthstatechange), automatic retries (https://supabase.com/changelog/45071-automatic-postgrest-retries-for-transient-errors).
+
+No historical SQL archival retry, DB migration, runtime deployment, paid voice/LLM session, persona/model change, new subscription, production merge or Manuzinha-source change is included. See the batch status document for actual CI results.

@@ -4,51 +4,73 @@ on:
   push:
     branches: [v2]
   pull_request:
-    branches: [main]
+    branches: [v2, main]
+  workflow_dispatch:
+    inputs:
+      run_authenticated_acceptance:
+        description: 'Run the live V2 login/navigation gate with a dedicated Finance test account. No voice or audio-generation calls.'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    timeout-minutes: 15
+    env:
+      VITE_SUPABASE_URL: https://lh-ui.invalid
+      VITE_SUPABASE_PUBLISHABLE_KEY: fictional-browser-fixture-not-a-key
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 24
-
-      - name: Install dependencies
-        run: npm install
-
+          node-version: '24'
+      - name: Install locked dependencies
+        run: npm ci
       - name: Typecheck and build
         run: npm run build
-
+      - name: Node contracts without providers
+        run: node --experimental-strip-types --test tests/*.test.ts
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-
-      - name: Run smoke tests
-        run: npm run test:e2e
+      - name: Public and simulated-account browser regressions, not live authentication
+        run: npx playwright test --grep-invert 'authenticated Learning Hub shell'
+      - name: State the acceptance boundary
+        run: echo 'These are local contracts and simulated browser journeys. Live authenticated acceptance and live voice acceptance remain separate required release gates.' >> "$GITHUB_STEP_SUMMARY"
 
   professor-agent-typecheck:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 24
-
-      - name: Install Professor agent dependencies
+          node-version: '24'
+      - run: npm ci && npm run typecheck
         working-directory: professor-agent
-        run: npm install
 
-      - name: Typecheck Professor agent
-        working-directory: professor-agent
-        run: npm run typecheck
+  live-authenticated-acceptance:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_authenticated_acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VITE_SUPABASE_URL: https://aazfyosqqeujureksqjs.supabase.co
+      E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      LH_TEST_EMAIL: ${{ secrets.LH_TEST_EMAIL }}
+      LH_TEST_PASSWORD: ${{ secrets.LH_TEST_PASSWORD }}
+      E2E_REQUIRE_AUTH: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Require a dedicated test-account fixture, never silently skip
+        run: node --experimental-strip-types --input-type=module -e "import {resolveAuthFixture} from './tests/helpers/auth-fixture.ts'; resolveAuthFixture(process.env);"
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Live V2 authentication and read-only navigation, no provider generation
+        run: npx playwright test tests/smoke.spec.ts --grep 'authenticated Learning Hub shell' --retries=0 --trace=off
+      - name: Separate login/navigation from voice acceptance
+        run: echo 'The live login/navigation gate ran with its dedicated fixture. This does not prove real voice quality, worker deployment or full schema reconstruction.' >> "$GITHUB_STEP_SUMMARY"
