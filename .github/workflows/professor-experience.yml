@@ -6,7 +6,7 @@ concurrency:
   group: learning-experience-${{ github.ref }}
   cancel-in-progress: true
 permissions:
-  contents: write
+  contents: read
 jobs:
   companion-and-quality:
     if: github.ref == 'refs/heads/feat/professor-experience-2026-09-13'
@@ -19,6 +19,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -26,9 +27,7 @@ jobs:
         run: |
           git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- professor-agent supabase src/auth src/components/AuthGate.tsx src/components/LittleEnglish.tsx src/little-english.css src/professor/voiceState.ts
           git diff --exit-code b0a629ae70b271c896709c2fa1a6a25a105ce220 HEAD -- api server
-      - name: Wire only the reviewed lesson workspace and local workshops
-        run: node scripts/materialize-lesson-workspace.mjs && node scripts/finalize-workspace-wiring.mjs
-      - name: Install locked dependencies and build candidate
+      - name: Install locked dependencies and build the committed candidate
         run: npm ci && npm run build
       - name: Compare initial JavaScript with the previous baseline using identical dependencies
         run: |
@@ -36,7 +35,7 @@ jobs:
           ln -s "$GITHUB_WORKSPACE/node_modules" "$RUNNER_TEMP/lh-payload-baseline/node_modules"
           (cd "$RUNNER_TEMP/lh-payload-baseline" && "$GITHUB_WORKSPACE/node_modules/.bin/vite" build --manifest --outDir "$RUNNER_TEMP/lh-baseline-dist")
           node scripts/bundle-metrics.mjs "$RUNNER_TEMP/lh-baseline-dist"
-      - name: Workshop answer keys and all previous contracts
+      - name: Workshop answer keys, editorial consistency and all previous contracts
         run: node --experimental-strip-types --test tests/*.test.ts
       - name: Bundle unchanged handler/evaluator and candidate connection for isolated tests
         run: |
@@ -67,16 +66,7 @@ jobs:
             quality-results/bundle-metrics.json
           retention-days: 7
           if-no-files-found: error
-      - name: Commit only the tested integration on the feature branch
+      - name: Unchanged source and release boundary
         run: |
-          test "$GITHUB_REF_NAME" = "feat/professor-experience-2026-09-13"
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/App.tsx src/components/LessonStudyPanel.tsx src/components/LessonProfessorWorkspace.tsx src/professor/livekitProfessor.ts tests/written-lessons.test.ts
-          if ! git diff --cached --quiet; then
-            git commit -m 'Integrate verified three-course workshops and continuous lesson workspace'
-            git push origin HEAD:feat/professor-experience-2026-09-13
-          fi
           git diff --exit-code
-      - name: Release boundary
-        run: echo 'Feature preview only; no paid model/voice call, real credentials, database writes, worker deployment, normal-V2 promotion or budget change. Workshops are local, not recorded mastery. Simulated continuity is not real media acceptance.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Read-only verification of committed feature preview. No paid model/voice call, real credentials, database writes, worker deployment, normal-V2 promotion or budget change. Workshops are local, not recorded mastery. Simulated continuity is not real media acceptance.' >> "$GITHUB_STEP_SUMMARY"
