@@ -116,9 +116,9 @@ try{
   await page.getByRole('button',{name:'Close Learning Memory',exact:true}).click();
  });
  await check('real_cost_center_read',async()=>{
-  await page.getByRole('button',{name:'Open Cost Center',exact:true}).click();
+  await page.getByRole('button',{name:'Open Learning Hub Cost Center',exact:true}).click();
   await waitFor(()=>report.costRead);
-  await page.locator('.cost-center-body').waitFor({state:'visible'});
+  await page.locator('.cost-center-grid').waitFor({state:'visible'});
   await page.getByRole('button',{name:'Close Cost Center',exact:true}).click();
  });
  await check('local_logout',async()=>{
@@ -130,7 +130,7 @@ try{
  requireTrue(Object.values(report.checks).every(result=>result==='passed')&&report.blockedSensitiveRequests===0);
  report.result='passed';
 }catch{
- report.result='failed';report.failureStage=phase;
+ report.result='failed';report.failureStage=Object.entries(report.checks).find(([,result])=>result==='failed')?.[0]??phase;
  if(report.credentialConfiguration==='not_checked')report.credentialConfiguration='missing_or_inconsistent';
 }finally{
  // Always revoke only the session created by this run, including after a UI failure.

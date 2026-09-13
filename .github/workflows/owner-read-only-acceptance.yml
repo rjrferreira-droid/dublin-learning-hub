@@ -1,4 +1,6 @@
 name: Owner-authorized read-only acceptance
+# Second attempt corrects only the test's Cost Center locators and failure-stage reporting.
+# No authentication, network allowance, real-response assertion or application permission is relaxed.
 on:
   push:
     branches: [fix/core-consolidation-2026-09-13]
