@@ -1,0 +1,16 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
+import {observedProfessorState,professorVoiceLabel} from '../src/professor/voiceState.ts';
+import {voiceValidationPlan} from '../server/voice-validation.ts';
+const plan=(validationMode:boolean,maxSessionSeconds=1200)=>voiceValidationPlan({validationMode,roomName:validationMode?'validation:lh-test':'lh-test',budget:{maxSessionSeconds}});
+test('empty room is not evidence that Professor is listening',()=>assert.equal(observedProfessorState([]),'awaiting_professor'));
+test('unrelated remote participant is not interpreted as a Professor',()=>assert.equal(observedProfessorState([{attributes:{name:'learner'}}]),'awaiting_professor'));
+for(const state of ['initializing','idle','listening','thinking','speaking'] as const)test(`display SDK-reported ${state} rather than inventing a state`,()=>assert.equal(observedProfessorState([{attributes:{'lk.agent.state':state}}]),state));
+test('unrecognized state and multiple agents do not falsely claim listening',()=>{assert.equal(observedProfessorState([{attributes:{'lk.agent.state':'future_state'}}]),'state_unavailable');assert.equal(observedProfessorState([{attributes:{'lk.agent.state':'listening'}},{attributes:{'lk.agent.state':'speaking'}}]),'state_unavailable');});
+test('thinking is only a visible response-preparation label',()=>assert.equal(professorVoiceLabel('thinking'),'PREPARING A RESPONSE'));
+test('validation uses at most five minutes; no price or free-use claim',()=>assert.deepEqual(plan(true),{validationMode:true,maxSessionSeconds:300}));
+test('validation never exceeds a shorter configured allowance',()=>assert.equal(plan(true,120).maxSessionSeconds,120));
+test('normal sessions preserve existing duration policy',()=>assert.deepEqual(plan(false),{validationMode:false,maxSessionSeconds:1200}));
+test('persisted room and validation flag must agree',()=>assert.throws(()=>voiceValidationPlan({validationMode:false,roomName:'validation:lh-test',budget:{maxSessionSeconds:1200}}),/mismatch/));
+test('invalid budget limit cannot generate a voice plan',()=>{for(const n of [NaN,0,59,1201,300.5])assert.throws(()=>plan(true,n));});
+test('Docker deployment uses the tested lockfile',()=>{const s=fs.readFileSync('professor-agent/Dockerfile','utf8');assert.ok(s.includes('COPY package.json package-lock.json ./'));assert.ok(s.includes('npm ci --include=dev'));assert.ok(!s.includes('RUN npm install'));});
+test('both dispatch metadata and browser response use the persisted plan',()=>{const s=fs.readFileSync('api/livekit-token.ts','utf8');assert.equal(s.split('validationMode: voicePlan.validationMode').length,3);assert.equal(s.split('maxSessionSeconds: voicePlan.maxSessionSeconds').length,3);});

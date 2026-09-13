@@ -1,0 +1,42 @@
+name: Voice validation preparation
+on:
+  push:
+    branches: [fix/core-consolidation-2026-09-13]
+    paths: ['.github/workflows/voice-validation-preparation.yml','scripts/prepare-voice-validation.mjs','server/voice-validation.ts','src/professor/voiceState.ts','tests/voice-validation.test.ts']
+permissions:
+  contents: write
+jobs:
+  verify-voice-preparation:
+    if: github.ref == 'refs/heads/fix/core-consolidation-2026-09-13'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      VITE_SUPABASE_URL: https://lh-ui.invalid
+      VITE_SUPABASE_PUBLISHABLE_KEY: fictional-browser-fixture-not-a-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Materialize bounded validation API before verification
+        run: node scripts/prepare-voice-validation.mjs
+      - run: npm ci && npm run build
+      - name: Voice state, validation, account and existing contract regressions
+        run: node --experimental-strip-types --test tests/*.test.ts
+      - run: npx playwright install --with-deps chromium
+      - name: Browser regressions without real Auth, microphone or voice provider
+        run: npx playwright test --grep-invert 'authenticated Learning Hub shell' --retries=0
+      - name: Verify worker with its exact lockfile; do not deploy it
+        run: npm --prefix professor-agent ci && npm --prefix professor-agent run typecheck
+      - name: Commit verified API source only to the repair branch
+        run: |
+          test "$GITHUB_REF_NAME" = "fix/core-consolidation-2026-09-13"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add api/livekit-token.ts
+          if ! git diff --cached --quiet; then
+            git commit -m 'Use persisted validation protection and five-minute voice trial limit'
+            git push origin HEAD:fix/core-consolidation-2026-09-13
+          fi
+      - name: Release boundary
+        run: echo 'No owner credentials, LiveKit dispatch, worker deployment, production merge or learner writes. Live voice and worker version remain unverified.'
