@@ -1,3 +1,4 @@
+import { LessonStudyPanel } from './components/LessonStudyPanel';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLearnerSession } from './auth/LearnerSession';
 import { canUseLearnerActions } from './auth/identity';
@@ -486,14 +487,8 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close 
         <article className="lesson-content-card">
           <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">Premium lesson</span></div>
           <div className="eyebrow">{activeTab.toUpperCase()}</div>
-          {activeTab === 'Learn' && <LearnPanel track={track} />}
+          <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} activeTab={activeTab} onTabChange={setActiveTab} />
           {activeTab === 'Audio' && (canUseActions ? <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} /> : <p role="status" data-testid="audio-account-mismatch">Audio actions require the matching signed-in learner account.</p>)}
-          {activeTab === 'English' && <EnglishPanel track={track} />}
-          {activeTab === 'Practice' && <PracticePanel track={track} />}
-          {activeTab === 'Visual' && <VisualPanel />}
-          {activeTab === 'Case' && <CasePanel track={track} />}
-          {activeTab === 'Test' && <TestPanel />}
-          {activeTab === 'Sources' && <SourcesPanel />}
           {activeTab === 'Professor' && <InlineProfessorPanel learnerKey={learnerKey} track={track} />}
         </article>
         <aside className="lesson-side-card">
@@ -507,35 +502,6 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close 
       </div>
     </section>
   );
-}
-
-function LearnPanel({ track }: { track: Track }) {
-  return <div className="reading-copy"><h2>{track.lesson}</h2><p className="lead">A Golden Lesson proves the complete Learning Hub experience before the curriculum scales.</p><h3>Learning objective</h3><p>Understand the core concept, explain it clearly, apply it to a realistic decision and defend your reasoning in a short professional conversation.</p><div className="callout"><strong>Active learning rule</strong><span>You will be asked to retrieve and apply the concept before the system shows model reasoning.</span></div><h3>Why this matters</h3><p>{track.focus}. The final goal is employability and practical confidence, not passive completion.</p></div>;
-}
-
-function EnglishPanel({ track }: { track: Track }) {
-  const terms = track.key === 'english' ? ['follow-up question', 'natural phrasing', 'word stress', 'story arc', 'register'] : ['judgement', 'reconciliation', 'variance', 'stakeholder', 'control'];
-  return <div className="reading-copy"><h2>English in context</h2><p className="lead">Technical and everyday language is trained as usable speech, not as a vocabulary list.</p><div className="term-grid">{terms.map((term) => <div className="term-card" key={term}><strong>{term}</strong><span>Listen • use it • retrieve it later</span></div>)}</div></div>;
-}
-
-function PracticePanel({ track }: { track: Track }) {
-  return <div className="reading-copy"><h2>Quick retrieval</h2><p className="lead">This practice surface is available for drafting; automatic scoring is not yet connected here.</p><div className="question-box"><strong>{track.key === 'english' ? 'Tell the same story in 30 seconds without using “and then” more than once.' : 'What would you investigate first, and why?'}</strong><textarea placeholder="Write your answer here…" /><button className="primary-btn" disabled>Scoring not connected yet</button></div></div>;
-}
-
-function VisualPanel() {
-  return <div className="reading-copy"><h2>Visual challenge</h2><p className="lead">Interpret the signal, identify the issue and explain your conclusion. This visual is a practice prompt, not a scored result.</p><div className="visual-demo"><div className="visual-bar a"/><div className="visual-bar b"/><div className="visual-bar c"/><div className="visual-bar d"/><div className="visual-bar e"/></div><p>Which movement requires management attention first? Explain the business implication.</p></div>;
-}
-
-function CasePanel({ track }: { track: Track }) {
-  return <div className="reading-copy"><h2>Manager case</h2><div className="case-box"><span>SCENARIO</span><p>{track.key === 'payroll' ? 'An employee says net pay unexpectedly fell after a payroll change. Revenue data, employee setup and deductions all need to be checked before responding.' : track.key === 'english' ? 'You have moved to Dublin and need to call a letting agent because the heating has stopped. Explain the issue clearly, ask what happens next and respond to follow-up questions.' : 'Month-end reporting is complete, but working capital deteriorated while EBITDA improved. The Regional CFO asks for a concise explanation and next actions.'}</p></div><textarea className="case-answer" placeholder="Build your response…" /><button className="primary-btn" disabled>Independent case scoring not connected yet</button></div>;
-}
-
-function TestPanel() {
-  return <div className="reading-copy"><h2>Checkpoint</h2><p className="lead">The question is available for practice, but this surface does not write a competency score yet.</p><div className="question-box"><strong>Which answer demonstrates the strongest professional judgement?</strong>{['State the rule only.', 'State the rule and repeat the data.', 'Explain the conclusion, evidence, risk and next action.', 'Escalate immediately without analysis.'].map((x, i) => <label className="option-row" key={x}><input type="radio" name="q1"/><span>{String.fromCharCode(65+i)}. {x}</span></label>)}<button className="primary-btn" disabled>Measured scoring not connected yet</button></div></div>;
-}
-
-function SourcesPanel() {
-  return <div className="reading-copy"><h2>Sources & freshness</h2><p className="lead">A production-grade source package has not yet been published on this lesson screen.</p><div className="source-row"><strong>Authority status</strong><span>Not yet displayed in this surface</span></div><div className="source-row"><strong>Freshness status</strong><span className="freshness">Do not treat placeholder lesson copy as authoritative source evidence</span></div></div>;
 }
 
 function InlineProfessorPanel({ learnerKey, track }: { learnerKey: LearnerKey; track: Track }) {
