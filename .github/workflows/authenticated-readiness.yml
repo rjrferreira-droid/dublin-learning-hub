@@ -1,0 +1,47 @@
+name: Authenticated acceptance readiness
+on:
+  push:
+    branches: [fix/core-consolidation-2026-09-13]
+    paths: ['.github/workflows/authenticated-readiness.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dedicated-fixture-preflight:
+    if: github.repository == 'rjrferreira-droid/dublin-learning-hub' && github.ref == 'refs/heads/fix/core-consolidation-2026-09-13'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify only fixture availability, never print its values or contact Auth
+        env:
+          E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+          LH_TEST_EMAIL: ${{ secrets.LH_TEST_EMAIL }}
+          LH_TEST_PASSWORD: ${{ secrets.LH_TEST_PASSWORD }}
+          E2E_REQUIRE_AUTH: '1'
+        run: |
+          node --experimental-strip-types --input-type=module <<'NODE'
+          import {appendFileSync} from 'node:fs';
+          import {resolveAuthFixture} from './tests/helpers/auth-fixture.ts';
+          const report = message => {
+            console.log(message);
+            if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, message+'\n');
+          };
+          const emailPresent = Boolean(process.env.E2E_EMAIL || process.env.LH_TEST_EMAIL);
+          const passwordPresent = Boolean(process.env.E2E_PASSWORD || process.env.LH_TEST_PASSWORD);
+          report(`Dedicated test email available to job: ${emailPresent ? 'yes' : 'no'}.`);
+          report(`Dedicated test password available to job: ${passwordPresent ? 'yes' : 'no'}.`);
+          try {
+            resolveAuthFixture(process.env);
+            report('READY_FOR_AUTHENTICATED_TEST: configuration is available. Login/navigation have NOT been executed by this readiness check.');
+          } catch {
+            report('BLOCKED_AUTHENTICATED_TEST: dedicated fixture is missing or inconsistent. No real login, learner data read/write, or paid provider call was attempted.');
+            process.exitCode=1;
+          }
+          NODE
