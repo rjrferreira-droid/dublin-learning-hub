@@ -69,7 +69,7 @@ for(const track of ['finance','payroll','english'])test(`${track}: actual handle
   const text=request.input.find(x=>x.role==='user').content;
   const context=JSON.parse(text.split('SESSION CONTEXT\n')[1].split('\n\nTRANSCRIPT\n')[0]);
   assert.equal(context.lesson.technicalBrief,metadata.lessonContext.technicalBrief);
-  assert.ok(text.endsWith('LEARNER: Fictional learner response, not the case answer.'));
+  assert.ok(text.endsWith('#1 LEARNER: "Fictional learner response, not the case answer."'));
  }finally{globalThis.fetch=async()=>{throw new Error('network_forbidden');};delete process.env.OPENAI_API_KEY;}
 });
 test('actual handler refuses a cross-account course before reserving or dispatching',async()=>{
@@ -103,7 +103,7 @@ for(const [track,ids] of Object.entries({finance:['finance-bridge-a','finance-br
   assert.equal(m.maxSessionSeconds,300);assert.equal(m.qualityTier,'premium');assert.equal(current.rpcCalls.length,1);
   let sent;process.env.OPENAI_API_KEY='fictional-only';
   globalThis.fetch=async(url,opts)=>{assert.equal(url,'https://api.openai.com/v1/responses');sent=JSON.parse(opts.body);return new Response(JSON.stringify({output_text:JSON.stringify({summary:'Fictional evaluator response',errors:[],assessmentConfidence:10}),usage:{input_tokens:1,output_tokens:1}}),{status:200});};
-  try{await evaluateProfessorSession([{role:'user',text:'FICTIONAL ACTUAL ANSWER'}],m);const content=sent.input.find(x=>x.role==='user').content;const ctx=JSON.parse(content.split('SESSION CONTEXT\n')[1].split('\n\nTRANSCRIPT\n')[0]);assert.equal(ctx.lesson.technicalBrief,m.lessonContext.technicalBrief);assert.ok(content.endsWith('LEARNER: FICTIONAL ACTUAL ANSWER'));}
+  try{await evaluateProfessorSession([{role:'user',text:'FICTIONAL ACTUAL ANSWER'}],m);const content=sent.input.find(x=>x.role==='user').content;const ctx=JSON.parse(content.split('SESSION CONTEXT\n')[1].split('\n\nTRANSCRIPT\n')[0]);assert.equal(ctx.lesson.technicalBrief,m.lessonContext.technicalBrief);assert.ok(content.endsWith('#1 LEARNER: "FICTIONAL ACTUAL ANSWER"'));}
   finally{globalThis.fetch=async()=>{throw new Error('network_forbidden');};delete process.env.OPENAI_API_KEY;}
  }
  assert.equal(hashes.size,3);
