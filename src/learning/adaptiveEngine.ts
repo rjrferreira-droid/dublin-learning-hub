@@ -94,9 +94,10 @@ export function rankAdaptivePriorities(input: {
   }
 
   for (const error of input.errors) {
-    if (error.status === 'mastered' || error.status === 'archived') continue;
+    if (error.status === 'archived') continue;
+    if (error.status === 'mastered' && (!Number.isFinite(new Date(error.nextReviewAt).getTime()) || new Date(error.nextReviewAt).getTime() > now.getTime())) continue;
     const overdue = daysOverdue(error.nextReviewAt, now);
-    const lowConfidence = clamp(100 - error.confidence);
+    const lowConfidence = clamp(100 - (error.masteryConfidence ?? 50));
     const repetitionBoost = Math.min(Math.max((error.frequency ?? 1) - 1, 0), 8) * 3;
     const priorityScore = clamp(28 + lowConfidence * 0.45 + Math.min(overdue, 21) * 1.7 + repetitionBoost);
     const repeated = (error.frequency ?? 1) > 1 ? ` It has recurred ${error.frequency} times.` : '';

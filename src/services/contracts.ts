@@ -14,7 +14,10 @@ export type ErrorBankItem = {
   learnerId: string;
   domain: 'technical' | 'grammar' | 'vocabulary' | 'pronunciation' | 'fluency' | 'register';
   pattern: string;
+  /** Legacy field: never interpret a diagnosis confidence as student mastery. */
   confidence: number;
+  diagnosticConfidence?: number | null;
+  masteryConfidence?: number | null;
   frequency?: number;
   status?: 'active' | 'mastered' | 'archived';
   lastSeenAt: string;

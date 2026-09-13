@@ -111,6 +111,8 @@ function realIntelligence(snapshot: LearningMemorySnapshot | null, learnerKey: L
     domain: errorDomains.has(item.domain) ? item.domain as ErrorBankItem['domain'] : 'technical',
     pattern: item.pattern,
     confidence: Math.round(item.confidence),
+    diagnosticConfidence: item.diagnosticConfidence,
+    masteryConfidence: item.masteryConfidence,
     frequency: item.frequency,
     status: item.status === 'mastered' || item.status === 'archived' ? item.status : 'active',
     lastSeenAt: item.lastSeenAt,

@@ -19,7 +19,7 @@ test('repeated error lowers mastery confidence and resurfaces quickly', () => {
   );
 
   expect(second.frequency).toBe(2);
-  expect(second.confidence).toBeLessThan(first.confidence);
+  expect(second.masteryConfidence).toBeLessThan(first.masteryConfidence);
   expect(shouldResurface(second, new Date('2026-09-10T12:00:00.000Z'))).toBe(true);
 });
 
@@ -65,7 +65,7 @@ test('strong retrieval raises confidence and can eventually mark an error master
     learnerId: 'test-user',
     domain: 'vocabulary' as const,
     pattern: 'make vs do',
-    confidence: 78,
+    masteryConfidence: 78,
     frequency: 3,
     lastSeenAt: '2026-09-01T12:00:00.000Z',
     nextReviewAt: '2026-09-03T12:00:00.000Z',
@@ -73,7 +73,7 @@ test('strong retrieval raises confidence and can eventually mark an error master
   };
 
   const result = recordSuccessfulRetrieval(item, '2026-09-03T12:00:00.000Z', 92);
-  expect(result.confidence).toBe(98);
+  expect(result.masteryConfidence).toBe(98);
   expect(result.status).toBe('mastered');
-  expect(shouldResurface(result, new Date('2027-01-01T12:00:00.000Z'))).toBe(false);
+  expect(shouldResurface(result, new Date('2027-01-01T12:00:00.000Z'))).toBe(true);
 });

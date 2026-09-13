@@ -81,8 +81,8 @@ export function CostCenterPanel() {
   }, []);
 
   useEffect(() => {
-    if (open && !data && !loading) void load();
-  }, [open, data, loading, load]);
+    if (open && !data && !loading && !message) void load();
+  }, [open, data, loading, message, load]);
 
   const totalPct = Math.min(100, data?.utilizationPct.total ?? 0);
   const actualAiSpend = data?.usage.actualAiSpendUsd ?? data?.usage.loggedAiUsd ?? 0;
@@ -114,7 +114,7 @@ export function CostCenterPanel() {
           {loading ? (
             <div className="cost-center-state">Reading live budget…</div>
           ) : message ? (
-            <div className="cost-center-state">{message}</div>
+            <div className="cost-center-state">{message}<button type="button" onClick={() => void load()}>Try again</button></div>
           ) : data ? (
             <>
               <div className="cost-center-status-row">

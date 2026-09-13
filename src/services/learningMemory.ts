@@ -44,6 +44,8 @@ export type LearningMemoryError = {
   pattern: string;
   frequency: number;
   confidence: number;
+  diagnosticConfidence: number | null;
+  masteryConfidence: number | null;
   lastSeenAt: string;
   nextReviewAt: string;
   status: string;
@@ -149,7 +151,7 @@ export async function loadLearningMemory(): Promise<LearningMemorySnapshot> {
       .limit(16),
     supabase
       .from('user_error_bank')
-      .select('id,domain,pattern,frequency,confidence,last_seen_at,next_review_at,status')
+      .select('id,domain,pattern,frequency,confidence,diagnostic_confidence,mastery_confidence,last_seen_at,next_review_at,status')
       .eq('status', 'active')
       .order('next_review_at', { ascending: true })
       .limit(12),
@@ -185,6 +187,8 @@ export async function loadLearningMemory(): Promise<LearningMemorySnapshot> {
     pattern: String(row.pattern ?? ''),
     frequency: Math.max(1, Math.round(numberOrZero(row.frequency) || 1)),
     confidence: Math.max(0, Math.min(100, numberOrZero(row.confidence))),
+    diagnosticConfidence: numberOrNull(row.diagnostic_confidence),
+    masteryConfidence: numberOrNull(row.mastery_confidence),
     lastSeenAt: String(row.last_seen_at ?? row.next_review_at ?? ''),
     nextReviewAt: String(row.next_review_at ?? row.last_seen_at ?? ''),
     status: String(row.status ?? 'active'),

@@ -68,7 +68,7 @@ test('recurring language error can become the next learning action', () => {
   expect(action?.reason).toContain('recurred 4 times');
 });
 
-test('mastered and archived Error Bank patterns never compete for the next action', () => {
+test('not-yet-due mastered and archived patterns do not compete for the next action', () => {
   const priorities = rankAdaptivePriorities({
     now: new Date('2026-09-10T12:00:00.000Z'),
     competencies: [{ competencyId: 'finance', label: 'Finance judgement', score: 68, priority: true }],
@@ -82,7 +82,7 @@ test('mastered and archived Error Bank patterns never compete for the next actio
         frequency: 7,
         status: 'mastered',
         lastSeenAt: '2026-08-01T12:00:00.000Z',
-        nextReviewAt: '2026-09-01T12:00:00.000Z',
+        nextReviewAt: '2099-09-01T12:00:00.000Z',
       },
       {
         id: 'archived',
