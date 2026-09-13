@@ -1,15 +1,18 @@
 name: Owner-authorized read-only acceptance
-# Second attempt corrects only the test's Cost Center locators and failure-stage reporting.
-# No authentication, network allowance, real-response assertion or application permission is relaxed.
+# The owner's one-off 2026-09-13 run is complete. Never reuse personal credentials on a push/PR.
 on:
-  push:
-    branches: [fix/core-consolidation-2026-09-13]
-    paths: ['.github/workflows/owner-read-only-acceptance.yml']
+  workflow_dispatch:
+    inputs:
+      confirm_owner_read_only:
+        description: 'I authorize this reviewed run to use the configured account for login, reads and local logout only.'
+        type: boolean
+        required: true
+        default: false
 permissions:
   contents: read
 jobs:
   verify-before-owner-login:
-    if: github.repository == 'rjrferreira-droid/dublin-learning-hub' && github.ref == 'refs/heads/fix/core-consolidation-2026-09-13'
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_owner_read_only && github.repository == 'rjrferreira-droid/dublin-learning-hub' && github.ref == 'refs/heads/fix/core-consolidation-2026-09-13'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -30,7 +33,7 @@ jobs:
         run: npx playwright test tests/account-boundary.spec.ts tests/smoke.spec.ts --grep-invert 'authenticated Learning Hub shell' --retries=0
   actual-owner-login-and-navigation:
     needs: verify-before-owner-login
-    if: github.repository == 'rjrferreira-droid/dublin-learning-hub' && github.ref == 'refs/heads/fix/core-consolidation-2026-09-13'
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_owner_read_only && github.repository == 'rjrferreira-droid/dublin-learning-hub' && github.ref == 'refs/heads/fix/core-consolidation-2026-09-13'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
