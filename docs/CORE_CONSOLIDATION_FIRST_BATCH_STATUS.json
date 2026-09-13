@@ -1,0 +1,21 @@
+{
+  "date": "2026-09-13",
+  "scope": "first repair batch, not full project acceptance",
+  "baselineCommit": "5c98fecdc77728a93a563aa949ef8a57bc080613",
+  "verifiedSourceCommit": "ecabc4211ccfdfbf1bef38fc6c9078e4b5a82f2f",
+  "ciRun": 34766520845,
+  "ciResult": "success",
+  "localContractTests": {"passed": 11, "failed": 0},
+  "applicationBuild": "passed",
+  "agentTypecheck": "passed",
+  "databaseTests": "passed in rolled-back transaction",
+  "completionEdgeFunctionVersion": 4,
+  "historicalCountsPreserved": {"sessions": 6, "turns": 56, "errors": 3, "competencyScores": 4, "reviews": 4, "usageEntries": 8},
+  "legacyErrorValuesPreserved": true,
+  "masteryInventedForHistoricErrors": false,
+  "liveAuthenticatedAcceptance": "pending",
+  "liveVoiceAcceptance": "pending",
+  "productionPromoted": false,
+  "newSubscription": false,
+  "manuzinhaChanged": false
+}
