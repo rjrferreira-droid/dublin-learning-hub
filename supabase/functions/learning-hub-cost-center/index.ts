@@ -1,3 +1,4 @@
+import {parseReservationExposure,type ReservationExposure} from '../_shared/reservation-exposure.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
@@ -9,7 +10,7 @@ const cors = {
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
   status,
-  headers: { ...cors, "Content-Type": "application/json" },
+  headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "no-store" },
 });
 
 Deno.serve(async (req: Request) => {
@@ -41,9 +42,7 @@ Deno.serve(async (req: Request) => {
     admin.from("ai_usage_log")
       .select("feature,estimated_cost_usd,created_at")
       .gte("created_at", monthStartIso),
-    admin.from("professor_budget_reservations")
-      .select("reserved_usd,status,actual_cost_usd,created_at")
-      .eq("month_start", monthStartDay),
+    admin.rpc("professor_reservation_exposure_v2"),
     admin.from("ai_tutor_sessions")
       .select("id,status,started_at")
       .gte("started_at", monthStartIso),
@@ -63,7 +62,9 @@ Deno.serve(async (req: Request) => {
 
   const settings = budgetResult.data;
   const usageRows = usageResult.data ?? [];
-  const professorRows = professorResult.data ?? [];
+  let exposure: ReservationExposure;
+  try { exposure=parseReservationExposure(professorResult.data,monthStartDay); }
+  catch { return json({error:'cost_center_unavailable'},503); }
   const sessionRows = sessionsResult.data ?? [];
 
   const usageByFeature = usageRows.reduce<Record<string, number>>((acc, row) => {
@@ -73,11 +74,9 @@ Deno.serve(async (req: Request) => {
   }, {});
 
   const actualAiSpendUsd = Object.values(usageByFeature).reduce((sum, value) => sum + value, 0);
-  const activeRows = professorRows.filter((row) => row.status === "active");
-  const unresolvedRows = professorRows.filter((row) => row.status === "unresolved");
-  const activeReservationUsd = activeRows.reduce((sum, row) => sum + Number(row.reserved_usd ?? 0), 0);
-  const unresolvedReservationUsd = unresolvedRows.reduce((sum, row) => sum + Number(row.reserved_usd ?? 0), 0);
-  const protectedReservationUsd = activeReservationUsd + unresolvedReservationUsd;
+  const activeReservationUsd = exposure.activeReservedUsd;
+  const unresolvedReservationUsd = exposure.unresolvedReservedUsd;
+  const protectedReservationUsd = exposure.protectedReservationUsd;
 
   const professorActualUsd = Number(usageByFeature.professor_livekit ?? 0);
   const professorCommittedUsd = professorActualUsd + protectedReservationUsd;
@@ -96,13 +95,16 @@ Deno.serve(async (req: Request) => {
   const aiRemainingUsd = Math.max(0, aiHardCapUsd - aiCommittedUsd);
 
   const pct = (value: number, cap: number) => cap > 0 ? Number(((value / cap) * 100).toFixed(1)) : 0;
-  const status = safetyBufferUsd >= 20 && aiRemainingUsd >= 15
+  const capacityStatus = safetyBufferUsd >= 20 && aiRemainingUsd >= 15
     ? "safe"
     : safetyBufferUsd >= 10 && aiRemainingUsd >= 5
       ? "watch"
       : "guarded";
 
+  const status = exposure.needsReconciliationCount>0 && capacityStatus==="safe" ? "watch" : capacityStatus;
+
   return json({
+    costBasis: "application_estimate_not_provider_invoice",
     month: monthStartDay,
     status,
     budget: {
@@ -116,6 +118,8 @@ Deno.serve(async (req: Request) => {
       actualAiSpendUsd: Number(actualAiSpendUsd.toFixed(6)),
       loggedAiUsd: Number(actualAiSpendUsd.toFixed(6)),
       professorReservedUsd: Number(protectedReservationUsd.toFixed(6)),
+      professorCarriedReservedUsd: exposure.carriedReservedUsd,
+      professorKnownCostUpliftUsd: exposure.knownCostUpliftUsd,
       professorActiveReservedUsd: Number(activeReservationUsd.toFixed(6)),
       professorUnresolvedReservedUsd: Number(unresolvedReservationUsd.toFixed(6)),
       professorActualUsd: Number(professorActualUsd.toFixed(6)),
@@ -137,8 +141,10 @@ Deno.serve(async (req: Request) => {
     features: usageByFeature,
     professorSessions: sessionRows.length,
     professorCompletedSessions: sessionRows.filter((row) => row.status === "completed").length,
-    professorActiveReservations: activeRows.length,
-    professorUnresolvedReservations: unresolvedRows.length,
+    professorActiveReservations: exposure.activeCount,
+    professorUnresolvedReservations: exposure.unresolvedCount,
+    professorStaleReservations: exposure.staleCount,
+    professorNeedsReconciliation: exposure.needsReconciliationCount,
     generatedAt: new Date().toISOString(),
   });
 });

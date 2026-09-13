@@ -32,7 +32,7 @@ select jsonb_build_object(
  'unresolvedCount',count(*) filter(where status='unresolved'),
  'staleCount',count(*) filter(where stale),
  'needsReconciliationCount',count(*) filter(where stale or status='unresolved'),
- 'oldestPendingAt',min(created_at)
+ 'oldestPendingAt',to_char(min(created_at) at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
 ) from protected;
 $fn$;
 revoke all on function lh_internal.professor_reservation_exposure(timestamptz) from public,anon,authenticated;
