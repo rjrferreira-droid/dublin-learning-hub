@@ -6,7 +6,7 @@ concurrency:
   group: learning-experience-${{ github.ref }}
   cancel-in-progress: true
 permissions:
-  contents: write
+  contents: read
 jobs:
   companion-and-quality:
     if: github.ref == 'refs/heads/feat/professor-experience-2026-09-13'
@@ -19,6 +19,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -26,9 +27,7 @@ jobs:
         run: |
           git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- professor-agent supabase src/auth src/components/AuthGate.tsx src/components/LittleEnglish.tsx src/little-english.css src/professor/voiceState.ts
           git diff --exit-code f7235b7f2d4c12efd6e04d5ed6de346f2c8597a5 HEAD -- api server ':!api/livekit-token.ts' ':!server/written-lesson-context.ts'
-      - name: Materialize narrow scenario selection before verification
-        run: node scripts/prepare-workshop-imports.mjs && node scripts/materialize-workshop-handoff.mjs && node scripts/extend-workshop-integration.mjs
-      - name: Install locked dependencies and build candidate
+      - name: Install locked dependencies and build committed candidate
         run: npm ci && npm run build
       - name: Measure initial bundle against the same previous baseline
         run: |
@@ -60,16 +59,7 @@ jobs:
             quality-results/bundle-metrics.json
           retention-days: 7
           if-no-files-found: error
-      - name: Commit only verified wiring to the feature branch
+      - name: Unchanged source and acceptance boundary
         run: |
-          test "$GITHUB_REF_NAME" = "feat/professor-experience-2026-09-13"
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add api/livekit-token.ts src/services/contracts.ts src/professor/livekitProfessor.ts src/App.tsx src/components/LessonStudyPanel.tsx src/components/AppliedPracticePanel.tsx src/components/LessonProfessorWorkspace.tsx src/components/ProfessorSessionPanel.tsx server/written-lesson-context.ts src/learning/workshopSelection.ts tsconfig.app.json tsconfig.api.json tests/written-bridge.integration.mjs
-          if ! git diff --cached --quiet; then
-            git commit -m 'Connect verified explicit workshop selection to teacher and evaluator references'
-            git push origin HEAD:feat/professor-experience-2026-09-13
-          fi
           git diff --exit-code
-      - name: Acceptance boundary
-        run: echo 'Candidate only. Fictional Auth, responses and media. No learner drafts sent, live credentials, paid AI call, DB migration, worker deployment, budget change or normal-V2 promotion.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Committed candidate only; no source patch/commit, learner drafts sent, live credentials, paid AI call, DB migration, worker deployment, budget change or normal-V2 promotion. Auth/media/model responses are fictional.' >> "$GITHUB_STEP_SUMMARY"
