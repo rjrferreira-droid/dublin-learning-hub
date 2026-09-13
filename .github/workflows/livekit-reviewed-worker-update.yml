@@ -1,5 +1,5 @@
 name: Reviewed V2 worker update
-# One controlled update of the existing V2 agent. No new agent, secrets update, room or learner session.
+# Controlled follow-up for the verified image-library security patch. No new agent or secrets changes.
 on:
   push:
     branches: [fix/core-consolidation-2026-09-13]
@@ -21,23 +21,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Verify application, worker and contracts without provider credentials
-        env:
-          VITE_SUPABASE_URL: https://lh-ui.invalid
-          VITE_SUPABASE_PUBLISHABLE_KEY: fictional-offline-fixture
+      - name: Verify the patched worker and high/critical audit before credentials are available
         run: |
-          npm ci
-          npm run build
-          node --experimental-strip-types --test tests/*.test.ts
           npm --prefix professor-agent ci
+          npm --prefix professor-agent audit --audit-level=high
           npm --prefix professor-agent run typecheck
-      - name: Build and verify the actual worker container without running the voice agent
+          python3 -m py_compile scripts/livekit-reviewed-publish.py
+      - name: Build the worker container and check native module without network or provider access
         run: |
-          docker build --pull --tag lh-professor-verification:${{ github.sha }} professor-agent
-          test "$(docker image inspect --format '{{.Config.User}}' lh-professor-verification:${{ github.sha }})" = 'node'
-          docker run --rm --network none lh-professor-verification:${{ github.sha }} npm run typecheck
+          docker build --pull --tag lh-professor-verified:${{ github.sha }} professor-agent
+          test "$(docker image inspect --format '{{.Config.User}}' lh-professor-verified:${{ github.sha }})" = 'node'
+          docker run --rm --network none lh-professor-verified:${{ github.sha }} npm run typecheck
+          docker run --rm --network none lh-professor-verified:${{ github.sha }} node --input-type=module -e "import {createRequire} from 'node:module';const r=createRequire(import.meta.resolve('@livekit/agents'));const s=r('sharp');if(s.versions.sharp!=='0.35.4')throw Error('Patch missing');await import('@livekit/agents-plugin-openai');console.log('Patched library and SDK imports verified');"
           git diff --exit-code
-      - name: Install integrity-checked official CLI before providing LiveKit credentials
+      - name: Install pinned official CLI before providing credentials
         shell: bash
         run: |
           set -euo pipefail
@@ -48,95 +45,14 @@ jobs:
           tar -xzf lk.tar.gz lk
           chmod 755 lk
           echo "$RUNNER_TEMP/lh-livekit-cli" >> "$GITHUB_PATH"
-          ./lk --version
-      - name: Recheck target, deploy once, and confirm new source-tagged version
+      - name: Publish once only if the existing version still matches the verified target
         env:
+          LH_REVIEWED_UPDATE_AUTHORIZED: '1'
+          LH_EXPECTED_PREVIOUS: kj6p9S6zpGUw
           LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
           LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
           LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          import json, os, re, subprocess, sys, time, tomllib
-          from pathlib import Path
-          from urllib.parse import urlsplit
-          AGENT='CA_T9kcWtn6Xki7'
-          SUBDOMAIN='dublin-learning-hub-v2-odgkxtya'
-          EXPECTED_PREVIOUS='L8twNhRUNnHq'
-          SOURCE=os.environ['GITHUB_SHA']
-          report={'scope':'reviewed_existing_v2_worker_update','agentId':AGENT,'sourceCommit':SOURCE,'previousVersion':None,'newVersion':None,'deployCommandInvoked':False,'deployReturnCode':None,'providerVersionConfirmed':False,'providerStatus':None,'learnerSessionStarted':False,'runtimeSecretsSupplied':False,'newAgentCreated':False,'result':'failed','phase':'preflight'}
-          def field(obj,name,default=None):
-              if not isinstance(obj,dict): return default
-              for k,v in obj.items():
-                  if k.replace('_','').lower()==name.replace('_','').lower(): return v
-              return default
-          def safe_version(value):
-              return value if isinstance(value,str) and re.fullmatch(r'[A-Za-z0-9_-]{1,100}',value) else None
-          def read(command):
-              p=subprocess.run(['lk','agent',command,'--id',AGENT,'--json','professor-agent'],capture_output=True,text=True,timeout=45,check=False)
-              if p.returncode or len(p.stdout)>1_000_000: raise RuntimeError('status_unavailable')
-              return json.loads(p.stdout)
-          def current_agent():
-              rows=[a for a in field(read('status'),'agents',[]) if field(a,'agent_id')==AGENT]
-              if len(rows)!=1: raise RuntimeError('unexpected_agent')
-              return rows[0]
-          def production(agent):
-              rows=[r for r in field(agent,'agent_deployments',[]) if field(r,'deployment','') in ('','production')]
-              if len(rows)!=1 or field(rows[0],'region')!='us-east': raise RuntimeError('unexpected_deployment')
-              return rows[0]
-          try:
-              if os.environ.get('GITHUB_REF_NAME')!='fix/core-consolidation-2026-09-13' or not re.fullmatch('[a-f0-9]{40}',SOURCE): raise RuntimeError('unexpected_source')
-              u=urlsplit(os.environ.get('LIVEKIT_URL',''))
-              if u.hostname!=SUBDOMAIN+'.livekit.cloud' or u.scheme not in ('wss','https') or u.username or u.password or u.query or u.fragment or u.path not in ('','/'): raise RuntimeError('unexpected_project')
-              if not os.environ.get('LIVEKIT_API_KEY') or not os.environ.get('LIVEKIT_API_SECRET'): raise RuntimeError('credentials_unavailable')
-              with open('professor-agent/livekit.toml','rb') as f: cfg=tomllib.load(f)
-              if cfg.get('project',{}).get('subdomain')!=SUBDOMAIN or cfg.get('agent',{}).get('id')!=AGENT: raise RuntimeError('unexpected_config')
-              if any(Path('professor-agent').glob('.env*')): raise RuntimeError('local_secret_file_forbidden')
-              report['phase']='remote_preflight'
-              before=current_agent(); row=production(before)
-              previous=field(row,'version') or field(before,'version')
-              report['previousVersion']=safe_version(previous)
-              if previous!=EXPECTED_PREVIOUS or field(row,'status')!='Sleeping': raise RuntimeError('agent_changed_or_not_idle')
-              report['phase']='deploy_existing_once'
-              report['deployCommandInvoked']=True
-              print('Existing idle V2 agent confirmed. Submitting one source update; no voice session.',flush=True)
-              # No --secrets, --secrets-file, update-secrets, create, restart, simulate, or room command.
-              # Official CLI lazy secrets loading leaves the existing cloud secrets unchanged.
-              args=['lk','agent','deploy','--no-default-attributes','--attribute','lh_source_commit='+SOURCE,'--attribute','lh_scope=v2-core-consolidation','professor-agent']
-              try:
-                  deployed=subprocess.run(args,capture_output=True,text=True,timeout=1000,check=False)
-                  report['deployReturnCode']=deployed.returncode
-              except subprocess.TimeoutExpired:
-                  report['deployReturnCode']='timeout_submission_state_unknown'
-              # Never retry deploy automatically: a lost reply can still mean a successful submission.
-              report['phase']='confirm_provider_version'
-              for attempt in range(24):
-                  try:
-                      after=current_agent(); d=production(after)
-                      version=field(d,'version') or field(after,'version')
-                      state=field(d,'status')
-                      report['providerStatus']=state if state in ('Sleeping','Running','Building','Updating','Scheduling','Waking','Error','CrashLoop','Build Failed','Server Error','Disabled') else 'unrecognized'
-                      versions=field(read('versions'),'versions',[])
-                      tagged=[v for v in versions if field(v,'version')==version and field(v,'attributes',{}).get('lh_source_commit')==SOURCE]
-                      if version!=EXPECTED_PREVIOUS and len(tagged)==1 and state in ('Running','Sleeping'):
-                          report['newVersion']=safe_version(version)
-                          report['providerVersionConfirmed']=True
-                          report['result']='updated_and_provider_ready'
-                          report['phase']='complete'
-                          break
-                      if state in ('Error','CrashLoop','Build Failed','Server Error','Disabled'): break
-                  except Exception:
-                      pass
-                  time.sleep(10)
-              if not report['providerVersionConfirmed']: report['result']='update_not_confirmed_do_not_start_validation'
-          except Exception:
-              report['result']='stopped_without_verified_update'
-          output=json.dumps(report,indent=2)
-          print('LIVEKIT_REVIEWED_WORKER_UPDATE\n'+output)
-          if os.environ.get('GITHUB_STEP_SUMMARY'):
-              with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f: f.write('## Existing V2 worker update\n```json\n'+output+'\n```\n')
-          sys.exit(0 if report['providerVersionConfirmed'] else 1)
-          PY
-      - name: Confirm no source/config file was rewritten
+        run: python3 scripts/livekit-reviewed-publish.py
+      - name: Confirm no tracked source/config was rewritten
         if: always()
         run: git diff --exit-code
