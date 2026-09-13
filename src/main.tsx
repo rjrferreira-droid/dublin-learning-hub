@@ -27,7 +27,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <LittleEnglish standalone />
       ) : (
         <AuthGate>
-          <WorkspaceLoadBoundary><Suspense fallback={<p role="status" className="workspace-loading">Preparing your learning workspace…</p>}><App /></Suspense></WorkspaceLoadBoundary>
+          <WorkspaceLoadBoundary>
+            <Suspense fallback={<p role="status" className="workspace-loading">Preparing your learning workspace…</p>}><App /></Suspense>
+          </WorkspaceLoadBoundary>
           <LittleEnglish />
           <LearningMemoryPanel />
           <CostCenterPanel />
