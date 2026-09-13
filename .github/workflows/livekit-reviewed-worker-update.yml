@@ -1,9 +1,17 @@
 name: Reviewed V2 worker update
-# Controlled follow-up for the verified image-library security patch. No new agent or secrets changes.
+# No publication on push/PR. Future updates require explicit confirmation and a verified current version.
 on:
-  push:
-    branches: [fix/core-consolidation-2026-09-13]
-    paths: ['.github/workflows/livekit-reviewed-worker-update.yml']
+  workflow_dispatch:
+    inputs:
+      confirm_update:
+        description: 'Authorize this reviewed revision to update the existing V2 worker only, without changing secrets or creating a session.'
+        type: boolean
+        required: true
+        default: false
+      expected_current_version:
+        description: 'Exact currently deployed LiveKit version verified before this update.'
+        type: string
+        required: true
 permissions:
   contents: read
 concurrency:
@@ -11,7 +19,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   verify-and-update-existing-worker:
-    if: github.repository == 'rjrferreira-droid/dublin-learning-hub' && github.ref == 'refs/heads/fix/core-consolidation-2026-09-13'
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_update && github.repository == 'rjrferreira-droid/dublin-learning-hub' && github.ref == 'refs/heads/fix/core-consolidation-2026-09-13'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -45,10 +53,10 @@ jobs:
           tar -xzf lk.tar.gz lk
           chmod 755 lk
           echo "$RUNNER_TEMP/lh-livekit-cli" >> "$GITHUB_PATH"
-      - name: Publish once only if the existing version still matches the verified target
+      - name: Publish once only if the existing version still matches the reviewed target
         env:
           LH_REVIEWED_UPDATE_AUTHORIZED: '1'
-          LH_EXPECTED_PREVIOUS: kj6p9S6zpGUw
+          LH_EXPECTED_PREVIOUS: ${{ inputs.expected_current_version }}
           LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
           LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
           LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
