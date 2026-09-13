@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 if(process.env.GITHUB_REF_NAME && process.env.GITHUB_REF_NAME!=='fix/core-consolidation-2026-09-13')throw new Error('wrong_branch');
 function edit(file,before,after){const s=fs.readFileSync(file,'utf8');if(s.includes(after))return;if(s.split(before).length!==2)throw new Error(`anchor_not_unique: ${file}: ${before.slice(0,60)}`);fs.writeFileSync(file,s.replace(before,after));}
-const sql='supabase/pending/lh_reservation_lifecycle.sql';
+const sql='supabase/migrations/20260913165704_lh_reservation_lifecycle.sql';
 edit(sql," 'oldestPendingAt',min(created_at)"," 'oldestPendingAt',to_char(min(created_at) at time zone 'UTC','YYYY-MM-DD\"T\"HH24:MI:SS.US\"Z\"')");
 const server='supabase/functions/learning-hub-cost-center/index.ts';
 edit(server,'import "jsr:@supabase/functions-js/edge-runtime.d.ts";',`import {parseReservationExposure,type ReservationExposure} from '../_shared/reservation-exposure.ts';\nimport "jsr:@supabase/functions-js/edge-runtime.d.ts";`);
@@ -24,7 +24,7 @@ const panel='src/components/CostCenterPanel.tsx';
 edit(panel,'    professorReservedUsd: number;','    professorReservedUsd: number;\n    professorCarriedReservedUsd?: number;\n    professorKnownCostUpliftUsd?: number;');
 edit(panel,'  professorSessions: number;','  professorNeedsReconciliation?: number;\n  professorSessions: number;');
 let p=fs.readFileSync(panel,'utf8');
-p=p.replaceAll('Actual AI spend','Estimated AI usage').replaceAll('Professor voice • actual','Professor voice • estimated').replaceAll('Evaluation & Audio • actual','Evaluation & Audio • estimated').replaceAll('Live session reserve','Active reserve • all periods').replaceAll('Legacy unresolved reserve','Unresolved reserve • all periods').replaceAll(' legacy unresolved',' unresolved');fs.writeFileSync(panel,p);
+p=p.replaceAll('Actual AI spend','Estimated AI usage').replaceAll('Professor voice • actual','Professor voice • estimated').replaceAll('Evaluation & Audio • actual','Evaluation & Audio • estimated').replaceAll('Live session reserve','Active reserve • all periods').replaceAll('Legacy unresolved reserve','Unresolved reserve • all periods').replaceAll(' legacy unresolved',' unresolved').replaceAll(' live reserve',' active reserve');fs.writeFileSync(panel,p);
 edit(panel,'              <div className="cost-center-buffer">',`              {(data.professorNeedsReconciliation ?? 0)>0 && (
                 <div className="cost-center-state">
                   {data.professorNeedsReconciliation} reservation(s) need reconciliation. Prior-period holds: {money(data.usage.professorCarriedReservedUsd ?? 0)}. No automatic release is assumed.

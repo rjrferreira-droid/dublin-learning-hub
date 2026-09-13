@@ -4,7 +4,7 @@ on:
     branches: [fix/core-consolidation-2026-09-13]
     paths:
       - '.github/workflows/reservation-lifecycle.yml'
-      - 'supabase/pending/lh_reservation_lifecycle.sql'
+      - 'supabase/migrations/*lh_reservation_lifecycle.sql'
       - 'scripts/prepare-reservation-lifecycle.mjs'
       - 'supabase/functions/_shared/reservation-exposure.ts'
       - 'tests/reservation-exposure.test.ts'
@@ -49,7 +49,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913154315_lh_serialize_learning_updates.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913155850_lh_usage_settlement_integrity.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913161005_lh_atomic_professor_start.sql
-          psql -v ON_ERROR_STOP=1 -f supabase/pending/lh_reservation_lifecycle.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913165704_lh_reservation_lifecycle.sql
       - name: Verify month rollover, aging, known costs and reservation gates
         run: |
           psql -v ON_ERROR_STOP=1 -f supabase/tests/reservation-lifecycle.sql
@@ -66,7 +66,7 @@ jobs:
           test "$GITHUB_REF_NAME" = "fix/core-consolidation-2026-09-13"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add supabase/pending/lh_reservation_lifecycle.sql supabase/functions/learning-hub-cost-center/index.ts src/components/CostCenterPanel.tsx
+          git add supabase/migrations/20260913165704_lh_reservation_lifecycle.sql supabase/functions/learning-hub-cost-center/index.ts src/components/CostCenterPanel.tsx
           if ! git diff --cached --quiet; then
             git commit -m 'Apply verified all-period reservation exposure and Cost Center labels'
             git push origin HEAD:fix/core-consolidation-2026-09-13
