@@ -1,11 +1,12 @@
-import React from 'react';
+import React,{lazy,Suspense} from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import App from './App';
+const App=lazy(()=>import('./App'));
 import { AuthGate } from './components/AuthGate';
 import { CostCenterPanel } from './components/CostCenterPanel';
 import { LearningMemoryPanel } from './components/LearningMemoryPanel';
 import { LittleEnglish } from './components/LittleEnglish';
+import { WorkspaceLoadBoundary } from './components/WorkspaceLoadBoundary';
 import './styles.css';
 import './british-premium.css';
 import './premium-audio.css';
@@ -26,7 +27,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <LittleEnglish standalone />
       ) : (
         <AuthGate>
-          <App />
+          <WorkspaceLoadBoundary><Suspense fallback={<p role="status" className="workspace-loading">Preparing your learning workspace…</p>}><App /></Suspense></WorkspaceLoadBoundary>
           <LittleEnglish />
           <LearningMemoryPanel />
           <CostCenterPanel />

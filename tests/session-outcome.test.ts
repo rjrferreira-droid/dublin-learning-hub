@@ -1,0 +1,31 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
+import {parseSessionOutcome,emptySessionOutcome,pollSessionOutcome,OUTCOME_DELAYS_MS} from '../src/professor/sessionOutcome.ts';
+const id={sessionId:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',userId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',validation:true};
+const row=()=>({id:id.sessionId,user_id:id.userId,room_name:'validation:lesson',status:'completed',completed_at:'2026-09-13T20:00:00Z',final_feedback:{summary:'Fictional feedback',strengths:['Clear explanation'],nextSessionFocus:['Check one assumption']}});
+test('missing or active record means processing, never invented success',()=>{assert.equal(parseSessionOutcome(null,id).kind,'processing');assert.equal(parseSessionOutcome({...row(),status:'active'},id).summary,'');});
+test('only matching user, session and validation scope can reveal feedback',()=>{
+ for(const change of [{id:'other'},{user_id:'other'},{room_name:'lh-normal'}])assert.throws(()=>parseSessionOutcome({...row(),...change},id));
+});
+test('malformed responses and false completion timestamps are rejected',()=>{for(const v of [undefined,[],{},true,{...row(),status:'unknown'},{...row(),completed_at:null},{...row(),completed_at:'bad'}])assert.throws(()=>parseSessionOutcome(v,id));});
+test('completed record and available feedback are reported separately',()=>{assert.equal(parseSessionOutcome({...row(),final_feedback:null},id).kind,'saved_without_feedback');assert.equal(parseSessionOutcome({...row(),final_feedback:{}},id).kind,'saved_without_feedback');assert.equal(parseSessionOutcome(row(),id).kind,'ready');});
+test('abandoned record does not expose stale partial feedback as a completed lesson',()=>{const result=parseSessionOutcome({...row(),status:'abandoned'},id);assert.equal(result.kind,'stopped');assert.equal(result.summary,'');});
+test('feedback accepts only bounded text and never infers scores',()=>{
+ const v=parseSessionOutcome({...row(),final_feedback:{summary:'x'.repeat(5000),strengths:[{},false,'a','b','c','d'],nextSessionFocus:['n'.repeat(500)],technicalScore:100}},id);
+ assert.equal(v.summary.length,1600);assert.equal(v.strengths.length,3);assert.equal(v.nextFocus[0].length,320);assert.equal((v as any).technicalScore,undefined);assert.equal((v as any).costSettled,undefined);
+});
+test('polling is bounded to six read calls and a finite delay schedule',async()=>{
+ let calls=0,updates=0;const delays:number[]=[];const controller=new AbortController();
+ const result=await pollSessionOutcome(async()=>{calls++;return emptySessionOutcome(id);},()=>{updates++;},{signal:controller.signal,wait:async ms=>{delays.push(ms);}});
+ assert.equal(result,'waiting');assert.equal(calls,6);assert.equal(updates,6);assert.deepEqual(delays,[...OUTCOME_DELAYS_MS]);assert.equal(delays.reduce((a,b)=>a+b,0),27500);
+});
+test('saved result immediately ends polling',async()=>{let calls=0;const r=await pollSessionOutcome(async()=>{calls++;return parseSessionOutcome(row(),id);},()=>{},{signal:new AbortController().signal,wait:async()=>{}});assert.equal(r,'finished');assert.equal(calls,1);});
+test('signout/unmount cancels before a read and prevents late disclosure',async()=>{
+ const controller=new AbortController();let updates=0;await pollSessionOutcome(async()=>{controller.abort();return parseSessionOutcome(row(),id);},()=>{updates++;},{signal:controller.signal,wait:async()=>{}});assert.equal(updates,0);
+ let calls=0;const r=await pollSessionOutcome(async()=>{calls++;return emptySessionOutcome(id);},()=>{updates++;},{signal:controller.signal,wait:async()=>{}});assert.equal(r,'cancelled');assert.equal(calls,0);
+});
+test('read failures are not retried as evaluation or completion writes',async()=>{
+ await assert.rejects(()=>pollSessionOutcome(async()=>{throw new Error('outage');},()=>{},{signal:new AbortController().signal,wait:async()=>{}}));
+ const service=fs.readFileSync('src/services/sessionOutcome.ts','utf8');for(const banned of ['.insert(','.update(','.delete(','.rpc(','functions.invoke','ai_usage_log','professor_budget_reservations'])assert.ok(!service.includes(banned),banned);
+ assert.ok(service.includes(".eq('id',id.sessionId).eq('user_id',id.userId)"));assert.ok(service.includes('abortSignal(controller.signal)'));assert.ok(service.includes('setTimeout(cancel,8000)'));
+});
+test('outcome UI labels validation and cost-settlement limits explicitly',()=>{const ui=fs.readFileSync('src/components/SessionOutcomePanel.tsx','utf8');assert.ok(ui.includes('Cost settlement is separate'));assert.ok(ui.includes('not confirm any update to mastery'));assert.ok(ui.includes('No score or learning gain is inferred'));});

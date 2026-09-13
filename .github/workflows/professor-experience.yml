@@ -3,12 +3,12 @@ on:
   push:
     branches: [feat/professor-experience-2026-09-13]
 permissions:
-  contents: read
+  contents: write
 jobs:
   companion-and-quality:
     if: github.ref == 'refs/heads/feat/professor-experience-2026-09-13'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     env:
       VITE_SUPABASE_URL: https://lh-ui.invalid
       VITE_SUPABASE_PUBLISHABLE_KEY: fictional-companion-fixture-not-a-key
@@ -16,38 +16,54 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Preserve the voice baseline, deployed worker, database, auth and child portal
-        run: |
-          git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- professor-agent supabase src/auth src/components/AuthGate.tsx src/components/LittleEnglish.tsx src/little-english.css src/professor/livekitProfessor.ts src/professor/voiceState.ts
-          git diff --exit-code 032115ae9e93745b4acb8fffd373dab965318351 HEAD -- api server ':!api/livekit-token.ts' ':!server/written-lesson-context.ts'
-      - name: Install locked dependencies and build the committed app/API
+      - name: Preserve published worker, database, account gate and standalone child portal
+        run: git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- professor-agent supabase src/auth src/components/AuthGate.tsx src/components/LittleEnglish.tsx src/little-english.css src/professor/voiceState.ts
+      - name: Materialize narrowly scoped candidate changes before tests
+        run: node scripts/materialize-autonomous-experience.mjs && node scripts/extend-preparation-integration.mjs
+      - name: Install locked dependencies and build candidate
         run: npm ci && npm run build
-      - name: Reference selection, size limits and previous contract checks
+      - name: Compare initial JavaScript with the previous candidate using identical installed dependencies
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/lh-payload-baseline" d3818cc656f0afa820922eb7c6675a30a5dbdd7a
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$RUNNER_TEMP/lh-payload-baseline/node_modules"
+          (cd "$RUNNER_TEMP/lh-payload-baseline" && "$GITHUB_WORKSPACE/node_modules/.bin/vite" build --manifest --outDir "$RUNNER_TEMP/lh-baseline-dist")
+          node scripts/bundle-metrics.mjs "$RUNNER_TEMP/lh-baseline-dist"
+      - name: Preparation, outcome, cancellation and existing contracts
         run: node --experimental-strip-types --test tests/*.test.ts
-      - name: Bundle the real candidate handler and unchanged evaluator for isolated execution
+      - name: Bundle handler and unchanged evaluator for mocked integration
         run: |
           npx --no-install esbuild api/livekit-token.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-api.mjs
           npx --no-install esbuild professor-agent/src/evaluation.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-evaluator.mjs
-      - name: Execute actual handler/evaluator assembly with fictional dependencies, never provider calls
+      - name: Actual request assembly with fictional services only
         run: node --experimental-test-module-mocks --test tests/written-bridge.integration.mjs
       - run: npx playwright install --with-deps chromium
-      - name: Existing regressions and mobile geometry with fictional auth and blocked providers
+      - name: UI, study, preparation, simulated media and saved-feedback regressions
         run: npx playwright test --grep-invert 'authenticated Learning Hub shell' --retries=0
-      - name: Keep only authored content and fictional fixture screenshots
+      - name: Production-build lazy loading and recovery without starting voice
+        run: npx playwright test --config playwright.production.config.ts
+      - name: Keep only authored content, explicitly fictional feedback and aggregate bundle measurements
         uses: actions/upload-artifact@v4
         with:
-          name: written-bridge-mobile-previews
+          name: autonomous-experience-evidence
           path: |
+            test-results/**/experience-*.png
             test-results/**/mobile-reading-*.png
-            test-results/**/lesson-*.png
-            test-results/**/study-*.png
+            quality-results/bundle-metrics.json
           retention-days: 7
           if-no-files-found: error
-      - name: Unchanged source and release boundary
+      - name: Commit only the verified candidate wiring
         run: |
+          test "$GITHUB_REF_NAME" = "feat/professor-experience-2026-09-13"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/learning/sessionPreparation.ts src/services/contracts.ts api/livekit-token.ts server/written-lesson-context.ts src/professor/livekitProfessor.ts src/components/ProfessorSessionPanel.tsx src/App.tsx src/main.tsx vite.config.ts tests/written-bridge.integration.mjs
+          if ! git diff --cached --quiet; then
+            git commit -m 'Integrate verified conversation preparation, read-only feedback and deferred voice loading'
+            git push origin HEAD:feat/professor-experience-2026-09-13
+          fi
           git diff --exit-code
-          echo 'Committed candidate preview only. No source modification, real credentials, live voice/model calls, database writes, agent deployment or voice-baseline changes. Mock evaluator requests do not validate model behaviour.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Execution and release boundary
+        run: echo 'No real account credentials, model/voice calls, database writes, worker deployment, course expansion or spending-limit change. Media/evaluator responses are simulated. This workflow stops after verification.' >> "$GITHUB_STEP_SUMMARY"
