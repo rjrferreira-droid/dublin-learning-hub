@@ -2,8 +2,11 @@ name: Parallel Professor experience and pedagogy checks
 on:
   push:
     branches: [feat/professor-experience-2026-09-13]
+concurrency:
+  group: learning-experience-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
-  contents: read
+  contents: write
 jobs:
   companion-and-quality:
     if: github.ref == 'refs/heads/feat/professor-experience-2026-09-13'
@@ -16,49 +19,64 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Preserve published worker, database, account gate and standalone child portal
-        run: git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- professor-agent supabase src/auth src/components/AuthGate.tsx src/components/LittleEnglish.tsx src/little-english.css src/professor/voiceState.ts
-      - name: Install locked dependencies and build committed candidate
+      - name: Preserve worker, database, auth, standalone child and previous request context
+        run: |
+          git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- professor-agent supabase src/auth src/components/AuthGate.tsx src/components/LittleEnglish.tsx src/little-english.css src/professor/voiceState.ts
+          git diff --exit-code b0a629ae70b271c896709c2fa1a6a25a105ce220 HEAD -- api server
+      - name: Wire only the reviewed lesson workspace and local workshops
+        run: node scripts/materialize-lesson-workspace.mjs && node scripts/finalize-workspace-wiring.mjs
+      - name: Install locked dependencies and build candidate
         run: npm ci && npm run build
-      - name: Compare initial JavaScript with the previous candidate using identical installed dependencies
+      - name: Compare initial JavaScript with the previous baseline using identical dependencies
         run: |
           git worktree add --detach "$RUNNER_TEMP/lh-payload-baseline" d3818cc656f0afa820922eb7c6675a30a5dbdd7a
           ln -s "$GITHUB_WORKSPACE/node_modules" "$RUNNER_TEMP/lh-payload-baseline/node_modules"
           (cd "$RUNNER_TEMP/lh-payload-baseline" && "$GITHUB_WORKSPACE/node_modules/.bin/vite" build --manifest --outDir "$RUNNER_TEMP/lh-baseline-dist")
           node scripts/bundle-metrics.mjs "$RUNNER_TEMP/lh-baseline-dist"
-      - name: Preparation, outcome, cancellation and existing contracts
+      - name: Workshop answer keys and all previous contracts
         run: node --experimental-strip-types --test tests/*.test.ts
-      - name: Bundle handler and unchanged evaluator for mocked integration
+      - name: Bundle unchanged handler/evaluator and candidate connection for isolated tests
         run: |
           npx --no-install esbuild api/livekit-token.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-api.mjs
           npx --no-install esbuild professor-agent/src/evaluation.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-evaluator.mjs
-      - name: Actual request assembly with fictional services only
-        run: node --experimental-test-module-mocks --test tests/written-bridge.integration.mjs
+          node scripts/bundle-client-boundaries.mjs
+      - name: Execute real code with simulated providers and media only
+        run: node --experimental-test-module-mocks --test tests/written-bridge.integration.mjs tests/workspace-client.integration.mjs
       - run: npx playwright install --with-deps chromium
-      - name: UI, study, preparation, simulated media and saved-feedback regressions
+      - name: Combined written workshops, live-session continuity and prior UI regressions
         run: npx playwright test --grep-invert 'authenticated Learning Hub shell' --retries=0
-      - name: Production-build lazy loading and recovery without starting voice
+      - name: Production-build loading and recovery
         run: npx playwright test --config playwright.production.config.ts
-      - name: Require screenshot evidence as well as payload metrics
+      - name: Require workshop, continuity and previous screenshots
         run: |
+          test "$(find test-results -name 'workshop-*.png' | wc -l)" -eq 6
+          test "$(find test-results -name 'continuity-*.png' | wc -l)" -eq 3
           test "$(find test-results -name 'experience-*.png' | wc -l)" -ge 4
-          test "$(find test-results -name 'mobile-reading-*.png' | wc -l)" -ge 3
           test -s quality-results/bundle-metrics.json
-      - name: Keep only authored content, explicitly fictional feedback and aggregate bundle measurements
+      - name: Retain fictional UI evidence and aggregate payload report only
         uses: actions/upload-artifact@v4
         with:
-          name: autonomous-experience-evidence
+          name: accelerated-lesson-workspace-evidence
           path: |
+            test-results/**/workshop-*.png
+            test-results/**/continuity-*.png
             test-results/**/experience-*.png
-            test-results/**/mobile-reading-*.png
             quality-results/bundle-metrics.json
           retention-days: 7
           if-no-files-found: error
-      - name: Unchanged committed source and release boundary
+      - name: Commit only the tested integration on the feature branch
         run: |
+          test "$GITHUB_REF_NAME" = "feat/professor-experience-2026-09-13"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/App.tsx src/components/LessonStudyPanel.tsx src/components/LessonProfessorWorkspace.tsx src/professor/livekitProfessor.ts tests/written-lessons.test.ts
+          if ! git diff --cached --quiet; then
+            git commit -m 'Integrate verified three-course workshops and continuous lesson workspace'
+            git push origin HEAD:feat/professor-experience-2026-09-13
+          fi
           git diff --exit-code
-          echo 'No source patch/commit, real account credentials, model/voice calls, database writes, worker deployment, course expansion or spending-limit change. Media/evaluator responses are simulated. This workflow stops after verification.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Release boundary
+        run: echo 'Feature preview only; no paid model/voice call, real credentials, database writes, worker deployment, normal-V2 promotion or budget change. Workshops are local, not recorded mastery. Simulated continuity is not real media acceptance.' >> "$GITHUB_STEP_SUMMARY"

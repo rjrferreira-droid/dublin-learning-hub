@@ -1,0 +1,19 @@
+import fs from 'node:fs';
+if(process.env.GITHUB_REF_NAME!=='feat/professor-experience-2026-09-13')throw new Error('wrong_branch');
+function edit(file,before,after){const s=fs.readFileSync(file,'utf8');if(s.includes(after))return;if(s.split(before).length!==2)throw new Error('workspace_anchor_not_unique:'+file+':'+before.slice(0,60));fs.writeFileSync(file,s.replace(before,after));}
+edit('src/components/LessonStudyPanel.tsx',"import { useEffect, useState } from 'react';", "import { useEffect, useState } from 'react';\nimport {AppliedPracticePanel} from './AppliedPracticePanel';");
+edit('src/components/LessonStudyPanel.tsx','   <h2>Retrieve, then compare</h2>','   <AppliedPracticePanel key={module.track} track={module.track}/>\n   <h2>Retrieve, then compare</h2>');
+const app='src/App.tsx';
+edit(app,"import { LessonStudyPanel } from './components/LessonStudyPanel';", "import { LessonStudyPanel } from './components/LessonStudyPanel';\nimport {LessonProfessorWorkspace} from './components/LessonProfessorWorkspace';");
+edit(app,'<LessonView track={activeTrack}', '<LessonView key={account.userId+\':\'+learnerKey+\':\'+activeTrack.lessonId} track={activeTrack}');
+edit(app,'  const measuredScores = measuredSession ? scorePairs(measuredSession) : [];','  const measuredScores = measuredSession ? scorePairs(measuredSession) : [];\n  const [conversationBusy,setConversationBusy]=useState(false);');
+edit(app,'          <LessonStudyPanel key={track.lessonId}', '          <LessonProfessorWorkspace track={track.key} lessonId={track.lessonId} learnerKey={learnerKey} activeTab={activeTab} onTabChange={setActiveTab} onActivityChange={setConversationBusy}/>\n          <LessonStudyPanel key={track.lessonId}');
+edit(app,"          {activeTab === 'Audio' && (canUseActions ? <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} /> : <p role=\"status\" data-testid=\"audio-account-mismatch\">Audio actions require the matching signed-in learner account.</p>)}", "          {conversationBusy && activeTab === 'Audio' ? <p role=\"status\" data-testid=\"audio-conversation-guard\">End the Professor session before playing lesson audio. Written tabs remain available.</p> : <>{activeTab === 'Audio' && (canUseActions ? <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} /> : <p role=\"status\" data-testid=\"audio-account-mismatch\">Audio actions require the matching signed-in learner account.</p>)}</>}");
+edit(app,"          {activeTab === 'Professor' && <InlineProfessorPanel learnerKey={learnerKey} track={track} />}", '          {/* One persistent lesson-scoped Professor instance is rendered above; no duplicate tab mount. */}');
+// Keep the static regression meaningful as the intended tab lifecycle changes.
+edit('tests/written-lessons.test.ts', 'assert.ok(s.includes("{activeTab === \'Professor\' && <InlineProfessorPanel"));','assert.ok(s.includes("<LessonProfessorWorkspace track={track.key}"));assert.ok(!s.includes("{activeTab === \'Professor\' && <InlineProfessorPanel"));');
+// Idempotent SDK teardown avoids a second disconnect from abort + explicit End + unmount.
+const client='src/professor/livekitProfessor.ts';
+edit(client,' let closing=false;', ' let closing=false;\n let disconnectPromise:Promise<void>|null=null;');
+edit(client," async function disconnect(){\n  closing=true;signal?.removeEventListener('abort',onAbort);\n  await room.localParticipant.setMicrophoneEnabled(false).catch(()=>undefined);\n  await room.disconnect();\n }", " function disconnect():Promise<void>{\n  if(disconnectPromise)return disconnectPromise;\n  closing=true;signal?.removeEventListener('abort',onAbort);\n  disconnectPromise=(async()=>{\n   await room.localParticipant.setMicrophoneEnabled(false).catch(()=>undefined);\n   await room.disconnect();\n  })();\n  return disconnectPromise;\n }");
+console.log('Materialized local workshops and one lesson-scoped conversation; no backend or worker changes.');
