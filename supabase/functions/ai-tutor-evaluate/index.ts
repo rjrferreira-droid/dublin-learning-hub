@@ -1,3 +1,4 @@
+import { legacySessionBlockReason } from '../_shared/legacy-session-boundary.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
@@ -46,6 +47,8 @@ Deno.serve(async (req: Request) => {
   const admin = createClient(supabaseUrl, serviceKey);
   const { data: tutorSession } = await admin.from("ai_tutor_sessions").select("*").eq("id", sessionId).eq("user_id", user.id).single();
   if (!tutorSession) return json({ error: "session_not_found" }, 404);
+  const blocked = legacySessionBlockReason(tutorSession);
+  if (blocked) return json({ error: blocked }, 409);
 
   const { data: turns } = await admin.from("ai_tutor_turns").select("turn_number,speaker,transcript,technical_score,english_score").eq("session_id", sessionId).order("turn_number");
   const learnerTurns = (turns ?? []).filter((t) => t.speaker === "learner" && String(t.transcript ?? "").trim());

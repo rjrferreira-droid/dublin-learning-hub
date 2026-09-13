@@ -51,11 +51,13 @@ Deno.serve(async (req: Request) => {
   const admin = createClient(supabaseUrl, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
   const { data: current } = await admin
     .from("ai_tutor_sessions")
-    .select("id,user_id,lesson_id,callback_token_hash")
+    .select("id,user_id,lesson_id,callback_token_hash,status,started_at")
     .eq("id", sessionId)
     .maybeSingle();
   if (!current?.callback_token_hash || !current?.user_id) return json({ error: "session_not_found" }, 404);
   if (await sha256Hex(callbackToken) !== current.callback_token_hash) return json({ error: "invalid_callback_credentials" }, 401);
+  const started = Date.parse(current.started_at);
+  if (current.status !== 'active' || !Number.isFinite(started) || started > Date.now()+60_000 || Date.now()-started > 60*60*1000) return json({error:'memory_session_expired'},401);
 
   const [sessions, errors, competencies, reviews] = await Promise.all([
     admin.from("ai_tutor_sessions")
@@ -66,7 +68,7 @@ Deno.serve(async (req: Request) => {
       .order("started_at", { ascending: false })
       .limit(3),
     admin.from("user_error_bank")
-      .select("domain,pattern,frequency,confidence,next_review_at")
+      .select("domain,pattern,frequency,confidence,diagnostic_confidence,mastery_confidence,next_review_at")
       .eq("user_id", current.user_id)
       .eq("status", "active")
       .order("confidence", { ascending: false })
@@ -83,6 +85,8 @@ Deno.serve(async (req: Request) => {
       .order("due_date", { ascending: true })
       .limit(4),
   ]);
+
+  if ([sessions,errors,competencies,reviews].some(result => result.error)) return json({error:"memory_temporarily_unavailable"},503);
 
   const priorSessions = (sessions.data ?? []).map((row: any) => {
     const lesson = Array.isArray(row.lessons) ? row.lessons[0] : row.lessons;
@@ -108,7 +112,10 @@ Deno.serve(async (req: Request) => {
     domain: clean(row.domain, 40),
     pattern: clean(row.pattern, 500),
     frequency: Number(row.frequency) || 1,
-    confidence: Number(row.confidence) || 0,
+    confidence: Number(row.diagnostic_confidence ?? row.confidence) || 0,
+    diagnosticConfidence: row.diagnostic_confidence == null ? null : Number(row.diagnostic_confidence),
+    masteryConfidence: row.mastery_confidence == null ? null : Number(row.mastery_confidence),
+    confidenceSemantics: 'diagnostic',
     nextReviewAt: row.next_review_at,
   }));
 
@@ -129,7 +136,7 @@ Deno.serve(async (req: Request) => {
     return {
       stage: clean(row.review_stage, 20),
       dueDate: row.due_date,
-      status: clean(row.status, 20),
+      status: row.due_date && row.due_date <= new Date().toISOString().slice(0,10) ? 'due' : clean(row.status, 20),
       lessonTitle: clean(lesson?.title, 200) || "Adaptive review",
     };
   });

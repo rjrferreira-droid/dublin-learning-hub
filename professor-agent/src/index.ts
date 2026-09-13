@@ -1,3 +1,4 @@
+import { deliverProfessorFinalization, SHUTDOWN_GRACE_MS } from './callbackDelivery.js';
 import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { type JobContext, ServerOptions, cli, defineAgent, voice } from '@livekit/agents';
@@ -229,7 +230,7 @@ function learningMemoryGuidance(memory: LearningMemoryContext | null): string {
   const errors = (memory.activeErrors ?? [])
     .filter((item) => item.pattern)
     .slice(0, 4)
-    .map((item) => `${item.domain ?? 'learning'}: ${item.pattern} (${Math.round(item.confidence ?? 0)}% confidence)`);
+    .map((item) => `${item.domain ?? 'learning'}: ${item.pattern} (${Math.round(item.confidence ?? 0)}% diagnostic confidence; not a mastery score)`);
   const competencies = (memory.competencyProfile ?? [])
     .filter((item) => item.name && typeof item.score === 'number')
     .slice(0, 4)
@@ -337,33 +338,6 @@ function interruptionLead(profile: ProfessorProfile, intensity: CoachingIntensit
   return `Can I pause you there? Give me the main conclusion first.`;
 }
 
-async function postProfessorCallback(url: string, publishableKey: string | undefined, body: Record<string, unknown>, label: string): Promise<boolean> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
-  timeout.unref?.();
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        ...(publishableKey ? { apikey: publishableKey } : {}),
-      },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-    if (!response.ok) {
-      console.error(`${label} failed`, response.status, await response.text().catch(() => ''));
-      return false;
-    }
-    return true;
-  } catch (cause) {
-    console.error(`${label} error`, cause instanceof Error ? cause.message : 'unknown_error');
-    return false;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
 async function persistSessionCompletion(
   metadata: ProfessorJobMetadata,
   transcript: TranscriptTurn[],
@@ -395,26 +369,16 @@ async function persistSessionCompletion(
     evaluation,
   };
 
-  await postProfessorCallback(
-    persistence.completionUrl,
-    persistence.publishableKey,
-    callbackBody,
-    'Professor session completion callback',
-  );
+  const delivery = await deliverProfessorFinalization({
+    completionUrl: persistence.completionUrl,
+    publishableKey: persistence.publishableKey,
+    completion: callbackBody,
+    settlement: {sessionId:persistence.sessionId,callbackToken:persistence.callbackToken,modelUsage,realtimeModel,evaluation},
+  });
+  if (delivery.completion.state !== 'delivered' || delivery.settlement.state !== 'delivered') {
+    console.error('Professor finalization requires recovery', delivery);
+  }
 
-  const settlementUrl = persistence.completionUrl.replace(/professor-session-complete\/?$/, 'professor-usage-settle');
-  await postProfessorCallback(
-    settlementUrl,
-    persistence.publishableKey,
-    {
-      sessionId: persistence.sessionId,
-      callbackToken: persistence.callbackToken,
-      modelUsage,
-      realtimeModel,
-      evaluation,
-    },
-    'Professor usage settlement callback',
-  );
 }
 
 export default defineAgent({
@@ -531,5 +495,6 @@ cli.runApp(
   new ServerOptions({
     agent: fileURLToPath(import.meta.url),
     agentName: PROFESSOR_AGENT_NAME,
+    shutdownProcessTimeout: SHUTDOWN_GRACE_MS,
   }),
 );

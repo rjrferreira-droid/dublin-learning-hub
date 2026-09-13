@@ -1,3 +1,4 @@
+import { legacySessionBlockReason } from '../_shared/legacy-session-boundary.ts';
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
@@ -32,8 +33,10 @@ Deno.serve(async (req: Request) => {
   if (!sdp.startsWith("v=0") || sdp.length > 100000 || !tutorSessionId) return json({ error: "invalid_request" }, 400);
 
   const admin = createClient(supabaseUrl, serviceKey);
-  const { data: tutorSession } = await admin.from("ai_tutor_sessions").select("id,user_id,lesson_id,status").eq("id", tutorSessionId).eq("user_id", user.id).maybeSingle();
+  const { data: tutorSession } = await admin.from("ai_tutor_sessions").select("id,user_id,lesson_id,status,room_name,budget_reservation_id,callback_token_hash,startup_request_id").eq("id", tutorSessionId).eq("user_id", user.id).maybeSingle();
   if (!tutorSession) return json({ error: "tutor_session_not_found" }, 404);
+  const blocked = legacySessionBlockReason(tutorSession);
+  if (blocked) return json({ error: blocked }, 409);
 
   const { data: profile } = await admin.from("profiles").select("display_name,learner_track").eq("id", user.id).single();
   const { data: lesson } = await admin.from("lessons").select("id,module_id,title,technical_brief_pt,global_core_pt,ireland_overlay_pt,worked_example_pt,interview_angle_pt").eq("id", tutorSession.lesson_id).eq("is_published", true).single();
