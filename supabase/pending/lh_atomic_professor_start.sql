@@ -23,7 +23,7 @@ create or replace function public.start_professor_session_atomic(
 declare uid uuid:=auth.uid(); profile_track text; lesson_track text; budget public.learning_hub_budget_settings%rowtype;
  settings public.professor_budget_settings%rowtype; previous public.ai_tutor_sessions%rowtype;
  sid uuid; rid uuid; held numeric; used numeric; professor_used numeric; reserve_amount numeric;
- month_start timestamptz:=date_trunc('month',now()); room text; validation boolean;
+ v_month_start timestamptz:=date_trunc('month',now()); room text; validation boolean;
 begin
  if uid is null then raise exception 'authentication_required' using errcode='42501'; end if;
  if p_request_id is null or p_lesson_id is null or p_mode is null or p_mode not in ('chapter_conversation','case_feedback','oral_mock','english_drill','general_conversation')
@@ -49,7 +49,7 @@ begin
   return jsonb_build_object('allowed',false,'reason','professor_start_rate_limited');
  end if;
  select coalesce(sum(reserved_usd),0) into held from public.professor_budget_reservations where feature='professor_livekit' and month_start=date_trunc('month',now())::date and status in ('active','unresolved');
- select coalesce(sum(estimated_cost_usd),0),coalesce(sum(estimated_cost_usd) filter(where feature='professor_livekit'),0) into used,professor_used from public.ai_usage_log where created_at>=month_start and created_at<month_start+interval '1 month';
+ select coalesce(sum(estimated_cost_usd),0),coalesce(sum(estimated_cost_usd) filter(where feature='professor_livekit'),0) into used,professor_used from public.ai_usage_log where created_at>=v_month_start and created_at<v_month_start+interval '1 month';
  -- Preserve the existing premium-only policy and limits; this is not a model downgrade.
  reserve_amount:=settings.premium_reservation_usd;
  if held+professor_used+reserve_amount>least(settings.monthly_budget_usd,budget.professor_cap_usd) or held+used+reserve_amount>budget.ai_hard_cap_usd then

@@ -1,3 +1,4 @@
+import { startProfessorAtomically, ProfessorStartupError } from '../server/professor-start.js';
 import { randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { AccessToken, LiveKitAPI } from 'livekit-server-sdk';
@@ -244,54 +245,6 @@ async function resolvePersistenceLessonId(db: any, track: ProfessorTrack, reques
   return lesson.id;
 }
 
-async function reserveProfessorBudget(db: any, qualityTier: ProfessorQualityTier): Promise<ProfessorBudgetReservation | null> {
-  const { data, error } = await db.rpc('reserve_professor_budget', { p_quality_tier: qualityTier });
-  if (error) return null;
-  const row = Array.isArray(data) ? data[0] : data;
-  if (!row || typeof row.allowed !== 'boolean') return null;
-
-  const tier: ProfessorQualityTier = row.quality_tier === 'premium' ? 'premium' : 'standard';
-  return {
-    allowed: row.allowed,
-    reservationId: typeof row.reservation_id === 'string' ? row.reservation_id : null,
-    monthlyBudgetUsd: numeric(row.monthly_budget_usd),
-    reservedBeforeUsd: numeric(row.reserved_before_usd),
-    reservedAfterUsd: numeric(row.reserved_after_usd),
-    maxSessionSeconds: Math.max(
-      60,
-      Math.min(PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS, Math.round(numeric(row.max_session_seconds, PROFESSOR_ABSOLUTE_MAX_SESSION_SECONDS))),
-    ),
-    qualityTier: tier,
-    reservationUsd: numeric(row.reservation_usd),
-    globalAiCapUsd: numeric(row.global_ai_cap_usd),
-    globalCommittedBeforeUsd: numeric(row.global_committed_before_usd),
-  };
-}
-
-async function startProfessorPersistence(
-  db: any,
-  lessonId: string,
-  mode: string,
-  roomName: string,
-  qualityTier: ProfessorQualityTier,
-  reservationId: string,
-): Promise<ProfessorPersistence | null> {
-  const { data, error } = await db.rpc('start_professor_session', {
-    p_lesson_id: lessonId,
-    p_mode: mode,
-    p_room_name: roomName,
-    p_quality_tier: qualityTier,
-    p_budget_reservation_id: reservationId,
-  });
-  if (error) {
-    console.error('Professor session persistence start failed', error.message);
-    return null;
-  }
-  const row = Array.isArray(data) ? data[0] : data;
-  if (!row || typeof row.session_id !== 'string' || typeof row.callback_token !== 'string') return null;
-  return { sessionId: row.session_id, callbackToken: row.callback_token };
-}
-
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     res.setHeader('allow', 'POST');
@@ -351,36 +304,18 @@ export default async function handler(req: any, res: any) {
   const persistenceLessonId = await resolvePersistenceLessonId(db, track, lessonId);
   if (!persistenceLessonId) return send(res, 503, { error: 'professor_session_persistence_unavailable' });
 
-  const requestedQualityTier = qualityTierForMode(mode);
-
-  // Cost safety is fail-closed: a Professor session is never dispatched when
-  // the V2 budget guard is missing, unavailable, or exhausted.
-  const budget = await reserveProfessorBudget(db, requestedQualityTier);
-  if (!budget) return send(res, 503, { error: 'professor_budget_guard_unavailable' });
-  if (!budget.allowed || !budget.reservationId) {
-    return send(res, 429, {
-      error: 'professor_monthly_budget_reached',
-      monthlyBudgetUsd: budget.monthlyBudgetUsd,
-      globalAiCapUsd: budget.globalAiCapUsd,
-      reservedUsd: budget.reservedBeforeUsd,
-      globalCommittedUsd: budget.globalCommittedBeforeUsd,
-    });
-  }
-
   const professorProfile = profileForTrack(track);
   const languageProfile = normalizeLanguageProfile(body.languageProfile);
-  const roomName = `${validationMode ? 'validation:' : ''}lh-${randomUUID()}`;
+  const requestedRoomName = `${validationMode ? 'validation:' : ''}lh-${randomUUID()}`;
   const participantIdentity = `learner-${randomUUID()}`;
-
-  const persistence = await startProfessorPersistence(
-    db,
-    persistenceLessonId,
-    mode,
-    roomName,
-    budget.qualityTier,
-    budget.reservationId,
-  );
-  if (!persistence) return send(res, 503, { error: 'professor_session_persistence_unavailable' });
+  let startup: Awaited<ReturnType<typeof startProfessorAtomically>>;
+  try {
+    startup = await startProfessorAtomically(db, { lessonId:persistenceLessonId,mode,roomName:requestedRoomName,validationMode });
+  } catch (cause) {
+    const failure = cause instanceof ProfessorStartupError ? cause : new ProfessorStartupError('professor_session_persistence_unavailable',503);
+    return send(res,failure.status,{error:failure.message});
+  }
+  const { budget,persistence,roomName } = startup;
 
   const jobMetadata = JSON.stringify({
     professorProfile,
@@ -453,14 +388,10 @@ export default async function handler(req: any, res: any) {
       sessionId: persistence.sessionId,
     });
   } catch (cause) {
-    await db
-      .from('ai_tutor_sessions')
-      .update({
-        status: 'abandoned',
-        completed_at: new Date().toISOString(),
-        close_reason: validationMode ? 'validation:livekit_dispatch_failed' : 'livekit_dispatch_failed',
-      })
-      .eq('id', persistence.sessionId);
+    // An HTTP failure is not proof that no agent was dispatched: preserve its reserve.
+    await db.rpc('flag_professor_dispatch_uncertain', {
+      p_session_id: persistence.sessionId, p_callback_token: persistence.callbackToken,
+    });
     console.error('Professor LiveKit dispatch failed', cause instanceof Error ? cause.message : 'unknown_error');
     return send(res, 503, { error: 'professor_agent_dispatch_failed' });
   }
