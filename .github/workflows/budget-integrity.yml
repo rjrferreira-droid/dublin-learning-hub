@@ -2,7 +2,7 @@ name: Budget integrity verification
 on:
   push:
     branches: [fix/core-consolidation-2026-09-13]
-    paths: ['.github/workflows/budget-integrity.yml','server/professor-start.ts','scripts/budget-consolidation-apply.mjs','scripts/fix-budget-sql-names.mjs','tests/professor-start.test.ts','supabase/tests/fixture-budget.sql','supabase/tests/budget-integrity.sql','supabase/pending/**','supabase/migrations/*lh_usage_settlement_integrity.sql']
+    paths: ['.github/workflows/budget-integrity.yml','server/professor-start.ts','scripts/budget-consolidation-apply.mjs','tests/professor-start.test.ts','supabase/tests/fixture-budget.sql','supabase/tests/budget-integrity.sql','supabase/migrations/*lh_atomic_professor_start.sql','supabase/migrations/*lh_usage_settlement_integrity.sql']
 permissions:
   contents: write
 jobs:
@@ -30,7 +30,7 @@ jobs:
         with:
           node-version: '24'
       - name: Patch only isolated API startup
-        run: node scripts/budget-consolidation-apply.mjs && node scripts/fix-budget-sql-names.mjs
+        run: node scripts/budget-consolidation-apply.mjs
       - name: API startup contract tests without external services
         run: node --experimental-strip-types --test tests/professor-start.test.ts tests/completion-contract.test.ts
       - name: Prepare synthetic disposable Postgres, no live credentials
@@ -39,7 +39,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913153700_lh_professor_completion_integrity.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913154315_lh_serialize_learning_updates.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913155850_lh_usage_settlement_integrity.sql
-          psql -v ON_ERROR_STOP=1 -f supabase/pending/lh_atomic_professor_start.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913161005_lh_atomic_professor_start.sql
       - name: Verify transactional accounting on fictional records
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/budget-integrity.sql
       - name: Install locked dependencies and compile
@@ -49,7 +49,7 @@ jobs:
           test "$GITHUB_REF_NAME" = "fix/core-consolidation-2026-09-13"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add api/livekit-token.ts supabase/pending/lh_atomic_professor_start.sql
+          git add api/livekit-token.ts
           if ! git diff --cached --quiet; then
             git commit -m 'Wire verified atomic Professor startup in repair branch'
             git push origin HEAD:fix/core-consolidation-2026-09-13

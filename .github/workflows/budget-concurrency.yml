@@ -2,7 +2,7 @@ name: Budget concurrency and Edge checks
 on:
   push:
     branches: [fix/core-consolidation-2026-09-13]
-    paths: ['.github/workflows/budget-concurrency.yml','supabase/tests/concurrency-budget.sh','supabase/functions/professor-usage-settle/**']
+    paths: ['.github/workflows/budget-concurrency.yml','supabase/tests/concurrency-budget.sh','supabase/functions/professor-usage-settle/**','supabase/migrations/*lh_atomic_professor_start.sql']
 permissions:
   contents: read
 jobs:
@@ -31,15 +31,15 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913153700_lh_professor_completion_integrity.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913154315_lh_serialize_learning_updates.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913155850_lh_usage_settlement_integrity.sql
-          psql -v ON_ERROR_STOP=1 -f supabase/pending/lh_atomic_professor_start.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913161005_lh_atomic_professor_start.sql
       - name: Overlapping requests must not duplicate reservations or charges
         run: bash supabase/tests/concurrency-budget.sh
   edge-typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: denoland/setup-deno@v2
+      - uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed
         with:
-          deno-version: v2.x
+          deno-version: v2.9.6
       - name: Typecheck deployed callback candidates without executing them
-        run: deno check --no-lock supabase/functions/professor-usage-settle/index.ts supabase/functions/professor-session-complete/index.ts
+        run: deno check --no-lock --node-modules-dir=auto supabase/functions/professor-usage-settle/index.ts supabase/functions/professor-session-complete/index.ts
