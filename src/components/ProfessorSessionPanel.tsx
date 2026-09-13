@@ -7,6 +7,7 @@ import { getLearnerProfile, type LearnerKey } from '../learners/profiles';
 import { connectProfessor, type ProfessorConnection } from '../professor/livekitProfessor';
 import { professorVoiceLabel, type ProfessorVoiceState } from '../professor/voiceState';
 import type { LearnerTrack, TutorSessionRequest } from '../services/contracts';
+import { ProfessorLearningGuide } from './ProfessorLearningGuide';
 import '../professor/voice-validation.css';
 
 type Props={lessonId?:string;track:'finance'|'payroll'|'english';learnerKey?:LearnerKey};
@@ -104,5 +105,6 @@ export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payrol
   {state==='ended'&&details&&<p className="professor-privacy-note">Connection ended. Evaluation and cost settlement may still be processing; this screen does not confirm they were saved.</p>}
   <div ref={audioHostRef} className="professor-audio-host" aria-hidden="true"/>
   <div className="professor-privacy-note">AI voice tutor · Raw learner voice is not stored by the Learning Hub by default.</div>
+  {accountMatches&&!active&&state!=='connecting'&&<ProfessorLearningGuide track={track} lessonId={lessonId} phase={state==='ended'?'ended':'ready'}/>}
  </div>;
 }

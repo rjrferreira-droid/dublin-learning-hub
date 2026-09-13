@@ -1,0 +1,42 @@
+name: Parallel Professor experience and pedagogy checks
+on:
+  push:
+    branches: [feat/professor-experience-2026-09-13]
+permissions:
+  contents: read
+jobs:
+  companion-and-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VITE_SUPABASE_URL: https://lh-ui.invalid
+      VITE_SUPABASE_PUBLISHABLE_KEY: fictional-companion-fixture-not-a-key
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Preserve the deployed voice baseline, backend, auth and child portal
+        run: |
+          git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- api server professor-agent supabase src/auth src/components/AuthGate.tsx src/components/LittleEnglish.tsx src/little-english.css src/professor/livekitProfessor.ts src/professor/voiceState.ts
+      - name: Install locked dependencies and build
+        run: npm ci && npm run build
+      - name: Check companion contracts and designed reference-case structure, not model behaviour
+        run: node --experimental-strip-types --test tests/*.test.ts
+      - run: npx playwright install --with-deps chromium
+      - name: Existing regressions plus three-course desktop/mobile companions with fictional data
+        run: npx playwright test --grep-invert 'authenticated Learning Hub shell' --retries=0
+      - name: Keep screenshots of public companion content and fictional browser fixtures only
+        uses: actions/upload-artifact@v4
+        with:
+          name: professor-study-guide-previews
+          path: test-results/**/study-*.png
+          retention-days: 7
+          if-no-files-found: error
+      - name: Check working tree and state release boundary
+        run: |
+          git diff --exit-code
+          echo 'No credentials, model calls, live learner records, migrations, voice-worker deployment or baseline-branch update. Reference cases are authored expectations, not executed LLM evaluations.' >> "$GITHUB_STEP_SUMMARY"
