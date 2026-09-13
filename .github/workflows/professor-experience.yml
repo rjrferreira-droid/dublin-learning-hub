@@ -6,7 +6,7 @@ concurrency:
   group: learning-experience-${{ github.ref }}
   cancel-in-progress: true
 permissions:
-  contents: read
+  contents: write
 jobs:
   companion-and-quality:
     if: github.ref == 'refs/heads/feat/professor-experience-2026-09-13'
@@ -19,47 +19,57 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - name: Preserve worker, database, auth, child portal and other server paths
+      - name: Preserve runtime, deployment configuration, database and identity boundaries
         run: |
-          git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- professor-agent supabase src/auth src/components/AuthGate.tsx src/components/LittleEnglish.tsx src/little-english.css src/professor/voiceState.ts
-          git diff --exit-code f7235b7f2d4c12efd6e04d5ed6de346f2c8597a5 HEAD -- api server ':!api/livekit-token.ts' ':!server/written-lesson-context.ts'
-      - name: Install locked dependencies and build committed candidate
-        run: npm ci && npm run build
-      - name: Measure initial bundle against the same previous baseline
+          git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- professor-agent ':!professor-agent/src/evaluation.ts' ':!professor-agent/src/evaluationEvidence.ts' supabase src/auth src/components/AuthGate.tsx src/components/LittleEnglish.tsx src/little-english.css src/professor/voiceState.ts
+          git diff --exit-code 5d8e13f9751e9f87c0138b2c9031d08ccf29ff66 HEAD -- api server .github/workflows/livekit-professor-deploy.yml .github/workflows/livekit-reviewed-worker-update.yml
+      - name: Materialize candidate evaluator and recorded feedback display before testing
+        run: node scripts/materialize-evaluator-evidence.mjs && node scripts/materialize-feedback-details.mjs
+      - name: Install locked dependencies and compile both candidate application and unpublished worker
+        run: npm ci && npm run build && npm --prefix professor-agent ci && npm --prefix professor-agent run typecheck
+      - name: Measure initial JavaScript against the unchanged baseline
         run: |
           git worktree add --detach "$RUNNER_TEMP/lh-payload-baseline" d3818cc656f0afa820922eb7c6675a30a5dbdd7a
           ln -s "$GITHUB_WORKSPACE/node_modules" "$RUNNER_TEMP/lh-payload-baseline/node_modules"
           (cd "$RUNNER_TEMP/lh-payload-baseline" && "$GITHUB_WORKSPACE/node_modules/.bin/vite" build --manifest --outDir "$RUNNER_TEMP/lh-baseline-dist")
           node scripts/bundle-metrics.mjs "$RUNNER_TEMP/lh-baseline-dist"
-      - name: All contracts including 216 scenario and preparation combinations
+      - name: Evidence grounding, completion compatibility and all previous contracts
         run: node --experimental-strip-types --test tests/*.test.ts
-      - name: Bundle candidate handler, unchanged evaluator and client
+      - name: Bundle candidate handler, evaluator and client for isolated execution
         run: |
           npx --no-install esbuild api/livekit-token.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-api.mjs
           npx --no-install esbuild professor-agent/src/evaluation.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-evaluator.mjs
           node scripts/bundle-client-boundaries.mjs
-      - name: Executable assembly and lifecycle with fictional services only
-        run: node --experimental-test-module-mocks --test tests/written-bridge.integration.mjs tests/workspace-client.integration.mjs
+      - name: Real request assembly with fictional services and outputs only
+        run: node --experimental-test-module-mocks --test tests/written-bridge.integration.mjs tests/workspace-client.integration.mjs tests/evaluator-evidence.integration.mjs
       - run: npx playwright install --with-deps chromium
-      - name: Full browser regressions including explicit handoff and privacy boundaries
+      - name: Full UI regression including stored examples, confidence distinction and escaped markup
         run: npx playwright test --grep-invert 'authenticated Learning Hub shell' --retries=0
-      - name: Production-build loading and recovery
+      - name: Production-build lazy loading and recovery
         run: npx playwright test --config playwright.production.config.ts
-      - name: Require new handoff screenshots
-        run: test "$(find test-results -name 'handoff-*.png' | wc -l)" -eq 6
+      - name: Require new feedback captures
+        run: test "$(find test-results -name 'evidence-*.png' | wc -l)" -eq 6
       - uses: actions/upload-artifact@v4
         with:
-          name: workshop-handoff-evidence
+          name: evaluation-evidence-preview
           path: |
-            test-results/**/handoff-*.png
+            test-results/**/evidence-*.png
             quality-results/bundle-metrics.json
           retention-days: 7
           if-no-files-found: error
-      - name: Unchanged source and acceptance boundary
+      - name: Commit only verified materialization to the feature branch
         run: |
+          test "$GITHUB_REF_NAME" = "feat/professor-experience-2026-09-13"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add professor-agent/src/evaluation.ts src/professor/sessionOutcome.ts src/components/SessionOutcomePanel.tsx tests/written-bridge.integration.mjs
+          if ! git diff --cached --quiet; then
+            git commit -m 'Integrate verified learner-evidence gate and transparent recorded-feedback details'
+            git push origin HEAD:feat/professor-experience-2026-09-13
+          fi
           git diff --exit-code
-          echo 'Committed candidate only; no source patch/commit, learner drafts sent, live credentials, paid AI call, DB migration, worker deployment, budget change or normal-V2 promotion. Auth/media/model responses are fictional.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Acceptance boundary
+        run: echo 'Unpublished worker candidate plus feature UI only. No real account, model/voice call, DB write, worker deployment or pricing change. Exact quote grounding is not semantic calibration. Historical feedback is not retroactively verified or rewritten.' >> "$GITHUB_STEP_SUMMARY"
