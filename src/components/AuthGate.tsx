@@ -185,7 +185,8 @@ export function AuthGate({ children }: AuthGateProps) {
 
   async function logout() {
     setErrorMessage(null);
-    const { error } = await supabase.auth.signOut();
+    // Leave sessions on the learner's other browsers/devices untouched.
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
     if (error) setErrorMessage(error.message);
   }
 
