@@ -1,5 +1,5 @@
 import {test,expect} from '@playwright/test';import {experienceFixture} from './helpers/experienceFixture';
-const answers={finance:[['380','400','280'],['420','435','285'],['240','248','170']],payroll:[['2512','3552','-70'],['2826','3996','20'],['2268','3108','0']],english:[['1','2','0'],['1','2','0'],['1','2','0']]} as const;
+const answers={finance:[['380','400','280'],['420','435','285'],['240','248','170']],payroll:[['2512','3552','-70'],['2826','3996','20'],['2238','3108','0']],english:[['1','2','0'],['1','2','0'],['1','2','0']]} as const;
 for(const track of ['finance','payroll','english']as const)for(const width of [390,1440])test(`${track} workshop at ${width}px: three scenarios, local feedback, retained draft and reset`,async({page},info)=>{
  await page.setViewportSize({width,height:1000});const f=await experienceFixture(page,{track});await f.signIn();
  await page.getByRole('button',{name:track==='finance'?'Continue Finance':track==='payroll'?'Continue Payroll':'Start English practice',exact:true}).click();await page.getByRole('tab',{name:'Practice',exact:true}).click();

@@ -20,7 +20,7 @@ test('real connection wrapper tears down once across abort, explicit End and rep
 });
 test('aborting pending credentials never connects the remote room or enables a microphone',async()=>{
  blockToken=true;resolveToken=null;const controller=new AbortController();const pending=connectProfessor(request,{signal:controller.signal,expectedUserId:userId});const rejected=assert.rejects(pending,/cancelled/);
- while(!resolveToken)await new Promise(r=>setImmediate(r));controller.abort();resolveToken();await rejected;blockToken=false;
+ for(let i=0;i<20&&!resolveToken;i++)await new Promise(r=>setImmediate(r));assert.ok(resolveToken,'synthetic token request reached');controller.abort();resolveToken();await rejected;blockToken=false;
  assert.equal(latestRoom.connects,0);assert.ok(!latestRoom.microphones.includes(true));assert.equal(latestRoom.disconnects,1);
 });
 test('late microphone command after cancellation is disabled and rejected instead of restoring capture',async()=>{
