@@ -1,0 +1,169 @@
+{
+  "version":"p1-finance-leases-draft-1",
+  "status":"full_draft_not_published_to_database",
+  "track":"finance",
+  "roadmapSequence":3,
+  "reviewedOn":"2026-09-14",
+  "workingTitle":"Leases: recognition, close controls & local-framework differences",
+  "subtitle":"Reconcile the right-of-use asset and lease liability before explaining the business impact",
+  "targetDurationMinutes":20,
+  "primaryTeachingLanguage":"en",
+  "supportLanguage":"pt-BR",
+  "goal":"Apply the core IFRS 16 lessee model to a compact lease schedule, explain the separate movements in the right-of-use asset and lease liability, identify a modification/reassessment control, and keep the 2026 FRS 102 statutory basis distinct from the IFRS group package.",
+  "scope":"Professional foundation for a multinational finance learner. It covers ordinary lessee recognition, subsequent measurement, close reconciliation and a high-level modification/reassessment control. It is not a complete IFRS 16 course, lessor-accounting course, discount-rate valuation exercise, sale-and-leaseback analysis, tax treatment or legal contract opinion.",
+  "learningObjectives":[
+    "Explain why an ordinary in-scope lessee recognises both a right-of-use asset and a lease liability rather than only rental expense.",
+    "Build a simple opening-to-closing lease-liability bridge using interest and cash payment.",
+    "Build a separate right-of-use-asset bridge using depreciation and other applicable adjustments.",
+    "Distinguish a contract modification or reassessment trigger from a routine monthly payment.",
+    "Keep IFRS 16 group reporting and revised FRS 102 Section 20 local statutory reporting as separate framework conclusions."
+  ],
+  "databaseFieldDraft":{
+    "technical_brief_pt":"No modelo do arrendatário do IFRS 16, a entidade reconhece, em regra, um ativo de direito de uso e um passivo de arrendamento para leases dentro do escopo, sujeito às exceções aplicáveis. No fechamento, o passivo não deve ser conciliado pela mesma lógica do ativo: o passivo cresce por juros e reduz por pagamentos, enquanto o ativo de direito de uso sofre depreciação e outros ajustes aplicáveis. Mudanças de prazo, opções, índices/taxas ou modificações contratuais podem exigir nova mensuração conforme os fatos. Para uma entidade irlandesa que aplique FRS 102, a Section 20 revisada decorrente do Periodic Review 2024 é aplicável principalmente a períodos iniciados em ou após 1 de janeiro de 2026 e também coloca a maior parte dos leases do arrendatário no balanço, mas mantém acomodações e regras de transição próprias.",
+    "manager_commentary_pt":"Uma boa análise de close começa com duas pontes separadas: liability e ROU asset. Se alguém tenta explicar a diferença usando apenas o pagamento mensal, falta metade da história. Depois confirme se houve mudança contratual ou reavaliação e só então conclua se a schedule antiga continua válida.",
+    "worked_example_pt":"Exemplo fictício: lease de três anos, pagamentos anuais de 36 no fim de cada ano, taxa fornecida de 5%, sem custos diretos iniciais, incentivos, pagamentos antecipados ou obrigação de restauração. O valor presente inicial dos três pagamentos é aproximadamente 98,04. No ano 1, juros aproximados de 4,90 e pagamento de 36 levam o passivo para aproximadamente 66,94. Assumindo depreciação linear do ROU asset em três anos, a depreciação é aproximadamente 32,68 e o ativo fecha em aproximadamente 65,36. A diferença entre os dois saldos é esperada: são mensurados por mecânicas diferentes.",
+    "ireland_overlay_pt":"O FRC informa que as alterações do Periodic Review 2024 têm data principal de vigência em 1 de janeiro de 2026. A Section 20 revisada remove, para arrendatários, a distinção anterior entre operating e finance lease e exige ROU asset e lease liability para a maioria dos leases, com isenções para short-term e low-value leases. O FRC também prevê, em certas condições de transição, opção de usar os carrying amounts preparados sob IFRS 16 para fins de consolidação. Isso não autoriza assumir que todos os detalhes de IFRS 16 e FRS 102 são idênticos.",
+    "global_core_pt":"IFRS 16 introduz um modelo único de contabilização para arrendatários: reconhecer o direito de uso do ativo e a obrigação de pagamentos do lease, com exceções específicas. A análise subsequente exige acompanhar o passivo e o ativo separadamente e reavaliar eventos relevantes.",
+    "common_mistakes_pt":"Tratar pagamento como despesa total do período; usar o saldo do ROU asset como se fosse o lease liability; esquecer juros no bridge do passivo; confundir modificação com pagamento normal; aplicar uma nova taxa de desconto sem gatilho; copiar automaticamente o package IFRS para FRS 102; concluir que toda diferença entre ROU e liability é erro.",
+    "interview_angle_pt":"Explique em 30 segundos por que o lease liability e o ROU asset fecham em valores diferentes e qual controle você executaria antes de aprovar a schedule do mês."
+  },
+  "sections":[
+    {
+      "id":"fin-lease-recognition",
+      "title":"1. Recognise two balances, not one rent expense",
+      "paragraphs":[
+        "IFRS 16 uses a single lessee accounting model for ordinary in-scope leases. A lessee recognises a right-of-use asset representing the right to use the underlying asset and a lease liability representing the obligation to make lease payments. Short-term and low-value exemptions can apply when their requirements are met.",
+        "This changes the close question. Instead of asking only 'what rent did we pay?', ask what lease liability should remain, what right-of-use asset should remain and which profit-and-loss effects arise from the two measurement streams.",
+        "The contract facts still matter. The accounting model does not make every service contract a lease and it does not replace the need to identify the underlying arrangement and applicable scope before building a schedule."
+      ],
+      "supportPt":"Lease liability e ROU asset são saldos distintos. O pagamento de caixa sozinho não explica o fechamento.",
+      "sourceRefs":["ifrs16"]
+    },
+    {
+      "id":"fin-lease-bridges",
+      "title":"2. Reconcile liability and ROU asset separately",
+      "paragraphs":[
+        "A compact lease-liability bridge starts with the opening liability, adds the applicable interest effect, reflects cash payments and then includes any valid remeasurement or modification effect. The right-of-use asset follows a different bridge, normally including depreciation and any applicable impairment or remeasurement-related adjustment.",
+        "Because interest is front-loaded while a cost-model right-of-use asset may be depreciated on a different pattern, the closing liability and closing asset do not need to be equal after commencement. A difference is therefore a prompt to understand the schedule, not automatic evidence of an error.",
+        "At close, reconcile both balances to the approved lease population and investigate unmatched contracts, unexpected manual journals, payment differences and unexplained changes in term or index assumptions."
+      ],
+      "supportPt":"Faça duas conciliações: passivo e ativo. Depois conecte ambas ao contrato, pagamentos e eventos de remeasurement.",
+      "sourceRefs":["ifrs16","ifrs16-modifications"]
+    },
+    {
+      "id":"fin-lease-change",
+      "title":"3. A changed contract needs a changed question",
+      "paragraphs":[
+        "A lease modification is not the same thing as a routine payment. IFRS 16 defines lease modifications around changes in scope or consideration that were not part of the original terms, while other reassessments can arise from changes such as lease term, purchase-option assessment or certain payment assumptions.",
+        "The close control should therefore detect events before mechanically rolling the schedule. Useful evidence includes approved amendments, option decisions, index changes, termination notices and commencement/effective dates. The accounting response depends on what changed and whether the change is accounted for as a separate lease or through remeasurement of the existing lease.",
+        "If the facts are incomplete, identify the missing contract evidence and hold the accounting conclusion open. A guessed discount rate or guessed effective date can create a precise-looking schedule that is conceptually wrong."
+      ],
+      "supportPt":"Primeiro classifique o evento: pagamento normal, reassessment ou modification. Só depois altere a schedule.",
+      "sourceRefs":["ifrs16-modifications"]
+    },
+    {
+      "id":"fin-lease-ireland",
+      "title":"4. FRS 102 2026: more aligned, still its own framework",
+      "paragraphs":[
+        "For applicable UK and Republic of Ireland entities, the FRC's Periodic Review 2024 substantially revised FRS 102 Section 20 with a principal effective date of 1 January 2026. For lessees, most leases move on balance sheet as right-of-use assets and lease liabilities, bringing the model closer to IFRS 16.",
+        "The FRC also describes recognition exemptions for short-term and low-value leases and explains that the low-value accommodation is wider than under IFRS 16, subject to its own conditions. Transition is not simply 'copy last year's IFRS schedule'. The revised FRS 102 includes specific initial-application requirements and practical expedients.",
+        "One transition option can be useful for a subsidiary already calculating IFRS 16 amounts for group reporting: subject to the FRS 102 requirements, carrying amounts prepared for inclusion in IFRS consolidated financial statements may be used at initial application. Treat that as a framework-specific option, not proof that all subsequent accounting and disclosures are identical."
+      ],
+      "supportPt":"A maior aproximação de FRS 102 ao IFRS 16 reduz algumas diferenças, mas não elimina a necessidade de confirmar base, exemptions, transição e disclosures.",
+      "sourceRefs":["frs102","frs102-explainer","frs102-transition"]
+    }
+  ],
+  "vocabulary":[
+    {"term":"right-of-use asset","meaning":"The lessee asset representing its right to use the underlying leased asset.","pt":"ativo de direito de uso","example":"The right-of-use asset is depreciated separately from the lease-liability unwind."},
+    {"term":"lease liability","meaning":"The lessee liability representing its obligation to make lease payments under the applicable model.","pt":"passivo de arrendamento","example":"Interest increases the lease liability before the cash payment reduces it."},
+    {"term":"commencement date","meaning":"The date from which the lessee has the right to use the underlying asset under the lease.","pt":"data de início do lease","example":"Initial recognition is anchored to the commencement date in the exercise."},
+    {"term":"remeasurement","meaning":"A recalculation of the lease liability required by specified changes or reassessments.","pt":"remensuração","example":"A valid change in the lease term can trigger remeasurement."},
+    {"term":"lease modification","meaning":"A change in the scope of a lease, or consideration for a lease, that was not part of the original terms and conditions.","pt":"modificação do arrendamento","example":"An approved reduction in leased space may require modification accounting."},
+    {"term":"incremental borrowing rate","meaning":"A lessee discount-rate concept used when the applicable lease requirements call for it and the rate implicit in the lease is not readily determinable.","pt":"taxa incremental de empréstimo","example":"Do not invent an incremental borrowing rate merely to make a schedule balance."}
+  ],
+  "visual":{
+    "title":"Two close bridges",
+    "headers":["Balance","Typical movement","Control question"],
+    "rows":[
+      ["Lease liability","Opening + interest − payment ± valid remeasurement","Does the schedule agree to contract events and cash?"],
+      ["ROU asset","Opening − depreciation/impairment ± applicable adjustment","Does the asset bridge agree to the approved lease population?"],
+      ["P&L","Depreciation + interest and other applicable effects","Are we explaining mechanics rather than calling everything rent?"],
+      ["Framework bridge","IFRS group vs local FRS 102","Was the reporting basis confirmed before reuse of a schedule?"]
+    ],
+    "question":"Why can the lease liability and ROU asset differ after year one?",
+    "answer":"Because they follow different subsequent-measurement mechanics; liability interest/payment and asset depreciation do not normally unwind identically."
+  },
+  "workedCase":{
+    "title":"Three-year office-equipment lease",
+    "facts":[
+      "Fictional three-year lease with payments of 36 at the end of each year.",
+      "A 5% annual discount rate is supplied as an exercise input; the learner is not asked to derive it.",
+      "Assume commencement at the start of year 1, no initial direct costs, incentives, prepaid amounts, restoration obligation or impairment.",
+      "Assume straight-line depreciation of the right-of-use asset over the three-year exercise term.",
+      "No modification or reassessment occurs during year 1."
+    ],
+    "calculation":{
+      "initialLeaseLiability":98.04,
+      "initialRouAsset":98.04,
+      "year1Interest":4.90,
+      "year1CashPayment":36.00,
+      "closingLeaseLiability":66.94,
+      "year1Depreciation":32.68,
+      "closingRouAsset":65.36,
+      "units":"fictional currency units; rounded"
+    },
+    "task":"Reconcile both closing balances and explain in plain English why the 66.94 liability and 65.36 ROU asset are not expected to match.",
+    "hints":[
+      "For the liability, start with 98.04, add 5% interest and subtract the 36 payment.",
+      "For the asset, use the separate straight-line depreciation assumption rather than the cash payment."
+    ],
+    "modelAnswer":"The lease liability starts at approximately 98.04. Year-one interest is approximately 4.90, so after the 36 cash payment the closing liability is approximately 66.94. The ROU asset also starts at 98.04 but is depreciated by approximately 32.68, leaving approximately 65.36. The balances differ because the liability unwinds through interest and cash while the asset is depreciated separately. Before approving the close, I would also confirm that the lease population, payment, term and any modification/reassessment flags agree to current contract evidence.",
+    "reviewChecks":[
+      "Did the learner build the liability bridge independently from the asset bridge?",
+      "Did the learner avoid treating the 36 cash payment as ROU depreciation?",
+      "Did the learner explain the difference as a measurement-mechanics difference rather than an automatic error?",
+      "Did the learner identify a contract/event control before approving the schedule?"
+    ],
+    "transfer":"Give the CFO version in three sentences: closing liability, why ROU differs, and the one control you would verify before sign-off."
+  },
+  "workshops":[
+    {"id":"fin-lease-w1","title":"Payment posted, schedule unchanged","prompt":"The lease payment cleared the bank, but the lease schedule was not rolled forward. What balances and movements would you reconcile before booking a manual fix?","expected":"Reconcile opening liability, interest, cash payment and closing liability separately from opening ROU asset and depreciation; confirm the contract and payment belong to the lease before posting."},
+    {"id":"fin-lease-w2","title":"Extension option exercised","prompt":"Management formally exercises an extension option that was not previously included in the lease term. What is the first accounting-control question?","expected":"Determine whether the change triggers a lease-term reassessment and gather the approved evidence/effective date before remeasuring. Do not simply extend the old schedule without evaluating the applicable requirements."},
+    {"id":"fin-lease-w3","title":"Group IFRS schedule reused locally","prompt":"An Irish subsidiary uses FRS 102 and already has an IFRS 16 group schedule. Can the local controller just copy every balance and disclosure?","expected":"No. Confirm the FRS 102 reporting basis, transition option/exemptions and local requirements. An IFRS 16 transition carrying-amount option may be available in the relevant circumstances, but it does not make the frameworks identical."}
+  ],
+  "checkpoint":[
+    {"id":"fin-lease-q1","prompt":"What two principal balances does the ordinary IFRS 16 lessee model recognise?","options":["Inventory and provision","ROU asset and lease liability","Receivable and deferred revenue","Only rental expense"],"correctIndex":1,"explanation":"IFRS 16's lessee model brings a right-of-use asset and lease liability onto the balance sheet for ordinary in-scope leases, subject to applicable exemptions."},
+    {"id":"fin-lease-q2","prompt":"Which movement belongs in the lease-liability bridge?","options":["ROU depreciation only","Interest and cash lease payment","Revenue allocation","Inventory obsolescence"],"correctIndex":1,"explanation":"Interest increases and cash payments reduce the lease liability, alongside any valid remeasurement/modification effects."},
+    {"id":"fin-lease-q3","prompt":"The closing ROU asset differs from the closing liability. What is the safest first conclusion?","options":["The schedule is definitely wrong","The balances follow different measurement mechanics; reconcile both before concluding","Book the difference to rent expense","Force both balances to equal cash paid"],"correctIndex":1,"explanation":"Different unwind mechanics can legitimately create different balances after commencement."},
+    {"id":"fin-lease-q4","prompt":"What should happen before changing a schedule for a contract amendment?","options":["Use the previous discount rate automatically","Classify the event and obtain the amendment/effective-date evidence","Post the whole difference to depreciation","Assume every amendment is a separate lease"],"correctIndex":1,"explanation":"The accounting depends on the nature of the modification or reassessment, so the facts and effective date come first."},
+    {"id":"fin-lease-q5","prompt":"What is the best FRS 102 2026 approach for an Irish subsidiary?","options":["Assume FRS 102 equals IFRS 16 in every detail","Ignore the new Section 20","Confirm the local basis, exemptions and transition requirements before reusing group amounts","Keep every former operating lease off balance sheet"],"correctIndex":2,"explanation":"Revised FRS 102 is more aligned with IFRS 16 but remains a separate framework with its own proportionality and transition requirements."}
+  ],
+  "professorGuide":{
+    "opening":"Give the learner only the opening liability, interest rate and cash payment first. Ask them to build the liability bridge before showing the ROU depreciation information.",
+    "challengePrompts":[
+      "Why are you using the cash payment to explain the asset balance?",
+      "What evidence tells you the old lease term is still valid?",
+      "Is that an IFRS 16 conclusion or an FRS 102 conclusion?",
+      "Give me the controller sign-off: balance, driver, exception."
+    ],
+    "helpBehaviour":"Scaffold one bridge at a time. A request for the formula is help-seeking, not evidence that the learner lacks the underlying accounting judgement.",
+    "correctionBoundary":"Do not convert rounding differences into conceptual errors. Technical lease reasoning and English communication remain separate dimensions."
+  },
+  "assessmentBoundaries":[
+    "Lease liability versus right-of-use asset.",
+    "Routine payment versus reassessment or modification trigger.",
+    "Supplied discount rate versus learner-derived assumption.",
+    "Rounding difference versus conceptual bridge error.",
+    "IFRS 16 group accounting versus revised FRS 102 local statutory basis.",
+    "Technical accounting correctness versus executive-English quality.",
+    "Help request/self-correction versus persistent demonstrated error."
+  ],
+  "officialSources":[
+    {"id":"ifrs16","url":"https://www.ifrs.org/issued-standards/list-of-standards/ifrs-16-leases/","supports":"IFRS 16 objective and single lessee model requiring recognition of right-of-use assets and lease liabilities for ordinary leases, subject to stated exemptions."},
+    {"id":"ifrs16-modifications","url":"https://www.ifrs.org/content/dam/ifrs/publications/pdf-standards/english/2022/issued/part-a/ifrs-16-leases.pdf?bypass=on","supports":"IFRS 16 subsequent measurement, remeasurement and lease-modification requirements used only as the technical source boundary for the lesson."},
+    {"id":"frs102","url":"https://www.frc.org.uk/library/standards-codes-policy/accounting-and-reporting/uk-accounting-standards/frs-102/","supports":"Current FRS 102 edition, Republic of Ireland applicability and Periodic Review 2024 principal effective date of 1 January 2026."},
+    {"id":"frs102-explainer","url":"https://www.frc.org.uk/docs/9461/html/","supports":"FRC 2026 explainer describing revised Section 20, on-balance-sheet lessee accounting for most leases, short-term and low-value exemptions, business-metric effects and modified-retrospective transition."},
+    {"id":"frs102-transition","url":"https://www.frc.org.uk/library/standards-codes-policy/accounting-and-reporting/uk-accounting-standards/frs-factsheets/","supports":"FRC implementation factsheets, including the IFRS 16 carrying-amount transition option and revised lease-accounting guidance for applicable FRS 102 entities."}
+  ],
+  "publicationGate":"Source review + authored-content QA + arithmetic tests + Professor/evaluator contract tests + separate database publication/deployment decision. This file alone must never create or update a database lesson."
+}
