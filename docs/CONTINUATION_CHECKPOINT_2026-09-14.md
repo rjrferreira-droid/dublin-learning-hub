@@ -14,7 +14,7 @@ Read-only Supabase inspection on 14 September confirmed the current target modul
 
 ## P1 interactive gates verified offline
 
-The following have executable fictional-data coverage without provider calls:
+Run `34855724352` completed successfully before the subsequent documentation-only checkpoint updates. The following have executable fictional-data coverage without provider calls:
 
 - exact published P1 lesson identity + reviewed slug + authenticated track before accepting a teacher/evaluator reference;
 - English P1 cannot silently resolve to the current English Golden Lesson identity;
