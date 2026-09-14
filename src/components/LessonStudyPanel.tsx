@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {AppliedPracticePanel} from './AppliedPracticePanel';
-import { lessonModuleFor, checkLocalChoice, type LessonModule } from '../learning/lessonModules';
+import { lessonModuleFor, type LessonModule } from '../learning/lessonModules';
+import {checkLocalChoice} from '../learning/checkLocalChoice';
 import {p1ModuleFor} from '../learning/p1RuntimeModules';
 import { STUDY_PACKS, type StudyTrack } from '../learning/teachingPacks';
 import '../learning/lesson-study.css';
