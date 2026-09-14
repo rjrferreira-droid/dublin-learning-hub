@@ -1,0 +1,72 @@
+{
+  "version":"next-p1-lesson-specs-1",
+  "status":"authored_spec_not_database_lesson",
+  "sharedDesign":{
+    "targetDurationMinutes":20,
+    "writtenSections":4,
+    "vocabularyItems":6,
+    "fixedCheckpointItems":5,
+    "localWorkshopVariants":3,
+    "caseReviewChecks":4,
+    "professorPattern":"diagnose briefly, teach one idea, learner attempt, graded hint, retry, transfer",
+    "evaluationBoundary":"Only demonstrated learner responses count. Reference answers, help requests and local exercise completion are not learner evidence.",
+    "publicationGate":"Source review + authored-content QA + local tests + separate database publication decision."
+  },
+  "lessons":{
+    "finance_revenue":{
+      "track":"finance","roadmapSequence":2,"workingTitle":"Revenue judgement: contracts, performance obligations & cut-off",
+      "goal":"Apply the IFRS 15 five-step model to a compact close scenario and explain what evidence is still needed before booking or deferring revenue.",
+      "sections":[
+        {"title":"Start with the contract and promised transfer","focus":"Identify the customer contract and distinct promised goods/services before jumping to an invoice or GL account."},
+        {"title":"Transaction price and timing are separate judgements","focus":"Separate what consideration is expected from when control of each promise transfers."},
+        {"title":"Close evidence: invoice date is not the whole answer","focus":"Use delivery/service evidence, contractual terms and cut-off controls; distinguish billing from revenue recognition."},
+        {"title":"Irish statutory bridge without framework mixing","focus":"If the local entity applies FRS 102, scope the applicable 2026 revenue requirements separately rather than copying the group IFRS conclusion automatically."}
+      ],
+      "case":"Fictional year-end contract contains hardware delivered on 29 December, a separately identifiable support service beginning 1 January, and an invoice for both dated 28 December. Learner must identify what facts determine recognition and design one cut-off control; amounts are supplied only after the recognition logic is established.",
+      "workshops":["simple goods cut-off","goods plus service bundle","contract modification / missing evidence"],
+      "assessmentMustDistinguish":["invoice/billing versus recognition","contract facts versus assumption","IFRS group package versus local FRS 102 basis","technical correctness versus fluent English"],
+      "officialSources":[
+        {"url":"https://www.ifrs.org/issued-standards/list-of-standards/ifrs-15-revenue-from-contracts-with-customers/","supports":"IFRS 15 principles and five-step model"},
+        {"url":"https://www.frc.org.uk/library/standards-codes-policy/accounting-and-reporting/uk-accounting-standards/frs-102/","supports":"Current FRS 102 edition and Periodic Review 2024 effective-date context for UK/Republic of Ireland"}
+      ]
+    },
+    "payroll_submission":{
+      "track":"payroll","roadmapSequence":2,"workingTitle":"RPN, pay date, Employment ID & payroll submission workflow",
+      "goal":"Run the evidence sequence from employee/employment identity and RPN through pay date and submission, then diagnose a fictional exception without inventing tax treatment.",
+      "sections":[
+        {"title":"Identify the employment before calculating","focus":"Separate employee identity from the Employment ID used for each employment/period of employment."},
+        {"title":"Use the correct RPN for the pay period","focus":"Retrieve/use the applicable RPN; do not reuse the prior year's notification or invent credits when unavailable."},
+        {"title":"Pay date controls the reporting period","focus":"Connect actual payment timing to the payroll submission and retain the payroll-run reference/audit trail."},
+        {"title":"Submission exception: diagnose before correcting","focus":"Distinguish wrong input, wrong identifier, missing RPN and wrong pay date; use the correction path supported by Revenue rather than forcing net pay to prior month."}
+      ],
+      "case":"Fictional employee has unchanged salary but the first 2026 run references an old RPN and a payroll file contains a changed Employment ID. Learner must identify which facts are definitely wrong, what should be retrieved/reconciled and what cannot yet be concluded about the tax amount.",
+      "workshops":["first payroll of year","multiple employment IDs","correction after wrong pay-date/input"],
+      "assessmentMustDistinguish":["identity/control failure versus tax-calculation conclusion","confirmed fact versus hypothesis","employee-facing explanation versus internal audit trail","current Revenue rule versus fictional amount"],
+      "officialSources":[
+        {"url":"https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/transitional-arrangements/requesting-rpn.aspx","supports":"2026 RPN availability/use and emergency basis when unavailable"},
+        {"url":"https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/pay-date.aspx","supports":"Pay-date reporting timing"},
+        {"url":"https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/employment-identifier.aspx","supports":"Employment Identifier purpose"},
+        {"url":"https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/corrections.aspx","supports":"Current payroll-submission correction route"}
+      ]
+    },
+    "english_meetings":{
+      "track":"english","roadmapSequence":2,"workingTitle":"Clarify, check understanding & handle meetings",
+      "goal":"Participate naturally in a work meeting: clarify an ambiguous point, check understanding, state a view concisely and reconnect after a short detour.",
+      "sections":[
+        {"title":"Enter the conversation without over-formality","focus":"Signal a relevant contribution and connect it to the previous speaker rather than delivering a memorised mini-speech."},
+        {"title":"Clarify before disagreeing","focus":"Use concise clarification/paraphrase language to confirm what the other person means before challenging it."},
+        {"title":"State a view with evidence and uncertainty","focus":"Give headline, reason and caveat; avoid hiding behind excessive softening or claiming certainty that the facts do not support."},
+        {"title":"Repair and follow up","focus":"Handle misunderstanding, interruption or a side question, then reconnect to the meeting objective with one useful follow-up."}
+      ],
+      "case":"Fictional cross-functional meeting about a monthly variance. The explanation is ambiguous about whether the issue is timing or a real cost increase. Learner must ask one clarifying question, summarise the answer, give a concise view and propose the next check.",
+      "workshops":["clarify a vague variance explanation","disagree with an assumption politely","recover after misunderstanding/interruption"],
+      "assessmentMustDistinguish":["task completion versus grammar","clear professional communication versus accent","valid UK/US wording","help request versus language deficit"],
+      "officialSources":[
+        {"url":"https://learnenglish.britishcouncil.org/free-resources/business","supports":"Business English workplace communication and interview/email resources"},
+        {"url":"https://learnenglish.britishcouncil.org/free-resources/listening/b1","supports":"Work-related phone/meeting/interview listening situations"},
+        {"url":"https://learnenglish.britishcouncil.org/free-resources/listening/c1","supports":"Advanced meetings, talks and job-interview listening contexts"},
+        {"url":"https://learnenglish.britishcouncil.org/free-resources/business/podcasts-professionals","supports":"B2 workplace talks, presentations, dialogues and relationship/conflict themes"}
+      ]
+    }
+  }
+}
