@@ -1,0 +1,64 @@
+name: Disposable Supabase platform acceptance
+on:
+  push:
+    branches: [feat/professor-experience-2026-09-13]
+    paths:
+      - '.github/workflows/preview-local-platform.yml'
+      - 'quality/tests/preview-local-platform.mjs'
+      - 'quality/tests/install-local-preview.py'
+      - 'quality/preview-backend/**'
+      - 'quality/candidates/premium-audio-atomic.sql'
+      - 'supabase/migrations/20260913*.sql'
+      - 'server/p1-*.ts'
+      - 'src/learning/p1RuntimeRegistry.ts'
+      - 'package-lock.json'
+permissions:
+  contents: read
+concurrency:
+  group: local-supabase-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  local-platform:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_TELEMETRY_DISABLED: '1'
+      DO_NOT_TRACK: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.117.0
+      - name: Discover pinned CLI and create empty unlinked local workspace
+        run: |
+          supabase --version
+          supabase --help
+          supabase init --help
+          supabase start --help
+          supabase status --help
+          supabase stop --help
+          mkdir "$RUNNER_TEMP/lh-platform"
+          supabase init --workdir "$RUNNER_TEMP/lh-platform"
+          test ! -e "$RUNNER_TEMP/lh-platform/supabase/.temp/project-ref"
+      - name: Start disposable local Auth, PostgREST and Storage
+        run: |
+          umask 077
+          supabase start --workdir "$RUNNER_TEMP/lh-platform" -x studio,imgproxy,realtime,edge-runtime,logflare,vector,supavisor,postgres-meta,mailpit > "$RUNNER_TEMP/local-platform-start.log" 2>&1
+          supabase status --workdir "$RUNNER_TEMP/lh-platform" -o json > "$RUNNER_TEMP/local-platform-status.json"
+      - name: Install only the reviewed new foundation, no historical snapshot
+        run: |
+          python3 quality/preview-backend/build-foundation-package.py "$RUNNER_TEMP/local-foundation"
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" "$RUNNER_TEMP/local-foundation/install.sql"
+      - name: Actual local identity, P1 resolver, zero budget and private signed Storage
+        run: node --experimental-strip-types quality/tests/preview-local-platform.mjs "$RUNNER_TEMP/local-platform-status.json"
+      - name: Require unchanged repository
+        run: git diff --exit-code
+      - name: Stop only this disposable local stack
+        if: always()
+        run: supabase stop --workdir "$RUNNER_TEMP/lh-platform" --no-backup
