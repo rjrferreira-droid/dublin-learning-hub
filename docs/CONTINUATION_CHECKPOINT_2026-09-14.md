@@ -45,3 +45,7 @@ Use the current feature commit's CI run for final browser/build evidence; the li
 ## Subsequent continuation: atomic Audio and uncertain attempts
 
 The prior cross-lesson budget gap now has a tested SQL candidate, shared Edge orchestration and disposable PostgreSQL CI; see docs/PREMIUM_AUDIO_ATOMIC_CANDIDATE_2026-09-14.md. This supersedes the old isolated-stage value: the undeployed atomic stage is isolated-preview-atomic-v2. Do not set it against an unreviewed backend. Submitted/uncertain attempts retain their obligations across expiry and month boundaries; no automatic paid retry or invented receipt is allowed. Connected deployment/inventory review, reconciliation evidence and authenticated Preview acceptance remain outstanding.
+
+## Subsequent continuation: connected inventory and installation review
+
+Read-only metadata confirmed only main and v2-development exist; neither is an approved target. V2 has the exact legacy reserve_professor_budget(text) entry point that blocks the atomic candidate, and lacks Audio receipt metadata columns. See docs/PREVIEW_BACKEND_INSTALL_REVIEW_2026-09-14.md. The offline package adds transaction-wrapped prerequisites, hashes and nondestructive admission stop, tested exclusively in disposable PostgreSQL. A new isolated target, reviewed baseline/legacy disposition and installation approval remain required; do not treat the package as executable authorization.
