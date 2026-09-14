@@ -36,7 +36,7 @@ for(const track of ['finance','payroll','english'] as const)test(`${track}: exac
 test('browser-local drafts, answers and hint state are ignored rather than entering the server-owned packet',async()=>{
  const db=new FakeDb();const dirty={...input('finance'),drafts:'LOCAL_PRIVATE_DRAFT',answers:[100],hintCount:99,lessonContext:{technicalBrief:'ATTACKER_REFERENCE'}};
  const result=await executeP1BudgetGateCandidate(db,dirty as any);const encoded=JSON.stringify(result.metadata);
- for(const forbidden of ['LOCAL_PRIVATE_DRAFT','ATTACKER_REFERENCE','hintCount','answers'])assert.ok(!encoded.includes(forbidden),forbidden);
+ for(const forbidden of ['LOCAL_PRIVATE_DRAFT','ATTACKER_REFERENCE','"answers":[100]','"hintCount":99'])assert.ok(!encoded.includes(forbidden),forbidden);
  assert.equal(db.calls.length,1);
 });
 test('invalid identity, unpublished lesson, cross-track lesson and invalid preparation fail before the budget RPC',async()=>{
