@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {buildP1WrittenLessonContext,P1_WRITTEN_CONTEXT_VERSION} from '../server/p1-written-lesson-context.ts';
+import {buildP1WrittenLessonContext,P1_WRITTEN_CONTEXT_VERSION} from '../quality/candidates/p1-written-lesson-context.ts';
 import {p1SlugFor} from '../src/learning/p1RuntimeRegistry.ts';
 
 const ids={
@@ -13,9 +13,7 @@ const profile={finance:'rafael_finance',payroll:'viviane_payroll',english:'rafae
 
 for(const track of ['finance','payroll','english'] as const){
  test(`${track}: exact resolved id and reviewed slug produce bounded server-owned P1 context`,()=>{
-  const result=buildP1WrittenLessonContext({
-   profileTrack:profile[track],requestedTrack:requestTrack[track],requestedLessonId:ids[track],resolvedLessonId:ids[track],resolvedLessonSlug:p1SlugFor(track),approachBrief:'Use concise scaffolding and ask before revealing the answer.',
-  });
+  const result=buildP1WrittenLessonContext({profileTrack:profile[track],requestedTrack:requestTrack[track],requestedLessonId:ids[track],resolvedLessonId:ids[track],resolvedLessonSlug:p1SlugFor(track),approachBrief:'Use concise scaffolding and ask before revealing the answer.'});
   assert.ok(result);
   assert.equal(result.descriptor.version,P1_WRITTEN_CONTEXT_VERSION);
   assert.equal(result.descriptor.lessonId,ids[track]);
@@ -46,9 +44,10 @@ test('unknown or cross-track slug never silently substitutes another reviewed le
  assert.equal(buildP1WrittenLessonContext({profileTrack:'rafael_finance',requestedTrack:'rafael_finance',requestedLessonId:ids.finance,resolvedLessonId:ids.finance,resolvedLessonSlug:p1SlugFor('payroll')}),null);
 });
 
-test('P1 candidate contains no provider, database write, reservation or live dispatch primitive',async()=>{
+test('P1 candidate stays outside runtime and contains no provider, database write, reservation or live dispatch primitive',async()=>{
  const fs=await import('node:fs');
- const source=fs.readFileSync('server/p1-written-lesson-context.ts','utf8');
+ const source=fs.readFileSync('quality/candidates/p1-written-lesson-context.ts','utf8');
  for(const banned of ['createClient(','.insert(','.update(','.delete(','.rpc(','fetch(','LiveKitAPI','AccessToken','startProfessorAtomically'])assert.ok(!source.includes(banned),banned);
+ assert.ok(source.includes('CANDIDATE ONLY'));
  assert.ok(source.includes("source:'server-authored-reviewed-p1'"));
 });
