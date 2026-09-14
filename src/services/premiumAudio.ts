@@ -22,6 +22,7 @@ export type PremiumAudioErrorCode =
   | 'lesson-unavailable'
   | 'budget-reached'
   | 'provider-not-configured'
+  | 'generation-in-progress'
   | 'generation-failed'
   | 'upload-failed'
   | 'network-failed'
@@ -68,22 +69,25 @@ export function normalizePremiumAudioError(cause: unknown): PremiumAudioError {
     if (code === 'lesson_not_found' || code === 'audio_script_missing') {
       return new PremiumAudioError('lesson-unavailable', 'This lesson does not have a publishable Premium Audio script yet.', false, cause.status);
     }
-    if (code === 'ai_budget_reached') {
+    if (code === 'ai_budget_reached' || code === 'global_ai_budget_reached' || code === 'premium_audio_budget_reached') {
       return new PremiumAudioError(
         'budget-reached',
-        'The monthly AI generation budget has been reached. Existing cached audio remains available; new narration is paused until the budget resets.',
+        'The protected monthly AI budget does not have enough capacity for new narration. Existing cached audio remains available.',
         false,
         cause.status,
       );
+    }
+    if (code === 'audio_generation_in_progress') {
+      return new PremiumAudioError('generation-in-progress', 'This lesson narration is already being prepared. Try again shortly.', true, cause.status);
     }
     if (code === 'openai_not_configured') {
       return new PremiumAudioError('provider-not-configured', 'Premium Audio generation is not configured in the backend yet.', false, cause.status);
     }
     if (code === 'tts_failed') {
-      return new PremiumAudioError('generation-failed', 'The narration provider could not generate audio. Retrying is safe.', true, cause.status);
+      return new PremiumAudioError('generation-failed', 'The narration provider could not generate audio. Retrying is safe when no other generation is in progress.', true, cause.status);
     }
     if (code === 'audio_upload_failed') {
-      return new PremiumAudioError('upload-failed', 'Narration was generated but could not be stored. Retrying is safe.', true, cause.status);
+      return new PremiumAudioError('upload-failed', 'Narration was generated but could not be stored. Retrying is safe after the backend reports that no generation is still in progress.', true, cause.status);
     }
     return new PremiumAudioError('unknown', cause.message || 'Premium Audio could not be loaded.', cause.status == null || cause.status >= 500, cause.status);
   }
