@@ -470,7 +470,7 @@ function LearningLibrary({ learnerKey, catalog, catalogUnavailable, openLesson }
     {catalogUnavailable&&<p role="status" className="priority-note"><strong>Catalog temporarily unavailable</strong><span>The three verified Golden Lessons remain available as a safe fallback.</span></p>}
     <div className="library-grid">
       {available.length?available.map((lesson,index)=>{const base=tracks.find(t=>t.key===lesson.track)!;return <article className={`lesson-library-card ${lesson.track===primaryTrack?'primary-track-card':''}`} key={lesson.id} data-testid={`catalog-lesson-${lesson.slug}`}>
-        <div className="lesson-index">{String(index+1).padStart(2,'0')}</div><span className={`track-badge ${lesson.track}`}>{base.accent}</span><h3>{lesson.title}</h3><p>{lesson.subtitle??base.focus}</p><div className="lesson-meta"><span>{lesson.estimatedMinutes} min</span><span>{base.name}</span><span>Professor</span></div><button className="primary-btn" onClick={()=>openLesson(lesson.track,lesson)}>Open lesson</button>
+        <div className="lesson-index">{String(index+1).padStart(2,'0')}</div><span className={`track-badge ${lesson.track}`}>{base.accent}</span><h3>{lesson.title}</h3><p>{lesson.subtitle??base.focus}</p><div className="lesson-meta"><span>{lesson.estimatedMinutes} min</span><span>{base.name}</span><span>{lesson.id===base.lessonId?'Professor':'Written ready'}</span></div><button className="primary-btn" onClick={()=>openLesson(lesson.track,lesson)}>Open lesson</button>
       </article>}):tracks.map((track,index)=><article className={`lesson-library-card ${track.key===primaryTrack?'primary-track-card':''}`} key={track.key}><div className="lesson-index">0{index+1}</div><span className={`track-badge ${track.key}`}>{track.accent}</span><h3>{track.lesson}</h3><p>{track.focus}</p><div className="lesson-meta"><span>10–15 min</span><span>Verified fallback</span><span>Professor</span></div><button className="primary-btn" onClick={()=>openLesson(track.key)}>Open Golden Lesson</button></article>)}
     </div>
   </section>;
@@ -486,12 +486,13 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close 
 }) {
   const account = useLearnerSession();
   const canUseActions = canUseLearnerActions(account.learnerKey,learnerKey,track.key);
+  const interactiveLessonSupported = tracks.some((candidate)=>candidate.key===track.key&&candidate.lessonId===track.lessonId);
   const measuredSession = memory?.history.find((session) => session.lessonId === track.lessonId) ?? null;
   const measuredScores = measuredSession ? scorePairs(measuredSession) : [];
   const [conversationBusy,setConversationBusy]=useState(false);
   const [workshopId,setWorkshopId]=useState<string|undefined>();
   const prepareWorkshop=(id:string)=>{
-    if(conversationBusy||!canUseActions||!WORKSHOP_CASES[track.key].some(c=>c.id===id))return;
+    if(conversationBusy||!canUseActions||!interactiveLessonSupported||!WORKSHOP_CASES[track.key].some(c=>c.id===id))return;
     setWorkshopId(id);setActiveTab('Professor');
   };
   const clearWorkshop=()=>{if(!conversationBusy)setWorkshopId(undefined);};
@@ -500,7 +501,7 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close 
     <section className="lesson-shell" data-testid="lesson-shell">
       <div className="lesson-toolbar">
         <button className="back-btn" onClick={close}>← Dashboard</button>
-        <div className="lesson-progress"><span>Golden Lesson</span><b>{measuredSession ? `Last evaluated ${shortDate(measuredSession.completedAt ?? measuredSession.startedAt)}` : 'Baseline not measured yet'}</b></div>
+        <div className="lesson-progress"><span>{interactiveLessonSupported?'Golden Lesson':'Reviewed written lesson'}</span><b>{measuredSession ? `Last evaluated ${shortDate(measuredSession.completedAt ?? measuredSession.startedAt)}` : 'Baseline not measured yet'}</b></div>
       </div>
       <div className="lesson-tabs" role="tablist">
         {lessonTabs.map((tab) => (
@@ -511,10 +512,11 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close 
         <article className="lesson-content-card">
           <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">Premium lesson</span></div>
           <div className="eyebrow">{activeTab.toUpperCase()}</div>
-          <LessonProfessorWorkspace track={track.key} lessonId={track.lessonId} learnerKey={learnerKey} activeTab={activeTab} onTabChange={setActiveTab} onActivityChange={setConversationBusy} workshopId={workshopId} onClearWorkshop={clearWorkshop}/>
-          <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} lessonSlug={track.lessonSlug} activeTab={activeTab} onTabChange={setActiveTab} onPrepareWorkshop={prepareWorkshop} handoffDisabled={conversationBusy||!canUseActions} />
-          {conversationBusy && activeTab === 'Audio' ? <p role="status" data-testid="audio-conversation-guard">End the Professor session before playing lesson audio. Written tabs remain available.</p> : <>{activeTab === 'Audio' && (canUseActions ? <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} /> : <p role="status" data-testid="audio-account-mismatch">Audio actions require the matching signed-in learner account.</p>)}</>}
-          {/* One persistent lesson-scoped Professor instance is rendered above; no duplicate tab mount. */}
+          {interactiveLessonSupported?<LessonProfessorWorkspace track={track.key} lessonId={track.lessonId} learnerKey={learnerKey} activeTab={activeTab} onTabChange={setActiveTab} onActivityChange={setConversationBusy} workshopId={workshopId} onClearWorkshop={clearWorkshop}/>:null}
+          <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} lessonSlug={track.lessonSlug} activeTab={activeTab} onTabChange={setActiveTab} onPrepareWorkshop={prepareWorkshop} handoffDisabled={conversationBusy||!canUseActions||!interactiveLessonSupported} />
+          {!interactiveLessonSupported && (activeTab === 'Audio' || activeTab === 'Professor') ? <p role="status" data-testid="p1-interactive-gate">This reviewed written lesson is available for self-study. Audio and Professor remain disabled until the exact server-authored lesson reference and provider-cost gates pass.</p> : null}
+          {interactiveLessonSupported && (conversationBusy && activeTab === 'Audio' ? <p role="status" data-testid="audio-conversation-guard">End the Professor session before playing lesson audio. Written tabs remain available.</p> : <>{activeTab === 'Audio' && (canUseActions ? <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} /> : <p role="status" data-testid="audio-account-mismatch">Audio actions require the matching signed-in learner account.</p>)}</>)}
+          {/* Interactive providers are mounted only for lessons with a reviewed server handoff. */}
         </article>
         <aside className="lesson-side-card">
           <div className="eyebrow">MEASURED LEARNING SIGNALS</div>
