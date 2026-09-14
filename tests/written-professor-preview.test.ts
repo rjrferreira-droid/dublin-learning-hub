@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {resolveWrittenProfessorPreview} from '../quality/candidates/resolve-written-professor-preview.ts';
+import {prepareWrittenAudioPreview} from '../quality/candidates/written-audio-preview.ts';
 import {sequence3SlugFor} from '../src/learning/sequence3Registry.ts';
 import {sequence4SlugFor} from '../src/learning/sequence4Registry.ts';
 import {remainingSlugFor} from '../src/learning/remainingWrittenRegistry.ts';
@@ -44,4 +45,19 @@ test('shared English accepts either assigned profile but no manufactured referen
  const f=fixture('english',8);f.rows.profiles.learner_track='viviane_payroll';const r=await resolveWrittenProfessorPreview(f.db,f.input,env);
  assert.match(r.lessonContext.technicalBrief,/No embedded or validated Irish-accent audio/);
  for(const [key,value] of [['content_version',0],['sequence',7],['slug','unknown']] as const){const x=fixture();x.rows.lessons[key]=value;await assert.rejects(()=>resolveWrittenProfessorPreview(x.db,x.input,env),/future_reference_/);}
+});
+for(const track of Object.keys(tracks) as P1Track[])for(const sequence of [3,4,5,6,7,8] as const)test(`${track} ${sequence}: Audio overview is authored, versioned and provider-free`,async()=>{
+ const f=fixture(track,sequence);
+ const audio=await prepareWrittenAudioPreview(f.db,{...f.input,script:'PRIVATE_TTS_SCRIPT',answers:['PRIVATE_ANSWER']} as any,env);
+ assert.equal(audio.identity.lessonId,id);assert.equal(audio.language,track==='english'?'en':'pt-BR');
+ assert.ok(audio.characters>100&&audio.characters<=4000);assert.equal(audio.characters,audio.script.length);
+ assert.equal(audio.providerAdmission,false);assert.equal(audio.includesWorkedAnswer,false);
+ assert.doesNotMatch(JSON.stringify(audio),/PRIVATE_TTS_SCRIPT|PRIVATE_ANSWER/);
+ const reference=await resolveWrittenProfessorPreview(f.db,f.input,env);
+ for(const s of reference.context.teachingSteps)assert.ok(audio.script.includes(track==='english'?s.paragraphs[0]:s.supportPt));
+ assert.ok(!audio.script.includes(reference.context.authoredCase.referenceAnswer));
+ f.rows.lessons.content_version=2;const changed=await prepareWrittenAudioPreview(f.db,f.input,env);
+ assert.equal(changed.scriptSha256,audio.scriptSha256);assert.notEqual(changed.sourceFingerprint,audio.sourceFingerprint);
+ if(track==='english'&&sequence===8)assert.match(audio.script,/not verified Irish-accent audio/);
+ f.rows.lessons.is_published=false;await assert.rejects(()=>prepareWrittenAudioPreview(f.db,f.input,env),/forbidden/);
 });

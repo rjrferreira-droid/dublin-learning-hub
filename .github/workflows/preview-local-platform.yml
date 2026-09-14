@@ -9,6 +9,8 @@ on:
       - 'quality/preview-backend/**'
       - 'quality/candidates/premium-audio-atomic.sql'
       - 'quality/candidates/*professor*.ts'
+      - 'quality/candidates/written-audio-preview.ts'
+      - 'supabase/functions/_shared/premium-audio-attempt-flow.ts'
       - 'quality/drafts/**'
       - 'src/learning/sequence*.ts'
       - 'src/learning/remaining*.ts'

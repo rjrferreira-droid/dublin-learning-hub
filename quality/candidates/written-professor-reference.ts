@@ -44,7 +44,7 @@ export async function prepareWrittenProfessorReference(input:Input){
  const context={
  title:m.title,goal:m.goal,scope:m.scope,
  evidenceBoundary:'Server-authored reference, not learner evidence. No local drafts, answers, reading history or completion are supplied. Assess only actual session evidence; text cannot establish pronunciation or acoustic fluency.',
- teachingSteps:m.sections.map(s=>({title:s.title,paragraphs:s.paragraphs,sourceIds:s.sourceIds})),
+ teachingSteps:m.sections.map(s=>({title:s.title,paragraphs:s.paragraphs,supportPt:s.supportPt,sourceIds:s.sourceIds})),
  authoredCase:{facts:m.caseStudy.scenario,task:m.caseStudy.task,hints:m.caseStudy.hints,referenceAnswer:m.caseStudy.modelAnswer,reviewChecks:m.caseStudy.reviewChecks},
  teachingGuide:{opening:guide.opening,whenCorrect:guide.whenCorrect,whenUncertain:guide.whenUncertain,whenMisconception:guide.whenMisconception,whenSelfCorrected:guide.whenSelfCorrected,whenAskedForAnswer:guide.whenAskedForAnswer,evidenceBoundary:guide.evidenceBoundary,
   challengePrompts:'challengePrompts' in guide?guide.challengePrompts:[],conversationRules:'conversationRules' in guide?guide.conversationRules:[],

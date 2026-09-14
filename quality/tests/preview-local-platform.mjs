@@ -9,6 +9,8 @@ import {resolveWrittenProfessorPreview} from '../candidates/resolve-written-prof
 import {sequence3SlugFor} from '../../src/learning/sequence3Registry.ts';
 import {sequence4SlugFor} from '../../src/learning/sequence4Registry.ts';
 import {remainingSlugFor} from '../../src/learning/remainingWrittenRegistry.ts';
+import {prepareWrittenAudioPreview} from '../candidates/written-audio-preview.ts';
+import {runPremiumAudioAttempt} from '../../supabase/functions/_shared/premium-audio-attempt-flow.ts';
 const status=JSON.parse(readFileSync(process.argv[2],'utf8'));
 const api=new URL(status.API_URL);
 assert.ok(['127.0.0.1','localhost'].includes(api.hostname)&&api.port==='54321'&&api.protocol==='http:','local API only');
@@ -78,12 +80,22 @@ for(const track of ['finance','payroll','english']){
   future[track][sequence]=ok(await admin.from('lessons').insert({module_id:lessons[track].module_id,slug,title:'Fictional written reference',sequence,is_published:true,content_version:1}).select().single());
  }
 }
-let futureReferences=0;
+let futureReferences=0,audioBudgetDenials=0;
 for(const account of ['finance','payroll'])for(const requested of [account,'english'])for(const sequence of [3,4,5,6,7,8]){
  const lesson=future[requested][sequence],requestedTrack={finance:'rafael_finance',payroll:'viviane_payroll',english:'english_academy'}[requested];
  const ref=await resolveWrittenProfessorPreview(clients[account],{lessonId:lesson.id,requestedTrack,profileTrack:'manuzinha',draft:'LOCAL_PRIVATE_SENTINEL',contentVersion:999},previewEnv);
  assert.equal(ref.identity.lessonId,lesson.id);assert.equal(ref.identity.contentVersion,1);assert.equal(ref.identity.sequence,sequence);
  assert.equal(ref.descriptor.providerAdmission,false);assert.doesNotMatch(JSON.stringify(ref),/LOCAL_PRIVATE_SENTINEL|manuzinha/);
+ const audio=await prepareWrittenAudioPreview(clients[account],{lessonId:lesson.id,requestedTrack,script:'PRIVATE_TTS_SENTINEL'},previewEnv);
+ assert.equal(audio.identity.lessonId,lesson.id);assert.doesNotMatch(audio.script,/PRIVATE_TTS_SENTINEL/);
+ // Attempt orchestration is exercised only against this zero-budget local DB.
+ // Any transition towards submission/provider/storage is an immediate test failure.
+ await assert.rejects(()=>runPremiumAudioAttempt(admin,{attemptId:randomUUID(),userId:users[account],lessonId:audio.identity.lessonId,contentVersion:audio.identity.contentVersion,reservationUsd:0.10,estimatedCostUsd:0,characters:audio.characters},{
+  prepare:async()=>{assert.fail('Zero budget must stop before preparation');},
+  generate:async()=>{assert.fail('Provider forbidden');},
+  store:async()=>{assert.fail('Storage generation forbidden');},
+ }),/global_ai_budget_reached/);
+ audioBudgetDenials++;
  futureReferences++;
 }
 for(const account of ['finance','payroll']){
@@ -91,6 +103,9 @@ for(const account of ['finance','payroll']){
  for(const sequence of [3,4,5,6,7,8])await assert.rejects(()=>resolveWrittenProfessorPreview(clients[account],{lessonId:future[other][sequence].id,requestedTrack:other==='finance'?'rafael_finance':'viviane_payroll'},previewEnv),/forbidden/);
 }
 const probe=future.finance[3],request={lessonId:probe.id,requestedTrack:'rafael_finance'};
+for(const client of [anon,clients.finance,clients.payroll])assert.ok((await client.rpc('begin_premium_audio_attempt_v2',{
+ p_attempt_id:randomUUID(),p_user_id:users.finance,p_lesson_id:probe.id,p_content_version:1,p_reservation_usd:0.10,
+})).error,'Audio reservation remains service-only, even when a client supplies another user ID');
 const before=await resolveWrittenProfessorPreview(clients.finance,request,previewEnv);
 ok(await admin.from('lessons').update({content_version:2}).eq('id',probe.id));
 const after=await resolveWrittenProfessorPreview(clients.finance,request,previewEnv);
@@ -121,4 +136,4 @@ const response=await fetch(signed.signedUrl);assert.equal(response.status,200);a
 const invalid=new URL(signed.signedUrl);invalid.searchParams.set('token','invalid');assert.equal((await fetch(invalid)).ok,false);
 const publicUrl=admin.storage.from('lesson-audio').getPublicUrl(path).data.publicUrl;assert.equal((await fetch(publicUrl)).ok,false);
 for(const client of Object.values(clients))ok(await client.auth.signOut());
-console.log(JSON.stringify({status:'passed',realLocalAuth:true,realLocalPostgrest:true,realLocalStorage:true,assignedAccounts:2,unassignedAccounts:1,p1References:4,futureReferences,zeroBudgetStartsDenied:4,paidProviderCalls:0,connectedProjectWrites:0,networkScope:'loopback:54321',requests}));
+console.log(JSON.stringify({status:'passed',realLocalAuth:true,realLocalPostgrest:true,realLocalStorage:true,assignedAccounts:2,unassignedAccounts:1,p1References:4,futureReferences,audioBudgetDenials,zeroBudgetStartsDenied:4,paidProviderCalls:0,connectedProjectWrites:0,networkScope:'loopback:54321',requests}));
