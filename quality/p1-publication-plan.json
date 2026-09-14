@@ -1,0 +1,40 @@
+{
+  "version":"p1-publication-plan-1",
+  "status":"offline_plan_no_database_write",
+  "verifiedOn":"2026-09-14",
+  "rules":[
+    "Resolve the target module by course slug plus module slug; never hardcode generated module UUIDs in a future migration.",
+    "Require exactly one target module and assert sequence 2 and the target lesson slug are unused before any insert.",
+    "Insert the lesson initially with is_published=false, then attach reviewed sources and six terms.",
+    "Do not create user progress, mastery, Error Bank, review or audio rows as part of curriculum publication.",
+    "Run authored-content, source and application regression checks before any separate is_published=true decision.",
+    "Recheck current-sensitive official sources at publication time, especially Irish payroll guidance."
+  ],
+  "targets":{
+    "finance":{
+      "draftPath":"quality/drafts/p1-finance-revenue.json",
+      "learnerTrack":"rafael_finance",
+      "courseSlug":"finance-ireland-v2",
+      "moduleSlug":"ifrs-reporting",
+      "verifiedCurrentLesson":{"slug":"ifrs-18-group-reporting-irish-statutory","sequence":1},
+      "targetLesson":{"slug":"revenue-judgement-contracts-performance-obligations-cutoff","sequence":2,"weekNumber":1,"dayNumber":2,"level":"professional"}
+    },
+    "payroll":{
+      "draftPath":"quality/drafts/p1-payroll-submission.json",
+      "learnerTrack":"viviane_payroll",
+      "courseSlug":"irish-payroll-v2",
+      "moduleSlug":"gross-to-net",
+      "verifiedCurrentLesson":{"slug":"gross-to-net-rpn-paye-usc-prsi","sequence":1},
+      "targetLesson":{"slug":"rpn-pay-date-employment-id-payroll-submission","sequence":2,"weekNumber":1,"dayNumber":2,"level":"professional"}
+    },
+    "english":{
+      "draftPath":"quality/drafts/p1-english-meetings.json",
+      "learnerTrack":"english_academy",
+      "courseSlug":"english-academy",
+      "moduleSlug":"spoken-fluency",
+      "verifiedCurrentLesson":{"slug":"story-past-forms-rhythm-follow-up","sequence":1},
+      "targetLesson":{"slug":"clarify-check-understanding-handle-meetings","sequence":2,"weekNumber":1,"dayNumber":2,"level":"professional"}
+    }
+  },
+  "publicationDecision":"Explicit and separate. This plan is not authorization to write to Supabase or to publish the lessons."
+}
