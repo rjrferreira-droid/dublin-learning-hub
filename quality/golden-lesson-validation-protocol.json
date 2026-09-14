@@ -1,0 +1,38 @@
+{
+  "version":"golden-lesson-live-acceptance-1",
+  "status":"planned_not_executed",
+  "durationTargetMinutes":"3-5 per track",
+  "privacy":"Use fictional or non-confidential examples; do not disclose employer-sensitive information.",
+  "commonChecks":[
+    "Professor waits for the learner instead of filling normal pauses",
+    "Professor reacts to the learner's actual answer rather than reading the reference packet",
+    "a request for help triggers a smaller example or hint instead of a zero score",
+    "a clear self-correction is acknowledged without persisting the abandoned wording as a durable error",
+    "End session produces saved feedback without claiming mastery or provider-invoice certainty",
+    "validation session does not update mastery, Error Bank or spaced reviews"
+  ],
+  "tracks":{
+    "finance":{
+      "lesson":"IFRS 18 reference lesson",
+      "prompts":["Explain the 240 → 252 → 165 bridge in your own words.","Say you are unsure why investing income is separate and ask for a simpler example.","Deliberately begin with 165 as the intermediate subtotal, then immediately self-correct to 252."],
+      "acceptanceFocus":["technical accuracy remains separate from English fluency","classification assumptions are not presented as universal rules","self-correction is not converted into a recurring technical error"]
+    },
+    "payroll":{
+      "lesson":"Irish Payroll gross-to-net reference lesson",
+      "prompts":["Explain why employer PRSI is not another employee deduction in the fictional example.","Ask what should be checked before explaining a PAYE difference to an employee.","State that you do not know the current PRSI rate but can still reconcile the supplied fictional numbers."],
+      "acceptanceFocus":["fictional inputs are not turned into current statutory rates","simple English does not reduce technical correctness","unknown live-rate knowledge does not invalidate correct supplied arithmetic"]
+    },
+    "english":{
+      "lesson":"Past-storytelling reference lesson",
+      "prompts":["Tell a short story with background and a completed event.","Use a valid US form such as gotten in a natural sentence.","Say Yesterday I go — sorry, I went... and continue the story."],
+      "acceptanceFocus":["valid UK/US variants are accepted","self-correction is respected","text-only evaluator does not invent pronunciation/acoustic-fluency claims"]
+    }
+  },
+  "postSessionAudit":[
+    "record exact session reference",
+    "read saved feedback and evidence examples",
+    "verify validation record isolation from learning state",
+    "inspect application-estimated realtime/evaluator cost and reservation status when receipt endpoint is deployed",
+    "record human judgement on naturalness, pauses, interruption and usefulness separately from automated scores"
+  ]
+}
