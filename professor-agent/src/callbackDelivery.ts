@@ -1,5 +1,6 @@
-export const CALLBACK_DELIVERY_VERSION = 'bounded-delivery-1';
+export const CALLBACK_DELIVERY_VERSION = 'bounded-delivery-2';
 export const FINALIZATION_BUDGET_MS = 25_000;
+export const SETTLEMENT_RESERVE_MS = 8_000;
 export const SHUTDOWN_GRACE_MS = 60_000;
 const allowedOrigins = new Set(['https://aazfyosqqeujureksqjs.supabase.co', 'https://qwvsrcgsfoguxdbcdrxq.supabase.co']);
 const transientStatuses = new Set([408, 425, 429, 500, 502, 503, 504]);
@@ -36,13 +37,20 @@ export async function deliverProfessorFinalization(input: {
   const fetchImpl = runtime.fetchImpl ?? fetch;
   const sleep = runtime.sleep ?? (ms => new Promise(resolve => setTimeout(resolve, ms)));
   const now = runtime.now ?? Date.now;
-  const deadline = now() + bounded(runtime.totalBudgetMs, FINALIZATION_BUDGET_MS);
+  const totalBudgetMs = bounded(runtime.totalBudgetMs, FINALIZATION_BUDGET_MS);
+  const started = now();
+  const finalDeadline = started + totalBudgetMs;
+  // Completion is a prerequisite, but it must not consume every millisecond available to
+  // the subsequent cost-settlement request. For small test/custom budgets reserve one third;
+  // for the normal 25s budget reserve at most 8s. This remains one bounded total window.
+  const settlementReserveMs = Math.min(SETTLEMENT_RESERVE_MS, Math.max(1, Math.floor(totalBudgetMs / 3)));
+  const completionDeadline = finalDeadline - settlementReserveMs;
   const timeoutMs = bounded(runtime.attemptTimeoutMs, 8_000);
   const headers: Record<string,string> = { 'content-type':'application/json', ...(input.publishableKey ? {apikey:input.publishableKey} : {}) };
-  async function post(stage: Stage, body: string): Promise<DeliveryResult> {
+  async function post(stage: Stage, body: string, stageDeadline: number): Promise<DeliveryResult> {
     let last: DeliveryResult = {state:'failed',attempts:0,reason:'delivery_budget_exhausted'};
     for (let attempt = 1; attempt <= 3; attempt++) {
-      const remaining = deadline - now();
+      const remaining = stageDeadline - now();
       if (remaining <= 0) return {...last, reason:'delivery_budget_exhausted'};
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), Math.min(remaining, timeoutMs));
@@ -81,14 +89,14 @@ export async function deliverProfessorFinalization(input: {
         retry = true;
       } finally { clearTimeout(timer); }
       if (!retry || attempt === 3) break;
-      if (now() + waitMs >= deadline) return {...last,reason:'delivery_budget_exhausted'};
+      if (now() + waitMs >= stageDeadline) return {...last,reason:'delivery_budget_exhausted'};
       await sleep(waitMs);
     }
     return last;
   }
-  const completion = await post('completion', completionJson);
+  const completion = await post('completion', completionJson, completionDeadline);
   const settlement = completion.state === 'delivered'
-    ? await post('settlement', settlementJson)
+    ? await post('settlement', settlementJson, finalDeadline)
     : {state:'blocked' as const,attempts:0,reason:'completion_not_delivered'};
   return {completion,settlement};
 }
