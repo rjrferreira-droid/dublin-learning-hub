@@ -23,18 +23,24 @@ export type OutcomeIdentity={sessionId:string;userId:string;validation:boolean};
 const object=(v:unknown):Record<string,unknown>|null=>v!==null&&typeof v==='object'&&!Array.isArray(v)?v as Record<string,unknown>:null;
 const text=(v:unknown,max=1600)=>typeof v==='string'?v.trim().slice(0,max):'';
 const list=(v:unknown)=>Array.isArray(v)?v.filter((x):x is string=>typeof x==='string').map(x=>text(x,320)).filter(Boolean).slice(0,3):[];
+const validCompletedAt=(value:unknown):value is string=>typeof value==='string'&&Number.isFinite(Date.parse(value));
 export function emptySessionOutcome(id:OutcomeIdentity,kind:OutcomeKind='processing'):SessionOutcome{
  return {kind,sessionId:id.sessionId,completedAt:null,validation:id.validation,summary:'',strengths:[],nextFocus:[],details:storedFeedbackDetails(null)};
 }
-/** A read of this specific user's session is evidence of storage, not provider settlement. */
+/** A read of this specific user's session is evidence of storage, not provider settlement.
+ * Validation sessions are intentionally persisted with status=abandoned by the completion
+ * transaction so they cannot update mastery/Error Bank. That status is not a failed session
+ * when the room is a validation room and a valid completion timestamp exists. */
 export function parseSessionOutcome(value:unknown,id:OutcomeIdentity):SessionOutcome{
  if(value===null)return emptySessionOutcome(id);
  const row=object(value);
  if(!row||row.id!==id.sessionId||row.user_id!==id.userId||typeof row.room_name!=='string'
    ||row.room_name.startsWith('validation:')!==id.validation)throw new Error('session_outcome_identity_mismatch');
  if(row.status==='active')return emptySessionOutcome(id);
- if(row.status==='abandoned')return emptySessionOutcome(id,'stopped');
- if(row.status!=='completed'||typeof row.completed_at!=='string'||!Number.isFinite(Date.parse(row.completed_at)))throw new Error('session_outcome_invalid');
+ const validationFinalized=row.status==='abandoned'&&id.validation;
+ if(row.status==='abandoned'&&!id.validation)return emptySessionOutcome(id,'stopped');
+ if(row.status!=='completed'&&!validationFinalized)throw new Error('session_outcome_invalid');
+ if(!validCompletedAt(row.completed_at))throw new Error('session_outcome_invalid');
  const feedback=object(row.final_feedback);
  const summary=text(feedback?.summary);const strengths=list(feedback?.strengths);const nextFocus=list(feedback?.nextSessionFocus);
  return {...emptySessionOutcome(id,summary||strengths.length||nextFocus.length?'ready':'saved_without_feedback'),completedAt:row.completed_at,summary,strengths,nextFocus,details:storedFeedbackDetails(feedback)};
