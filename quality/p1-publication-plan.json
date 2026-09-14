@@ -1,5 +1,5 @@
 {
-  "version":"p1-publication-plan-2",
+  "version":"p1-publication-plan-3",
   "status":"offline_plan_no_database_write",
   "verifiedOn":"2026-09-14",
   "rules":[
@@ -13,16 +13,24 @@
     "English P1 must never fall back to the current Golden Lesson identity or reference when resolving Professor persistence or teaching context."
   ],
   "interactivePublicationGate":{
-    "status":"blocked_until_exact_server_handoff_and_provider_cost_gate",
-    "requiredBeforeIsPublishedTrue":[
-      "The exact P1 lesson identity resolves a reviewed server-authored Professor reference before any reservation or paid provider call.",
-      "Professor teacher and evaluator receive the same P1-specific reviewed lesson reference; browser drafts, local quiz answers and hints remain excluded.",
-      "English P1 persists and evaluates against its own published lesson identity and cannot silently resolve to the current English Golden Lesson.",
-      "P1 Audio/Professor provider paths use the reviewed budget, duplicate-generation and reconciliation controls applicable at publication time.",
-      "Executable mocked-handler and browser regressions prove the exact-lesson handoff, fail-closed behaviour and account boundaries before publication."
+    "status":"offline_contracts_verified_runtime_deploy_still_blocked",
+    "offlineVerifiedRun":34855724352,
+    "verifiedOffline":[
+      "Exact P1 lesson identity, reviewed slug, authenticated track and isPublished=true are required before a server-authored reference is accepted.",
+      "Professor teacher/evaluator candidate metadata share the same P1-specific reference and exclude browser drafts, local quiz answers and hint state.",
+      "English P1 candidate persistence uses its own generated lesson identity and never the current English Golden Lesson identity.",
+      "The existing start_professor_session_atomic budget/start contract is exercised only after the exact P1 reference gate; denied budget stops before any provider-like envelope.",
+      "P1 Premium Audio candidate verifies exact ID/slug/track/content version, versioned cache, global/premium budget, protected Professor exposure and claim-before-provider ordering."
     ],
-    "currentClientBoundary":"If a reviewed P1 appears in the catalog before this gate is satisfied, written self-study may render but Audio and Professor providers are not mounted and the UI reports the gate explicitly.",
-    "notAuthorization":"This gate documents prerequisites only. It is not authorization to deploy server changes, publish a lesson, write Supabase data or spend on provider acceptance."
+    "stillRequiredBeforeIsPublishedTrue":[
+      "Promote the reviewed P1 reference resolver into a production server module and integrate it into the feature API with executable mocked-handler regressions.",
+      "Integrate exact P1 Premium Audio provider mounting only after its reviewed Supabase budget/dedup/reconciliation dependencies are deployed and verified.",
+      "Publish the exact P1 database row first as is_published=false and re-run the identity/source gates against the generated lesson ID.",
+      "Run browser acceptance proving that the published P1 opens the same written identity while Audio/Professor remain blocked until the exact provider gate is enabled.",
+      "Make is_published=true a separate explicit decision after the runtime/deployment evidence above."
+    ],
+    "currentClientBoundary":"The dynamic read-only catalog is integrated and only allowlists reviewed runtime content. P1 written self-study may render for an allowlisted published row, but Audio and Professor are not mounted until the runtime/provider gate is separately satisfied.",
+    "notAuthorization":"Passing the offline contract tests is not authorization to write Supabase data, deploy Edge/server changes, enable paid providers or publish a P1 lesson."
   },
   "targets":{
     "finance":{
@@ -50,5 +58,5 @@
       "targetLesson":{"slug":"clarify-check-understanding-handle-meetings","sequence":2,"weekNumber":1,"dayNumber":2,"level":"professional"}
     }
   },
-  "publicationDecision":"Explicit and separate. This plan is not authorization to write to Supabase or to publish the lessons."
+  "publicationDecision":"Explicit and separate. This plan is not authorization to write to Supabase, deploy runtime/Edge changes, enable paid providers or publish the lessons."
 }
