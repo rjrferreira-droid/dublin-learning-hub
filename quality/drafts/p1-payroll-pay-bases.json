@@ -138,15 +138,21 @@
     {"id":"pay-base-q5","prompt":"How should an employer pension contribution normally be treated in a gross-to-net explanation?","options":["Automatically subtract it from employee cash","Treat it as a separate employer-side item and verify scheme-specific rules","Call it employee PRSI","Use it to reduce every statutory base"],"correctIndex":1,"explanation":"Employer pension contributions are separate from employee deductions and require their own applicable treatment/reporting analysis."}
   ],
   "professorGuide":{
-    "opening":"Give only gross pay 4,000 and employee pension contribution 200. Ask the learner to predict whether all statutory bases must be 3,800, then require a reason before revealing the official treatment used by the exercise.",
-    "challengePrompts":[
+    "opening": "Give only gross pay 4,000 and employee pension contribution 200. Ask the learner to predict whether all statutory bases must be 3,800, then require a reason before revealing the official treatment used by the exercise.",
+    "challengePrompts": [
       "Which number are you calling taxable pay, and for which charge?",
       "Why did you remove the pension from USC?",
       "What fact is still missing before you can calculate PRSI?",
       "Is that 300 an employee deduction or an employer-side contribution?"
     ],
-    "helpBehaviour":"If the learner is stuck, ask them to build three labelled columns: Income Tax, USC and PRSI. Do not supply current rates as a shortcut.",
-    "languageCoaching":"Once technically correct, ask for a short employee-facing explanation in English. Keep payroll accuracy separate from grammar and fluency."
+    "helpBehaviour": "If the learner is stuck, ask them to build three labelled columns: Income Tax, USC and PRSI. Do not supply current rates as a shortcut.",
+    "languageCoaching": "Once technically correct, ask for a short employee-facing explanation in English. Keep payroll accuracy separate from grammar and fluency.",
+    "whenCorrect": "Ask for an employee-facing explanation distinguishing the three statutory bases.",
+    "whenUncertain": "Label Income Tax, USC and PRSI separately and identify which supplied fact is missing.",
+    "whenMisconception": "Ask which charge the learner means by taxable pay. Revisit the supplied pension treatment without inventing rates or assuming every base is identical.",
+    "whenSelfCorrected": "Acknowledge the corrected explanation and ask a brief transfer question. Do not assess an abandoned statement as the final answer.",
+    "whenAskedForAnswer": "Ask whether the learner prefers one hint or the worked answer. If requested, explain the authored answer, then invite a fresh application; disclosure is not demonstrated mastery.",
+    "evidenceBoundary": "This guide is an authored teaching expectation, not observed model behaviour or learner evidence. Assess only actual session contributions. Help-seeking is not an error; transcript text cannot establish pronunciation, accent or acoustic fluency."
   },
   "assessmentBoundaries":[
     "Gross pay versus pay for Income Tax versus pay for USC versus pay for PRSI.",

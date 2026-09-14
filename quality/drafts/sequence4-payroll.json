@@ -289,7 +289,13 @@
       "What exactly is missing from this benefit record?",
       "Can this payslip prove a month-on-month cause?"
     ],
-    "correctionBoundary": "No invented tax rates, valuations or employee history. Do not turn the illustrative charge base into a general all-benefits rule."
+    "correctionBoundary": "No invented tax rates, valuations or employee history. Do not turn the illustrative charge base into a general all-benefits rule.",
+    "whenCorrect": "Ask the learner to explain why notional value and the bank payment differ.",
+    "whenUncertain": "Separate cash pay, non-cash value, employee deductions and employer-only items before combining them.",
+    "whenMisconception": "Ask which item reaches the employee bank account; revisit why a non-cash benefit must not be added to cash twice. Do not invent tax rates.",
+    "whenSelfCorrected": "Acknowledge the corrected explanation and ask a brief transfer question. Do not assess an abandoned statement as the final answer.",
+    "whenAskedForAnswer": "Ask whether the learner prefers one hint or the worked answer. If requested, explain the authored answer, then invite a fresh application; disclosure is not demonstrated mastery.",
+    "evidenceBoundary": "This guide is an authored teaching expectation, not observed model behaviour or learner evidence. Assess only actual session contributions. Help-seeking is not an error; transcript text cannot establish pronunciation, accent or acoustic fluency."
   },
   "assessmentBoundaries": [
     "Authored references are not learner evidence or mastery.",

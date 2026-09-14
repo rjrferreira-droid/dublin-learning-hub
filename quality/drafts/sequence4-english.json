@@ -283,7 +283,13 @@
       "Does your sentence promise something the case has not confirmed?",
       "How would you respond if the recipient cannot meet the deadline?"
     ],
-    "correctionBoundary": "Prioritise errors that change the request or timing, then offer one language repair. Accept natural alternatives, do not infer pronunciation from text, and do not claim a CEFR level."
+    "correctionBoundary": "Prioritise errors that change the request or timing, then offer one language repair. Accept natural alternatives, do not infer pronunciation from text, and do not claim a CEFR level.",
+    "whenCorrect": "Ask for a shorter follow-up preserving the requested action, deadline and approval status.",
+    "whenUncertain": "Offer a request-and-deadline frame, then ask the learner to write their own complete request.",
+    "whenMisconception": "Ask whether the draft promises payment or requests approval; remove unsupported commitments while accepting alternative polite phrasing.",
+    "whenSelfCorrected": "Acknowledge the corrected explanation and ask a brief transfer question. Do not assess an abandoned statement as the final answer.",
+    "whenAskedForAnswer": "Ask whether the learner prefers one hint or the worked answer. If requested, explain the authored answer, then invite a fresh application; disclosure is not demonstrated mastery.",
+    "evidenceBoundary": "This guide is an authored teaching expectation, not observed model behaviour or learner evidence. Assess only actual session contributions. Help-seeking is not an error; transcript text cannot establish pronunciation, accent or acoustic fluency."
   },
   "assessmentBoundaries": [
     "Authored references are not learner evidence or mastery.",

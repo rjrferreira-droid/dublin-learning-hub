@@ -5,6 +5,10 @@ import {randomUUID,randomBytes} from 'node:crypto';
 import {createClient} from '@supabase/supabase-js';
 import {p1SlugFor} from '../../src/learning/p1RuntimeRegistry.ts';
 import {resolvePreviewP1Lesson,P1_PREVIEW_BRANCH} from '../../server/p1-preview-runtime.ts';
+import {resolveWrittenProfessorPreview} from '../candidates/resolve-written-professor-preview.ts';
+import {sequence3SlugFor} from '../../src/learning/sequence3Registry.ts';
+import {sequence4SlugFor} from '../../src/learning/sequence4Registry.ts';
+import {remainingSlugFor} from '../../src/learning/remainingWrittenRegistry.ts';
 const status=JSON.parse(readFileSync(process.argv[2],'utf8'));
 const api=new URL(status.API_URL);
 assert.ok(['127.0.0.1','localhost'].includes(api.hostname)&&api.port==='54321'&&api.protocol==='http:','local API only');
@@ -64,6 +68,46 @@ assert.ok((await clients.unassigned.from('profiles').insert({id:users.unassigned
 assert.ok((await anon.from('lessons').select('id')).error);
 assert.deepEqual(ok(await admin.from('professor_budget_reservations').select('id')),[]);
 assert.deepEqual(ok(await admin.from('ai_tutor_sessions').select('id')),[]);
+// Expand only this disposable fixture. Connected curriculum and provider registries stay closed.
+const future={};
+const previewEnv={VERCEL_ENV:'preview',VERCEL_GIT_COMMIT_REF:P1_PREVIEW_BRANCH};
+for(const track of ['finance','payroll','english']){
+ future[track]={};
+ for(const sequence of [3,4,5,6,7,8]){
+  const slug=sequence===3?sequence3SlugFor(track):sequence===4?sequence4SlugFor(track):remainingSlugFor(track,sequence);
+  future[track][sequence]=ok(await admin.from('lessons').insert({module_id:lessons[track].module_id,slug,title:'Fictional written reference',sequence,is_published:true,content_version:1}).select().single());
+ }
+}
+let futureReferences=0;
+for(const account of ['finance','payroll'])for(const requested of [account,'english'])for(const sequence of [3,4,5,6,7,8]){
+ const lesson=future[requested][sequence],requestedTrack={finance:'rafael_finance',payroll:'viviane_payroll',english:'english_academy'}[requested];
+ const ref=await resolveWrittenProfessorPreview(clients[account],{lessonId:lesson.id,requestedTrack,profileTrack:'manuzinha',draft:'LOCAL_PRIVATE_SENTINEL',contentVersion:999},previewEnv);
+ assert.equal(ref.identity.lessonId,lesson.id);assert.equal(ref.identity.contentVersion,1);assert.equal(ref.identity.sequence,sequence);
+ assert.equal(ref.descriptor.providerAdmission,false);assert.doesNotMatch(JSON.stringify(ref),/LOCAL_PRIVATE_SENTINEL|manuzinha/);
+ futureReferences++;
+}
+for(const account of ['finance','payroll']){
+ const other=account==='finance'?'payroll':'finance';
+ for(const sequence of [3,4,5,6,7,8])await assert.rejects(()=>resolveWrittenProfessorPreview(clients[account],{lessonId:future[other][sequence].id,requestedTrack:other==='finance'?'rafael_finance':'viviane_payroll'},previewEnv),/forbidden/);
+}
+const probe=future.finance[3],request={lessonId:probe.id,requestedTrack:'rafael_finance'};
+const before=await resolveWrittenProfessorPreview(clients.finance,request,previewEnv);
+ok(await admin.from('lessons').update({content_version:2}).eq('id',probe.id));
+const after=await resolveWrittenProfessorPreview(clients.finance,request,previewEnv);
+assert.equal(after.identity.contentVersion,2);assert.notEqual(after.descriptor.sha256,before.descriptor.sha256);
+for(const [table,rowId,field] of [['lessons',probe.id,'is_published'],['modules',probe.module_id,'is_published']]){
+ ok(await admin.from(table).update({[field]:false}).eq('id',rowId));
+ await assert.rejects(()=>resolveWrittenProfessorPreview(clients.finance,request,previewEnv),/forbidden/);
+ ok(await admin.from(table).update({[field]:true}).eq('id',rowId));
+}
+const probeModule=ok(await admin.from('modules').select('course_id').eq('id',probe.module_id).single());
+ok(await admin.from('courses').update({is_active:false}).eq('id',probeModule.course_id));
+await assert.rejects(()=>resolveWrittenProfessorPreview(clients.finance,request,previewEnv),/forbidden/);
+ok(await admin.from('courses').update({is_active:true}).eq('id',probeModule.course_id));
+await assert.rejects(()=>resolveWrittenProfessorPreview(clients.unassigned,request,previewEnv),/forbidden/);
+await assert.rejects(()=>resolveWrittenProfessorPreview(anon,request,previewEnv),/unauthenticated/);
+assert.deepEqual(ok(await admin.from('professor_budget_reservations').select('id')),[]);
+assert.deepEqual(ok(await admin.from('ai_tutor_sessions').select('id')),[]);
 const path='fictional/local-contract.mp3',bytes=Buffer.from('ID3-fictional-storage-contract-not-playable-audio');
 ok(await admin.storage.from('lesson-audio').upload(path,bytes,{contentType:'audio/mpeg',upsert:false}));
 assert.equal(ok(await admin.storage.getBucket('lesson-audio')).public,false);
@@ -77,4 +121,4 @@ const response=await fetch(signed.signedUrl);assert.equal(response.status,200);a
 const invalid=new URL(signed.signedUrl);invalid.searchParams.set('token','invalid');assert.equal((await fetch(invalid)).ok,false);
 const publicUrl=admin.storage.from('lesson-audio').getPublicUrl(path).data.publicUrl;assert.equal((await fetch(publicUrl)).ok,false);
 for(const client of Object.values(clients))ok(await client.auth.signOut());
-console.log(JSON.stringify({status:'passed',realLocalAuth:true,realLocalPostgrest:true,realLocalStorage:true,assignedAccounts:2,unassignedAccounts:1,p1References:4,zeroBudgetStartsDenied:4,paidProviderCalls:0,connectedProjectWrites:0,networkScope:'loopback:54321',requests}));
+console.log(JSON.stringify({status:'passed',realLocalAuth:true,realLocalPostgrest:true,realLocalStorage:true,assignedAccounts:2,unassignedAccounts:1,p1References:4,futureReferences,zeroBudgetStartsDenied:4,paidProviderCalls:0,connectedProjectWrites:0,networkScope:'loopback:54321',requests}));

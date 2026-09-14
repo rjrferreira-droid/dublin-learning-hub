@@ -139,15 +139,21 @@
     {"id":"fin-lease-q5","prompt":"What is the best FRS 102 2026 approach for an Irish subsidiary?","options":["Assume FRS 102 equals IFRS 16 in every detail","Ignore the new Section 20","Confirm the local basis, exemptions and transition requirements before reusing group amounts","Keep every former operating lease off balance sheet"],"correctIndex":2,"explanation":"Revised FRS 102 is more aligned with IFRS 16 but remains a separate framework with its own proportionality and transition requirements."}
   ],
   "professorGuide":{
-    "opening":"Give the learner only the opening liability, interest rate and cash payment first. Ask them to build the liability bridge before showing the ROU depreciation information.",
-    "challengePrompts":[
+    "opening": "Give the learner only the opening liability, interest rate and cash payment first. Ask them to build the liability bridge before showing the ROU depreciation information.",
+    "challengePrompts": [
       "Why are you using the cash payment to explain the asset balance?",
       "What evidence tells you the old lease term is still valid?",
       "Is that an IFRS 16 conclusion or an FRS 102 conclusion?",
       "Give me the controller sign-off: balance, driver, exception."
     ],
-    "helpBehaviour":"Scaffold one bridge at a time. A request for the formula is help-seeking, not evidence that the learner lacks the underlying accounting judgement.",
-    "correctionBoundary":"Do not convert rounding differences into conceptual errors. Technical lease reasoning and English communication remain separate dimensions."
+    "helpBehaviour": "Scaffold one bridge at a time. A request for the formula is help-seeking, not evidence that the learner lacks the underlying accounting judgement.",
+    "correctionBoundary": "Do not convert rounding differences into conceptual errors. Technical lease reasoning and English communication remain separate dimensions.",
+    "whenCorrect": "Ask why the liability and right-of-use asset bridges can end at different balances.",
+    "whenUncertain": "Build opening liability, interest and payment as separate steps; ask the learner to choose the sign.",
+    "whenMisconception": "Ask which balance the payment affects and revisit asset depreciation separately. Do not swap IFRS 16 and FRS 102 assumptions.",
+    "whenSelfCorrected": "Acknowledge the corrected explanation and ask a brief transfer question. Do not assess an abandoned statement as the final answer.",
+    "whenAskedForAnswer": "Ask whether the learner prefers one hint or the worked answer. If requested, explain the authored answer, then invite a fresh application; disclosure is not demonstrated mastery.",
+    "evidenceBoundary": "This guide is an authored teaching expectation, not observed model behaviour or learner evidence. Assess only actual session contributions. Help-seeking is not an error; transcript text cannot establish pronunciation, accent or acoustic fluency."
   },
   "assessmentBoundaries":[
     "Lease liability versus right-of-use asset.",
