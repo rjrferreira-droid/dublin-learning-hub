@@ -9,6 +9,7 @@ const ids={finance:'11111111-1111-4111-8111-111111111111',payroll:'22222222-2222
 const requestTrack={finance:'rafael_finance',payroll:'viviane_payroll',english:'english_academy'} as const;
 const profile={finance:'rafael_finance',payroll:'viviane_payroll',english:'rafael_finance'} as const;
 const mode={finance:'chapter_conversation',payroll:'chapter_conversation',english:'general_conversation'} as const;
+const allowedResponse={allowed:true,session_id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',reservation_id:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',room_name:'lh-server-room',quality_tier:'premium',validation_mode:false,max_session_seconds:1200,monthly_budget_usd:110,global_ai_cap_usd:130,reservation_usd:4,reserved_before_usd:10,reserved_after_usd:14,global_committed_before_usd:20};
 function input(track:keyof typeof ids,overrides:Record<string,unknown>={}){
  const requestedTrack=requestTrack[track];
  return {
@@ -19,7 +20,8 @@ function input(track:keyof typeof ids,overrides:Record<string,unknown>={}){
 }
 class FakeDb{
  calls:Array<{name:string;args:Record<string,unknown>}>=[];
- constructor(public response:any={allowed:true,session_id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',reservation_id:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',room_name:'lh-server-room',quality_tier:'premium',validation_mode:false,max_session_seconds:1200,monthly_budget_usd:110,global_ai_cap_usd:130,reservation_usd:4,reserved_before_usd:10,reserved_after_usd:14,global_committed_before_usd:20}){}
+ response:any;
+ constructor(response:any=allowedResponse){this.response=response;}
  async rpc(name:string,args:Record<string,unknown>){this.calls.push({name,args});return {data:this.response,error:null};}
 }
 for(const track of ['finance','payroll','english'] as const)test(`${track}: exact P1 request reaches the real atomic budget gate before any future provider envelope`,async()=>{
@@ -57,7 +59,7 @@ test('budget denial stops the flow with the existing startup error and produces 
 });
 test('validation mode and room marker must agree before reservation',async()=>{
  for(const value of [input('finance',{validationMode:true,roomName:'lh-not-validation'}),input('finance',{validationMode:false,roomName:'validation:lh-wrong'})]){const db=new FakeDb();await assert.rejects(()=>executeP1BudgetGateCandidate(db,value),/validation_room_mismatch/);assert.equal(db.calls.length,0);}
- const db=new FakeDb({...new FakeDb().response,room_name:'validation:lh-server',validation_mode:true,max_session_seconds:300});const result=await executeP1BudgetGateCandidate(db,input('finance',{validationMode:true,roomName:'validation:lh-finance-candidate'}));assert.equal(result.metadata.validationMode,true);assert.equal(result.metadata.maxSessionSeconds,300);
+ const db=new FakeDb({...allowedResponse,room_name:'validation:lh-server',validation_mode:true,max_session_seconds:300});const result=await executeP1BudgetGateCandidate(db,input('finance',{validationMode:true,roomName:'validation:lh-finance-candidate'}));assert.equal(result.metadata.validationMode,true);assert.equal(result.metadata.maxSessionSeconds,300);
 });
 test('candidate source has no provider dispatch or network primitive and remains outside runtime paths',()=>{
  const source=fs.readFileSync('quality/candidates/p1-professor-start-flow.ts','utf8');
