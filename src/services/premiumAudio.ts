@@ -7,6 +7,7 @@ export type PremiumAudioResult = {
   audioUrl: string;
   cached: boolean;
   estimatedCostUsd?: number;
+  expiresAt?: number;
 };
 
 type PremiumLessonAudioResponse = {
@@ -14,6 +15,7 @@ type PremiumLessonAudioResponse = {
   cached?: boolean;
   voice?: string;
   estimated_cost_usd?: number;
+  expires_at?: number;
 };
 
 type PremiumAudioInvoker = (body: { lesson_id: string }) => Promise<PremiumLessonAudioResponse>;
@@ -62,13 +64,14 @@ export class SupabasePremiumAudioService implements PremiumAudioService {
   private readonly inFlight = new Map<string, Promise<PremiumAudioResult>>();
   private readonly invoke: PremiumAudioInvoker;
 
-  constructor(invoke: PremiumAudioInvoker = defaultInvoker) {
+  constructor(invoke: PremiumAudioInvoker = defaultInvoker, private readonly now: () => number = Date.now) {
     this.invoke = invoke;
   }
 
   async getOrCreateLessonAudio(lessonId: string): Promise<PremiumAudioResult> {
     const cached = this.resolved.get(lessonId);
-    if (cached) return { audioUrl: cached.audioUrl, cached: true };
+    if (cached && (cached.expiresAt ?? 0) > this.now() + 30_000) return { ...cached, cached: true };
+    if (cached) this.resolved.delete(lessonId);
     const pending = this.inFlight.get(lessonId);
     if (pending) return pending;
     const task = this.load(lessonId);
@@ -95,7 +98,10 @@ export class SupabasePremiumAudioService implements PremiumAudioService {
     try {
       const response = await this.invoke({ lesson_id: lessonId });
       if (!response.audio_url) throw new PremiumAudioError('invalid-response', 'Premium Audio backend returned no audio URL.', true);
-      return {audioUrl: response.audio_url,cached: Boolean(response.cached),estimatedCostUsd: response.estimated_cost_usd};
+      const expiresAt = response.expires_at ?? this.now() + 5 * 60_000;
+      if (!Number.isFinite(expiresAt) || expiresAt <= this.now() + 30_000)
+        throw new PremiumAudioError('invalid-response', 'The audio link has expired. Load the narration again.', true);
+      return {audioUrl: response.audio_url,cached: Boolean(response.cached),estimatedCostUsd: response.estimated_cost_usd,expiresAt};
     } catch (cause) {
       throw normalizePremiumAudioError(cause);
     }

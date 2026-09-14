@@ -33,7 +33,7 @@ function learnerFromTrack(track: LearnerTrack): LearnerKey {
   return track === 'viviane_payroll' ? 'viviane' : 'rafael';
 }
 
-async function readAssignedProfile(user: User): Promise<ProfileRow | null> {
+async function readOrCreateProfile(user: User): Promise<ProfileRow | null> {
   const { data, error } = await supabase
     .from('profiles')
     .select('display_name, learner_track')
@@ -46,8 +46,26 @@ async function readAssignedProfile(user: User): Promise<ProfileRow | null> {
     return data as ProfileRow;
   }
 
-  // Authorization comes only from a service-assigned profile, never editable Auth metadata.
-  return null;
+  const metadataTrack = user.user_metadata?.learner_track;
+  if (metadataTrack !== 'rafael_finance' && metadataTrack !== 'viviane_payroll') return null;
+
+  const learner = metadataTrack === 'viviane_payroll' ? learnerCopy.viviane : learnerCopy.rafael;
+  const displayName = typeof user.user_metadata?.display_name === 'string' && user.user_metadata.display_name.trim()
+    ? user.user_metadata.display_name.trim()
+    : learner.name;
+
+  const { data: inserted, error: insertError } = await supabase
+    .from('profiles')
+    .insert({
+      id: user.id,
+      display_name: displayName,
+      learner_track: metadataTrack,
+    })
+    .select('display_name, learner_track')
+    .single();
+
+  if (insertError) throw insertError;
+  return inserted as ProfileRow;
 }
 
 export function AuthGate({ children }: AuthGateProps) {
@@ -95,7 +113,7 @@ export function AuthGate({ children }: AuthGateProps) {
     setProfileLoading(true);
     setProfileFailed(false);
     setErrorMessage(null);
-    void readAssignedProfile(user).then(row => {
+    void readOrCreateProfile(user).then(row => {
       if (!cancelled) { setProfile(row); setProfileUserId(user.id); }
     }).catch(() => {
       if (!cancelled) { setProfile(null); setProfileUserId(user.id); setProfileFailed(true); }
@@ -116,11 +134,16 @@ export function AuthGate({ children }: AuthGateProps) {
         const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
         if (error) throw error;
       } else {
+        const learner = learnerCopy[learnerKey];
         const { data, error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
           options: {
             emailRedirectTo: window.location.origin,
+            data: {
+              learner_track: learner.track,
+              display_name: learner.name,
+            },
           },
         });
         if (error) throw error;
@@ -130,6 +153,31 @@ export function AuthGate({ children }: AuthGateProps) {
       }
     } catch (error: unknown) {
       setErrorMessage(error instanceof Error ? error.message : 'Não foi possível concluir o acesso.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function createMissingProfile(key: LearnerKey) {
+    if (!session?.user) return;
+    setSubmitting(true);
+    setErrorMessage(null);
+    try {
+      const learner = learnerCopy[key];
+      const { data, error } = await supabase
+        .from('profiles')
+        .insert({
+          id: session.user.id,
+          display_name: learner.name,
+          learner_track: learner.track,
+        })
+        .select('display_name, learner_track')
+        .single();
+      if (error) throw error;
+      setProfile(data as ProfileRow);
+      setProfileUserId(session.user.id);
+    } catch (error: unknown) {
+      setErrorMessage(error instanceof Error ? error.message : 'Não foi possível criar o perfil.');
     } finally {
       setSubmitting(false);
     }
@@ -250,11 +298,17 @@ export function AuthGate({ children }: AuthGateProps) {
       <div className="auth-screen auth-loading-screen">
         <div className="auth-profile-setup">
           <div className="auth-brand-mark">LH</div>
-          <span className="auth-kicker">ACCESS PENDING</span>
-          <h2>Your learning access is not assigned yet</h2>
-          <p>An administrator needs to assign this account to its private learning track.</p>
-          <button type="button" className="secondary-btn" onClick={() => setProfileAttempt(value => value + 1)}>Check access again</button>
-          <button type="button" className="secondary-btn" onClick={() => void logout()}>Sign out</button>
+          <span className="auth-kicker">PROFILE SETUP</span>
+          <h2>Who is using this account?</h2>
+          <p>This choice links the account to the correct private learning track.</p>
+          <div className="auth-learner-picker setup">
+            {(Object.keys(learnerCopy) as LearnerKey[]).map((key) => (
+              <button key={key} type="button" onClick={() => void createMissingProfile(key)} disabled={submitting}>
+                <strong>{learnerCopy[key].name}</strong>
+                <span>{learnerCopy[key].subtitle}</span>
+              </button>
+            ))}
+          </div>
           {errorMessage ? <div className="auth-message error">{errorMessage}</div> : null}
         </div>
       </div>

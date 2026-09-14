@@ -44,7 +44,7 @@ const db={auth:{getUser:async()=>({data:{user:{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaa
  if(name==='claim_premium_audio_generation_v1')return {data:state.claim,error:state.claimError?{message:'fictional'}:null};
  if(name==='release_premium_audio_generation_v1')return {data:null,error:null};
  throw new Error('Unexpected RPC');
-},storage:{from:()=>({getPublicUrl:path=>({data:{publicUrl:'https://fictional.invalid/'+path}}),list:async()=>({data:state.orphan?[{name:'commentary-v2.mp3'}]:[],error:null}),upload:async(path)=>{state.events.push('upload');state.uploadPath=path;return {error:state.uploadError?{message:'fictional'}:null};}})}};
+},storage:{from:()=>({createSignedUrl:async(path,ttl)=>{state.events.push('sign');assert.equal(ttl,3600);return {data:state.signError?null:{signedUrl:'https://fictional.invalid/signed/'+path},error:state.signError?{message:'fictional'}:null};},getPublicUrl:path=>({data:{publicUrl:'https://fictional.invalid/'+path}}),list:async()=>({data:state.orphan?[{name:'commentary-v2.mp3'}]:[],error:null}),upload:async(path)=>{state.events.push('upload');state.uploadPath=path;return {error:state.uploadError?{message:'fictional'}:null};}})}};
 mock.module('@supabase/supabase-js',{namedExports:{createClient:()=>db}});
 globalThis.Deno={env:{get:key=>key==='P1_AUDIO_RUNTIME_STAGE'?(state.enabled?'isolated-preview-atomic-v2':undefined):'fictional'},serve:fn=>handler=fn};
 const originalFetch=globalThis.fetch;
@@ -53,7 +53,7 @@ await import('../.test-runtime/p1-audio-handler.mjs');
 async function invoke(extra={}){const response=await handler(new Request('https://fictional.invalid/audio',{method:'POST',headers:{Authorization:'Bearer fictional','Content-Type':'application/json'},body:JSON.stringify({lesson_id:id,drafts:'LOCAL_PRIVATE_DRAFT',...extra})}));return {status:response.status,body:await response.json()};}
 for(const track of Object.keys(slugs))test(`${track}: actual undeployed Edge handler reaches fictional TTS only after exact identity, budget, claim and version recheck`,async()=>{
  reset(track);const r=await invoke();assert.equal(r.status,200);assert.equal(state.tts.length,1);assert.equal(state.uploadPath,`lessons/${id}/commentary-v2.mp3`);
- const at=name=>state.events.indexOf(name);assert.ok(at('courses')<at('professor_reservation_exposure_v2'));assert.ok(at('professor_reservation_exposure_v2')<at('begin_premium_audio_attempt_v2'));assert.ok(at('begin_premium_audio_attempt_v2')<at('recheck'));assert.ok(at('recheck')<at('tts'));assert.equal(state.events.at(-1),'settle_premium_audio_attempt_v2');assert.equal(state.attemptState,'settled');assert.ok(at('mark_premium_audio_submitted_v2')<at('tts'));
+ const at=name=>state.events.indexOf(name);assert.ok(at('courses')<at('professor_reservation_exposure_v2'));assert.ok(at('professor_reservation_exposure_v2')<at('begin_premium_audio_attempt_v2'));assert.ok(at('begin_premium_audio_attempt_v2')<at('recheck'));assert.ok(at('recheck')<at('tts'));assert.equal(state.events.at(-1),'sign');assert.ok(at('settle_premium_audio_attempt_v2')<at('sign'));assert.equal(state.attemptState,'settled');assert.ok(at('mark_premium_audio_submitted_v2')<at('tts'));
  assert.ok(!JSON.stringify(state.tts).includes('LOCAL_PRIVATE_DRAFT'));if(track==='english')assert.match(state.tts[0].instructions,/natural English/);
 });
 test('real backend default is closed for P1 even when the row exists',async()=>{reset('finance',{enabled:false});assert.equal((await invoke()).status,403);assert.equal(state.tts.length,0);assert.equal(state.writes.length,0);assert.ok(!state.events.includes('audio_assets'));});
@@ -84,5 +84,11 @@ test('provider, storage and receipt failures preserve uncertain obligations',asy
 });
 test('orphan object stops before submission without inventing a receipt',async()=>{
  reset('finance',{orphan:true});assert.equal((await invoke()).status,409);assert.equal(state.tts.length,0);assert.equal(state.attemptState,'cancelled');assert.equal(state.writes.length,0);
+});
+test('private URL failure does not regenerate or undo settled cost',async()=>{
+ reset('finance',{signError:true});const r=await invoke();assert.equal(r.status,503);assert.equal(r.body.error,'audio_url_unavailable');assert.equal(state.tts.length,1);assert.equal(state.attemptState,'settled');
+});
+test('private cached narration signs only after identity and invokes no provider',async()=>{
+ reset('finance',{cache:{id:'asset',storage_path:`lessons/${id}/commentary-v2.mp3`}});const r=await invoke();assert.match(r.body.audio_url,/signed/);assert.ok(r.body.expires_at>Date.now());assert.equal(state.tts.length,0);
 });
 test.after(()=>{globalThis.fetch=originalFetch;delete globalThis.Deno;mock.restoreAll();});

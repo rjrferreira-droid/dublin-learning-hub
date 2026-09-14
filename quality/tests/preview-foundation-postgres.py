@@ -11,6 +11,7 @@ def sql(query,deny=False):
  return r.stdout.strip().splitlines()[-1] if r.stdout.strip() else ''
 def as_user(uid,query,deny=False):
  return sql(f"set role authenticated;set request.jwt.claim.sub='{uid}';"+query,deny)
+assert sql("select public from storage.buckets where id='lesson-audio'")=='f'
 assert sql('select count(*) from public.profiles')=='0'
 assert sql('select count(*) from public.lessons')=='0'
 assert sql('select ai_hard_cap_usd from learning_hub_budget_settings')=='0'
@@ -55,3 +56,7 @@ sql("update courses set is_active=false where learner_track='english_academy'")
 assert as_user(ids[0],'select count(*) from lessons')=='1'
 assert sql("select count(*) from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and not c.relrowsecurity")=='0'
 print('PASS: fresh baseline, zero budgets, publication chain, profile/course isolation, no client evidence/write/secret access, unknown-user and anonymous denial')
+
+assert as_user(ids[0],'select count(*) from storage.objects')=='0'
+as_user(ids[0],f"insert into storage.objects(id,bucket_id,name) values('{uuid.uuid4()}','lesson-audio','forbidden.mp3')",True)
+print('PASS: private bucket and no direct learner storage writes')

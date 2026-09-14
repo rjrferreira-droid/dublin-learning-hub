@@ -49,3 +49,9 @@ The prior cross-lesson budget gap now has a tested SQL candidate, shared Edge or
 ## Subsequent continuation: connected inventory and installation review
 
 Read-only metadata confirmed only main and v2-development exist; neither is an approved target. V2 has the exact legacy reserve_professor_budget(text) entry point that blocks the atomic candidate, and lacks Audio receipt metadata columns. See docs/PREVIEW_BACKEND_INSTALL_REVIEW_2026-09-14.md. The offline package adds transaction-wrapped prerequisites, hashes and nondestructive admission stop, tested exclusively in disposable PostgreSQL. A new isolated target, reviewed baseline/legacy disposition and installation approval remain required; do not treat the package as executable authorization.
+
+## Subsequent continuation: new Preview foundation and private Audio
+
+The earlier missing-bootstrap gap now has a deliberately new minimal foundation under quality/preview-backend/foundation.sql and a source-hashed package builder. It is not a historical restore. The initial foundation PostgreSQL CI passed at a3d1c12b86bd8963a24a34e960b2b7d4d259df86; the initial full workflow correctly rejected modifying frozen AuthGate. That file is restored, and its proposed improvement is retained only as quality/candidates/auth-server-assignment.patch. Do not weaken the identity freeze.
+
+The new database requires server-assigned profiles and zero budgets, with publication gates/RLS and no user/content seeds. Follow-up adds private Storage configuration and atomic-stage signed URLs with client expiry handling. See docs/PREVIEW_FOUNDATION_2026-09-14.md and the current head's foundation/full workflows for authoritative evidence. No connected installation, P1 publication or paid call is authorized by these candidates.

@@ -27,6 +27,18 @@ Deno.serve(async(req:Request)=>{
   const lessonId=String(body.lesson_id??"");
   if(!lessonId)return json({error:"lesson_id_required"},400);
   const admin=createClient(supabaseUrl,serviceKey);
+  const audioReply=async(path:string,payload:Record<string,unknown>)=>{
+    if(Deno.env.get('P1_AUDIO_RUNTIME_STAGE')==='isolated-preview-atomic-v2'){
+      try{
+        const expiresAt=Date.now()+3600_000;
+        const {data,error}=await admin.storage.from('lesson-audio').createSignedUrl(path,3600);
+        if(error||!data?.signedUrl)return json({error:'audio_url_unavailable'},503);
+        return json({...payload,audio_url:data.signedUrl,expires_at:expiresAt});
+      }catch{return json({error:'audio_url_unavailable'},503);}
+    }
+    const {data}=admin.storage.from('lesson-audio').getPublicUrl(path);
+    return json({...payload,audio_url:data.publicUrl});
+  };
   const recordUsageReceipt=async(requestId:string,costUsd:number,characters:number,userId:string|null)=>{
     if(requestId.startsWith('premium-audio-v2:')){
       const {data,error}=await admin.rpc('settle_premium_audio_attempt_v2',{p_attempt_id:requestId.slice('premium-audio-v2:'.length),p_estimated_cost_usd:costUsd,p_characters:characters});
@@ -69,8 +81,7 @@ Deno.serve(async(req:Request)=>{
       const chars=String(receiptMeta.transcript_pt??existing.transcript_pt??"").length;
       if(Number.isFinite(cost)&&cost>=0&&!await recordUsageReceipt(String(receiptMeta.generation_request_id),cost,chars,null))console.error("Premium Audio cached usage reconciliation deferred");
     }
-    const {data:pub}=admin.storage.from("lesson-audio").getPublicUrl(existing.storage_path);
-    return json({audio_url:pub.publicUrl,cached:true,voice:existing.voice??"marin",generated_at:existing.generated_at});
+    return audioReply(existing.storage_path,{cached:true,voice:existing.voice??"marin",generated_at:existing.generated_at});
   }
 
   if(!openaiKey)return json({error:"openai_not_configured"},503);
@@ -139,10 +150,9 @@ Deno.serve(async(req:Request)=>{
           return identity;
         },
       });
-      const {data:pub}=admin.storage.from('lesson-audio').getPublicUrl(expectedPath);
-      return json({audio_url:pub.publicUrl,cached:false,voice:'marin',estimated_cost_usd:estimatedCost,cost_basis:'application_estimate_not_provider_invoice'});
+      return audioReply(expectedPath,{cached:false,voice:'marin',estimated_cost_usd:estimatedCost,cost_basis:'application_estimate_not_provider_invoice'});
     }catch(cause){
-      if(racedCache){const {data:pub}=admin.storage.from('lesson-audio').getPublicUrl(expectedPath);return json({audio_url:pub.publicUrl,cached:true,voice:racedCache.voice??'marin'});}
+      if(racedCache)return audioReply(expectedPath,{cached:true,voice:racedCache.voice??'marin'});
       const raw=cause instanceof Error?cause.message:'';
       const allowed=new Set(['global_ai_budget_reached','premium_audio_budget_reached','audio_generation_in_progress','audio_source_changed','audio_cache_unavailable','audio_reconciliation_required','audio_receipt_unconfirmed','audio_asset_record_failed','audio_upload_failed','tts_failed']);
       const code=allowed.has(raw)?raw:'audio_attempt_unavailable';

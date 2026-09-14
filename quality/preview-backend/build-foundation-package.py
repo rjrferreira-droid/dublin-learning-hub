@@ -13,6 +13,7 @@ SOURCES=[
  'supabase/migrations/20260913165704_lh_reservation_lifecycle.sql',
  'quality/preview-backend/asset-prerequisites.sql',
  'quality/candidates/premium-audio-atomic.sql',
+ 'quality/preview-backend/storage.sql',
 ]
 def build(destination):
  out=Path(destination);out.mkdir(parents=True,exist_ok=False)
@@ -27,7 +28,7 @@ def build(destination):
   status='CANDIDATE_NOT_AUTHORIZED',purpose='new_minimal_preview_not_historical_restore',
   targetProjectRef=None,deniedProjectRefs=['qwvsrcgsfoguxdbcdrxq','aazfyosqqeujureksqjs'],
   sourceBranch='feat/professor-experience-2026-09-13',realLearners=0,publishedLessons=0,initialAiBudgetUsd=0,
-  includesAuthImplementation=False,includesStorageConfiguration=False,files=entries),indent=2)+'\n')
+  includesAuthImplementation=False,includesStorageConfiguration=True,files=entries),indent=2)+'\n')
  return entries
 if __name__=='__main__':
  if len(sys.argv)!=2:raise SystemExit('Usage: build-foundation-package.py NEW_OUTPUT_DIRECTORY')
