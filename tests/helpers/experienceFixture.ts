@@ -35,7 +35,8 @@ export async function experienceFixture(page:Page,options:{track?:'finance'|'pay
   else if(r.method()==='GET'&&u.pathname==='/rest/v1/ai_tutor_sessions'&&u.searchParams.has('id')){
    fixture.outcomeReads++;expect(u.searchParams.get('id')).toBe('eq.'+SYNTHETIC_SESSION_ID);expect(u.searchParams.get('user_id')).toBe('eq.'+id);
    if(fixture.outcome==='unavailable'){await route.fulfill({status:403,headers,contentType:'application/json',body:JSON.stringify({code:'42501',message:'Fictional denied read'})});return;}
-   body={id:SYNTHETIC_SESSION_ID,user_id:id,room_name:options.validation?'validation:fictional':'lh-fictional',status:fixture.outcome==='processing'?'active':fixture.outcome==='stopped'?'abandoned':'completed',completed_at:'2026-09-13T20:00:00Z',final_feedback:fixture.outcome==='saved'?null:{summary:'FICTIONAL FEEDBACK: You distinguished the two measures.',strengths:['FICTIONAL: You stated the assumption.'],nextSessionFocus:['FICTIONAL: Explain the next bridge without a hint.']}};
+   const finalStatus=fixture.outcome==='processing'?'active':fixture.outcome==='stopped'?'abandoned':options.validation?'abandoned':'completed';
+   body={id:SYNTHETIC_SESSION_ID,user_id:id,room_name:options.validation?'validation:fictional':'lh-fictional',status:finalStatus,completed_at:fixture.outcome==='processing'?null:'2026-09-13T20:00:00Z',final_feedback:fixture.outcome==='saved'?null:{summary:'FICTIONAL FEEDBACK: You distinguished the two measures.',strengths:['FICTIONAL: You stated the assumption.'],nextSessionFocus:['FICTIONAL: Explain the next bridge without a hint.']}};
   }
   else if(r.method()==='GET'&&u.pathname.startsWith('/rest/v1/'))body=[];
   else{fixture.sensitive++;await route.abort();return;}
