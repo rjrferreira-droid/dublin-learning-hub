@@ -26,7 +26,8 @@ jobs:
       - name: Preserve runtime, deployment configuration, database and identity boundaries
         run: |
           git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- professor-agent ':!professor-agent/src/evaluation.ts' ':!professor-agent/src/evaluationEvidence.ts' ':!professor-agent/src/callbackDelivery.ts' supabase ':!supabase/functions/professor-session-receipt/**' ':!supabase/functions/_shared/session-receipt-contract.ts' src/auth src/components/AuthGate.tsx src/components/LittleEnglish.tsx src/little-english.css src/professor/voiceState.ts
-          git diff --exit-code 5d8e13f9751e9f87c0138b2c9031d08ccf29ff66 HEAD -- api server .github/workflows/livekit-professor-deploy.yml .github/workflows/livekit-reviewed-worker-update.yml .github/workflows/livekit-evaluator-reviewed-update.yml
+          git diff --exit-code 5d8e13f9751e9f87c0138b2c9031d08ccf29ff66 HEAD -- api server .github/workflows/livekit-professor-deploy.yml .github/workflows/livekit-reviewed-worker-update.yml
+          git diff --exit-code fd58ac40a8c9c4fe54782b9b4d9be6aa32aad7e4 HEAD -- .github/workflows/livekit-evaluator-reviewed-update.yml
       - name: Compile committed application and worker candidates with locked dependencies
         run: npm ci && npm run build && npm --prefix professor-agent ci && npm --prefix professor-agent run typecheck
       - name: Measure initial JavaScript against the unchanged baseline
