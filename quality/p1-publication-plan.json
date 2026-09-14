@@ -1,15 +1,29 @@
 {
-  "version":"p1-publication-plan-1",
+  "version":"p1-publication-plan-2",
   "status":"offline_plan_no_database_write",
   "verifiedOn":"2026-09-14",
   "rules":[
     "Resolve the target module by course slug plus module slug; never hardcode generated module UUIDs in a future migration.",
     "Require exactly one target module and assert sequence 2 and the target lesson slug are unused before any insert.",
-    "Insert the lesson initially with is_published=false, then attach reviewed sources and six terms.",
+    "Insert the lesson initially with is_published=false, then attach reviewed sources and six terms only after a separate explicit database-write decision.",
     "Do not create user progress, mastery, Error Bank, review or audio rows as part of curriculum publication.",
     "Run authored-content, source and application regression checks before any separate is_published=true decision.",
-    "Recheck current-sensitive official sources at publication time, especially Irish payroll guidance."
+    "Recheck current-sensitive official sources at publication time, especially Irish payroll guidance.",
+    "Never set a P1 lesson is_published=true until interactivePublicationGate is fully satisfied for that exact lesson identity.",
+    "English P1 must never fall back to the current Golden Lesson identity or reference when resolving Professor persistence or teaching context."
   ],
+  "interactivePublicationGate":{
+    "status":"blocked_until_exact_server_handoff_and_provider_cost_gate",
+    "requiredBeforeIsPublishedTrue":[
+      "The exact P1 lesson identity resolves a reviewed server-authored Professor reference before any reservation or paid provider call.",
+      "Professor teacher and evaluator receive the same P1-specific reviewed lesson reference; browser drafts, local quiz answers and hints remain excluded.",
+      "English P1 persists and evaluates against its own published lesson identity and cannot silently resolve to the current English Golden Lesson.",
+      "P1 Audio/Professor provider paths use the reviewed budget, duplicate-generation and reconciliation controls applicable at publication time.",
+      "Executable mocked-handler and browser regressions prove the exact-lesson handoff, fail-closed behaviour and account boundaries before publication."
+    ],
+    "currentClientBoundary":"If a reviewed P1 appears in the catalog before this gate is satisfied, written self-study may render but Audio and Professor providers are not mounted and the UI reports the gate explicitly.",
+    "notAuthorization":"This gate documents prerequisites only. It is not authorization to deploy server changes, publish a lesson, write Supabase data or spend on provider acceptance."
+  },
   "targets":{
     "finance":{
       "draftPath":"quality/drafts/p1-finance-revenue.json",
