@@ -25,7 +25,15 @@ function assertDraft(track,draft,target){
  if(target.targetLesson.sequence!==2||target.verifiedCurrentLesson.sequence!==1)throw new Error(`sequence_plan_mismatch:${track}`);
  if(!/separate database publication\/deployment decision/i.test(draft.publicationGate))throw new Error(`publication_gate_missing:${track}`);
 }
+function assertInteractiveGate(){
+ const gate=plan.interactivePublicationGate;
+ if(!gate||gate.status!=='blocked_until_exact_server_handoff_and_provider_cost_gate')throw new Error('interactive_publication_gate_missing');
+ if(!Array.isArray(gate.requiredBeforeIsPublishedTrue)||gate.requiredBeforeIsPublishedTrue.length<5)throw new Error('interactive_publication_gate_incomplete');
+ const joined=gate.requiredBeforeIsPublishedTrue.join(' ');
+ for(const phrase of ['exact P1 lesson identity','English P1','provider','browser'])if(!joined.includes(phrase))throw new Error(`interactive_publication_gate_missing:${phrase}`);
+}
 export function buildPublicationPack(){
+ assertInteractiveGate();
  const targets={};
  for(const [track,target] of Object.entries(plan.targets)){
   const draft=readJson(target.draftPath);assertDraft(track,draft,target);
@@ -77,9 +85,10 @@ export function buildPublicationPack(){
   };
  }
  return {
-  version:'p1-publication-pack-1',
+  version:'p1-publication-pack-2',
   status:'generated_offline_unpublished_no_database_ids',
   sourcePlanVersion:plan.version,
+  interactivePublicationGate:plan.interactivePublicationGate,
   targets,
   publicationDecision:plan.publicationDecision
  };
