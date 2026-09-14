@@ -14,8 +14,11 @@ export const strictPercentage=(value:unknown):number|null=>typeof value==='numbe
 
 /** Only obviously non-demonstrative full turns; not an attempt to classify all language intent. */
 export function isSupportOnly(textValue:string):boolean {
- const t=normalize(textValue).toLowerCase().replace(/[.!?,;:]+$/u,'').replace(/[’‘]/g,"'");
- return /^(?:i (?:don't|do not) know|i(?:'m| am) not sure|not sure|can you (?:help|explain)(?: me| that| it)?(?: please)?|could you (?:help|explain)(?: me| that| it)?(?: please)?|please (?:explain|help)|i (?:don't|do not) understand|não sei|não entendi|pode explicar|yes|no|ok|okay|thanks|thank you|hello|hi)$/u.test(t);
+ const t=normalize(textValue).toLowerCase().replace(/[’‘]/g,"'").replace(/[.!?,;:]+/gu,' ').replace(/\s+/gu,' ').trim();
+ const uncertainty="(?:i (?:don't|do not) know|i(?:'m| am) not sure|not sure|i (?:don't|do not) understand|não sei|não entendi)";
+ const help="(?:(?:can|could) you (?:help|explain)(?: me| that| it)?(?: please)?|(?:can|could) you give me (?:an )?example(?: first)?(?: please)?|please (?:explain|help)|pode explicar)";
+ const minimal='(?:yes|no|ok|okay|thanks|thank you|hello|hi)';
+ return new RegExp(`^(?:${uncertainty}(?: ${help})?|${help}|${minimal})$`,'u').test(t);
 }
 export function evidenceTranscript(turns:readonly EvidenceTurn[]):Array<EvidenceTurn&{turn:number;truncated:boolean}> {
  return turns.slice(0,120).map((item,index)=>({...item,text:item.text.slice(0,2500),turn:index+1,truncated:item.text.length>2500}));
