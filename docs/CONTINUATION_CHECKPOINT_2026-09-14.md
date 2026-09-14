@@ -55,3 +55,7 @@ Read-only metadata confirmed only main and v2-development exist; neither is an a
 The earlier missing-bootstrap gap now has a deliberately new minimal foundation under quality/preview-backend/foundation.sql and a source-hashed package builder. It is not a historical restore. The initial foundation PostgreSQL CI passed at a3d1c12b86bd8963a24a34e960b2b7d4d259df86; the initial full workflow correctly rejected modifying frozen AuthGate. That file is restored, and its proposed improvement is retained only as quality/candidates/auth-server-assignment.patch. Do not weaken the identity freeze.
 
 The new database requires server-assigned profiles and zero budgets, with publication gates/RLS and no user/content seeds. Follow-up adds private Storage configuration and atomic-stage signed URLs with client expiry handling. See docs/PREVIEW_FOUNDATION_2026-09-14.md and the current head's foundation/full workflows for authoritative evidence. No connected installation, P1 publication or paid call is authorized by these candidates.
+
+## Subsequent continuation: third lessons as written runtime candidates
+
+Reused the existing full sequence 3 drafts for leases, payroll pay bases and English variances, with lazy renderer adapters and exact per-track slug validation. The catalog supports these authored lessons when matching published rows exist; no rows were written. Professor/Audio/evaluator gates were not expanded. See docs/SEQUENCE3_WRITTEN_RUNTIME_2026-09-14.md. Use the final feature head's CI for the expanded desktop/mobile matrix.

@@ -1,9 +1,11 @@
+import {isSequence3Slug} from './sequence3Registry.ts';
 import type {LessonModule} from './lessonModules.ts';
 import {isP1Slug,p1SlugFor,type P1Track} from './p1RuntimeRegistry.ts';
 export {p1SlugFor} from './p1RuntimeRegistry.ts';
 
 /** Lightweight entry point. Reviewed P1 authored payloads are loaded only when a matching P1 is opened. */
 export async function loadP1ModuleFor(track:P1Track,lesson:{id:string;slug:string}):Promise<LessonModule|null>{
+ if(isSequence3Slug(track,lesson.slug)){const {sequence3ModuleFor}=await import('./sequence3Modules.ts');return sequence3ModuleFor(track,lesson);}
  if(!isP1Slug(track,lesson.slug))return null;
  const {p1ModuleFor}=await import('./p1RuntimeModulesData.ts');
  return p1ModuleFor(track,lesson);
