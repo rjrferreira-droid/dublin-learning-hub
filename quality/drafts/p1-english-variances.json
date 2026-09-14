@@ -1,0 +1,174 @@
+{
+  "version":"p1-english-variances-draft-1",
+  "status":"full_draft_not_published_to_database",
+  "track":"english",
+  "roadmapSequence":3,
+  "reviewedOn":"2026-09-14",
+  "workingTitle":"Explain numbers and variances to a stakeholder",
+  "subtitle":"Headline, driver, evidence, uncertainty and next action",
+  "targetDurationMinutes":20,
+  "primaryTeachingLanguage":"en",
+  "supportLanguage":"pt-BR_if_needed",
+  "goal":"Explain a small set of business numbers clearly and naturally by leading with the message, using precise units and comparison language, distinguishing evidence from hypothesis, and ending with the next action rather than reading every figure aloud.",
+  "scope":"Professional spoken-English lesson for workplace communication. The numerical cases are fictional and arithmetic is simple by design. The lesson trains language, structure, listening and stakeholder interaction; it does not assess IFRS/payroll knowledge, infer a CEFR level from one exercise or treat accent as an error.",
+  "learningObjectives":[
+    "Lead a numerical explanation with the main message instead of narrating a table row by row.",
+    "Use amount, percentage, percentage-point and trend language precisely enough to avoid changing the meaning of a figure.",
+    "Separate a confirmed driver from a working hypothesis or unresolved item.",
+    "Give a concise recommendation or next check after explaining the variance.",
+    "Answer a follow-up question without restarting the whole explanation or hiding uncertainty behind vague language."
+  ],
+  "databaseFieldDraft":{
+    "technical_brief_pt":"A estrutura-alvo para uma explicação profissional é: headline, magnitude, principal driver, evidência/uncertainty e next action. O aluno deve dizer unidades e base de comparação com clareza e distinguir 'increased by' de 'increased to'. Para percentuais, deve evitar confundir variação percentual com percentage points. A avaliação de inglês observa clareza, gramática, vocabulário, fluência e comunicação profissional; não transforma sotaque válido nem conhecimento técnico de Finance/Payroll em erro de idioma.",
+    "manager_commentary_pt":"Stakeholders normalmente não precisam que você leia a tabela. Eles precisam saber o que mudou, quanto, por quê, o que ainda é incerto e o que você recomenda fazer. A melhor resposta pode ter três frases e ainda assim ser mais informativa que dois minutos de números sem hierarquia.",
+    "worked_example_pt":"Caso fictício: plano de custo 10,0m; realizado 10,8m; variance desfavorável de 0,8m, equivalente a 8% sobre o plano. Drivers fornecidos: 0,5m price, 0,2m volume e 0,1m timing que, pelos fatos do caso, deve reverter no próximo mês. Resposta-alvo: headline de 0,8m/8%, price como maior driver estrutural, timing identificado separadamente e próximo passo de revisar o price bridge e refletir o efeito confirmado no forecast.",
+    "ireland_overlay_pt":"Para ambiente profissional em Dublin, a aula privilegia comunicação direta, colaborativa e baseada em evidência. Convenções britânicas/irlandesas podem ser preferidas quando natural, mas variantes americanas válidas não são marcadas como erradas.",
+    "global_core_pt":"Ao explicar dados, selecione as características mais importantes, diga a unidade e a comparação, e use evidência para sustentar a conclusão. Detalhe adicional entra depois, se o stakeholder perguntar.",
+    "common_mistakes_pt":"Começar com dez números antes da conclusão; omitir unidade; confundir 'by' e 'to'; dizer percentage quando a mudança é em percentage points; chamar hipótese de fato; usar hedge em todas as frases até perder a mensagem; dizer 'because of timing' sem evidência; terminar sem next action; repetir toda a explicação depois de uma pergunta curta.",
+    "interview_angle_pt":"Explique uma variance em 20 a 30 segundos: headline, dois drivers no máximo, caveat e ação. Depois responda ao follow-up diretamente sem repetir o script inteiro."
+  },
+  "sections":[
+    {
+      "id":"eng-var-headline",
+      "title":"1. Give the message before the table",
+      "paragraphs":[
+        "A stakeholder explanation should normally start with the conclusion the listener needs. Instead of reading actual, budget and every driver in order, say the headline first: 'Costs are 0.8 million, or 8 per cent, above plan this month.'",
+        "Then select the one or two drivers that explain the message. British Council guidance on describing data emphasises an overview of the key features rather than treating every figure as equally important. In business speech, that same principle helps the listener understand why the numbers matter.",
+        "If the stakeholder wants the detailed bridge, give it after the headline. Structure is not hiding detail; it is making the hierarchy visible."
+      ],
+      "supportPt":"Comece pela mensagem. Os números detalhados vêm depois, se forem necessários para sustentar ou aprofundar a conclusão.",
+      "sourceRefs":["bar-chart","charts"]
+    },
+    {
+      "id":"eng-var-precision",
+      "title":"2. Make the comparison precise",
+      "paragraphs":[
+        "Always make the reference point and unit clear enough that the listener can reconstruct the comparison. 'Up 0.8 million versus plan' is different from 'up 0.8 million versus last month'. A percentage without its denominator can be equally ambiguous.",
+        "Use 'increased by' for the size of a change and 'increased to' for the new level. If a rate moves from 20 per cent to 25 per cent, it rises by 5 percentage points, which is a 25 per cent relative increase. These expressions answer different numerical questions.",
+        "Do not overload the sentence with precision the decision does not need. Round consistently when the source data supports rounding, but never change the meaning of the figure to make the sentence easier."
+      ],
+      "supportPt":"Diga comparação e unidade. 'By', 'to', percent e percentage points não são intercambiáveis.",
+      "sourceRefs":["bar-chart","line-graph"]
+    },
+    {
+      "id":"eng-var-evidence",
+      "title":"3. Separate a driver from a hypothesis",
+      "paragraphs":[
+        "Professional English should make the strength of evidence audible. 'The price effect is 0.5 million' is a confirmed statement only if the case evidence supports it. If the analysis is incomplete, say so: 'Price appears to be the main driver, but the product bridge is still being validated.'",
+        "Useful caveats are specific. Phrases such as 'based on the current bridge', 'the part we have not confirmed yet is...' and 'our working assumption is...' tell the listener exactly where uncertainty remains.",
+        "Avoid both extremes: false certainty and permanent hedging. The goal is a clear current conclusion with a visible evidence boundary."
+      ],
+      "supportPt":"Mostre a força da evidência na própria linguagem. Fact, working hypothesis e unresolved item precisam soar diferentes.",
+      "sourceRefs":["research-report","presentation"]
+    },
+    {
+      "id":"eng-var-action",
+      "title":"4. Finish with the decision or next check",
+      "paragraphs":[
+        "A variance explanation is stronger when it ends with what follows from the analysis. That might be a forecast update, a supplier review, a data check or simply confirmation that a timing item will reverse next month.",
+        "Recommendations should connect to evidence. British Council report guidance links findings to recommendations rather than presenting recommendations as unsupported opinions. In a meeting, one sentence is often enough: 'I would update the price assumption in the forecast and keep the 0.1 million timing item separate until it reverses.'",
+        "When a stakeholder asks a follow-up, answer that question first. Do not restart the entire variance story. If the answer is unknown, state what is known and the next check needed to answer it."
+      ],
+      "supportPt":"Feche com ação ou verificação. No follow-up, responda à pergunta atual em vez de repetir toda a apresentação.",
+      "sourceRefs":["research-report","presentation"]
+    }
+  ],
+  "vocabulary":[
+    {"term":"variance","meaning":"The difference between a result and a comparison point such as budget, forecast or prior period.","pt":"variação/desvio","example":"The total cost variance versus plan is 0.8 million unfavourable."},
+    {"term":"driver","meaning":"A factor that explains a meaningful part of a change or result.","pt":"fator explicativo","example":"Supplier price is the largest confirmed driver in the fictional case."},
+    {"term":"timing effect","meaning":"A difference caused by when an item is recognised or occurs rather than by a permanent underlying change, when supported by the facts.","pt":"efeito de timing","example":"The 0.1 million timing effect is expected to reverse next month in the supplied case."},
+    {"term":"percentage point","meaning":"The arithmetic difference between two percentage rates, distinct from the relative percentage change.","pt":"ponto percentual","example":"A margin moving from 20% to 25% increases by five percentage points."},
+    {"term":"run rate","meaning":"A current level used as an indication of the pace at which a measure may continue, subject to the assumptions behind it.","pt":"ritmo/taxa corrente","example":"Do not call a one-off spike the new run rate without evidence."},
+    {"term":"caveat","meaning":"A specific limitation or condition attached to the current conclusion.","pt":"ressalva","example":"The caveat is that the product-level volume bridge is still being validated."}
+  ],
+  "visual":{
+    "title":"A 20-second variance story",
+    "headers":["Step","Question","Example function"],
+    "rows":[
+      ["Headline","What changed and by how much?","0.8m / 8% above plan"],
+      ["Driver","What explains most of it?","0.5m confirmed price effect"],
+      ["Evidence boundary","What is temporary or still uncertain?","0.1m timing; separate from structural price"],
+      ["Action","What should happen next?","Review price assumption / update forecast"]
+    ],
+    "question":"Where would you put the 0.2m volume effect if the CFO asks for more detail?",
+    "answer":"After the headline and main driver, as the next material bridge item; do not let it displace the main message unless it changes the decision."
+  },
+  "workedCase":{
+    "title":"Monthly cost variance: structural versus timing",
+    "facts":[
+      "Fictional monthly cost plan is 10.0 million.",
+      "Actual cost is 10.8 million.",
+      "The supplied bridge confirms 0.5 million from supplier price increases, 0.2 million from higher volume and 0.1 million from timing expected to reverse next month.",
+      "The three supplied drivers reconcile to the total 0.8 million variance.",
+      "The exercise tests communication, not accounting classification."
+    ],
+    "calculation":{
+      "plan":10.0,
+      "actual":10.8,
+      "varianceAmount":0.8,
+      "variancePctOfPlan":8.0,
+      "priceDriver":0.5,
+      "volumeDriver":0.2,
+      "timingDriver":0.1,
+      "units":"fictional millions except percentage"
+    },
+    "task":"Give a 20–30 second stakeholder explanation with headline, main driver, caveat/timing distinction and next action. Then answer: 'So should I assume the whole 0.8 million repeats next month?'",
+    "hints":[
+      "Do not start by listing 10.0, 10.8, 0.5, 0.2 and 0.1 in one sentence.",
+      "Separate the confirmed structural price effect from the supplied timing item before answering the repeat-next-month question."
+    ],
+    "modelAnswer":"Costs are 0.8 million, or 8 per cent, above plan this month. The largest confirmed driver is 0.5 million of supplier price increases; volume adds 0.2 million, while 0.1 million is a timing item expected to reverse next month. I would update the price assumption in the forecast and track the timing reversal separately. On your question, no: the case does not support assuming that the full 0.8 million repeats next month, because 0.1 million is explicitly temporary and volume may also depend on the next-period activity level.",
+    "reviewChecks":[
+      "Did the learner lead with the 0.8m / 8% headline rather than read the table?",
+      "Did the learner identify price as the largest confirmed driver and keep timing separate?",
+      "Did the learner answer the repeat-next-month follow-up directly without false certainty?",
+      "Did the learner finish with a concrete next action?"
+    ],
+    "alternateValidForms":"Any natural wording that preserves the figures, evidence strength and action is acceptable. Exact model phrases are not required."
+  },
+  "workshops":[
+    {"id":"eng-var-w1","title":"By versus to","prompt":"A defect rate moves from 4% to 5%. Explain the change in one precise sentence without confusing relative percentage change and percentage points.","expected":"For example: 'The defect rate increased to 5%, up one percentage point from 4%.' A correct relative-change statement may be added, but is not required."},
+    {"id":"eng-var-w2","title":"Evidence not complete","prompt":"Actual spend is above plan, but the price-volume split is still being checked. Give a clear stakeholder update without sounding evasive or certain.","expected":"State the total confirmed variance, identify the current working hypothesis as provisional, name the missing bridge and give the next check."},
+    {"id":"eng-var-w3","title":"CFO follow-up","prompt":"After your variance explanation, the CFO asks only: 'How much of this is expected to reverse?' Answer directly using a supplied temporary item of 0.1m.","expected":"Answer 0.1m is expected to reverse under the supplied facts, then add only the minimum caveat needed. Do not restart the whole variance explanation."}
+  ],
+  "checkpoint":[
+    {"id":"eng-var-q1","prompt":"What normally belongs first in a stakeholder variance explanation?","options":["Every table row","The main message and magnitude","A long disclaimer","All historical periods"],"correctIndex":1,"explanation":"A headline gives the listener the result and scale before supporting drivers."},
+    {"id":"eng-var-q2","prompt":"A rate moves from 20% to 25%. Which phrase is numerically precise?","options":["It increased by 25 percentage points","It increased to 5%","It increased by 5 percentage points","It fell by 5%"],"correctIndex":2,"explanation":"The arithmetic difference between 20% and 25% is five percentage points; that is distinct from the relative percentage increase."},
+    {"id":"eng-var-q3","prompt":"Which sentence best marks incomplete evidence?","options":["It's definitely price","Maybe everything is wrong","Price appears to be the main driver, but the product bridge is still being validated","There is no point discussing it"],"correctIndex":2,"explanation":"It gives a current view while identifying the exact evidence boundary."},
+    {"id":"eng-var-q4","prompt":"The CFO asks one narrow follow-up. What is the best conversational response?","options":["Repeat the entire presentation","Answer the question directly, then add a necessary caveat","Change the topic","Read the table from the first row"],"correctIndex":1,"explanation":"Natural stakeholder communication responds to the live question rather than restarting a script."},
+    {"id":"eng-var-q5","prompt":"A learner uses a valid US expression while explaining the variance in a Dublin-focused course. What should happen?","options":["Mark it wrong automatically","Accept it; explain a UK/Irish preference only when useful","Reduce the technical Finance score","Require an Irish accent"],"correctIndex":1,"explanation":"Valid regional English forms remain acceptable; local convention can be coached without treating the alternative as an error."}
+  ],
+  "professorGuide":{
+    "opening":"Show only plan 10.0 and actual 10.8 first. Ask the learner for the headline in one sentence before revealing the driver bridge.",
+    "conversationRules":[
+      "Require units and comparison point when omission changes meaning.",
+      "Do not interrupt a learner merely because they pause while calculating a simple figure.",
+      "If the learner self-corrects 'to' versus 'by', retain the corrected version rather than the abandoned phrase as the assessment evidence.",
+      "After the first explanation, ask one stakeholder follow-up that depends on what the learner actually said."
+    ],
+    "challengePrompts":[
+      "What's the headline before the detail?",
+      "Eight per cent of what?",
+      "Is that driver confirmed or still a hypothesis?",
+      "What should the stakeholder do differently after hearing your explanation?"
+    ],
+    "correctionBoundary":"Do not score the learner's Finance knowledge beyond the supplied fictional facts. Keep numerical-language precision, grammar, fluency and professional communication as distinct evidence dimensions."
+  },
+  "assessmentBoundaries":[
+    "Amount versus percentage versus percentage-point language.",
+    "Increase by versus increase to.",
+    "Confirmed driver versus working hypothesis versus unresolved item.",
+    "Headline selection versus exhaustive table narration.",
+    "Numerical-language accuracy versus underlying Finance expertise.",
+    "Valid regional wording/accent versus communication clarity.",
+    "Help request/self-correction versus persistent demonstrated error."
+  ],
+  "officialSources":[
+    {"id":"bar-chart","url":"https://learnenglish.britishcouncil.org/free-resources/writing/b1/describing-bar-chart","supports":"British Council guidance on selecting key features, stating specific figures and units, describing changes and providing an overall conclusion rather than treating every data point equally."},
+    {"id":"charts","url":"https://learnenglish.britishcouncil.org/comment/155597","supports":"British Council practice on giving an overview of chart features, selecting important trends and using accurate comparison vocabulary."},
+    {"id":"line-graph","url":"https://learnenglish.britishcouncil.org/comment/155666","supports":"British Council examples of precise trend language, comparisons and summarising the main patterns before detail."},
+    {"id":"research-report","url":"https://learnenglish.britishcouncil.org/comment/221388","supports":"British Council advanced business-writing guidance linking findings/statistics to evidence-based recommendations, used as a communication-structure reference rather than a spoken script."},
+    {"id":"presentation","url":"https://learnenglish.britishcouncil.org/sites/podcasts/files/LearnEnglish-Listening-B2-A-design-presentation.pdf","supports":"British Council presentation practice on structure, signposting, summary and opening discussion/questions, used as a spoken-communication reference."}
+  ],
+  "publicationGate":"Authored-content QA + arithmetic/language tests + source review + Professor/evaluator conversation tests + separate database publication/deployment decision. This draft is not evidence of learner performance or a CEFR certification."
+}
