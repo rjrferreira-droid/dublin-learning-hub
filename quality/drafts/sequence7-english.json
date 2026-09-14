@@ -1,0 +1,276 @@
+{
+  "version": "core-written-foundation-1",
+  "status": "full_draft_not_published_to_database",
+  "track": "english",
+  "roadmapSequence": 7,
+  "slug": "interview-experience-judgement-stories",
+  "reviewedOn": "2026-09-14",
+  "module": {
+    "track": "english",
+    "title": "Job interviews: explain your contribution honestly",
+    "goal": "Build an experience answer that separates your role, team results and unverified claims.",
+    "scope": "Original interview preparation. Fictional candidate examples must not be reused as personal history. No invented qualifications, Irish experience, CEFR level or pronunciation assessment.",
+    "sections": [
+      {
+        "id": "english7-s1",
+        "title": "1. Choose evidence before phrasing",
+        "paragraphs": [
+          "British Council’s interview series provides external hiring-context practice. For this original lesson, choose a real example you are permitted to discuss before polishing the language. Useful structure: situation, responsibility, action, result and learning.",
+          "A polished fictional story must not become your personal history. If asked about experience you do not have, state the boundary and connect real transferable experience. Confidence does not require an invented credential."
+        ],
+        "supportPt": "Escolha uma experiência verdadeira antes de lapidar o inglês. Exemplo fictício não vira histórico pessoal.",
+        "sourceIds": [
+          "hired"
+        ]
+      },
+      {
+        "id": "english7-s2",
+        "title": "2. Make your role visible",
+        "paragraphs": [
+          "Original fictional candidate: a team reviewed twenty overdue items; the candidate built the tracker and followed up with owners. The team resolved fifteen by the review date. The candidate did not personally perform every correction.",
+          "Use I for your supplied contribution and we for the team result. “I built the tracker; the team resolved fifteen items” preserves that distinction. Do not turn coordination into sole authorship or invent a performance comparison."
+        ],
+        "supportPt": "Separe sua contribuição do resultado da equipe. Não transforme coordenação em execução de tudo.",
+        "sourceIds": [
+          "hired"
+        ]
+      },
+      {
+        "id": "english7-s3",
+        "title": "3. Answer with judgement",
+        "paragraphs": [
+          "Original follow-up: “What would you do differently?” A useful answer identifies a specific lesson: “I would agree ownership and escalation criteria earlier.” Avoid presenting the project as flawless when issues remained.",
+          "If exact business figures are confidential, explain the method at a permitted level of detail. Do not invent replacement figures and present them as real. An interviewer can assess your reasoning without every internal data point."
+        ],
+        "supportPt": "Mostre uma aprendizagem concreta e preserve informações confidenciais sem inventar resultados.",
+        "sourceIds": [
+          "hired"
+        ]
+      },
+      {
+        "id": "english7-s4",
+        "title": "4. Handle missing experience directly",
+        "paragraphs": [
+          "If the truthful answer to “Have you run Irish payroll?” is no, say so and describe relevant real operational experience and current learning. Do not imply certification, local practice or system access you lack.",
+          "Different natural answer structures are acceptable when role, evidence and learning remain clear. A written answer cannot establish speaking naturalness or acoustic fluency. Prepare a relevant question for the interviewer instead of memorising an inflated story."
+        ],
+        "supportPt": "Diga o que fez e o que ainda está aprendendo. Preparação escrita não comprova fluência oral.",
+        "sourceIds": [
+          "hired"
+        ]
+      }
+    ],
+    "terms": [
+      {
+        "term": "Contribution",
+        "meaning": "Work you personally performed.",
+        "pt": "contribuição",
+        "example": "My contribution was building the tracker."
+      },
+      {
+        "term": "Responsibility",
+        "meaning": "Scope you were accountable for.",
+        "pt": "responsabilidade",
+        "example": "I owned the follow-up process."
+      },
+      {
+        "term": "Outcome",
+        "meaning": "Result supported by the example.",
+        "pt": "resultado",
+        "example": "The team resolved fifteen items."
+      },
+      {
+        "term": "Transferable skill",
+        "meaning": "Capability useful in another context.",
+        "pt": "competência transferível",
+        "example": "Reconciliation is a transferable skill."
+      },
+      {
+        "term": "Reflection",
+        "meaning": "Specific learning from experience.",
+        "pt": "reflexão",
+        "example": "I would set escalation criteria earlier."
+      },
+      {
+        "term": "Confidential",
+        "meaning": "Information requiring permission to share.",
+        "pt": "confidencial",
+        "example": "Use permitted detail in the answer."
+      }
+    ],
+    "visual": {
+      "title": "Job interviews: explain your contribution honestly — decision map",
+      "note": "Original fictional exercise; not a live calculation or measured learner result.",
+      "headers": [
+        "Item",
+        "Supplied detail",
+        "Interpretation"
+      ],
+      "rows": [
+        [
+          "Candidate role",
+          "Tracker and follow-up",
+          "Personal contribution"
+        ],
+        [
+          "Team result",
+          "15 of 20 resolved",
+          "Team outcome"
+        ],
+        [
+          "Remaining",
+          "5 open",
+          "Do not hide"
+        ],
+        [
+          "Irish experience",
+          "Not supplied",
+          "Do not invent"
+        ]
+      ],
+      "question": "Can the candidate say “I resolved all twenty”?",
+      "answer": "No. Both the role and total contradict the supplied facts."
+    },
+    "caseStudy": {
+      "title": "Job interviews: explain your contribution honestly — applied case",
+      "scenario": [
+        "Entirely fictional practice candidate, not the learner’s history.",
+        "Candidate built a tracker and followed up with owners on twenty overdue items. Team resolved fifteen; five remained open.",
+        "No Irish payroll experience or qualification supplied."
+      ],
+      "task": "Write a short practice answer and respond to “Did you personally resolve every item?”",
+      "hints": [
+        "Separate I from we.",
+        "Keep the open items visible."
+      ],
+      "modelAnswer": "In this fictional project, I built a tracker and followed up with the responsible owners. The team resolved fifteen of twenty items, with five still open. I would agree escalation criteria earlier next time. No, I did not personally make every correction: I coordinated tracking and follow-up. This practice example is not my personal employment history.",
+      "reviewChecks": [
+        "Personal contribution distinct from team outcome.",
+        "15 resolved and 5 open retained.",
+        "Specific reflection.",
+        "No invented personal or Irish credentials."
+      ],
+      "transfer": "Replace the fictional case only with your own truthful, permitted example."
+    },
+    "checkpoint": [
+      {
+        "id": "english7-q1",
+        "prompt": "The candidate personally:",
+        "options": [
+          "Made every correction",
+          "Built the tracker and followed up",
+          "Ran Irish payroll"
+        ],
+        "correctIndex": 1,
+        "explanation": "Only that contribution is supplied.",
+        "reviewSection": "english7-s2"
+      },
+      {
+        "id": "english7-q2",
+        "prompt": "Open items number:",
+        "options": [
+          "0",
+          "5",
+          "15"
+        ],
+        "correctIndex": 1,
+        "explanation": "Twenty minus fifteen equals five.",
+        "reviewSection": "english7-s2"
+      },
+      {
+        "id": "english7-q3",
+        "prompt": "Fictional stories may be presented as personal history:",
+        "options": [
+          "Yes",
+          "No",
+          "If fluent"
+        ],
+        "correctIndex": 1,
+        "explanation": "Preparation must remain truthful.",
+        "reviewSection": "english7-s1"
+      },
+      {
+        "id": "english7-q4",
+        "prompt": "Missing local experience should be:",
+        "options": [
+          "Invented",
+          "Hidden by a fake qualification",
+          "Stated honestly with real transferable experience"
+        ],
+        "correctIndex": 2,
+        "explanation": "Do not imply unsupported credentials.",
+        "reviewSection": "english7-s4"
+      },
+      {
+        "id": "english7-q5",
+        "prompt": "A useful reflection identifies:",
+        "options": [
+          "A specific learning or changed approach",
+          "Perfection",
+          "An unrelated slogan"
+        ],
+        "correctIndex": 0,
+        "explanation": "Judgement is visible in a concrete improvement.",
+        "reviewSection": "english7-s3"
+      }
+    ],
+    "practiceExercises": [
+      {
+        "id": "english7-p1",
+        "question": "The team delivered the result; you built its reporting tool. State your contribution.",
+        "hints": [
+          "Use a precise verb.",
+          "Separate team and personal work."
+        ],
+        "answer": "I built the reporting tool that helped the team track delivery.",
+        "explanation": "Do not claim every delivery task."
+      },
+      {
+        "id": "english7-p2",
+        "question": "You have not used the interviewer’s system. Respond honestly.",
+        "hints": [
+          "State the experience boundary.",
+          "Connect a relevant real skill."
+        ],
+        "answer": "I have not used that system yet; I can explain my relevant workflow experience and how I would learn it.",
+        "explanation": "Personalise only with true experience."
+      },
+      {
+        "id": "english7-p3",
+        "question": "Repair “I solved all issues” when five remain open.",
+        "hints": [
+          "Use the supplied result.",
+          "Do not hide remaining work."
+        ],
+        "answer": "The team resolved fifteen issues; five remained open at the review date.",
+        "explanation": "A precise partial outcome is better than an invented complete one."
+      }
+    ],
+    "sources": [
+      {
+        "id": "hired",
+        "label": "British Council — You are hired",
+        "url": "https://learnenglish.britishcouncil.org/free-resources/business/youre-hired",
+        "supports": "Interview practice resource. No personal credentials or source dialogue are invented or copied.",
+        "reviewedOn": "2026-09-14"
+      }
+    ]
+  },
+  "professorGuide": {
+    "status": "offline_authored_guide_not_live",
+    "opening": "Ask the learner to label personal action versus team result.",
+    "whenCorrect": "Ask what they would do differently and accept a specific supported reflection.",
+    "whenUncertain": "Ask which supplied fact is missing or unclear. Offer the first case hint, then invite another attempt.",
+    "whenMisconception": "If they claim all twenty or local experience, point to the supplied facts and invite a truthful repair.",
+    "whenSelfCorrected": "Use the corrected answer, not the abandoned phrase, as the current response. Ask one transfer question.",
+    "whenAskedForAnswer": "Provide a concise explanation and one worked step; invite an optional fresh attempt without claiming independent mastery.",
+    "evidenceBoundary": "Use only actual session evidence if this guide is separately integrated. Never consume local drafts or checkpoint results. Do not infer pronunciation/acoustic fluency from text, technical mastery from a phrase, or a CEFR level from one task."
+  },
+  "assessmentBoundaries": [
+    "Authored answer keys and guide branches are expectations, not model results or learner evidence.",
+    "Accept supported alternatives and self-correction.",
+    "No local drafts or answers may enter Professor/evaluator payloads.",
+    "No paid provider or database publication is authorized by this draft."
+  ],
+  "publicationGate": "Content QA, server-owned reference integration, exact identity acceptance and separate publication decision remain required."
+}

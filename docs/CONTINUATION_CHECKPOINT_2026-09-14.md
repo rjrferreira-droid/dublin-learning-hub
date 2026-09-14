@@ -63,3 +63,9 @@ Reused the existing full sequence 3 drafts for leases, payroll pay bases and Eng
 ## Subsequent continuation: fourth written foundations
 
 Authored sequence 4 for all three tracks with original cases, practice, fixed checkpoints, Portuguese support and offline Professor guides. Exact identity mapping is lazy and written-only; no interactive provider registry was expanded. See docs/SEQUENCE4_WRITTEN_RUNTIME_2026-09-14.md and the final matching PR CI for evidence. Finance separates movement from balance and collection hypothesis from evidence; Payroll separates non-cash value from bank pay without invented rates; English preserves response deadlines and unconfirmed approval. Sequences 5–8 remain safe curriculum work and do not require paid infrastructure approval.
+
+## Subsequent continuation: remaining core written roadmap and Professor references
+
+Completed written foundations for sequences 5–8 across Finance, Payroll and English, reusing sequences 1–4. English 8 is written listening preparation with audio pending, explicitly not an acoustic/listening assessment. All 24 roadmap positions now have scoped written material/preparation in source; this is not full course acceptance or publication.
+
+The dynamic reader adds exact lazy identities for twelve new modules. Offline-only Professor references now validate assigned profile, complete published ancestry, exact slug/sequence/UUID/version, content-size limits and source hashes, and exclude extra browser/local-evidence fields. No live handler imports the new candidate and no provider admission was expanded. See docs/CORE_WRITTEN_FOUNDATIONS_2026-09-14.md and the matching PR CI for results. No Supabase/worker change or paid call occurred. Remaining interactive acceptance and real listening/Irish audio are separate gaps, not proof that written learning is complete end to end.

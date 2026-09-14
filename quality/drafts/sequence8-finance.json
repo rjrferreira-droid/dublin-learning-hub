@@ -1,0 +1,285 @@
+{
+  "version": "core-written-foundation-1",
+  "status": "full_draft_not_published_to_database",
+  "track": "finance",
+  "roadmapSequence": 8,
+  "slug": "frs102-irish-reporting-basis-bridge",
+  "reviewedOn": "2026-09-14",
+  "module": {
+    "track": "finance",
+    "title": "FRS 102: an Irish reporting-basis bridge",
+    "goal": "Build a reviewable group-to-local gap register with dates, evidence and owners.",
+    "scope": "Reporting-basis and transition-control foundation. This lesson does not determine an entity legal eligibility or provide a full FRS 102 transition calculation. Confirm the current edition plus amendments for the actual period.",
+    "sections": [
+      {
+        "id": "finance8-s1",
+        "title": "1. Name each reporting output",
+        "paragraphs": [
+          "The FRC describes FRS 102 as applicable to entities not using adopted IFRS, FRS 101 or FRS 105. Its scope includes the UK and Republic of Ireland. A local entity and its parent reporting package may therefore need different policy reviews.",
+          "Original scoping example: the parent requests an IFRS package while the Irish entity has an approved FRS 102 statutory basis. Label both outputs, period and approver. Do not replace the local basis merely because one report is sent to the same CFO."
+        ],
+        "supportPt": "Nomeie cada entrega, período e aprovador. O pacote da matriz não substitui automaticamente a base local.",
+        "sourceIds": [
+          "frs102"
+        ]
+      },
+      {
+        "id": "finance8-s2",
+        "title": "2. Control the applicable edition",
+        "paragraphs": [
+          "The FRC page identifies 1 January 2026 as the principal effective date of Periodic Review 2024 and says the latest edition includes subsequent amendments. It also lists adapted-format amendments effective from 1 January 2027. These dates must not be collapsed into one undifferentiated “2026 change”.",
+          "Original planning exercise: a calendar-year 2026 local reporting file needs a documented list of applicable changes, transition provisions and policy choices. Keep revenue and lease arrangements on the review agenda from the earlier course lessons, but do not treat a group adjustment as the reviewed local amount."
+        ],
+        "supportPt": "Confira vigência e transição por alteração. Uma data de destaque não cobre todas as exigências.",
+        "sourceIds": [
+          "frs102"
+        ]
+      },
+      {
+        "id": "finance8-s3",
+        "title": "3. Build a gap register",
+        "paragraphs": [
+          "Original register columns: issue, group policy, approved local policy, amount or unresolved question, supporting source, owner and status. For a revenue contract, attach the contract review; for a lease, attach the arrangement schedule and applicable-basis assessment. An empty amount is an unresolved question, not zero.",
+          "Fictional reconciliation: local profit 200; two separately approved group adjustments of +12 and -7 give group profit 205. A third issue has no approved amount. Keep it visibly unresolved instead of inserting zero and declaring the bridge final. The numbers are supplied, not derived FRS 102 transition rules."
+        ],
+        "supportPt": "Uma pendência sem valor não é ajuste zero. O registro precisa mostrar evidência e status.",
+        "sourceIds": [
+          "frs102"
+        ]
+      },
+      {
+        "id": "finance8-s4",
+        "title": "4. Review the bridge as a control",
+        "paragraphs": [
+          "Original review meeting: confirm both outputs reconcile to the same source ledger, inspect each authorised difference, and ask whether the unresolved item could change the reported total. Assign a due date and owner. Do not call the bridge complete while a materiality assessment or policy decision is missing.",
+          "Finish the course by connecting earlier lessons: contract evidence, lease movements, cash logic, receivable estimates, group eliminations and tax effects each need the correct reporting basis. A clean spreadsheet supports the review; it cannot choose the framework or invent missing facts."
+        ],
+        "supportPt": "A ponte precisa de aprovação por diferença. Planilha organizada não resolve política ausente.",
+        "sourceIds": [
+          "frs102"
+        ]
+      }
+    ],
+    "terms": [
+      {
+        "term": "Statutory output",
+        "meaning": "Financial statements prepared for the legal entity under its applicable basis.",
+        "pt": "entrega estatutária",
+        "example": "Confirm the statutory basis."
+      },
+      {
+        "term": "Group package",
+        "meaning": "Information submitted for group reporting.",
+        "pt": "pacote de consolidação",
+        "example": "The package follows reviewed group policies."
+      },
+      {
+        "term": "Gap register",
+        "meaning": "Record of differences, evidence and unresolved issues.",
+        "pt": "registro de diferenças",
+        "example": "Keep an owner on every gap."
+      },
+      {
+        "term": "Effective date",
+        "meaning": "Date determining when a requirement applies under its terms.",
+        "pt": "data de vigência",
+        "example": "Check the period beginning date."
+      },
+      {
+        "term": "Transition",
+        "meaning": "Move from old to new requirements under specified provisions.",
+        "pt": "transição",
+        "example": "Document the transition decision."
+      },
+      {
+        "term": "Unresolved",
+        "meaning": "Awaiting evidence or approval.",
+        "pt": "não resolvido",
+        "example": "The third item remains unresolved."
+      }
+    ],
+    "visual": {
+      "title": "FRS 102: an Irish reporting-basis bridge — decision map",
+      "note": "Original fictional exercise; not a live calculation or measured learner result.",
+      "headers": [
+        "Item",
+        "Supplied detail",
+        "Interpretation"
+      ],
+      "rows": [
+        [
+          "Local profit",
+          "200",
+          "Supplied approved starting point"
+        ],
+        [
+          "Reviewed group differences",
+          "+12 and -7",
+          "Net +5"
+        ],
+        [
+          "Provisional group profit",
+          "205",
+          "Before unresolved issue"
+        ],
+        [
+          "Third issue",
+          "Unknown",
+          "Not assumed zero"
+        ]
+      ],
+      "question": "Can 205 be labelled final?",
+      "answer": "Not while the unresolved item lacks the necessary assessment and approval."
+    },
+    "caseStudy": {
+      "title": "FRS 102: an Irish reporting-basis bridge — applied case",
+      "scenario": [
+        "Fictional Irish entity: approved local basis FRS 102; parent requests IFRS group reporting for calendar 2026.",
+        "Local profit 200; approved group adjustments +12 and -7.",
+        "A revenue-policy question remains unresolved, with no approved amount or materiality assessment."
+      ],
+      "task": "Prepare the bridge and a short gap-register note that makes the open issue visible.",
+      "hints": [
+        "Add only approved differences.",
+        "Unknown is not zero."
+      ],
+      "modelAnswer": "The provisional group bridge is 200 + 12 - 7 = 205. Keep the revenue issue open with its source, contract review, owner and due date; do not assume a zero adjustment or label the output final. Confirm the applicable FRS 102 edition/amendments and group policies separately for the reporting period.",
+      "reviewChecks": [
+        "Provisional 205 correctly calculated.",
+        "Unknown issue not turned into zero.",
+        "Group and local basis separated.",
+        "Owner/evidence/date required before closure."
+      ],
+      "transfer": "Use the same register to review a lease or tax difference; change the supporting facts and applicable requirements, not just the label."
+    },
+    "checkpoint": [
+      {
+        "id": "finance8-q1",
+        "prompt": "Provisional group profit is:",
+        "options": [
+          "205",
+          "200",
+          "219"
+        ],
+        "correctIndex": 0,
+        "explanation": "200 + 12 - 7 = 205.",
+        "reviewSection": "finance8-s3"
+      },
+      {
+        "id": "finance8-q2",
+        "prompt": "An unresolved adjustment amount should be:",
+        "options": [
+          "Zero",
+          "Invented",
+          "Recorded as unknown pending review"
+        ],
+        "correctIndex": 2,
+        "explanation": "Missing evidence is not a nil difference.",
+        "reviewSection": "finance8-s3"
+      },
+      {
+        "id": "finance8-q3",
+        "prompt": "The FRC page states the principal Periodic Review 2024 effective date as:",
+        "options": [
+          "1 January 2026",
+          "1 January 2030",
+          "Every entity chooses without conditions"
+        ],
+        "correctIndex": 0,
+        "explanation": "Individual provisions still need review.",
+        "reviewSection": "finance8-s2"
+      },
+      {
+        "id": "finance8-q4",
+        "prompt": "Group reporting automatically replaces the local basis:",
+        "options": [
+          "True",
+          "False",
+          "Only when the same CFO receives both"
+        ],
+        "correctIndex": 1,
+        "explanation": "The outputs need separate applicable-basis checks.",
+        "reviewSection": "finance8-s1"
+      },
+      {
+        "id": "finance8-q5",
+        "prompt": "A gap can close when:",
+        "options": [
+          "The spreadsheet looks tidy",
+          "Someone deletes the row",
+          "Evidence and the required decision are documented"
+        ],
+        "correctIndex": 2,
+        "explanation": "Control completion depends on review, not appearance.",
+        "reviewSection": "finance8-s4"
+      }
+    ],
+    "practiceExercises": [
+      {
+        "id": "finance8-p1",
+        "question": "Local profit 80; approved group differences -6 and +9. Find the provisional bridge.",
+        "hints": [
+          "Use the signed adjustments.",
+          "80 - 6 + 9."
+        ],
+        "answer": "83.",
+        "explanation": "This is arithmetic using supplied approved differences."
+      },
+      {
+        "id": "finance8-p2",
+        "question": "A gap is marked “not relevant” without source or reviewer. What should you ask?",
+        "hints": [
+          "Status needs support.",
+          "Identify the decision owner."
+        ],
+        "answer": "Ask for the applicable-basis assessment, evidence and reviewer approval before closing it.",
+        "explanation": "A status label is not proof."
+      },
+      {
+        "id": "finance8-p3",
+        "question": "A 2027 adapted-format date is copied into every 2026 policy line. Correct the plan.",
+        "hints": [
+          "Review effective dates individually.",
+          "Separate amendments and transition provisions."
+        ],
+        "answer": "Map each requirement to the actual period and its own effective/transition rules.",
+        "explanation": "Do not infer a universal date from one amendment."
+      }
+    ],
+    "sources": [
+      {
+        "id": "frs102",
+        "label": "FRC — FRS 102",
+        "url": "https://www.frc.org.uk/library/standards-codes-policy/accounting-and-reporting/uk-accounting-standards/frs-102/",
+        "supports": "Reporting-basis scope, Periodic Review 2024 principal effective date and later adapted-format amendments.",
+        "reviewedOn": "2026-09-14"
+      }
+    ]
+  },
+  "professorGuide": {
+    "status": "offline_authored_guide_not_live",
+    "opening": "Ask the learner to label the two reporting outputs before calculating.",
+    "whenCorrect": "Ask how the register would change for a lease issue with a different transition decision.",
+    "whenUncertain": "Ask which supplied fact is missing or unclear. Offer the first case hint, then invite another attempt.",
+    "whenMisconception": "If they turn the unknown issue into zero, ask what evidence supports a nil difference.",
+    "whenSelfCorrected": "Use the corrected answer, not the abandoned phrase, as the current response. Ask one transfer question.",
+    "whenAskedForAnswer": "Provide a concise explanation and one worked step; invite an optional fresh attempt without claiming independent mastery.",
+    "evidenceBoundary": "Use only actual session evidence if this guide is separately integrated. Never consume local drafts or checkpoint results. Do not infer pronunciation/acoustic fluency from text, technical mastery from a phrase, or a CEFR level from one task."
+  },
+  "assessmentBoundaries": [
+    "Authored answer keys and guide branches are expectations, not model results or learner evidence.",
+    "Accept supported alternatives and self-correction.",
+    "No local drafts or answers may enter Professor/evaluator payloads.",
+    "No paid provider or database publication is authorized by this draft."
+  ],
+  "publicationGate": "Content QA, server-owned reference integration, exact identity acceptance and separate publication decision remain required.",
+  "fictionalCalculation": {
+    "local": 200,
+    "adjustments": [
+      12,
+      -7
+    ],
+    "provisional": 205,
+    "unresolvedAmount": null
+  }
+}

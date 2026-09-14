@@ -1,0 +1,282 @@
+{
+  "version": "core-written-foundation-1",
+  "status": "written_preparation_audio_pending",
+  "track": "english",
+  "roadmapSequence": 8,
+  "slug": "workplace-listening-preparation-irish-exposure",
+  "reviewedOn": "2026-09-14",
+  "module": {
+    "track": "english",
+    "title": "Workplace listening: preparation, clarification and response",
+    "goal": "Prepare to identify a message, preserve uncertainty and ask a precise clarification.",
+    "scope": "Written preparation for listening with optional external British Council audio practice. No embedded or validated Irish-accent audio is supplied. Written checkpoints assess reading and response choices, not listening ability, pronunciation or acoustic fluency.",
+    "sections": [
+      {
+        "id": "english8-s1",
+        "title": "1. Set a listening purpose",
+        "paragraphs": [
+          "The British Council listening collection offers preparation, recordings and comprehension tasks. For our original practice, decide what the workplace message needs to tell you: main point, important detail or next action. Transcribing every word can distract from the decision.",
+          "Before optional external audio, prepare a note frame: topic, action, owner, date and uncertain detail. Leave a field blank if you did not establish it. A guessed time must not become a confirmed appointment in your notes."
+        ],
+        "supportPt": "Defina o objetivo da escuta e mantenha incerto o que não conseguiu confirmar.",
+        "sourceIds": [
+          "listen"
+        ]
+      },
+      {
+        "id": "english8-s2",
+        "title": "2. Notice repairs and conditions",
+        "paragraphs": [
+          "Original written message for reading practice only: “The review is Thursday—sorry, Friday—at two, subject to room confirmation.” The corrected day is Friday; the room remains a condition. Do not treat abandoned Thursday as the final instruction.",
+          "The time two lacks an explicit a.m./p.m. or time-zone reference. Ask about it if material to the arrangement. This exercise cannot establish what the learner heard because the message is displayed as text."
+        ],
+        "supportPt": "Use a autocorreção final e preserve a condição. Texto exibido não mede compreensão auditiva.",
+        "sourceIds": [
+          "listen"
+        ]
+      },
+      {
+        "id": "english8-s3",
+        "title": "3. Clarify the exact gap",
+        "paragraphs": [
+          "Original response: “Friday at two, subject to the room being confirmed—is that 2 p.m. Dublin time?” It preserves known details and asks about a specific gap. Do not pretend certainty about the room or time reference.",
+          "If the whole message was missed, a broader repeat request is appropriate. Choose the repair that fits the gap. Requesting repetition is a communication strategy, not proof of poor pronunciation or a fixed proficiency level."
+        ],
+        "supportPt": "Peça esclarecimento proporcional à dúvida. Repetição é estratégia, não diagnóstico de nível.",
+        "sourceIds": [
+          "listen"
+        ]
+      },
+      {
+        "id": "english8-s4",
+        "title": "4. Plan varied exposure honestly",
+        "paragraphs": [
+          "Optional external practice: choose a recording from the linked collection, listen for the main point, then for selected details, and use the source transcript/tasks to review. This voluntary self-study does not create a saved Learning Hub score. No source audio is copied or played automatically.",
+          "Irish workplace exposure remains a separate requirement: select suitable permitted recordings, verify speakers/context and accessibility, and review comprehension fairly across valid varieties. This candidate does not label generic British Council material as Irish audio or infer accent tolerance from reading."
+        ],
+        "supportPt": "Prática externa é opcional. A exposição irlandesa precisa de gravações verificadas, não de texto simulando escuta.",
+        "sourceIds": [
+          "listen"
+        ]
+      }
+    ],
+    "terms": [
+      {
+        "term": "Main point",
+        "meaning": "Central message needed for the task.",
+        "pt": "ideia principal",
+        "example": "Identify the main point first."
+      },
+      {
+        "term": "Detail",
+        "meaning": "Specific item such as date or owner.",
+        "pt": "detalhe",
+        "example": "The final day is Friday."
+      },
+      {
+        "term": "Clarification",
+        "meaning": "Question resolving an information gap.",
+        "pt": "esclarecimento",
+        "example": "Ask whether two means 2 p.m."
+      },
+      {
+        "term": "Self-correction",
+        "meaning": "Speaker’s replacement of an earlier expression.",
+        "pt": "autocorreção",
+        "example": "Friday replaces Thursday."
+      },
+      {
+        "term": "Condition",
+        "meaning": "Requirement limiting a plan or claim.",
+        "pt": "condição",
+        "example": "The room needs confirmation."
+      },
+      {
+        "term": "Transcript",
+        "meaning": "Written representation for later review.",
+        "pt": "transcrição",
+        "example": "Reading is not an acoustic test."
+      }
+    ],
+    "visual": {
+      "title": "Workplace listening: preparation, clarification and response — decision map",
+      "note": "Original fictional exercise; not a live calculation or measured learner result.",
+      "headers": [
+        "Item",
+        "Supplied detail",
+        "Interpretation"
+      ],
+      "rows": [
+        [
+          "Initial day",
+          "Thursday",
+          "Abandoned"
+        ],
+        [
+          "Corrected day",
+          "Friday",
+          "Final supplied day"
+        ],
+        [
+          "Time",
+          "Two",
+          "Clarify if material"
+        ],
+        [
+          "Room",
+          "Not confirmed",
+          "Conditional plan"
+        ]
+      ],
+      "question": "Which day should the response preserve?",
+      "answer": "Friday, while keeping the room condition and clarifying material time ambiguity."
+    },
+    "caseStudy": {
+      "title": "Workplace listening: preparation, clarification and response — applied case",
+      "scenario": [
+        "Original written message, not audio: “The review is Thursday—sorry, Friday—at two, subject to room confirmation.”",
+        "No other time reference or room confirmation supplied.",
+        "This exercise assesses interpretation of displayed text and response planning only."
+      ],
+      "task": "Write a confirmation/clarification preserving the correction and condition.",
+      "hints": [
+        "Use the final day.",
+        "Clarify time without claiming the room is booked."
+      ],
+      "modelAnswer": "Friday at two, subject to the room being confirmed—is that 2 p.m. Dublin time? The message does not establish that the room is booked. This is a response to displayed text, not evidence of listening or pronunciation.",
+      "reviewChecks": [
+        "Friday replaces Thursday.",
+        "Room condition preserved.",
+        "Specific clarification of material time uncertainty.",
+        "No acoustic score inferred from text."
+      ],
+      "transfer": "With a permitted recording, identify what was heard before reviewing a transcript and keep the evidence type explicit."
+    },
+    "checkpoint": [
+      {
+        "id": "english8-q1",
+        "prompt": "The final day is:",
+        "options": [
+          "Thursday",
+          "Friday",
+          "No correction occurred"
+        ],
+        "correctIndex": 1,
+        "explanation": "Friday replaces Thursday.",
+        "reviewSection": "english8-s2"
+      },
+      {
+        "id": "english8-q2",
+        "prompt": "The room is:",
+        "options": [
+          "Confirmed",
+          "Cancelled",
+          "Subject to confirmation"
+        ],
+        "correctIndex": 2,
+        "explanation": "The condition is explicit.",
+        "reviewSection": "english8-s2"
+      },
+      {
+        "id": "english8-q3",
+        "prompt": "The displayed message proves listening skill:",
+        "options": [
+          "Yes",
+          "No",
+          "If answered quickly"
+        ],
+        "correctIndex": 1,
+        "explanation": "It is text, not audio evidence.",
+        "reviewSection": "english8-s1"
+      },
+      {
+        "id": "english8-q4",
+        "prompt": "A missed location calls for:",
+        "options": [
+          "An invented place",
+          "Targeted clarification",
+          "An accent penalty"
+        ],
+        "correctIndex": 1,
+        "explanation": "Ask for the missing detail.",
+        "reviewSection": "english8-s3"
+      },
+      {
+        "id": "english8-q5",
+        "prompt": "Verified Irish-accent recordings are included:",
+        "options": [
+          "Yes",
+          "No; they remain a requirement",
+          "Text is equivalent"
+        ],
+        "correctIndex": 1,
+        "explanation": "Generic external links do not establish Irish-accent coverage.",
+        "reviewSection": "english8-s4"
+      }
+    ],
+    "practiceExercises": [
+      {
+        "id": "english8-p1",
+        "question": "Written message: “Send it on Monday—sorry, Tuesday.” Which day is final?",
+        "hints": [
+          "Follow the repair.",
+          "Discard the abandoned day."
+        ],
+        "answer": "Tuesday.",
+        "explanation": "This is reading/self-correction practice, not a listening measurement."
+      },
+      {
+        "id": "english8-p2",
+        "question": "You caught the date but missed the location. Ask a targeted question.",
+        "hints": [
+          "Keep the known date.",
+          "Ask for the missing place."
+        ],
+        "answer": "I have the date; could you confirm the location?",
+        "explanation": "Targeted clarification reduces unnecessary repetition."
+      },
+      {
+        "id": "english8-p3",
+        "question": "You read a transcript and got every answer right. Can the app record strong listening or pronunciation?",
+        "hints": [
+          "Identify the evidence type.",
+          "Text lacks acoustic performance."
+        ],
+        "answer": "No. This supports local written practice only; acoustic claims need appropriate audio evidence and validated assessment.",
+        "explanation": "Do not convert reading success into an acoustic result."
+      }
+    ],
+    "sources": [
+      {
+        "id": "listen",
+        "label": "British Council — B2 listening",
+        "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b2",
+        "supports": "External listening collection with preparation, audio and comprehension tasks. Its level label is not a learner assessment or Irish-accent verification.",
+        "reviewedOn": "2026-09-14"
+      }
+    ]
+  },
+  "professorGuide": {
+    "status": "offline_authored_guide_not_live",
+    "opening": "Ask what is confirmed, corrected and uncertain in the written message.",
+    "whenCorrect": "Ask how clarification changes if only the location was missed, preserving the audio-evidence boundary.",
+    "whenUncertain": "Ask which supplied fact is missing or unclear. Offer the first case hint, then invite another attempt.",
+    "whenMisconception": "If they retain Thursday or confirm the room, point to the correction and condition, then invite a repair.",
+    "whenSelfCorrected": "Use the corrected answer, not the abandoned phrase, as the current response. Ask one transfer question.",
+    "whenAskedForAnswer": "Provide a concise explanation and one worked step; invite an optional fresh attempt without claiming independent mastery.",
+    "evidenceBoundary": "Use only actual session evidence if this guide is separately integrated. Never consume local drafts or checkpoint results. Do not infer pronunciation/acoustic fluency from text, technical mastery from a phrase, or a CEFR level from one task."
+  },
+  "assessmentBoundaries": [
+    "Authored answer keys and guide branches are expectations, not model results or learner evidence.",
+    "Accept supported alternatives and self-correction.",
+    "No local drafts or answers may enter Professor/evaluator payloads.",
+    "No paid provider or database publication is authorized by this draft."
+  ],
+  "publicationGate": "Content QA, server-owned reference integration, exact identity acceptance and separate publication decision remain required.",
+  "listeningBoundary": {
+    "embeddedAudio": false,
+    "irishAccentVerified": false,
+    "acousticAssessment": false,
+    "externalPracticeOptional": true
+  }
+}
