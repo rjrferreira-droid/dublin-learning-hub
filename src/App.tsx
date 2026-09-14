@@ -1,3 +1,4 @@
+import {isSequence4Slug} from './learning/sequence4Registry';
 import {WORKSHOP_CASES} from './learning/appliedPractice';
 import {loadPublishedCurriculumCatalog,type CatalogLesson} from './services/curriculumCatalog';
 import {lessonsForTrack,chooseNextPublishedLesson} from './learning/curriculumCatalogCore';
@@ -163,7 +164,7 @@ function App() {
   const [selectedCatalogLesson,setSelectedCatalogLesson]=useState<CatalogLesson|null>(null);
 
   const profile = useMemo(() => getLearnerProfile(learnerKey), [learnerKey]);
-  const supportedCatalog=useMemo(()=>catalog.filter((lesson)=>{const base=tracks.find(t=>t.key===lesson.track);return !!base&&(lesson.id===base.lessonId||lesson.slug===p1SlugFor(lesson.track)||isSequence3Slug(lesson.track,lesson.slug));}),[catalog]);
+  const supportedCatalog=useMemo(()=>catalog.filter((lesson)=>{const base=tracks.find(t=>t.key===lesson.track);return !!base&&(lesson.id===base.lessonId||lesson.slug===p1SlugFor(lesson.track)||isSequence3Slug(lesson.track,lesson.slug)||isSequence4Slug(lesson.track,lesson.slug));}),[catalog]);
   const activeTrack = useMemo(() => {
     const base=tracks.find((t)=>t.key===trackKey)??tracks[0];
     const selected=selectedCatalogLesson?.track===trackKey?selectedCatalogLesson:null;

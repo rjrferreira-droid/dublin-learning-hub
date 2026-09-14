@@ -1,0 +1,305 @@
+{
+  "version": "sequence4-written-draft-1",
+  "status": "full_draft_not_published_to_database",
+  "track": "finance",
+  "slug": "cash-flow-working-capital-management-story",
+  "roadmapSequence": 4,
+  "reviewedOn": "2026-09-14",
+  "module": {
+    "track": "finance",
+    "title": "Cash flow and working capital: explain the movement",
+    "goal": "Reconcile a fictional cash bridge and distinguish a supported driver from a hypothesis.",
+    "scope": "IAS 7 foundation and original management-control exercises. Not a complete statutory statement. Confirm entity reporting basis and applicable standard version; do not transfer IFRS rules automatically to Irish local accounts. Interest, dividends, acquisitions, foreign exchange and tax classification are outside this numerical case.",
+    "sections": [
+      {
+        "id": "fin4-classify",
+        "title": "1. Ask what moved cash",
+        "paragraphs": [
+          "IAS 7 groups cash flows into operating, investing and financing activities. The indirect method adjusts an earnings starting point for non-cash effects, operating accruals and items related to other cash-flow categories. Non-cash investing and financing transactions are excluded from cash flows and disclosed separately.",
+          "Original close exercise: a machine is purchased for 25 in cash, while another machine worth 40 is acquired entirely through new financing without a cash transfer. Only the first transaction reduces cash here. Put the second in a separate non-cash register; do not create an invented receipt and payment to make the bridge look complete."
+        ],
+        "supportPt": "Uma compra sem transferência de caixa não vira entrada e saída fictícias. Separe o registro contábil da movimentação bancária.",
+        "sourceIds": [
+          "ias7"
+        ]
+      },
+      {
+        "id": "fin4-working",
+        "title": "2. Explain working-capital signs",
+        "paragraphs": [
+          "In our simplified management bridge, an increase in trade receivables means part of recorded sales remains uncollected. An inventory increase absorbs funds; a trade-payables increase means some supplier obligations remain unpaid. These signs assume the movements are ordinary operating changes with no acquisitions, foreign exchange, write-offs or reclassifications.",
+          "Fictional example: receivables rise by 20, inventory falls by 5 and payables rise by 12. The bridge adjustments are -20, +5 and +12: a net use of 3. This does not prove customers are paying late. Ask for ageing, sales timing and receipts after close before choosing that explanation."
+        ],
+        "supportPt": "Os sinais dependem das premissas. Crescimento de clientes não prova atraso: confira vendas, vencimentos e recebimentos.",
+        "sourceIds": [
+          "ias7"
+        ]
+      },
+      {
+        "id": "fin4-reconcile",
+        "title": "3. Reconcile before telling the story",
+        "paragraphs": [
+          "Original case: an agreed management earnings starting figure of 120 already includes depreciation expense of 15. Add back that non-cash expense once, then apply the working-capital use of 3. The simplified operating bridge is 132. With cash equipment purchases of 25 and loan proceeds of 10, net cash rises by 117; opening cash of 80 becomes 197. All other cash movements are explicitly zero.",
+          "Keep two checks: the adjustments must tie to reviewed movement schedules, and ending cash must tie to the supplied cash record. A matching final number alone can hide offsetting errors. If someone adds back depreciation twice, ask them to point to the second expense in the starting figure; there is none in this exercise."
+        ],
+        "supportPt": "Concilie os movimentos e o saldo final. Um total correto pode esconder dois erros que se compensam.",
+        "sourceIds": [
+          "ias7"
+        ]
+      },
+      {
+        "id": "fin4-story",
+        "title": "4. Give a decision and a boundary",
+        "paragraphs": [
+          "Original management response: cash increased by 117, including 10 of new borrowing. Operating conversion was 132 in the simplified bridge; receivables used 20, partly offset by inventory and payables movements. Review the receivables schedule before calling the increase a collection problem. Assign the credit controller to check overdue balances and subsequent receipts.",
+          "The IAS 7 overview notes IFRS 18 amendments affecting the indirect starting subtotal and interest/dividend classification. Identify the applicable reporting version before preparing an actual statement. Our agreed management starting figure is an exercise input, not a universal statutory starting subtotal."
+        ],
+        "supportPt": "Diga o valor, os fatores confirmados e a próxima checagem. A ponte gerencial não substitui a demonstração estatutária.",
+        "sourceIds": [
+          "ias7"
+        ]
+      }
+    ],
+    "terms": [
+      {
+        "term": "Cash bridge",
+        "meaning": "Reconciliation from opening to ending cash.",
+        "pt": "ponte de caixa",
+        "example": "The bridge ends at 197."
+      },
+      {
+        "term": "Working capital",
+        "meaning": "Operating receivables, inventory and payables considered in this exercise.",
+        "pt": "capital de giro",
+        "example": "Working capital uses 3 here."
+      },
+      {
+        "term": "Non-cash item",
+        "meaning": "Entry without a cash transfer in the period.",
+        "pt": "item sem efeito caixa",
+        "example": "Depreciation is added back once."
+      },
+      {
+        "term": "Cash conversion",
+        "meaning": "How earnings translate into cash under a defined measure.",
+        "pt": "conversão em caixa",
+        "example": "Define the measure before comparing it."
+      },
+      {
+        "term": "Ageing",
+        "meaning": "Balances grouped by age or overdue status.",
+        "pt": "análise por vencimento",
+        "example": "Ageing helps test the collection hypothesis."
+      },
+      {
+        "term": "Subsequent receipt",
+        "meaning": "Cash collected after the reporting date.",
+        "pt": "recebimento posterior",
+        "example": "Check subsequent receipts for overdue invoices."
+      }
+    ],
+    "visual": {
+      "title": "Original simplified cash bridge",
+      "note": "Fictional units; all omitted cash movements are zero. Not a full IAS 7 statement.",
+      "headers": [
+        "Line",
+        "Adjustment",
+        "Running total"
+      ],
+      "rows": [
+        [
+          "Agreed earnings start",
+          "120",
+          "120"
+        ],
+        [
+          "Depreciation",
+          "+15",
+          "135"
+        ],
+        [
+          "Receivables increase",
+          "-20",
+          "115"
+        ],
+        [
+          "Inventory decrease",
+          "+5",
+          "120"
+        ],
+        [
+          "Payables increase",
+          "+12",
+          "132"
+        ],
+        [
+          "Equipment paid",
+          "-25",
+          "107"
+        ],
+        [
+          "Loan received",
+          "+10",
+          "117"
+        ]
+      ],
+      "question": "Is 117 the ending cash balance?",
+      "answer": "No. It is the change; add opening cash of 80 to get 197."
+    },
+    "caseStudy": {
+      "title": "A cash improvement with an unresolved collection question",
+      "scenario": [
+        "All amounts are fictional and use the same unit. Earnings start 120 includes depreciation of 15.",
+        "Trade receivables increase 20, inventory decreases 5 and trade payables increase 12; all are operating movements without non-cash distortions.",
+        "Equipment cash payment 25; loan cash receipt 10; opening cash 80; independently supplied ending cash 197. No other movements.",
+        "A manager says the receivables movement proves customers are late. No ageing or invoice-level receipts have been provided."
+      ],
+      "task": "Reconcile ending cash and draft a three-sentence management update with a specific next check.",
+      "hints": [
+        "Use the operating asset/liability signs, then add cash investing and financing movements.",
+        "Keep the receivables movement separate from an unverified cause."
+      ],
+      "modelAnswer": "The simplified operating bridge is 120 + 15 - 20 + 5 + 12 = 132. Net cash movement is 132 - 25 + 10 = 117, giving 80 + 117 = 197. Cash increased by 117, with 10 supplied by new borrowing. Receivables absorbed 20, but the movement alone does not establish overdue collection. Ask the credit controller to review ageing and subsequent receipts before deciding on a collection intervention.",
+      "reviewChecks": [
+        "Operating bridge 132; net movement 117; ending cash 197.",
+        "Depreciation added once; no invented non-cash flows.",
+        "New borrowing is visible in the narrative.",
+        "Collection cause remains conditional with a named evidence check."
+      ],
+      "transfer": "If a new case contains acquired receivables or exchange differences, remove those distortions before using balance movements as cash adjustments."
+    },
+    "checkpoint": [
+      {
+        "id": "fin4-q1",
+        "prompt": "Receivables rise by 20 under the stated assumptions. Which adjustment applies?",
+        "options": [
+          "+20",
+          "-20",
+          "0"
+        ],
+        "correctIndex": 1,
+        "explanation": "The operating asset increase uses cash relative to the earnings figure.",
+        "reviewSection": "fin4-working"
+      },
+      {
+        "id": "fin4-q2",
+        "prompt": "Equipment acquired without cash transfer should be:",
+        "options": [
+          "Invented as cash in and out",
+          "Counted twice",
+          "Kept outside cash flows with appropriate separate disclosure"
+        ],
+        "correctIndex": 2,
+        "explanation": "Non-cash acquisition is distinct from a cash purchase.",
+        "reviewSection": "fin4-classify"
+      },
+      {
+        "id": "fin4-q3",
+        "prompt": "What is ending cash in the case?",
+        "options": [
+          "117",
+          "197",
+          "132"
+        ],
+        "correctIndex": 1,
+        "explanation": "Opening 80 plus movement 117 is 197.",
+        "reviewSection": "fin4-reconcile"
+      },
+      {
+        "id": "fin4-q4",
+        "prompt": "What does a receivables increase establish by itself?",
+        "options": [
+          "Customers are late",
+          "An operating balance movement, subject to stated assumptions",
+          "Fraud"
+        ],
+        "correctIndex": 1,
+        "explanation": "Cause needs evidence beyond the balance change.",
+        "reviewSection": "fin4-working"
+      },
+      {
+        "id": "fin4-q5",
+        "prompt": "Can the exercise starting figure be copied into every statutory statement?",
+        "options": [
+          "Yes",
+          "Only if cash increased",
+          "No; check reporting basis and applicable requirements"
+        ],
+        "correctIndex": 2,
+        "explanation": "This management bridge is scoped and simplified.",
+        "reviewSection": "fin4-story"
+      }
+    ],
+    "practiceExercises": [
+      {
+        "id": "fin4-p1",
+        "question": "Inventory rises by 9; operating payables fall by 4. No other distortions. What is the net bridge adjustment?",
+        "hints": [
+          "An operating asset increase absorbs cash.",
+          "A liability decrease also absorbs cash."
+        ],
+        "answer": "-13: -9 - 4.",
+        "explanation": "Both movements use cash relative to earnings."
+      },
+      {
+        "id": "fin4-p2",
+        "question": "A machine worth 40 arrives through financing with no cash transfer. A colleague adds 40 to receipts and payments. Challenge the bridge.",
+        "hints": [
+          "Separate recognition from cash.",
+          "Ask which bank transfer supports either line."
+        ],
+        "answer": "Remove both invented flows and record the non-cash transaction separately.",
+        "explanation": "Offsetting invented cash flows still misstate the presentation."
+      },
+      {
+        "id": "fin4-p3",
+        "question": "Cash rose by 30, including a new loan of 50. Can you call this stronger operating conversion?",
+        "hints": [
+          "Separate financing from operations.",
+          "The remaining net movements total -20."
+        ],
+        "answer": "No. Borrowing explains 50, while other net movements total -20; inspect the operating and investing bridge before judging conversion.",
+        "explanation": "A higher cash balance alone does not prove stronger operations."
+      }
+    ],
+    "sources": [
+      {
+        "id": "ias7",
+        "label": "IFRS Foundation — IAS 7",
+        "url": "https://www.ifrs.org/issued-standards/list-of-standards/ias-7-statement-of-cash-flows/",
+        "supports": "Cash-flow categories, indirect reconciliation, non-cash exclusion and amendments. Examples and controls are original teaching material, not prescribed templates.",
+        "reviewedOn": "2026-09-14"
+      }
+    ]
+  },
+  "professorGuide": {
+    "opening": "Ask for the sign of a receivables increase before showing the full bridge.",
+    "challengePrompts": [
+      "Why is the 15 adjustment made once?",
+      "Which evidence would turn a collection hypothesis into a supported conclusion?",
+      "Does 117 describe a balance or a movement?"
+    ],
+    "correctionBoundary": "Assess only the supplied arithmetic and reasoning. Do not award technical mastery or claim the simplified bridge is a compliant complete cash-flow statement."
+  },
+  "assessmentBoundaries": [
+    "Authored references are not learner evidence or mastery.",
+    "No pronunciation or acoustic fluency inference from text.",
+    "Accept supported alternative answers and self-correction.",
+    "Local drafts and checkpoint answers must never enter Professor payloads.",
+    "This guide is offline only; sequence 4 is not admitted to Professor/evaluator/Audio."
+  ],
+  "publicationGate": "Separate content review and exact identity acceptance before any explicitly authorized database publication. No provider activation implied.",
+  "fictionalCalculation": {
+    "earnings": 120,
+    "depreciation": 15,
+    "receivablesIncrease": 20,
+    "inventoryDecrease": 5,
+    "payablesIncrease": 12,
+    "operating": 132,
+    "equipmentPaid": 25,
+    "loanReceived": 10,
+    "change": 117,
+    "opening": 80,
+    "closing": 197
+  }
+}

@@ -1,13 +1,14 @@
+import {sequence4SlugFor} from '../src/learning/sequence4Registry';
 import {test,expect} from '@playwright/test';
 import {experienceFixture} from './helpers/experienceFixture';
 import {sequence3SlugFor} from '../src/learning/sequence3Registry';
 import {p1SlugFor} from '../src/learning/p1RuntimeRegistry';
 const tracks={finance:'rafael_finance',payroll:'viviane_payroll',english:'english_academy'};
-for(const sequence of [2,3])for(const track of ['finance','payroll','english'] as const)for(const width of [1440,390])test(`${track} sequence ${sequence} dynamic catalog ${width}: exact authored lesson and local drafts, providers stay closed`,async({page},info)=>{
+for(const sequence of [2,3,4])for(const track of ['finance','payroll','english'] as const)for(const width of [1440,390])test(`${track} sequence ${sequence} dynamic catalog ${width}: exact authored lesson and local drafts, providers stay closed`,async({page},info)=>{
  await page.setViewportSize({width,height:900});
  const {fixture,signIn}=await experienceFixture(page,{track});
  const lessonId='11111111-1111-4111-8111-111111111111',moduleId='22222222-2222-4222-8222-222222222222',courseId='33333333-3333-4333-8333-333333333333';
- const rows={courses:[{id:courseId,slug:track,learner_track:tracks[track]}],modules:[{id:moduleId,course_id:courseId,slug:'fictional-module',sequence:1}],lessons:[{id:lessonId,module_id:moduleId,slug:sequence===2?p1SlugFor(track):sequence3SlugFor(track),title:'Fictional published P1 '+track,subtitle:null,sequence,estimated_minutes:25}]};
+ const rows={courses:[{id:courseId,slug:track,learner_track:tracks[track]}],modules:[{id:moduleId,course_id:courseId,slug:'fictional-module',sequence:1}],lessons:[{id:lessonId,module_id:moduleId,slug:sequence===2?p1SlugFor(track):sequence===3?sequence3SlugFor(track):sequence4SlugFor(track),title:'Fictional published P1 '+track,subtitle:null,sequence,estimated_minutes:25}]};
  const catalogReads:string[]=[];
  await page.route('**/rest/v1/*',async route=>{
   const req=route.request(),url=new URL(req.url()),table=url.pathname.split('/').at(-1)!;

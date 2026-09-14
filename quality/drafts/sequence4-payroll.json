@@ -1,0 +1,310 @@
+{
+  "version": "sequence4-written-draft-1",
+  "status": "full_draft_not_published_to_database",
+  "track": "payroll",
+  "slug": "benefits-notional-pay-employer-items",
+  "roadmapSequence": 4,
+  "reviewedOn": "2026-09-14",
+  "module": {
+    "track": "payroll",
+    "title": "Benefits and notional pay: from input to controlled payroll",
+    "goal": "Distinguish cash pay, a supplied taxable benefit and missing benefit evidence before approving payroll.",
+    "scope": "Irish payroll input and reporting foundation. No live tax calculator or comprehensive benefit valuation. Medical insurance, share arrangements and retirement contributions require their specific current rules; this lesson does not assume all employer-paid items share one treatment.",
+    "sections": [
+      {
+        "id": "pay4-noncash",
+        "title": "1. Separate value from cash",
+        "paragraphs": [
+          "Revenue explains that most employee benefits are taxable. A non-cash benefit can affect payroll charges even though the employee does not receive that value in the bank. Confirm the actual benefit and applicable treatment rather than assuming that an employer payment is either always exempt or always taxable.",
+          "Original example: cash salary is 3,000 and an already-reviewed taxable benefit value is 200 for this period. The case supplies a 3,200 charge base, but the benefit does not add 200 to the employee bank payment. Keep three boxes on your worksheet: cash entitlement, non-cash taxable value and deductions. Do not merge the first two into cash payable."
+        ],
+        "supportPt": "O benefício pode entrar na base sem aumentar o dinheiro pago ao funcionário. Separe caixa, valor tributável e descontos.",
+        "sourceIds": [
+          "bik",
+          "apply"
+        ]
+      },
+      {
+        "id": "pay4-input",
+        "title": "2. Require a usable input record",
+        "paragraphs": [
+          "Original control exercise: a manager sends a receipt labelled “staff benefit” with no recipient or coverage period. That is insufficient to assign a payroll value. Ask for the employee, item or scheme, provision dates, gross cost, employee contribution, approved valuation and source of the treatment. Record what is missing and who will resolve it.",
+          "An approved value in a training case lets you practise downstream controls; it does not teach how to value a car, loan or accommodation. If approval is absent, mark the item unresolved for timely payroll review. Do not silently treat missing evidence as zero or delete a reporting obligation because the deadline is close."
+        ],
+        "supportPt": "Documento sem identificação, período e tratamento aprovado não fecha o input. Registre a pendência e encaminhe antes do fechamento.",
+        "sourceIds": [
+          "bik"
+        ]
+      },
+      {
+        "id": "pay4-fields",
+        "title": "3. Keep reporting categories distinct",
+        "paragraphs": [
+          "Revenue identifies separate submission information for company share-based remuneration, employer-paid medical insurance and taxable benefits. Its taxable-benefits field excludes company share-based remuneration. Medical insurance reporting requires the total employer-paid amount in the specified field. A single label such as “benefits total” can therefore conceal mapping errors.",
+          "Original review task: keep the benefit source record, valuation decision and submission field mapping together. For share remuneration, request the actual arrangement and relevant event dates; do not infer treatment from the word “shares”. For employer retirement contributions, request the exact scheme type, period and applicable conditions before deciding treatment. These two tasks identify missing inputs; they do not prescribe scheme-specific calculations."
+        ],
+        "supportPt": "Não coloque todos os itens em um único campo. Identifique o tipo de benefício e a regra específica antes de mapear a declaração.",
+        "sourceIds": [
+          "fields"
+        ]
+      },
+      {
+        "id": "pay4-explain",
+        "title": "4. Reconcile and explain the bank payment",
+        "paragraphs": [
+          "Original case, with all charges supplied rather than calculated from tax rates: cash salary 3,000; approved non-cash benefit 200; combined employee statutory deductions 650; separate employee deduction 50. Bank pay is 3,000 - 650 - 50 = 2,300. It is not 2,500. The charge base is 3,200 solely under the fictional case assumptions.",
+          "Employee response: your cash salary is 3,000. The 200 benefit is included in the supplied payroll charge base but is not extra cash. After the supplied deductions of 700, bank pay is 2,300. To explain the change from a previous month, compare both periods and their approved inputs; this single payslip cannot establish the exact tax impact of the benefit."
+        ],
+        "supportPt": "Os 200 não são dinheiro adicional. Para explicar a diferença entre meses, compare os dois períodos; não invente o efeito fiscal isolado.",
+        "sourceIds": [
+          "apply"
+        ]
+      }
+    ],
+    "terms": [
+      {
+        "term": "Notional pay",
+        "meaning": "Non-cash value included for payroll treatment under applicable rules.",
+        "pt": "remuneração nocional",
+        "example": "The case supplies an approved notional value of 200."
+      },
+      {
+        "term": "Cash salary",
+        "meaning": "Salary payable in money before deductions.",
+        "pt": "salário em dinheiro",
+        "example": "Cash salary remains 3,000."
+      },
+      {
+        "term": "Benefit valuation",
+        "meaning": "Determining the relevant benefit amount under its rules.",
+        "pt": "avaliação do benefício",
+        "example": "Request the approved valuation."
+      },
+      {
+        "term": "Coverage period",
+        "meaning": "Period to which the benefit relates.",
+        "pt": "período de cobertura",
+        "example": "The invoice must identify the coverage period."
+      },
+      {
+        "term": "Submission field",
+        "meaning": "Specific data item reported to Revenue.",
+        "pt": "campo da declaração",
+        "example": "Check the correct submission field."
+      },
+      {
+        "term": "Unresolved input",
+        "meaning": "Item awaiting evidence or a reviewed decision.",
+        "pt": "input pendente",
+        "example": "Assign an owner to the unresolved input."
+      }
+    ],
+    "visual": {
+      "title": "Fictional pay reconciliation",
+      "note": "Bases and charges supplied for teaching; not Irish tax rates or a benefit valuation.",
+      "headers": [
+        "Item",
+        "Amount",
+        "Meaning"
+      ],
+      "rows": [
+        [
+          "Cash salary",
+          "3,000",
+          "Before deductions"
+        ],
+        [
+          "Non-cash benefit",
+          "200",
+          "Not bank cash"
+        ],
+        [
+          "Supplied charge base",
+          "3,200",
+          "Case assumption"
+        ],
+        [
+          "Employee statutory deductions",
+          "650",
+          "Supplied total"
+        ],
+        [
+          "Separate employee deduction",
+          "50",
+          "Supplied amount"
+        ],
+        [
+          "Bank payment",
+          "2,300",
+          "3,000 - 650 - 50"
+        ]
+      ],
+      "question": "Why is bank pay not 2,500?",
+      "answer": "The 200 is a non-cash benefit and is not added to cash salary."
+    },
+    "caseStudy": {
+      "title": "A benefit appears on the payslip",
+      "scenario": [
+        "Fictional monthly cash salary 3,000; reviewed taxable non-cash benefit 200.",
+        "The exercise supplies the applicable charge base as 3,200 and employee statutory deductions as 650. These are not rate calculations.",
+        "A separate approved employee deduction is 50. No other cash items or deductions.",
+        "The employee asks why a benefit worth 200 has not increased the bank payment; no prior-period payslip is supplied."
+      ],
+      "task": "Reconcile bank pay, explain the non-cash distinction and name the evidence needed for a period-on-period comparison.",
+      "hints": [
+        "Start the bank reconciliation from cash salary.",
+        "Do not invent a prior-period difference or a marginal tax rate."
+      ],
+      "modelAnswer": "Bank pay is 3,000 - 650 - 50 = 2,300. The 200 benefit contributes to the supplied 3,200 charge base but is not another cash payment. I can explain this current reconciliation; to explain a month-on-month change, I need both payslips, approved benefit inputs and relevant payroll settings. The case does not establish how much of the 650 is caused by this benefit.",
+      "reviewChecks": [
+        "Bank payment is 2,300.",
+        "3,200 is identified as a supplied base, not bank cash.",
+        "No invented rate or isolated tax impact.",
+        "Previous-period evidence requested before explaining a change."
+      ],
+      "transfer": "For an unvalued medical policy or share award, stop at the missing-input review; do not reuse the fictional 200 or its assumed base."
+    },
+    "checkpoint": [
+      {
+        "id": "pay4-q1",
+        "prompt": "Which amount starts the bank-pay reconciliation?",
+        "options": [
+          "3,200",
+          "3,000",
+          "200"
+        ],
+        "correctIndex": 1,
+        "explanation": "Cash salary is the cash entitlement before deductions.",
+        "reviewSection": "pay4-noncash"
+      },
+      {
+        "id": "pay4-q2",
+        "prompt": "A staff-benefit receipt has no recipient or period. What next?",
+        "options": [
+          "Assume exempt",
+          "Assign to every employee",
+          "Obtain missing facts and a reviewed treatment"
+        ],
+        "correctIndex": 2,
+        "explanation": "The label alone is not a usable payroll input.",
+        "reviewSection": "pay4-input"
+      },
+      {
+        "id": "pay4-q3",
+        "prompt": "What is bank pay in this case?",
+        "options": [
+          "2,300",
+          "2,500",
+          "3,200"
+        ],
+        "correctIndex": 0,
+        "explanation": "3,000 less supplied deductions of 650 and 50 equals 2,300.",
+        "reviewSection": "pay4-explain"
+      },
+      {
+        "id": "pay4-q4",
+        "prompt": "Should company share-based remuneration simply be copied into the taxable-benefits field?",
+        "options": [
+          "Yes, all benefits use one field",
+          "No; confirm the specific reporting mapping",
+          "Only when convenient"
+        ],
+        "correctIndex": 1,
+        "explanation": "Revenue distinguishes those submission categories.",
+        "reviewSection": "pay4-fields"
+      },
+      {
+        "id": "pay4-q5",
+        "prompt": "Can the case establish the exact increase in tax caused by the benefit?",
+        "options": [
+          "Yes, it is 200",
+          "Yes, it is 650",
+          "No; comparative calculation evidence is absent"
+        ],
+        "correctIndex": 2,
+        "explanation": "Supplied total deductions do not isolate one causal tax effect.",
+        "reviewSection": "pay4-explain"
+      }
+    ],
+    "practiceExercises": [
+      {
+        "id": "pay4-p1",
+        "question": "Cash salary 2,400; reviewed non-cash benefit 100; supplied statutory deductions 410 and separate employee deduction 30. Find bank pay.",
+        "hints": [
+          "Ignore the benefit when adding cash entitlement.",
+          "Subtract both supplied employee deductions."
+        ],
+        "answer": "1,960 = 2,400 - 410 - 30.",
+        "explanation": "No live rate calculation is needed."
+      },
+      {
+        "id": "pay4-p2",
+        "question": "A medical-policy invoice arrives without coverage dates. Write a control note.",
+        "hints": [
+          "Name the missing fact.",
+          "Assign a check before approval."
+        ],
+        "answer": "Coverage dates and employee allocation are missing; ask the benefits owner for supporting records and confirm valuation and submission mapping before approval.",
+        "explanation": "Do not infer the payroll period from an invoice label."
+      },
+      {
+        "id": "pay4-p3",
+        "question": "An employer retirement payment is described only as “pension”. Can you apply the same treatment as the non-cash example?",
+        "hints": [
+          "Identify the scheme.",
+          "The fictional case is not a universal pension rule."
+        ],
+        "answer": "No. Confirm the arrangement, period, amount and applicable conditions with current scheme-specific guidance.",
+        "explanation": "A category name cannot replace the treatment review."
+      }
+    ],
+    "sources": [
+      {
+        "id": "bik",
+        "label": "Revenue — Taxation of benefit in kind",
+        "url": "https://www.revenue.ie/en/employing-people/benefit-in-kind-for-employers/taxation-of-benefit-in-kind/index.aspx",
+        "supports": "General benefit taxation; specific exemptions and valuation require separate confirmation.",
+        "reviewedOn": "2026-09-14"
+      },
+      {
+        "id": "apply",
+        "label": "Revenue — Applying tax to benefits",
+        "url": "https://www.revenue.ie/en/employing-people/benefit-in-kind-for-employers/taxation-of-benefit-in-kind/applying-tax-to-benefits.aspx",
+        "supports": "Notional pay and payroll deduction treatment. No live rates are reproduced.",
+        "reviewedOn": "2026-09-14"
+      },
+      {
+        "id": "fields",
+        "label": "Revenue — Benefit information in payroll submissions",
+        "url": "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/what-benefit-information-do-you-provide.aspx",
+        "supports": "Distinct reporting fields for company shares, medical insurance and taxable benefits.",
+        "reviewedOn": "2026-09-14"
+      }
+    ]
+  },
+  "professorGuide": {
+    "opening": "Ask whether non-cash value is extra bank cash; let the learner explain before correcting.",
+    "challengePrompts": [
+      "Which numbers are supplied rather than calculated?",
+      "What exactly is missing from this benefit record?",
+      "Can this payslip prove a month-on-month cause?"
+    ],
+    "correctionBoundary": "No invented tax rates, valuations or employee history. Do not turn the illustrative charge base into a general all-benefits rule."
+  },
+  "assessmentBoundaries": [
+    "Authored references are not learner evidence or mastery.",
+    "No pronunciation or acoustic fluency inference from text.",
+    "Accept supported alternative answers and self-correction.",
+    "Local drafts and checkpoint answers must never enter Professor payloads.",
+    "This guide is offline only; sequence 4 is not admitted to Professor/evaluator/Audio."
+  ],
+  "publicationGate": "Separate content review and exact identity acceptance before any explicitly authorized database publication. No provider activation implied.",
+  "fictionalCalculation": {
+    "cash": 3000,
+    "benefit": 200,
+    "suppliedBase": 3200,
+    "statutoryDeductions": 650,
+    "otherDeductions": 50,
+    "bank": 2300
+  }
+}

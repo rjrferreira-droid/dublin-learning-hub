@@ -59,3 +59,7 @@ The new database requires server-assigned profiles and zero budgets, with public
 ## Subsequent continuation: third lessons as written runtime candidates
 
 Reused the existing full sequence 3 drafts for leases, payroll pay bases and English variances, with lazy renderer adapters and exact per-track slug validation. The catalog supports these authored lessons when matching published rows exist; no rows were written. Professor/Audio/evaluator gates were not expanded. See docs/SEQUENCE3_WRITTEN_RUNTIME_2026-09-14.md. Use the final feature head's CI for the expanded desktop/mobile matrix.
+
+## Subsequent continuation: fourth written foundations
+
+Authored sequence 4 for all three tracks with original cases, practice, fixed checkpoints, Portuguese support and offline Professor guides. Exact identity mapping is lazy and written-only; no interactive provider registry was expanded. See docs/SEQUENCE4_WRITTEN_RUNTIME_2026-09-14.md and the final matching PR CI for evidence. Finance separates movement from balance and collection hypothesis from evidence; Payroll separates non-cash value from bank pay without invented rates; English preserves response deadlines and unconfirmed approval. Sequences 5–8 remain safe curriculum work and do not require paid infrastructure approval.
