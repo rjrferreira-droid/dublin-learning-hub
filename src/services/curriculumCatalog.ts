@@ -1,4 +1,4 @@
-import {supabase} from './supabase';
+import {supabase} from './supabase.js';
 export type CatalogTrack='finance'|'payroll'|'english';
 export type CatalogLesson={id:string;slug:string;title:string;subtitle:string|null;sequence:number;moduleSequence:number;estimatedMinutes:number;track:CatalogTrack;moduleSlug:string;courseSlug:string};
 const trackByLearner:Record<string,CatalogTrack>={rafael_finance:'finance',viviane_payroll:'payroll',english_academy:'english'};
