@@ -1,5 +1,9 @@
 -- CANDIDATE ONLY. Not a migration file and not applied to any database.
--- Purpose: prevent concurrent Premium Audio requests from paying for duplicate provider generations.
+-- Purpose: prevent duplicate paid Premium Audio generations and make post-provider cost logging recoverable.
+-- Read-only production inspection on 2026-09-14 found:
+--   * zero duplicate (lesson_id,audio_type) audio_asset groups;
+--   * every existing ai_usage_log row had a non-null request_id;
+--   * no duplicate (feature,request_id) pairs.
 
 create table if not exists lh_internal.premium_audio_generation_claims (
   lesson_id uuid not null references public.lessons(id) on delete cascade,
@@ -13,6 +17,19 @@ create table if not exists lh_internal.premium_audio_generation_claims (
 
 revoke all on table lh_internal.premium_audio_generation_claims from public, anon, authenticated;
 grant select, insert, update, delete on table lh_internal.premium_audio_generation_claims to service_role;
+
+-- Keep one canonical commentary asset row per lesson. The storage path contains the content version.
+create unique index if not exists audio_assets_lesson_audio_type_uq
+  on public.audio_assets(lesson_id,audio_type);
+
+-- Provider-attempt receipts become idempotent. PostgreSQL unique indexes still permit multiple NULL request_ids.
+create unique index if not exists ai_usage_log_feature_request_id_uq
+  on public.ai_usage_log(feature,request_id);
+
+-- Retain enough generation metadata on the cached asset to repair a missing usage receipt later without calling TTS again.
+alter table public.audio_assets
+  add column if not exists generation_request_id text,
+  add column if not exists estimated_cost_usd numeric check (estimated_cost_usd is null or estimated_cost_usd >= 0);
 
 create or replace function public.claim_premium_audio_generation_v1(
   p_lesson_id uuid,
@@ -80,7 +97,3 @@ $$;
 
 revoke all on function public.release_premium_audio_generation_v1(uuid,integer,text,uuid) from public, anon, authenticated;
 grant execute on function public.release_premium_audio_generation_v1(uuid,integer,text,uuid) to service_role;
-
--- Current production inspection on 2026-09-14 found zero duplicate (lesson_id,audio_type) groups.
--- A future reviewed migration may therefore also add this uniqueness guard before changing persistence to upsert:
--- create unique index audio_assets_lesson_audio_type_uq on public.audio_assets(lesson_id,audio_type);
