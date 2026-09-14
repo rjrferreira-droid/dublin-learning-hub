@@ -102,8 +102,11 @@ export function normalizePremiumAudioError(cause: unknown): PremiumAudioError {
 export class SupabasePremiumAudioService implements PremiumAudioService {
   private readonly resolved = new Map<string, PremiumAudioResult>();
   private readonly inFlight = new Map<string, Promise<PremiumAudioResult>>();
+  private readonly invoke: PremiumAudioInvoker;
 
-  constructor(private readonly invoke: PremiumAudioInvoker = defaultInvoker) {}
+  constructor(invoke: PremiumAudioInvoker = defaultInvoker) {
+    this.invoke = invoke;
+  }
 
   async getOrCreateLessonAudio(lessonId: string): Promise<PremiumAudioResult> {
     const cached = this.resolved.get(lessonId);
