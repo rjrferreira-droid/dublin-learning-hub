@@ -1,4 +1,7 @@
 import {WORKSHOP_CASES} from './learning/appliedPractice';
+import {loadPublishedCurriculumCatalog,type CatalogLesson} from './services/curriculumCatalog';
+import {lessonsForTrack,chooseNextPublishedLesson} from './learning/curriculumCatalogCore';
+import {p1SlugFor} from './learning/p1RuntimeModules';
 import { LessonStudyPanel } from './components/LessonStudyPanel';
 import {LessonProfessorWorkspace} from './components/LessonProfessorWorkspace';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -28,6 +31,7 @@ type Track = {
   accent: string;
   lesson: string;
   lessonId: string;
+  lessonSlug: string;
   focus: string;
 };
 
@@ -40,6 +44,7 @@ const tracks: Track[] = [
     accent: 'FINANCE',
     lesson: 'IFRS 18, Group Reporting & Irish Statutory Accounts',
     lessonId: 'b3639582-3c32-4147-a4b3-84237d11a66e',
+    lessonSlug: 'ifrs-18-group-reporting-irish-statutory',
     focus: 'Executive finance judgement, reporting and Dublin readiness',
   },
   {
@@ -50,6 +55,7 @@ const tracks: Track[] = [
     accent: 'PAYROLL',
     lesson: 'Gross-to-Net: RPN, PAYE, USC & PRSI',
     lessonId: '6ffda415-3b18-46ab-afaa-414f81a7eb31',
+    lessonSlug: 'gross-to-net-rpn-paye-usc-prsi',
     focus: 'Irish payroll operations, controls and professional English',
   },
   {
@@ -60,6 +66,7 @@ const tracks: Track[] = [
     accent: 'ENGLISH',
     lesson: 'Tell a story naturally: past forms, rhythm & follow-up questions',
     lessonId: 'f455a740-f50f-4eb7-95a7-9e4129ca4a68',
+    lessonSlug: 'story-past-forms-rhythm-follow-up',
     focus: 'Everyday fluency, listening, grammar, pronunciation and work English',
   },
 ];
@@ -150,9 +157,17 @@ function App() {
   const [memory, setMemory] = useState<LearningMemorySnapshot | null>(null);
   const [memoryLoading, setMemoryLoading] = useState(true);
   const [memoryError, setMemoryError] = useState(false);
+  const [catalog,setCatalog]=useState<CatalogLesson[]>([]);
+  const [catalogUnavailable,setCatalogUnavailable]=useState(false);
+  const [selectedCatalogLesson,setSelectedCatalogLesson]=useState<CatalogLesson|null>(null);
 
   const profile = useMemo(() => getLearnerProfile(learnerKey), [learnerKey]);
-  const activeTrack = useMemo(() => tracks.find((t) => t.key === trackKey) ?? tracks[0], [trackKey]);
+  const supportedCatalog=useMemo(()=>catalog.filter((lesson)=>{const base=tracks.find(t=>t.key===lesson.track);return !!base&&(lesson.id===base.lessonId||lesson.slug===p1SlugFor(lesson.track));}),[catalog]);
+  const activeTrack = useMemo(() => {
+    const base=tracks.find((t)=>t.key===trackKey)??tracks[0];
+    const selected=selectedCatalogLesson?.track===trackKey?selectedCatalogLesson:null;
+    return selected?{...base,lesson:selected.title,lessonId:selected.id,lessonSlug:selected.slug,focus:selected.subtitle??base.focus}:base;
+  },[trackKey,selectedCatalogLesson]);
 
   const refreshMemory = useCallback(async () => {
     const revision = ++memoryRequest.current;
@@ -173,6 +188,12 @@ function App() {
     return () => { memoryRequest.current++; };
   }, [refreshMemory]);
 
+  useEffect(()=>{
+    const controller=new AbortController();setCatalogUnavailable(false);
+    void loadPublishedCurriculumCatalog(controller.signal).then(setCatalog).catch(()=>{if(!controller.signal.aborted){setCatalog([]);setCatalogUnavailable(true);}});
+    return ()=>controller.abort();
+  },[account.userId]);
+
   const privateDataVisible = learnerKey === accountLearnerKey;
   const visibleMemory = privateDataVisible ? memory : null;
   const memoryStatus: MemoryStatus = !privateDataVisible
@@ -185,7 +206,10 @@ function App() {
           ? 'ready'
           : 'empty';
 
-  const openLesson = (key: TrackKey) => {
+  const openLesson = (key: TrackKey,lesson?:CatalogLesson) => {
+    const measured=new Set((visibleMemory?.history??[]).map(x=>x.lessonId));
+    const resolved=lesson??chooseNextPublishedLesson(supportedCatalog,key,measured);
+    setSelectedCatalogLesson(resolved??null);
     setTrackKey(key);
     setLessonTab('Learn');
     setLessonOpen(true);
@@ -197,6 +221,7 @@ function App() {
     setLessonOpen(false);
     setView('dashboard');
     setTrackKey(key === 'viviane' ? 'payroll' : 'finance');
+    setSelectedCatalogLesson(null);
   };
 
   return (
@@ -272,7 +297,7 @@ function App() {
         ) : view === 'dashboard' ? (
           <Dashboard learnerKey={learnerKey} profile={profile} memory={visibleMemory} memoryStatus={memoryStatus} openLesson={openLesson} openView={setView} />
         ) : view === 'learn' ? (
-          <LearningLibrary learnerKey={learnerKey} openLesson={openLesson} />
+          <LearningLibrary learnerKey={learnerKey} catalog={supportedCatalog} catalogUnavailable={catalogUnavailable} openLesson={openLesson} />
         ) : view === 'english-academy' ? (
           <EnglishAcademyView profile={profile} learnerKey={learnerKey} openLesson={() => openLesson('english')} />
         ) : view === 'revision' ? (
@@ -437,28 +462,18 @@ function PriorityCard({ priority, rank }: { priority: AdaptivePriority; rank: nu
   );
 }
 
-function LearningLibrary({ learnerKey, openLesson }: { learnerKey: LearnerKey; openLesson: (key: TrackKey) => void }) {
-  const primaryTrack = learnerKey === 'viviane' ? 'payroll' : 'finance';
-  return (
-    <section className="page-stack">
-      <div className="section-heading">
-        <div><div className="eyebrow">GOLDEN LESSONS</div><h2>Validate the full experience before scaling content</h2></div>
-        <span>3 lessons • end-to-end quality gate</span>
-      </div>
-      <div className="library-grid">
-        {tracks.map((track, index) => (
-          <article className={`lesson-library-card ${track.key === primaryTrack ? 'primary-track-card' : ''}`} key={track.key}>
-            <div className="lesson-index">0{index + 1}</div>
-            <span className={`track-badge ${track.key}`}>{track.accent}</span>
-            <h3>{track.lesson}</h3>
-            <p>{track.focus}</p>
-            <div className="lesson-meta"><span>10–15 min</span><span>Case</span><span>Quiz</span><span>Professor</span></div>
-            <button className="primary-btn" onClick={() => openLesson(track.key)}>Open Golden Lesson</button>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
+function LearningLibrary({ learnerKey, catalog, catalogUnavailable, openLesson }: { learnerKey: LearnerKey; catalog: CatalogLesson[]; catalogUnavailable:boolean; openLesson: (key: TrackKey,lesson?:CatalogLesson) => void }) {
+  const primaryTrack=learnerKey==='viviane'?'payroll':'finance';
+  const available=catalog.length?catalog:[];
+  return <section className="page-stack" data-testid="learning-library">
+    <div className="section-heading"><div><div className="eyebrow">LEARNING LIBRARY</div><h2>Published lessons with reviewed runtime content</h2></div><span>{available.length||3} available now</span></div>
+    {catalogUnavailable&&<p role="status" className="priority-note"><strong>Catalog temporarily unavailable</strong><span>The three verified Golden Lessons remain available as a safe fallback.</span></p>}
+    <div className="library-grid">
+      {available.length?available.map((lesson,index)=>{const base=tracks.find(t=>t.key===lesson.track)!;return <article className={`lesson-library-card ${lesson.track===primaryTrack?'primary-track-card':''}`} key={lesson.id} data-testid={`catalog-lesson-${lesson.slug}`}>
+        <div className="lesson-index">{String(index+1).padStart(2,'0')}</div><span className={`track-badge ${lesson.track}`}>{base.accent}</span><h3>{lesson.title}</h3><p>{lesson.subtitle??base.focus}</p><div className="lesson-meta"><span>{lesson.estimatedMinutes} min</span><span>{base.name}</span><span>Professor</span></div><button className="primary-btn" onClick={()=>openLesson(lesson.track,lesson)}>Open lesson</button>
+      </article>}):tracks.map((track,index)=><article className={`lesson-library-card ${track.key===primaryTrack?'primary-track-card':''}`} key={track.key}><div className="lesson-index">0{index+1}</div><span className={`track-badge ${track.key}`}>{track.accent}</span><h3>{track.lesson}</h3><p>{track.focus}</p><div className="lesson-meta"><span>10–15 min</span><span>Verified fallback</span><span>Professor</span></div><button className="primary-btn" onClick={()=>openLesson(track.key)}>Open Golden Lesson</button></article>)}
+    </div>
+  </section>;
 }
 
 function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close }: {
@@ -497,7 +512,7 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close 
           <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">Premium lesson</span></div>
           <div className="eyebrow">{activeTab.toUpperCase()}</div>
           <LessonProfessorWorkspace track={track.key} lessonId={track.lessonId} learnerKey={learnerKey} activeTab={activeTab} onTabChange={setActiveTab} onActivityChange={setConversationBusy} workshopId={workshopId} onClearWorkshop={clearWorkshop}/>
-          <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} activeTab={activeTab} onTabChange={setActiveTab} onPrepareWorkshop={prepareWorkshop} handoffDisabled={conversationBusy||!canUseActions} />
+          <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} lessonSlug={track.lessonSlug} activeTab={activeTab} onTabChange={setActiveTab} onPrepareWorkshop={prepareWorkshop} handoffDisabled={conversationBusy||!canUseActions} />
           {conversationBusy && activeTab === 'Audio' ? <p role="status" data-testid="audio-conversation-guard">End the Professor session before playing lesson audio. Written tabs remain available.</p> : <>{activeTab === 'Audio' && (canUseActions ? <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} /> : <p role="status" data-testid="audio-account-mismatch">Audio actions require the matching signed-in learner account.</p>)}</>}
           {/* One persistent lesson-scoped Professor instance is rendered above; no duplicate tab mount. */}
         </article>
