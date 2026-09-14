@@ -42,6 +42,7 @@ for(const sequence of [2,3,4])for(const track of ['finance','payroll','english']
   await page.getByRole('tab',{name:'Case',exact:true}).click();
   await study.getByText('Worked case and review checklist',{exact:true}).click();
   await expect(study.getByTestId('lesson-case')).toContainText(authored.caseStudy.modelAnswer);
+  if(track==='english')await expect(study.locator('.lesson-case-worked-answer')).toHaveCSS('white-space','pre-line');
  }
  await page.getByRole('tab',{name:'Practice',exact:true}).click();
  await study.getByTestId('written-practice-0').getByRole('textbox').fill('LOCAL P1 PRIVATE DRAFT');

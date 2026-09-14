@@ -81,7 +81,7 @@ function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDis
    <label htmlFor="lesson-case-draft">Your case response</label><textarea id="lesson-case-draft" maxLength={6000} value={drafts.case??''} onChange={e=>setDrafts(x=>({...x,case:e.target.value}))} placeholder="Draft here, or work through the case on paper…"/>
    <p className="lesson-study-note">Temporary local draft only. Not submitted or assessed by the Professor.</p>
    <details><summary>Case hints</summary>{module.caseStudy.hints.map(h=><p key={h}>{h}</p>)}</details>
-   <details><summary>Worked case and review checklist</summary><p>{module.caseStudy.modelAnswer}</p><ul>{module.caseStudy.reviewChecks.map(c=><li key={c}>{c}</li>)}</ul></details>
+   <details><summary>Worked case and review checklist</summary><p className="lesson-case-worked-answer">{module.caseStudy.modelAnswer}</p><ul>{module.caseStudy.reviewChecks.map(c=><li key={c}>{c}</li>)}</ul></details>
    <h3>Transfer the skill</h3><p>{module.caseStudy.transfer}</p>
   </section>
   <section className="lesson-study-section" hidden={activeTab!=='Test'} data-testid="lesson-checkpoint">
