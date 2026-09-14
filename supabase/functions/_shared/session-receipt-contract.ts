@@ -28,23 +28,30 @@ export function buildSessionReceipt(input:SessionReceiptInput):SessionReceipt{
  const settledAt=input.reservation?.settled_at??null;
  const linkedReservationMissing=!!input.session.budget_reservation_id&&!input.reservation;
  const finalizationInconsistent=finalStatus&&!completionTimestampValid;
+ const settlementMetadataIncomplete=reservationStatus==='settled'&&(actual===null||!validDate(settledAt));
+ const settlementAmountMismatch=reservationStatus==='settled'&&actual!==null&&total>0&&!sameMoney(actual,realtime);
  let state:SessionReceiptState='processing';
  if(!finalStatus)state='not_completed';
  else if(finalizationInconsistent||linkedReservationMissing)state='needs_reconciliation';
  else if(reservationStatus==='unresolved')state='needs_reconciliation';
  else if(reservationStatus==='active')state='processing';
  else if(reservationStatus==='settled'){
-  const settlementMetadataValid=actual!==null&&validDate(settledAt);
-  if(!settlementMetadataValid)state='needs_reconciliation';
+  if(settlementMetadataIncomplete)state='needs_reconciliation';
   else if(total===0)state=actual===0?'completed_without_usage':'needs_reconciliation';
-  else state=sameMoney(actual,realtime)?'settled':'needs_reconciliation';
+  else state=settlementAmountMismatch?'needs_reconciliation':'settled';
  }else if(input.reservation)state='needs_reconciliation';
  else if(total>0)state='settled';
  else state='completed_without_usage';
+ let reconciliationNote='Session, reservation or usage evidence is incomplete or inconsistent. Keep any protected hold until it is reconciled; do not treat it as zero cost.';
+ if(reservationStatus==='unresolved')reconciliationNote='The session has an unresolved budget reservation. Keep the protected hold until reconciliation; do not treat it as zero cost.';
+ else if(linkedReservationMissing)reconciliationNote='The session references a budget reservation that is not available to this receipt. Reconciliation is required before treating the session as settled.';
+ else if(finalizationInconsistent)reconciliationNote='The session status says it is finalized, but its completion timestamp is missing or invalid. Reconciliation is required.';
+ else if(settlementMetadataIncomplete)reconciliationNote='The reservation is marked settled, but its actual cost or settlement timestamp is missing. Reconciliation is required.';
+ else if(settlementAmountMismatch)reconciliationNote='The settled reservation actual cost does not match the logged realtime estimate. Reconciliation is required before treating the session as settled.';
  const note=state==='settled'
   ?'Application-estimated usage was recorded for this session. This is not a provider invoice.'
   :state==='needs_reconciliation'
-    ?'Session, reservation or usage evidence is incomplete or inconsistent. Keep any protected hold until it is reconciled; do not treat it as zero cost.'
+    ?reconciliationNote
     :state==='completed_without_usage'
       ?'The session is closed, but no matching usage estimate is visible in the application log yet.'
       :state==='not_completed'
