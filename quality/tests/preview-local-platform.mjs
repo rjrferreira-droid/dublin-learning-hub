@@ -1,6 +1,7 @@
 /** Actual local Supabase Auth/PostgREST/Storage, fictional data only; no provider. */
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,writeFileSync} from 'node:fs';
+import {dirname,join} from 'node:path';
 import {randomUUID,randomBytes} from 'node:crypto';
 import {createClient} from '@supabase/supabase-js';
 import {p1SlugFor} from '../../src/learning/p1RuntimeRegistry.ts';
@@ -32,11 +33,12 @@ for(let attempt=0;;attempt++){
  if(result.error.code!=='PGRST205'||attempt>=24)ok(result);
  await new Promise(resolve=>setTimeout(resolve,200));
 }
-const clients={},users={},lessons={};
+const clients={},users={},lessons={},browserAccounts={},authoredTitles={};
 for(const name of ['finance','payroll','unassigned']){
  const password=randomBytes(24).toString('hex');
  const user=ok(await admin.auth.admin.createUser({email:`${name}@learning-hub.example.invalid`,password,email_confirm:true,user_metadata:{learner_track:'viviane_payroll'}})).user;
  users[name]=user.id;clients[name]=make(status.ANON_KEY);
+ browserAccounts[name]={email:user.email,password};
  ok(await clients[name].auth.signInWithPassword({email:user.email,password}));
  assert.equal(ok(await clients[name].auth.getUser()).user.id,user.id);
 }
@@ -97,6 +99,7 @@ for(const account of ['finance','payroll'])for(const requested of [account,'engl
  }),/global_ai_budget_reached/);
  audioBudgetDenials++;
  futureReferences++;
+ authoredTitles[lesson.id]=ref.context.title;
 }
 for(const account of ['finance','payroll']){
  const other=account==='finance'?'payroll':'finance';
@@ -136,4 +139,6 @@ const response=await fetch(signed.signedUrl);assert.equal(response.status,200);a
 const invalid=new URL(signed.signedUrl);invalid.searchParams.set('token','invalid');assert.equal((await fetch(invalid)).ok,false);
 const publicUrl=admin.storage.from('lesson-audio').getPublicUrl(path).data.publicUrl;assert.equal((await fetch(publicUrl)).ok,false);
 for(const client of Object.values(clients))ok(await client.auth.signOut());
+// Disposable credentials only; never upload this file, status, traces or videos.
+writeFileSync(join(dirname(process.argv[2]),'local-browser-fixture.json'),JSON.stringify({accounts:browserAccounts,lessons:future,authoredTitles}),{mode:0o600,flag:'wx'});
 console.log(JSON.stringify({status:'passed',realLocalAuth:true,realLocalPostgrest:true,realLocalStorage:true,assignedAccounts:2,unassignedAccounts:1,p1References:4,futureReferences,audioBudgetDenials,zeroBudgetStartsDenied:4,paidProviderCalls:0,connectedProjectWrites:0,networkScope:'loopback:54321',requests}));
