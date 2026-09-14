@@ -31,7 +31,9 @@ for(const width of [1440,390])test(`actual Auth and catalog at ${width}px: accou
   await page.getByLabel('E-mail').fill(fixture.accounts[account].email);
   await page.getByLabel('Senha').fill(fixture.accounts[account].password);
   await page.getByRole('button',{name:'Entrar',exact:true}).click();
-  await expect(page.getByTestId('active-learner-card')).toBeVisible();
+  // Mobile intentionally hides the sidebar profile card; the authenticated shell is shared.
+  await expect(page.locator('.auth-app.learner-'+(account==='finance'?'rafael':'viviane'))).toBeVisible();
+  await expect(page.getByTestId('active-learner-card')).toHaveCount(1);
   const other=account==='finance'?'payroll':'finance';
   for(const track of [account,'english'])for(const sequence of [3,4,5,6,7,8]){
    await page.locator('.nav-stack').getByRole('button',{name:/Learning/}).click();
