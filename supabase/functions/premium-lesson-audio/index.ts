@@ -70,17 +70,45 @@ Deno.serve(async(req:Request)=>{
     return json({error:decision.reason,committed_usd:decision.reason==='global_ai_budget_reached'?decision.globalCommittedUsd:decision.premiumBucketSpentUsd,reservation_usd:Number(conservativeReservationUsd.toFixed(6))},429);
   }
 
-  const speech=await fetch("https://api.openai.com/v1/audio/speech",{method:"POST",headers:{"Authorization":`Bearer ${openaiKey}`,"Content-Type":"application/json"},body:JSON.stringify({model:"gpt-4o-mini-tts",voice:"marin",input:script,instructions:"Speak in natural Brazilian Portuguese with a calm, confident expert-professor tone. Keep English finance, accounting, payroll and legal terms in natural English pronunciation. Use clear pacing and subtle emphasis on key concepts. Do not sound like an advertisement.",response_format:"mp3",speed:0.98})});
-  if(!speech.ok){console.error("TTS failed",speech.status);await speech.body?.cancel().catch(()=>undefined);return json({error:"tts_failed",status:speech.status},502)}
-  const bytes=new Uint8Array(await speech.arrayBuffer());
-  const {error:uploadError}=await admin.storage.from("lesson-audio").upload(expectedPath,bytes,{contentType:"audio/mpeg",upsert:true,cacheControl:"31536000"});
-  if(uploadError){console.error("Premium Audio storage upload failed");return json({error:"audio_upload_failed"},500)}
+  const claimToken=crypto.randomUUID();
+  const claimResult=await admin.rpc("claim_premium_audio_generation_v1",{p_lesson_id:lessonId,p_content_version:version,p_audio_type:"commentary",p_claim_token:claimToken,p_lease_seconds:180});
+  if(claimResult.error)return json({error:"audio_generation_claim_unavailable"},503);
+  if(claimResult.data!=="claimed")return json({error:"audio_generation_in_progress"},409);
 
-  await admin.from("audio_assets").delete().eq("lesson_id",lessonId).eq("audio_type","commentary");
-  await admin.from("audio_assets").insert({lesson_id:lessonId,audio_type:"commentary",storage_path:expectedPath,transcript_pt:script,voice:"marin",generated_at:new Date().toISOString()});
-  const {data:pub}=admin.storage.from("lesson-audio").getPublicUrl(expectedPath);
+  const releaseClaim=async()=>{
+    const release=await admin.rpc("release_premium_audio_generation_v1",{p_lesson_id:lessonId,p_content_version:version,p_audio_type:"commentary",p_claim_token:claimToken});
+    if(release.error)console.error("Premium Audio generation claim release failed");
+  };
 
-  await admin.from("ai_usage_log").insert({user_id:user.id,feature:"lesson_audio",model:"gpt-4o-mini-tts",characters:script.length,estimated_cost_usd:Number(estimatedCost.toFixed(6))});
+  try{
+    const {data:existingAfterClaim,error:cacheReadError}=await admin.from("audio_assets").select("id,storage_path,voice,generated_at").eq("lesson_id",lessonId).eq("audio_type","commentary").eq("storage_path",expectedPath).maybeSingle();
+    if(cacheReadError)return json({error:"audio_cache_unavailable"},503);
+    if(existingAfterClaim?.storage_path){
+      const {data:pub}=admin.storage.from("lesson-audio").getPublicUrl(existingAfterClaim.storage_path);
+      return json({audio_url:pub.publicUrl,cached:true,voice:existingAfterClaim.voice??"marin",generated_at:existingAfterClaim.generated_at});
+    }
 
-  return json({audio_url:pub.publicUrl,cached:false,voice:"marin",estimated_cost_usd:Number(estimatedCost.toFixed(4)),cost_basis:"application_estimate_not_provider_invoice",monthly_audio_cap_usd:Number(budgetResult.data.premium_audio_cap_usd),global_ai_cap_usd:Number(budgetResult.data.ai_hard_cap_usd)});
+    const {data:latestLesson,error:latestLessonError}=await admin.from("lessons").select("content_version").eq("id",lessonId).eq("is_published",true).maybeSingle();
+    if(latestLessonError||!latestLesson)return json({error:"audio_source_recheck_failed"},503);
+    if(Number(latestLesson.content_version??1)!==version)return json({error:"audio_source_changed"},409);
+
+    const speech=await fetch("https://api.openai.com/v1/audio/speech",{method:"POST",headers:{"Authorization":`Bearer ${openaiKey}`,"Content-Type":"application/json"},body:JSON.stringify({model:"gpt-4o-mini-tts",voice:"marin",input:script,instructions:"Speak in natural Brazilian Portuguese with a calm, confident expert-professor tone. Keep English finance, accounting, payroll and legal terms in natural English pronunciation. Use clear pacing and subtle emphasis on key concepts. Do not sound like an advertisement.",response_format:"mp3",speed:0.98})});
+    if(!speech.ok){console.error("TTS failed",speech.status);await speech.body?.cancel().catch(()=>undefined);return json({error:"tts_failed",status:speech.status},502)}
+    const bytes=new Uint8Array(await speech.arrayBuffer());
+    const {error:uploadError}=await admin.storage.from("lesson-audio").upload(expectedPath,bytes,{contentType:"audio/mpeg",upsert:true,cacheControl:"31536000"});
+    if(uploadError){console.error("Premium Audio storage upload failed");return json({error:"audio_upload_failed"},500)}
+
+    const {error:deleteError}=await admin.from("audio_assets").delete().eq("lesson_id",lessonId).eq("audio_type","commentary");
+    if(deleteError){console.error("Premium Audio stale asset metadata cleanup failed");return json({error:"audio_asset_record_failed"},500)}
+    const {error:assetError}=await admin.from("audio_assets").insert({lesson_id:lessonId,audio_type:"commentary",storage_path:expectedPath,transcript_pt:script,voice:"marin",generated_at:new Date().toISOString()});
+    if(assetError){console.error("Premium Audio asset metadata write failed");return json({error:"audio_asset_record_failed"},500)}
+    const {data:pub}=admin.storage.from("lesson-audio").getPublicUrl(expectedPath);
+
+    const {error:usageError}=await admin.from("ai_usage_log").insert({user_id:user.id,feature:"lesson_audio",model:"gpt-4o-mini-tts",characters:script.length,estimated_cost_usd:Number(estimatedCost.toFixed(6))});
+    if(usageError)console.error("Premium Audio usage estimate logging failed");
+
+    return json({audio_url:pub.publicUrl,cached:false,voice:"marin",estimated_cost_usd:Number(estimatedCost.toFixed(4)),cost_basis:"application_estimate_not_provider_invoice",monthly_audio_cap_usd:Number(budgetResult.data.premium_audio_cap_usd),global_ai_cap_usd:Number(budgetResult.data.ai_hard_cap_usd)});
+  }finally{
+    await releaseClaim();
+  }
 });
