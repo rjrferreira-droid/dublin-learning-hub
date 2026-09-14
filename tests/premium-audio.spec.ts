@@ -58,6 +58,6 @@ test('Premium Audio marks provider and storage failures with correct retry polic
     throw new EdgeFunctionError('audio_upload_failed', 500, { error: 'audio_upload_failed' });
   });
 
-  await expect(provider.getOrCreateLessonAudio('lesson-3')).rejects.toMatchObject({ code: 'generation-failed', retryable: true });
-  await expect(storage.getOrCreateLessonAudio('lesson-4')).rejects.toMatchObject({ code: 'upload-failed', retryable: true });
+  await expect(provider.getOrCreateLessonAudio('lesson-3')).rejects.toMatchObject({ code: 'generation-failed', retryable: false });
+  await expect(storage.getOrCreateLessonAudio('lesson-4')).rejects.toMatchObject({ code: 'upload-failed', retryable: false });
 });

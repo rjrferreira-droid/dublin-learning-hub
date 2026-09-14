@@ -21,7 +21,8 @@ Commit a4e9869fd5685f02acb9401cae46d0066d1b01bc:
 
 Current orchestration changes:
 - Local: 365 Node contracts, 43 handler integrations, production build passed.
-- Added five PostgreSQL-plus-orchestration scenarios with fictional provider/storage, including lost database acknowledgements. Their authoritative result is the atomic workflow on the current commit; do not infer success from the earlier SQL-only run.
+- Commit 12a69fd8ca53bf20863b65f6e32fd00d708d2151: atomic CI https://github.com/rjrferreira-droid/dublin-learning-hub/actions/runs/34862475821 passed all 12 SQL scenarios and five PostgreSQL-plus-orchestration scenarios with fictional provider/storage, including lost database acknowledgements.
+- Full CI on that commit caught one outdated browser-suite service expectation (retryable=true after uncertain provider/storage failure); 109 other browser cases passed. The follow-up aligns that expectation with the reviewed non-retryable policy. Use the follow-up commit CI for complete browser acceptance.
 - Full browser regression is the Professor workflow on the current commit. No hosted authenticated P1 provider flow is claimed.
 
 ## Remaining activation requirements
