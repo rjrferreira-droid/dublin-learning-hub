@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
-import {LESSON_MODULES,lessonModuleFor,checkLocalChoice} from '../src/learning/lessonModules.ts';
+import {LESSON_MODULES,lessonModuleFor} from '../src/learning/lessonModules.ts';
+import {checkLocalChoice} from '../src/learning/checkLocalChoice.ts';
 import {STUDY_PACKS} from '../src/learning/teachingPacks.ts';
 const modules=Object.values(LESSON_MODULES);
 test('three written foundations share the same known lessons as their companions',()=>{assert.equal(modules.length,3);for(const m of modules){assert.equal(m.lessonId,STUDY_PACKS[m.track].lessonId);assert.equal(lessonModuleFor(m.track,m.lessonId),m);assert.equal(lessonModuleFor(m.track,'unrelated'),null);}});
