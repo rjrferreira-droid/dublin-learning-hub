@@ -1,8 +1,8 @@
-import type {LessonModule,LessonPracticeExercise,LessonSource,CheckpointQuestion} from './lessonModules';
-import {isP1Slug,type P1Track} from './p1RuntimeRegistry';
-import finance from '../../quality/drafts/p1-finance-revenue.json';
-import payroll from '../../quality/drafts/p1-payroll-submission.json';
-import english from '../../quality/drafts/p1-english-meetings.json';
+import type {LessonModule,LessonPracticeExercise,LessonSource,CheckpointQuestion} from './lessonModules.ts';
+import {isP1Slug,type P1Track} from './p1RuntimeRegistry.ts';
+import finance from '../../quality/drafts/p1-finance-revenue.json' with {type:'json'};
+import payroll from '../../quality/drafts/p1-payroll-submission.json' with {type:'json'};
+import english from '../../quality/drafts/p1-english-meetings.json' with {type:'json'};
 
 const label=(id:string)=>id.split('-').map(x=>x.charAt(0).toUpperCase()+x.slice(1)).join(' ');
 const sources=(rows:readonly {id:string;url:string;supports:string}[],reviewedOn:string):LessonSource[]=>rows.map(s=>({id:s.id,label:label(s.id),url:s.url,supports:s.supports,reviewedOn}));
