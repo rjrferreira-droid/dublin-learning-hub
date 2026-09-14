@@ -65,7 +65,7 @@ test('candidate source has no provider dispatch or network primitive and remains
  const source=fs.readFileSync('quality/candidates/p1-professor-start-flow.ts','utf8');
  for(const banned of ['LiveKitAPI','AccessToken','agentDispatch','fetch(','createClient(','supabase.from','functions.invoke'])assert.ok(!source.includes(banned),banned);
  assert.ok(source.includes('startProfessorAtomically'));assert.ok(source.includes('CANDIDATE ONLY'));
- const api=fs.readFileSync('api/livekit-token.ts','utf8');assert.ok(!api.includes('p1-professor-start-flow'));assert.ok(!api.includes('p1-professor-handoff'));
+ const api=fs.readFileSync('api/livekit-token.ts','utf8');assert.ok(!api.includes('p1-professor-start-flow'));assert.ok(api.includes('resolvePreviewP1Lesson'));
 });
 test('pure preparation itself makes no RPC and fixes course mode deterministically',()=>{
  const prepared=prepareP1ProfessorStart(input('payroll'));assert.equal(prepared.startInput.mode,'chapter_conversation');assert.equal(prepared.startInput.lessonId,ids.payroll);assert.equal(prepared.sessionPreparation.goal,'practice');

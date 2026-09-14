@@ -3,6 +3,9 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 import {parseReservationExposure} from '../_shared/reservation-exposure.ts';
 import {premiumAudioBudgetDecision} from '../_shared/premium-audio-budget.ts';
 
+import {p1AudioIdentity,p1PremiumAudioGate} from '../_shared/p1-premium-audio-gate.ts';
+import {p1SlugFor} from '../../../src/learning/p1RuntimeRegistry.ts';
+
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
 const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...cors,"Content-Type":"application/json","Cache-Control":"no-store"}});
 
@@ -30,17 +33,29 @@ Deno.serve(async(req:Request)=>{
   };
 
   const {data:profile}=await admin.from("profiles").select("learner_track").eq("id",user.id).single();
-  const {data:lesson}=await admin.from("lessons").select("id,module_id,title,manager_commentary_pt,technical_brief_pt,content_version").eq("id",lessonId).eq("is_published",true).single();
-  if(!profile||!lesson)return json({error:"lesson_not_found"},404);
-  const {data:mod}=await admin.from("modules").select("course_id").eq("id",lesson.module_id).single();
-  const {data:course}=mod?await admin.from("courses").select("learner_track").eq("id",mod.course_id).single():{data:null};
-  if(!course||course.learner_track!==profile.learner_track)return json({error:"forbidden"},403);
+  const {data:lesson}=await admin.from("lessons").select("id,module_id,slug,is_published,title,manager_commentary_pt,technical_brief_pt,content_version").eq("id",lessonId).eq("is_published",true).single();
+  if(!profile||!lesson||lesson.id!==lessonId||lesson.is_published!==true)return json({error:"lesson_not_found"},404);
+  const {data:mod}=await admin.from("modules").select("id,course_id,is_published").eq("id",lesson.module_id).eq("is_published",true).single();
+  const {data:course}=mod?await admin.from("courses").select("id,learner_track,is_active").eq("id",mod.course_id).eq("is_active",true).single():{data:null};
+  if(!course||mod?.id!==lesson.module_id||mod?.is_published!==true||course.id!==mod.course_id||course.is_active!==true)return json({error:"forbidden"},403);
+  const isP1=[p1SlugFor('finance'),p1SlugFor('payroll'),p1SlugFor('english')].includes(lesson.slug);
+  const p1Input={profileTrack:profile.learner_track,requestedTrack:course.learner_track,requestedLessonId:lessonId,resolvedLesson:{id:lesson.id,slug:lesson.slug,learnerTrack:course.learner_track,isPublished:lesson.is_published,contentVersion:lesson.content_version}};
+  if(isP1){
+    // Deliberately unset in the real backend. Requires a separately reviewed isolated backend deployment.
+    if(Deno.env.get('P1_AUDIO_RUNTIME_STAGE')!=='isolated-preview')return json({error:'p1_audio_runtime_unavailable'},403);
+    try{p1AudioIdentity(p1Input);}catch{return json({error:'forbidden'},403);}
+  }else{
+    const goldenIds:Record<string,string>={rafael_finance:'b3639582-3c32-4147-a4b3-84237d11a66e',viviane_payroll:'6ffda415-3b18-46ab-afaa-414f81a7eb31'};
+    if(course.learner_track!==profile.learner_track||goldenIds[course.learner_track]!==lessonId)return json({error:"forbidden"},403);
+  }
 
   const version=Number(lesson.content_version??1);
+  if(!Number.isSafeInteger(version)||version<1||version>100000)return json({error:'audio_source_changed'},409);
   const expectedPath=`lessons/${lessonId}/commentary-v${version}.mp3`;
   const folder=`lessons/${lessonId}`;
   const fileName=`commentary-v${version}.mp3`;
   const {data:existing}=await admin.from("audio_assets").select("id,storage_path,transcript_pt,voice,generated_at").eq("lesson_id",lessonId).eq("audio_type","commentary").eq("storage_path",expectedPath).maybeSingle();
+  if(existing?.storage_path && existing.storage_path!==expectedPath)return json({error:"audio_source_changed"},409);
   if(existing?.storage_path){
     // New receipt columns are queried separately so cached playback remains backwards-compatible before the reviewed migration exists.
     const {data:receiptMeta}=await admin.from("audio_assets").select("generation_request_id,estimated_cost_usd,transcript_pt").eq("id",existing.id).maybeSingle();
@@ -84,6 +99,12 @@ Deno.serve(async(req:Request)=>{
     return json({error:decision.reason,committed_usd:decision.reason==='global_ai_budget_reached'?decision.globalCommittedUsd:decision.premiumBucketSpentUsd,reservation_usd:Number(conservativeReservationUsd.toFixed(6))},429);
   }
 
+  if(isP1){
+    try{
+      const gate=p1PremiumAudioGate({...p1Input,scriptWords:words,usageRows:usageResult.data??[],exposure,aiHardCapUsd:budgetResult.data.ai_hard_cap_usd,premiumAudioCapUsd:budgetResult.data.premium_audio_cap_usd});
+      if(gate.action!=='claim-before-provider')return json({error:gate.action==='blocked'?gate.reason:'audio_source_changed'},409);
+    }catch{return json({error:'v2_budget_guard_unavailable'},503);}
+  }
   const claimToken=crypto.randomUUID();
   const claimResult=await admin.rpc("claim_premium_audio_generation_v1",{p_lesson_id:lessonId,p_content_version:version,p_audio_type:"commentary",p_claim_token:claimToken,p_lease_seconds:180});
   if(claimResult.error)return json({error:"audio_generation_claim_unavailable"},503);
@@ -97,6 +118,7 @@ Deno.serve(async(req:Request)=>{
   try{
     const {data:existingAfterClaim,error:cacheReadError}=await admin.from("audio_assets").select("id,storage_path,voice,generated_at,generation_request_id,estimated_cost_usd,transcript_pt").eq("lesson_id",lessonId).eq("audio_type","commentary").eq("storage_path",expectedPath).maybeSingle();
     if(cacheReadError)return json({error:"audio_cache_unavailable"},503);
+    if(existingAfterClaim?.storage_path && existingAfterClaim.storage_path!==expectedPath)return json({error:"audio_source_changed"},409);
     if(existingAfterClaim?.storage_path){
       if(existingAfterClaim.generation_request_id&&existingAfterClaim.estimated_cost_usd!=null){
         const cost=Number(existingAfterClaim.estimated_cost_usd),chars=String(existingAfterClaim.transcript_pt??script).length;
@@ -131,11 +153,11 @@ Deno.serve(async(req:Request)=>{
       return json({audio_url:pub.publicUrl,cached:true,voice:"marin",generated_at:stored.updated_at??stored.created_at??null});
     }
 
-    const {data:latestLesson,error:latestLessonError}=await admin.from("lessons").select("content_version").eq("id",lessonId).eq("is_published",true).maybeSingle();
+    const {data:latestLesson,error:latestLessonError}=await admin.from("lessons").select("id,slug,module_id,is_published,content_version").eq("id",lessonId).eq("is_published",true).maybeSingle();
     if(latestLessonError||!latestLesson)return json({error:"audio_source_recheck_failed"},503);
-    if(Number(latestLesson.content_version??1)!==version)return json({error:"audio_source_changed"},409);
+    if(latestLesson.id!==lessonId||latestLesson.slug!==lesson.slug||latestLesson.module_id!==lesson.module_id||latestLesson.is_published!==true||Number(latestLesson.content_version??1)!==version)return json({error:"audio_source_changed"},409);
 
-    const speech=await fetch("https://api.openai.com/v1/audio/speech",{method:"POST",headers:{"Authorization":`Bearer ${openaiKey}`,"Content-Type":"application/json"},body:JSON.stringify({model:"gpt-4o-mini-tts",voice:"marin",input:script,instructions:"Speak in natural Brazilian Portuguese with a calm, confident expert-professor tone. Keep English finance, accounting, payroll and legal terms in natural English pronunciation. Use clear pacing and subtle emphasis on key concepts. Do not sound like an advertisement.",response_format:"mp3",speed:0.98})});
+    const speech=await fetch("https://api.openai.com/v1/audio/speech",{method:"POST",headers:{"Authorization":`Bearer ${openaiKey}`,"Content-Type":"application/json"},body:JSON.stringify({model:"gpt-4o-mini-tts",voice:"marin",input:script,instructions:course.learner_track==='english_academy'?"Speak in clear natural English as a patient teacher. Keep the learner task and examples distinct. Do not invent evidence about the learner.":"Speak in natural Brazilian Portuguese with a calm, confident expert-professor tone. Keep English finance, accounting, payroll and legal terms in natural English pronunciation. Use clear pacing and subtle emphasis on key concepts. Do not sound like an advertisement.",response_format:"mp3",speed:0.98})});
     if(!speech.ok){console.error("TTS failed",speech.status);await speech.body?.cancel().catch(()=>undefined);return json({error:"tts_failed",status:speech.status},502)}
     const bytes=new Uint8Array(await speech.arrayBuffer());
     const usageRequestId=`premium-audio:${lessonId}:v${version}:${claimToken}`;

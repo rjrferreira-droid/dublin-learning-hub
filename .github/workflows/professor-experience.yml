@@ -25,8 +25,8 @@ jobs:
           node-version: '24'
       - name: Preserve runtime, deployment configuration, database and identity boundaries
         run: |
-          git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- professor-agent ':!professor-agent/src/evaluation.ts' ':!professor-agent/src/evaluationEvidence.ts' ':!professor-agent/src/callbackDelivery.ts' ':!professor-agent/src/index.ts' supabase ':!supabase/functions/professor-session-receipt/**' ':!supabase/functions/_shared/session-receipt-contract.ts' ':!supabase/functions/premium-lesson-audio/index.ts' ':!supabase/functions/_shared/premium-audio-budget.ts' src/auth src/components/AuthGate.tsx src/components/LittleEnglish.tsx src/little-english.css src/professor/voiceState.ts
-          git diff --exit-code 5d8e13f9751e9f87c0138b2c9031d08ccf29ff66 HEAD -- api server .github/workflows/livekit-professor-deploy.yml .github/workflows/livekit-reviewed-worker-update.yml
+          git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- professor-agent ':!professor-agent/src/evaluation.ts' ':!professor-agent/src/evaluationEvidence.ts' ':!professor-agent/src/callbackDelivery.ts' ':!professor-agent/src/index.ts' supabase ':!supabase/functions/professor-session-receipt/**' ':!supabase/functions/_shared/session-receipt-contract.ts' ':!supabase/functions/premium-lesson-audio/index.ts' ':!supabase/functions/_shared/premium-audio-budget.ts' ':!supabase/functions/_shared/p1-premium-audio-gate.ts' src/auth src/components/AuthGate.tsx src/components/LittleEnglish.tsx src/little-english.css src/professor/voiceState.ts
+          git diff --exit-code 5d8e13f9751e9f87c0138b2c9031d08ccf29ff66 HEAD -- api ':!api/livekit-token.ts' server ':!server/p1-preview-runtime.ts' ':!server/p1-professor-handoff.ts' ':!server/p1-written-lesson-context.ts' .github/workflows/livekit-professor-deploy.yml .github/workflows/livekit-reviewed-worker-update.yml
           git diff --exit-code fd58ac40a8c9c4fe54782b9b4d9be6aa32aad7e4 HEAD -- .github/workflows/livekit-evaluator-reviewed-update.yml
       - name: Compile committed application and worker candidates with locked dependencies
         run: npm ci && npm run build && npm --prefix professor-agent ci && npm --prefix professor-agent run typecheck
@@ -43,8 +43,16 @@ jobs:
           npx --no-install esbuild api/livekit-token.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-api.mjs
           npx --no-install esbuild professor-agent/src/evaluation.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-evaluator.mjs
           node scripts/bundle-client-boundaries.mjs
+          node scripts/bundle-p1-audio-runtime.mjs
       - name: Real request assembly with fictional services only
-        run: node --experimental-test-module-mocks --test tests/written-bridge.integration.mjs tests/workspace-client.integration.mjs tests/evaluator-evidence.integration.mjs
+        run: node --experimental-test-module-mocks --test tests/written-bridge.integration.mjs tests/workspace-client.integration.mjs tests/evaluator-evidence.integration.mjs tests/p1-preview-runtime.integration.mjs tests/p1-audio-runtime.integration.mjs
+      - name: Same P1 request assembly against the exact published evaluator source, without deploying it
+        run: |
+          mkdir -p .test-runtime/published-worker
+          git show 07d770b53a4f3d6b77c8316541ea8dff6dcf7faf:professor-agent/src/evaluation.ts > .test-runtime/published-worker/evaluation.ts
+          git show 07d770b53a4f3d6b77c8316541ea8dff6dcf7faf:professor-agent/src/evaluationEvidence.ts > .test-runtime/published-worker/evaluationEvidence.ts
+          npx --no-install esbuild .test-runtime/published-worker/evaluation.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/published-evaluator.mjs
+          P1_EVALUATOR_BUNDLE=published node --experimental-test-module-mocks --test tests/p1-preview-runtime.integration.mjs
       - run: npx playwright install --with-deps chromium
       - name: Full UI regression including stored examples, confidence distinction and escaped markup
         run: npx playwright test --grep-invert 'authenticated Learning Hub shell' --retries=0
@@ -59,6 +67,7 @@ jobs:
           name: evaluation-evidence-preview
           path: |
             test-results/**/evidence-*.png
+            test-results/**/p1-*.png
             quality-results/bundle-metrics.json
           retention-days: 7
           if-no-files-found: error

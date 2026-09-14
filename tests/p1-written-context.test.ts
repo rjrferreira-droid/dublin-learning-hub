@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {buildP1WrittenLessonContext,P1_WRITTEN_CONTEXT_VERSION} from '../quality/candidates/p1-written-lesson-context.ts';
+import {buildP1WrittenLessonContext,P1_WRITTEN_CONTEXT_VERSION} from '../server/p1-written-lesson-context.ts';
 import {p1SlugFor} from '../src/learning/p1RuntimeRegistry.ts';
 
 const ids={
@@ -44,12 +44,12 @@ test('unknown or cross-track slug never silently substitutes another reviewed le
  assert.equal(buildP1WrittenLessonContext({profileTrack:'rafael_finance',requestedTrack:'rafael_finance',requestedLessonId:ids.finance,resolvedLessonId:ids.finance,resolvedLessonSlug:p1SlugFor('payroll')}),null);
 });
 
-test('P1 candidate stays outside runtime and contains no provider, database mutation, reservation or live dispatch primitive',async()=>{
+test('P1 server reference contains no provider, database mutation, reservation or live dispatch primitive',async()=>{
  const fs=await import('node:fs');
- const source=fs.readFileSync('quality/candidates/p1-written-lesson-context.ts','utf8');
+ const source=fs.readFileSync('server/p1-written-lesson-context.ts','utf8');
  // createHash(...).update(...) is intentionally allowed; it is local hashing, not a database mutation.
  for(const banned of ['createClient(','supabase.from(','db.from(','.insert(','.upsert(','.delete(','.rpc(','fetch(','LiveKitAPI','AccessToken','startProfessorAtomically','agentDispatch'])assert.ok(!source.includes(banned),banned);
  assert.ok(source.includes("createHash('sha256').update(encoded)"));
- assert.ok(source.includes('CANDIDATE ONLY'));
+
  assert.ok(source.includes("source:'server-authored-reviewed-p1'"));
 });

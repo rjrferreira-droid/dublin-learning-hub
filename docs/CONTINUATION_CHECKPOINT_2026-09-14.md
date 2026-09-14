@@ -33,3 +33,11 @@ Any Supabase write/deploy, another LiveKit publication, meaningful paid acceptan
 ## Working preference
 
 Continue reversible, in-scope development and fictional/read-only testing without routine micro-approval. Keep user-facing summaries short. Do not claim real voice quality, semantic evaluator fairness, provider invoice accuracy or deployed P1 interactivity until those are directly evidenced.
+
+## Subsequent Work continuation: P1 Preview runtime
+
+The earlier statement that P1 handoff/context is not imported by the token API is now superseded by `docs/P1_PREVIEW_RUNTIME_2026-09-14.md`. Exact authenticated P1 resolution is integrated in the feature Preview handler, behind Preview + exact-branch checks. The same authored context was exercised through the handler and both the candidate and exact published evaluator sources, using fictional providers only. Client identity acknowledgement now gates remote-room/microphone access.
+
+Premium Audio's shared P1 gate is integrated into its **undeployed** Edge source with a default-closed isolated stage. The UI still blocks P1 interactive providers; the catalog/browser tests do not insert any real lessons. Before paid activation, resolve atomic cross-lesson Audio budget admission and uncertain-generation recovery as well as the existing publication/deployment gates. Do not treat per-lesson dedup as an atomic global spend cap.
+
+Use the current feature commit's CI run for final browser/build evidence; the linked runtime document distinguishes local results from remote CI. The LiveKit worker remains `nb67ioJmoKBN`, with no new publication.

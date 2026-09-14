@@ -1,3 +1,4 @@
+import { resolvePreviewP1Lesson } from '../server/p1-preview-runtime.js';
 import {parseWorkshopSelection,selectedWorkshop} from '../src/learning/workshopSelection.js';
 import { voiceValidationPlan } from '../server/voice-validation.js';
 import {parseSessionPreparation,teachingApproachBrief} from '../src/learning/sessionPreparation.js';
@@ -310,6 +311,29 @@ export default async function handler(req: any, res: any) {
   catch { return send(res,403,{error:'workshop_track_mismatch'}); }
 
   let lessonContext: LessonContext;
+  let persistenceLessonId: string | null;
+  let writtenLesson: ReturnType<typeof buildWrittenLessonContext> | {
+    context: LessonContext; descriptor: Awaited<ReturnType<typeof resolvePreviewP1Lesson>>['teachingContent'];
+  };
+  const goldenId = LESSON_MODULES[profileForTrack(track)].lessonId;
+  const isGoldenRequest = lessonId === goldenId || (track === 'english_academy' && lessonId === 'english-golden-lesson');
+  if (!isGoldenRequest) {
+    // Unknown/next-lesson IDs must never flow through the English Golden-Lesson alias resolver.
+    if (workshopSelection) return send(res,409,{error:'workshop_lesson_mismatch'});
+    try {
+      const handoff = await resolvePreviewP1Lesson(db, {
+        profileTrack: learnerProfile.learner_track, requestedTrack: track, requestedLessonId: lessonId,
+        approachBrief: teachingApproachBrief(sessionPreparation,profileForTrack(track)),
+      }, process.env);
+      persistenceLessonId = handoff.lessonId;
+      lessonContext = handoff.context;
+      writtenLesson = {context: handoff.context, descriptor: handoff.teachingContent};
+    } catch (cause) {
+      const code = cause instanceof Error && cause.message === 'p1_preview_runtime_unavailable'
+        ? 'p1_preview_runtime_unavailable' : 'professor_lesson_forbidden';
+      return send(res,403,{error:code});
+    }
+  } else {
   if (requiresPublishedTechnicalLesson(track)) {
     const technicalLesson = await publishedTechnicalLesson(supabase as UntypedSupabaseClient, lessonId);
     if (!technicalLesson || technicalLesson.track !== track) return send(res, 403, { error: 'professor_lesson_forbidden' });
@@ -318,12 +342,11 @@ export default async function handler(req: any, res: any) {
     lessonContext = englishGoldenLessonContext();
   }
 
-  const persistenceLessonId = await resolvePersistenceLessonId(db, track, lessonId);
+  persistenceLessonId = await resolvePersistenceLessonId(db, track, lessonId);
   if (!persistenceLessonId) return send(res, 503, { error: 'professor_session_persistence_unavailable' });
 
   // Choose authored content only after authenticated track/lesson resolution and BEFORE reserving.
   // Browser-supplied lessonContext, answers and drafts are intentionally ignored.
-  let writtenLesson: ReturnType<typeof buildWrittenLessonContext>;
   try {
     writtenLesson = buildWrittenLessonContext({
       profileTrack: learnerProfile.learner_track, requestedTrack: track,
@@ -336,6 +359,8 @@ export default async function handler(req: any, res: any) {
   } catch (cause) {
     if(cause instanceof Error && cause.message==='workshop_lesson_mismatch')return send(res,409,{error:'workshop_lesson_mismatch'});
     return send(res, 503, {error:'written_lesson_context_unavailable'});
+  }
+
   }
 
 

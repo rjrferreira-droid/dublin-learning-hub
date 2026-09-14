@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import {resolveP1ProfessorHandoff} from '../quality/candidates/p1-professor-handoff.ts';
+import {resolveP1ProfessorHandoff} from '../server/p1-professor-handoff.ts';
 import {p1SlugFor} from '../src/learning/p1RuntimeRegistry.ts';
 
 const ids={finance:'11111111-1111-4111-8111-111111111111',payroll:'22222222-2222-4222-8222-222222222222',english:'33333333-3333-4333-8333-333333333333'};
@@ -31,8 +31,8 @@ test('unpublished, cross-track or malformed server rows fail before a reference 
 });
 
 test('candidate resolver is side-effect free and documents authenticated server-read responsibility',()=>{
- const source=fs.readFileSync('quality/candidates/p1-professor-handoff.ts','utf8');
+ const source=fs.readFileSync('server/p1-professor-handoff.ts','utf8');
  for(const banned of ['createClient(','supabase.from(','db.from(','.insert(','.upsert(','.delete(','.rpc(','fetch(','LiveKitAPI','AccessToken','startProfessorAtomically','agentDispatch'])assert.ok(!source.includes(banned),banned);
  assert.match(source,/authenticated server-side DB reads/i);
- assert.match(source,/CANDIDATE ONLY/);
+
 });

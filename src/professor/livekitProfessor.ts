@@ -1,3 +1,4 @@
+import {p1SlugFor} from '../learning/p1RuntimeRegistry';
 import {sameWorkshopSelection} from '../learning/workshopSelection';
 import { Room, RoomEvent, type RemoteAudioTrack, Track } from 'livekit-client';
 import { supabase } from '../services/supabase';
@@ -37,6 +38,12 @@ async function requestProfessorToken(request:TutorSessionRequest,signal?:AbortSi
  if(typeof body.sessionId!=='string'||!Number.isInteger(body.maxSessionSeconds)||body.maxSessionSeconds<60||body.maxSessionSeconds>1200||typeof body.roomName!=='string'||typeof body.validationMode!=='boolean')throw new Error('Professor session confirmation is incomplete. No microphone was opened.');
  if(body.roomName.startsWith('validation:')!==body.validationMode||(request.validationMode===true&&!body.validationMode))throw new Error('Validation protection could not be confirmed. No microphone was opened.');
  if(request.sessionPreparation && (!body.sessionPreparation || !sameSessionPreparation(request.sessionPreparation,body.sessionPreparation)))throw new Error('Session preferences could not be confirmed. No microphone was opened.');
+ const expectedProfile=request.track==='rafael_finance'?'finance':request.track==='viviane_payroll'?'payroll':'english';
+ const expectedLessonId=request.track==='english_academy'&&request.lessonId==='english-golden-lesson'?'f455a740-f50f-4eb7-95a7-9e4129ca4a68':request.lessonId;
+ if(body.lessonId!==expectedLessonId||body.mode!==request.mode||body.professorProfile!==expectedProfile)throw new Error('Lesson identity could not be confirmed. No microphone was opened.');
+ const goldenIds={finance:'b3639582-3c32-4147-a4b3-84237d11a66e',payroll:'6ffda415-3b18-46ab-afaa-414f81a7eb31',english:'f455a740-f50f-4eb7-95a7-9e4129ca4a68'};
+ if(expectedLessonId!==goldenIds[expectedProfile] && (body.teachingContent?.source!=='server-authored-reviewed-p1'||body.teachingContent?.lessonSlug!==p1SlugFor(expectedProfile)||typeof body.teachingContent?.sha256!=='string'||! /^[0-9a-f]{64}$/.test(body.teachingContent.sha256)))throw new Error('P1 lesson reference could not be confirmed. No microphone was opened.');
+ if(body.teachingContent && (body.teachingContent.lessonId!==expectedLessonId||body.teachingContent.track!==expectedProfile))throw new Error('Lesson reference could not be confirmed. No microphone was opened.');
  if(!sameWorkshopSelection(request.workshopSelection,body.workshopSelection))throw new Error('Workshop reference could not be confirmed. No microphone was opened.');
  return body as ProfessorTokenResponse;
 }
