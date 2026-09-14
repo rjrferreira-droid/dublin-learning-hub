@@ -1,8 +1,10 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import {parseReservationExposure} from '../_shared/reservation-exposure.ts';
+import {premiumAudioBudgetDecision} from '../_shared/premium-audio-budget.ts';
 
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
-const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...cors,"Content-Type":"application/json"}});
+const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...cors,"Content-Type":"application/json","Cache-Control":"no-store"}});
 
 Deno.serve(async(req:Request)=>{
   if(req.method==="OPTIONS")return new Response("ok",{headers:cors});
@@ -48,37 +50,31 @@ Deno.serve(async(req:Request)=>{
   const estimatedCost=Math.max(0.01,estimatedMinutes*0.015*1.30);
   const conservativeReservationUsd=Math.max(0.10,estimatedCost*2);
 
-  const {data:budgetSettings}=await admin.from("learning_hub_budget_settings").select("ai_hard_cap_usd,premium_audio_cap_usd").eq("id",1).maybeSingle();
-  if(!budgetSettings)return json({error:"v2_budget_guard_unavailable"},503);
-
   const now=new Date();
   const monthStartDate=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),1));
   const monthStart=monthStartDate.toISOString();
   const monthStartDay=monthStart.slice(0,10);
-  const [{data:usageRows},{data:professorRows}]=await Promise.all([
+  const [budgetResult,usageResult,professorResult]=await Promise.all([
+    admin.from("learning_hub_budget_settings").select("ai_hard_cap_usd,premium_audio_cap_usd").eq("id",1).maybeSingle(),
     admin.from("ai_usage_log").select("feature,estimated_cost_usd").gte("created_at",monthStart),
-    admin.from("professor_budget_reservations").select("reserved_usd").eq("month_start",monthStartDay),
+    admin.rpc("professor_reservation_exposure_v2"),
   ]);
-
-  const loggedAi=(usageRows??[]).reduce((s,r)=>s+Number(r.estimated_cost_usd??0),0);
-  const audioSpent=(usageRows??[]).filter(r=>r.feature==="lesson_audio").reduce((s,r)=>s+Number(r.estimated_cost_usd??0),0);
-  const professorReserved=(professorRows??[]).reduce((s,r)=>s+Number(r.reserved_usd??0),0);
-  const globalCommitted=loggedAi+professorReserved;
-  const globalCap=Number(budgetSettings.ai_hard_cap_usd??80);
-  const audioCap=Number(budgetSettings.premium_audio_cap_usd??15);
-
-  if(globalCommitted+conservativeReservationUsd>globalCap){
-    return json({error:"global_ai_budget_reached",committed_usd:Number(globalCommitted.toFixed(4)),monthly_budget_usd:globalCap},429);
-  }
-  if(audioSpent+conservativeReservationUsd>audioCap){
-    return json({error:"premium_audio_budget_reached",spent_usd:Number(audioSpent.toFixed(4)),monthly_budget_usd:audioCap},429);
+  if(budgetResult.error||!budgetResult.data||usageResult.error||professorResult.error)return json({error:"v2_budget_guard_unavailable"},503);
+  let exposure;
+  try{exposure=parseReservationExposure(professorResult.data,monthStartDay);}catch{return json({error:"v2_budget_guard_unavailable"},503);}
+  let decision;
+  try{
+    decision=premiumAudioBudgetDecision({usageRows:usageResult.data??[],exposure,aiHardCapUsd:budgetResult.data.ai_hard_cap_usd,premiumAudioCapUsd:budgetResult.data.premium_audio_cap_usd,reservationUsd:conservativeReservationUsd});
+  }catch{return json({error:"v2_budget_guard_unavailable"},503);}
+  if(!decision.allowed){
+    return json({error:decision.reason,committed_usd:decision.reason==='global_ai_budget_reached'?decision.globalCommittedUsd:decision.premiumBucketSpentUsd,reservation_usd:Number(conservativeReservationUsd.toFixed(6))},429);
   }
 
   const speech=await fetch("https://api.openai.com/v1/audio/speech",{method:"POST",headers:{"Authorization":`Bearer ${openaiKey}`,"Content-Type":"application/json"},body:JSON.stringify({model:"gpt-4o-mini-tts",voice:"marin",input:script,instructions:"Speak in natural Brazilian Portuguese with a calm, confident expert-professor tone. Keep English finance, accounting, payroll and legal terms in natural English pronunciation. Use clear pacing and subtle emphasis on key concepts. Do not sound like an advertisement.",response_format:"mp3",speed:0.98})});
-  if(!speech.ok){const detail=await speech.text();console.error("TTS failed",speech.status,detail);return json({error:"tts_failed",status:speech.status},502)}
+  if(!speech.ok){console.error("TTS failed",speech.status);await speech.body?.cancel().catch(()=>undefined);return json({error:"tts_failed",status:speech.status},502)}
   const bytes=new Uint8Array(await speech.arrayBuffer());
   const {error:uploadError}=await admin.storage.from("lesson-audio").upload(expectedPath,bytes,{contentType:"audio/mpeg",upsert:true,cacheControl:"31536000"});
-  if(uploadError){console.error(uploadError);return json({error:"audio_upload_failed"},500)}
+  if(uploadError){console.error("Premium Audio storage upload failed");return json({error:"audio_upload_failed"},500)}
 
   await admin.from("audio_assets").delete().eq("lesson_id",lessonId).eq("audio_type","commentary");
   await admin.from("audio_assets").insert({lesson_id:lessonId,audio_type:"commentary",storage_path:expectedPath,transcript_pt:script,voice:"marin",generated_at:new Date().toISOString()});
@@ -86,5 +82,5 @@ Deno.serve(async(req:Request)=>{
 
   await admin.from("ai_usage_log").insert({user_id:user.id,feature:"lesson_audio",model:"gpt-4o-mini-tts",characters:script.length,estimated_cost_usd:Number(estimatedCost.toFixed(6))});
 
-  return json({audio_url:pub.publicUrl,cached:false,voice:"marin",estimated_cost_usd:Number(estimatedCost.toFixed(4)),monthly_audio_cap_usd:audioCap,global_ai_cap_usd:globalCap});
+  return json({audio_url:pub.publicUrl,cached:false,voice:"marin",estimated_cost_usd:Number(estimatedCost.toFixed(4)),cost_basis:"application_estimate_not_provider_invoice",monthly_audio_cap_usd:Number(budgetResult.data.premium_audio_cap_usd),global_ai_cap_usd:Number(budgetResult.data.ai_hard_cap_usd)});
 });
