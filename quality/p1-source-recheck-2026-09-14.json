@@ -1,0 +1,56 @@
+{
+  "version":"p1-source-recheck-1",
+  "checkedOn":"2026-09-14",
+  "status":"official_sources_rechecked_no_publication",
+  "scope":"Editorial source verification only. No Supabase write, lesson publication, learner update, model call or audio generation.",
+  "tracks":{
+    "payroll":{
+      "draft":"quality/drafts/p1-payroll-submission.json",
+      "result":"core claims supported by current Revenue guidance",
+      "verifiedClaims":[
+        "2026 RPNs are available from early December 2025 and update in real time from 1 January 2026.",
+        "A 2025 RPN must not be used for payments made in 2026; first 2026 payroll should request the relevant 2026 RPNs and use emergency basis if no RPN is available.",
+        "The 2025 Employment ID carries forward to the first 2026 RPN and should not be changed merely because the tax year changes.",
+        "Employment Identifier distinguishes separate employments/periods with the same employer.",
+        "Pay and deductions must be reported on or before pay date; for bank transfer the pay-date rule follows the scheduled funds-available date subject to Revenue's non-bank-day guidance.",
+        "Incorrect payroll-submission details can be corrected via payroll software or ROS; corrected submissions replace incorrect information using the supported correction trail."
+      ],
+      "officialSources":[
+        "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/transitional-arrangements/requesting-rpn.aspx",
+        "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/transitional-arrangements/payroll-submissions.aspx",
+        "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/employment-identifier.aspx",
+        "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/pay-date.aspx",
+        "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/corrections.aspx"
+      ],
+      "publicationNote":"Recheck again immediately before publication because payroll guidance is date-sensitive; do not embed current tax rates into this lesson."
+    },
+    "finance":{
+      "draft":"quality/drafts/p1-finance-revenue.json",
+      "result":"core IFRS 15 structure supported by current IFRS Foundation material",
+      "verifiedClaims":[
+        "IFRS 15 uses the five-step revenue model: identify contract, identify performance obligations, determine transaction price, allocate price, recognise revenue when the obligation is satisfied.",
+        "A performance obligation can be satisfied at a point in time or over time, based on the applicable control/paragraph 35 criteria.",
+        "Distinct promised goods or services drive performance-obligation identification rather than invoice timing alone."
+      ],
+      "officialSources":[
+        "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-15-revenue-from-contracts-with-customers/",
+        "https://www.ifrs.org/content/dam/ifrs/publications/pdf-standards/english/2024/issued/part-a/ifrs-15-revenue-from-contracts-with-customers.pdf?bypass=on"
+      ],
+      "publicationNote":"Keep fictional facts and contract assumptions explicit; do not turn a worked example into a universal classification rule."
+    },
+    "english":{
+      "draft":"quality/drafts/p1-english-meetings.json",
+      "result":"meeting-clarification teaching objective remains supported by British Council material",
+      "verifiedClaims":[
+        "Effective meetings should clarify, check understanding and record decisions/action points rather than assume shared understanding.",
+        "Clarification and summarising are particularly relevant when the meeting language is not every participant's first language."
+      ],
+      "officialSources":[
+        "https://learnenglish.britishcouncil.org/comment/221157",
+        "https://learnenglish.britishcouncil.org/sites/podcasts/files/LearnEnglish-Business-magazine-Managingmeetings.pdf"
+      ],
+      "publicationNote":"Teach multiple natural formulations; do not convert accent, a request for clarification or a valid regional variant into a deficit."
+    }
+  },
+  "authorization":"Source verification is not authorization to publish these lessons or to write to Supabase."
+}
