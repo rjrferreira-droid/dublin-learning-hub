@@ -32,7 +32,7 @@ jobs:
         run: npm ci && npm run build && npm --prefix professor-agent ci && npm --prefix professor-agent run typecheck
       - name: Measure initial JavaScript against the unchanged baseline
         run: |
-          git worktree add --detach "$RUNNER_TEMP/lh-payload-baseline" d3818cc656f0afa820eb7c6675a30a5dbdd7a
+          git worktree add --detach "$RUNNER_TEMP/lh-payload-baseline" d3818cc656f0afa820922eb7c6675a30a5dbdd7a
           ln -s "$GITHUB_WORKSPACE/node_modules" "$RUNNER_TEMP/lh-payload-baseline/node_modules"
           (cd "$RUNNER_TEMP/lh-payload-baseline" && "$GITHUB_WORKSPACE/node_modules/.bin/vite" build --manifest --outDir "$RUNNER_TEMP/lh-baseline-dist")
           node scripts/bundle-metrics.mjs "$RUNNER_TEMP/lh-baseline-dist"
@@ -43,7 +43,7 @@ jobs:
           npx --no-install esbuild api/livekit-token.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-api.mjs
           npx --no-install esbuild professor-agent/src/evaluation.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-evaluator.mjs
           node scripts/bundle-client-boundaries.mjs
-      - name: Real request assembly with fictional services and outputs only
+      - name: Real request assembly with fictional services only
         run: node --experimental-test-module-mocks --test tests/written-bridge.integration.mjs tests/workspace-client.integration.mjs tests/evaluator-evidence.integration.mjs
       - run: npx playwright install --with-deps chromium
       - name: Full UI regression including stored examples, confidence distinction and escaped markup
