@@ -3,6 +3,9 @@ import assert from 'node:assert/strict';
 import {resolveWrittenProfessorPreview} from '../quality/candidates/resolve-written-professor-preview.ts';
 import {prepareWrittenAudioPreview} from '../quality/candidates/written-audio-preview.ts';
 import {mintWrittenProfessorPreview} from '../quality/candidates/mint-written-professor-preview.ts';
+import {mintP1ProfessorPreview} from '../quality/candidates/p1-professor-binding.ts';
+import {p1SlugFor} from '../src/learning/p1RuntimeRegistry.ts';
+import {resolveP1ProfessorHandoff} from '../server/p1-professor-handoff.ts';
 import {sequence3SlugFor} from '../src/learning/sequence3Registry.ts';
 import {sequence4SlugFor} from '../src/learning/sequence4Registry.ts';
 import {remainingSlugFor} from '../src/learning/remainingWrittenRegistry.ts';
@@ -20,6 +23,30 @@ function fixture(track:P1Track='finance',sequence:3|4|5|6|7|8=3){
  },rpc(){throw Error('No budget or provider may be called');}};
  return {rows,db,events,input:{requestedTrack:tracks[track],lessonId:id},failRead:(s:string)=>{errorTable=s;},failAuth:()=>{authError=true;},noUser:()=>{authUser=null;}};
 }
+for(const track of Object.keys(tracks) as P1Track[])test(`${track} P1: atomic candidate preserves the exact existing teacher/evaluator reference`,async()=>{
+ const f=fixture(track);f.rows.lessons.sequence=2;f.rows.lessons.slug=p1SlugFor(track);let minted=0;
+ const service={rpc:async(_name:string,args:any)=>{
+  minted++;assert.equal(args.p_user_id,user);assert.equal(args.p_identity.sequence,2);
+  assert.equal(args.p_identity.moduleId,mid);assert.equal(args.p_identity.courseId,cid);
+  assert.equal(args.p_descriptor_version,'p1-reference-candidate-v1');
+  return {data:{reference_id:id,expires_at:new Date(Date.now()+300000).toISOString(),source_sha256:args.p_source_sha256,descriptor_version:args.p_descriptor_version}};
+ }};
+ const bound=await mintP1ProfessorPreview(f.db,service,{...f.input,profileTrack:'manuzinha',contentVersion:999,approachBrief:'PRIVATE_LOCAL_ANSWER',sha256:'FORGED'} as any,env);
+ const original=resolveP1ProfessorHandoff({profileTrack:f.rows.profiles.learner_track,requestedTrack:tracks[track],requestedLessonId:id,resolvedLesson:{id,slug:p1SlugFor(track),learnerTrack:tracks[track],isPublished:true}});
+ assert.deepEqual(bound.reference.lessonContext,original.context);
+ assert.doesNotMatch(JSON.stringify(bound),/PRIVATE_LOCAL_ANSWER|FORGED|manuzinha/);
+ assert.equal(bound.reference.descriptor.providerAdmission,false);assert.equal(minted,1);
+ f.rows.lessons.content_version=2;const changed=await mintP1ProfessorPreview(f.db,service,f.input,env);
+ assert.notEqual(changed.reference.descriptor.sha256,bound.reference.descriptor.sha256);
+ assert.deepEqual(changed.reference.lessonContext,bound.reference.lessonContext);
+});
+test('P1 stale versions, wrong sequences and English fallback cannot reach service mint',async()=>{
+ const service={rpc:()=>assert.fail('Must reject before mint')};
+ for(const [key,value] of [['sequence',1],['sequence',3],['content_version',0],['content_version',1.5],['slug','english-golden-lesson']] as const){
+  const f=fixture('english');f.rows.lessons.sequence=2;f.rows.lessons.slug=p1SlugFor('english');f.rows.lessons[key]=value;
+  await assert.rejects(()=>mintP1ProfessorPreview(f.db,service,f.input,env),/p1_binding_version_sequence_invalid|p1_handoff_slug_mismatch/);
+ }
+});
 for(const track of Object.keys(tracks) as P1Track[])for(const sequence of [3,4,5,6,7,8] as const)test(`${track} ${sequence}: authenticated candidate resolves authored lesson and evaluator context`,async()=>{
  const f=fixture(track,sequence);const r=await resolveWrittenProfessorPreview(f.db,{...f.input,profileTrack:'manuzinha',resolved:{},draft:'PRIVATE_DRAFT',answers:['PRIVATE_ANSWER']} as any,env);
  assert.deepEqual(f.events,['auth','profiles','lessons','modules','courses']);

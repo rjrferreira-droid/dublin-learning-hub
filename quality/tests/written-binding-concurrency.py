@@ -97,6 +97,14 @@ def waiting(connection):
 
 sql('update professor_budget_settings set monthly_budget_usd=10;update learning_hub_budget_settings set ai_hard_cap_usd=10,professor_cap_usd=10,premium_audio_cap_usd=10')
 try:
+    p1 = sql(f"select id from lh_internal.written_professor_references where user_id='{finance}' and identity->>'sequence'='2' and identity->>'studyTrack'='finance' limit 1")
+    uuid.UUID(p1)
+    result = last_json(sql('begin;' + auth(start(p1)) + ';rollback'))
+    assert result['allowed'] is True and result['written_reference']['identity']['sequence'] == 2
+    assert result['written_reference']['descriptor_version'] == 'p1-reference-candidate-v1'
+    sql(f"set role service_role;select create_written_professor_reference_v1('{finance}',(select identity from lh_internal.written_professor_references where id='{p1}'),repeat('a',64),'written-reference-candidate-v3')", error='written_reference_descriptor_mismatch')
+    check('P1 exact authored descriptor binds through the same atomic path; descriptor family mismatch is rejected')
+
     ticket, request = mint(), str(uuid.uuid4())
     output = sql('begin;' + auth(start(ticket, request) + ';' + start(ticket, request)) + ';rollback')
     results = [json.loads(line) for line in output.splitlines() if line.startswith('{')]

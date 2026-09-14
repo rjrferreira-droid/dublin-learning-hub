@@ -5,6 +5,7 @@ import {dirname,join} from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {createClient} from '@supabase/supabase-js';
 import {mintWrittenProfessorPreview} from '../candidates/mint-written-professor-preview.ts';
+import {mintP1ProfessorPreview} from '../candidates/p1-professor-binding.ts';
 const status=JSON.parse(readFileSync(process.argv[2],'utf8'));
 const fixture=JSON.parse(readFileSync(join(dirname(process.argv[2]),'local-browser-fixture.json'),'utf8'));
 const api=new URL(status.API_URL),originalFetch=globalThis.fetch;
@@ -24,6 +25,21 @@ for(let i=0;;i++){
  if(i>=24)ok(r);await new Promise(resolve=>setTimeout(resolve,200));
 }
 let minted=0;let probe;
+let p1Minted=0;
+for(const account of ['finance','payroll'])for(const track of [account,'english']){
+ const lesson=fixture.p1Lessons[track],requestedTrack={finance:'rafael_finance',payroll:'viviane_payroll',english:'english_academy'}[track];
+ const result=await mintP1ProfessorPreview(clients[account],admin,{lessonId:lesson.id,requestedTrack,draft:'PRIVATE_P1_SENTINEL',contentVersion:999},env);
+ assert.doesNotMatch(JSON.stringify(result),/PRIVATE_P1_SENTINEL/);assert.equal(result.reference.identity.contentVersion,1);
+ assert.equal(result.reference.identity.lessonSlug,lesson.slug);
+ const admission=ok(await clients[account].rpc('start_written_professor_session_v1',params(result.ticket)));
+ assert.equal(admission.allowed,false);assert.equal(admission.reason,'professor_monthly_budget_reached');
+ const other=account==='finance'?'payroll':'finance';
+ assert.match((await clients[other].rpc('start_written_professor_session_v1',params(result.ticket))).error?.message??'',/written_reference_forbidden/);
+ ok(await admin.from('lessons').update({content_version:2}).eq('id',lesson.id));
+ try{assert.match((await clients[account].rpc('start_written_professor_session_v1',params(result.ticket))).error?.message??'',/written_reference_stale_or_forbidden/);}
+ finally{ok(await admin.from('lessons').update({content_version:1}).eq('id',lesson.id));}
+ p1Minted++;
+}
 for(const account of ['finance','payroll'])for(const track of [account,'english'])for(const sequence of [3,4,5,6,7,8]){
  const lesson=fixture.lessons[track][sequence],requestedTrack={finance:'rafael_finance',payroll:'viviane_payroll',english:'english_academy'}[track];
  const result=await mintWrittenProfessorPreview(clients[account],admin,{lessonId:lesson.id,requestedTrack,draft:'PRIVATE_SENTINEL',source_sha256:'b'.repeat(64),userId:'forged'},env);
@@ -54,4 +70,4 @@ for(const [table,id,changed,restore] of mutations){
 assert.deepEqual(ok(await admin.from('professor_budget_reservations').select('id')),[]);
 assert.deepEqual(ok(await admin.from('ai_tutor_sessions').select('id')),[]);
 for(const c of Object.values(clients))ok(await c.auth.signOut());
-console.log(JSON.stringify({status:'passed',realLocalAuth:true,serverMintedReferences:minted,zeroBudgetDenials:minted,staleStateDenials:mutations.length,providerCalls:0,connectedWrites:0}));
+console.log(JSON.stringify({status:'passed',realLocalAuth:true,serverMintedReferences:minted,p1MintedReferences:p1Minted,zeroBudgetDenials:minted+p1Minted,staleStateDenials:mutations.length+p1Minted,providerCalls:0,connectedWrites:0}));

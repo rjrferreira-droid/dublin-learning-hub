@@ -140,5 +140,5 @@ const invalid=new URL(signed.signedUrl);invalid.searchParams.set('token','invali
 const publicUrl=admin.storage.from('lesson-audio').getPublicUrl(path).data.publicUrl;assert.equal((await fetch(publicUrl)).ok,false);
 for(const client of Object.values(clients))ok(await client.auth.signOut());
 // Disposable credentials only; never upload this file, status, traces or videos.
-writeFileSync(join(dirname(process.argv[2]),'local-browser-fixture.json'),JSON.stringify({accounts:browserAccounts,lessons:future,authoredTitles}),{mode:0o600,flag:'wx'});
+writeFileSync(join(dirname(process.argv[2]),'local-browser-fixture.json'),JSON.stringify({accounts:browserAccounts,lessons:future,p1Lessons:lessons,authoredTitles}),{mode:0o600,flag:'wx'});
 console.log(JSON.stringify({status:'passed',realLocalAuth:true,realLocalPostgrest:true,realLocalStorage:true,assignedAccounts:2,unassignedAccounts:1,p1References:4,futureReferences,audioBudgetDenials,zeroBudgetStartsDenied:4,paidProviderCalls:0,connectedProjectWrites:0,networkScope:'loopback:54321',requests}));

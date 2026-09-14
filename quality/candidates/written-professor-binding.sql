@@ -7,7 +7,7 @@ create table lh_internal.written_professor_references(
  lesson_id uuid not null references public.lessons(id),
  identity jsonb not null check(jsonb_typeof(identity)='object'),
  source_sha256 text not null check(source_sha256 ~ '^[a-f0-9]{64}$'),
- descriptor_version text not null check(descriptor_version='written-reference-candidate-v3'),
+ descriptor_version text not null check(descriptor_version in ('written-reference-candidate-v3','p1-reference-candidate-v1')),
  created_at timestamptz not null default clock_timestamp(),
  expires_at timestamptz not null default clock_timestamp()+interval '5 minutes',
  bound_session_id uuid unique references public.ai_tutor_sessions(id),
@@ -35,7 +35,7 @@ begin
  select * into m from public.modules where id=(p_identity->>'moduleId')::uuid for share;
  select * into l from public.lessons where id=(p_identity->>'lessonId')::uuid for share;
  if c.id is null or m.id is null or l.id is null or not c.is_active or not m.is_published or not l.is_published
-  or m.course_id<>c.id or l.module_id<>m.id or l.sequence not between 3 and 8
+  or m.course_id<>c.id or l.module_id<>m.id or l.sequence not between 2 and 8
   or (c.learner_track<>'english_academy' and c.learner_track<>profile_track) then
   raise exception 'written_reference_stale_or_forbidden' using errcode='42501'; end if;
  expected:=jsonb_build_object('lessonId',l.id,'moduleId',m.id,'courseId',c.id,'lessonSlug',l.slug,
@@ -52,8 +52,9 @@ returns jsonb language plpgsql security definer set search_path=pg_catalog,publi
 declare ticket lh_internal.written_professor_references%rowtype;
 begin
  if p_source_sha256 is null or p_source_sha256 !~ '^[a-f0-9]{64}$'
-  or p_descriptor_version is distinct from 'written-reference-candidate-v3' then raise exception 'written_reference_invalid'; end if;
+  or p_descriptor_version is null or p_descriptor_version not in ('written-reference-candidate-v3','p1-reference-candidate-v1') then raise exception 'written_reference_invalid'; end if;
  perform lh_internal.lock_written_identity(p_user_id,p_identity);
+ if (p_identity->>'sequence'='2') is distinct from (p_descriptor_version='p1-reference-candidate-v1') then raise exception 'written_reference_descriptor_mismatch'; end if;
  insert into lh_internal.written_professor_references(user_id,lesson_id,identity,source_sha256,descriptor_version)
  values(p_user_id,(p_identity->>'lessonId')::uuid,p_identity,p_source_sha256,p_descriptor_version) returning * into ticket;
  return jsonb_build_object('reference_id',ticket.id,'expires_at',ticket.expires_at,
