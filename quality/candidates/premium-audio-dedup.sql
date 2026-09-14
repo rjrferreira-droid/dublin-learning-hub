@@ -8,7 +8,7 @@ create table if not exists lh_internal.premium_audio_generation_claims (
   claim_token uuid not null,
   claimed_at timestamptz not null default now(),
   lease_until timestamptz not null,
-  primary key (lesson_id, content_version, audio_type)
+  primary key (lesson_id, audio_type)
 );
 
 revoke all on table lh_internal.premium_audio_generation_claims from public, anon, authenticated;
@@ -38,8 +38,9 @@ begin
   ) values (
     p_lesson_id,p_content_version,p_audio_type,p_claim_token,now(),now()+make_interval(secs=>p_lease_seconds)
   )
-  on conflict (lesson_id,content_version,audio_type) do update
-    set claim_token=excluded.claim_token,
+  on conflict (lesson_id,audio_type) do update
+    set content_version=excluded.content_version,
+        claim_token=excluded.claim_token,
         claimed_at=excluded.claimed_at,
         lease_until=excluded.lease_until
     where lh_internal.premium_audio_generation_claims.lease_until < now()
@@ -49,7 +50,7 @@ begin
 
   select claim_token into v_token
     from lh_internal.premium_audio_generation_claims
-   where lesson_id=p_lesson_id and content_version=p_content_version and audio_type=p_audio_type;
+   where lesson_id=p_lesson_id and audio_type=p_audio_type;
   return case when v_token=p_claim_token then 'claimed' else 'busy' end;
 end;
 $$;
