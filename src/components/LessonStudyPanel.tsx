@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'react';
 import {AppliedPracticePanel} from './AppliedPracticePanel';
-import { lessonModuleFor, checkLocalChoice } from '../learning/lessonModules';
+import { lessonModuleFor, checkLocalChoice, type LessonModule } from '../learning/lessonModules';
+import {p1ModuleFor} from '../learning/p1RuntimeModules';
 import { STUDY_PACKS, type StudyTrack } from '../learning/teachingPacks';
 import '../learning/lesson-study.css';
 
 const studyTabs=new Set(['Learn','English','Practice','Visual','Case','Test','Sources']);
-type Props={track:StudyTrack;lessonId:string;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean};
-export function LessonStudyPanel({track,lessonId,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled}:Props){
- const module=lessonModuleFor(track,lessonId);
+type Props={track:StudyTrack;lessonId:string;lessonSlug?:string;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean};
+export function LessonStudyPanel({track,lessonId,lessonSlug,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled}:Props){
+ const module=lessonModuleFor(track,lessonId)??(lessonSlug?p1ModuleFor(track,{id:lessonId,slug:lessonSlug}):null);
  if(!module)return studyTabs.has(activeTab)?<p role="status">No reviewed written module is available for this lesson yet.</p>:null;
- // Key includes the actual lesson. Drafts stay in component memory across tabs, never storage/server.
  return <StudyContent key={module.lessonId} module={module} activeTab={activeTab} onTabChange={onTabChange} onPrepareWorkshop={onPrepareWorkshop} handoffDisabled={handoffDisabled}/>;
 }
-function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled}:{module:NonNullable<ReturnType<typeof lessonModuleFor>>;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean}){
+function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled}:{module:LessonModule;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean}){
  const pack=STUDY_PACKS[module.track];
+ const exercises=module.practiceExercises??pack.exercises;
  const [drafts,setDrafts]=useState<Record<string,string>>({});
  const [hints,setHints]=useState<Record<string,number>>({});
  const [revealed,setRevealed]=useState<Record<string,boolean>>({});
@@ -38,7 +39,7 @@ function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDis
    {module.sections.map(s=><section key={s.id} id={'lesson-section-'+s.id} className="lesson-teaching-block">
     <h3>{s.title}</h3>{s.paragraphs.map((p,i)=><p key={i}>{p}</p>)}
     <details><summary>Resumo em português</summary><p lang="pt-BR">{s.supportPt}</p></details>
-    <div className="lesson-inline-sources">{s.sourceIds.length?s.sourceIds.map(id=>{const src=module.sources.find(x=>x.id===id)!;return <a key={id} href={src.url} target="_blank" rel="noopener noreferrer">{src.label}</a>;}):<span>Original practice guidance, not an additional regulatory requirement.</span>}</div>
+    <div className="lesson-inline-sources">{s.sourceIds.length?s.sourceIds.map(id=>{const src=module.sources.find(x=>x.id===id);return src?<a key={id} href={src.url} target="_blank" rel="noopener noreferrer">{src.label}</a>:null;}):<span>Original practice guidance, not an additional regulatory requirement.</span>}</div>
    </section>)}
    <div className="lesson-study-next"><button type="button" onClick={()=>onTabChange('Practice')}>Try the practice questions</button></div>
   </section>
@@ -48,9 +49,9 @@ function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDis
    <p className="lesson-study-note">No microphone is opened here; reading an example is not a pronunciation or fluency result.</p>
   </section>
   <section className="lesson-study-section" hidden={activeTab!=='Practice'} data-testid="lesson-practice">
-   <AppliedPracticePanel key={module.track} track={module.track} onPrepare={onPrepareWorkshop} handoffDisabled={handoffDisabled}/>
+   {!module.practiceExercises&&<AppliedPracticePanel key={module.track} track={module.track} onPrepare={onPrepareWorkshop} handoffDisabled={handoffDisabled}/>}
    <h2>Retrieve, then compare</h2><p>Try each question before opening help. Drafts remain while you switch tabs, but disappear when this lesson closes, the page reloads or the account signs out. Avoid confidential information.</p>
-   {pack.exercises.map((q,i)=><section className="lesson-exercise" key={q.id} data-testid={'written-practice-'+i}>
+   {exercises.map((q,i)=><section className="lesson-exercise" key={q.id} data-testid={'written-practice-'+i}>
     <h3>{i+1}. {q.question}</h3><label htmlFor={'draft-'+q.id}>Your practice draft {i+1}</label>
     <textarea id={'draft-'+q.id} maxLength={6000} value={drafts[q.id]??''} onChange={e=>setDrafts(x=>({...x,[q.id]:e.target.value}))} placeholder="Try explaining it in your own words…"/>
     <div className="lesson-inline-actions"><button type="button" disabled={(hints[q.id]??0)>=2} onClick={()=>setHints(x=>({...x,[q.id]:Math.min(2,(x[q.id]??0)+1)}))}>Reveal a hint</button><button type="button" aria-expanded={revealed[q.id]===true} onClick={()=>setRevealed(x=>({...x,[q.id]:!x[q.id]}))}>{revealed[q.id]?'Hide worked response':'Compare with worked response'}</button></div>
@@ -73,7 +74,7 @@ function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDis
    <h3>Transfer the skill</h3><p>{module.caseStudy.transfer}</p>
   </section>
   <section className="lesson-study-section" hidden={activeTab!=='Test'} data-testid="lesson-checkpoint">
-   <h2>Check your understanding</h2><p>Five fixed-answer questions with immediate, local feedback. This is practice against an answer key, not an AI evaluation, mastery score or course completion.</p>
+   <h2>Check your understanding</h2><p>Fixed-answer questions with immediate, local feedback. This is practice against an answer key, not an AI evaluation, mastery score or course completion.</p>
    <p role="status" className="lesson-local-result" data-testid="local-checkpoint-result">{checked.length} of {module.checkpoint.length} checked · {correct.length} correct in this attempt · not saved to your profile</p>
    {module.checkpoint.map((q,i)=>{const choice=answers[q.id];const result=choice?.checked?checkLocalChoice(q,choice.selected):'unanswered';return <fieldset key={q.id} className="lesson-check-question" data-testid={'checkpoint-question-'+i}>
     <legend>{i+1}. {q.prompt}</legend>{q.options.map((option,n)=><label key={n}><input type="radio" name={q.id} checked={choice?.selected===n} onChange={()=>setAnswers(x=>({...x,[q.id]:{selected:n,checked:false}}))}/><span>{option}</span></label>)}
@@ -86,7 +87,7 @@ function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDis
    <h2>Sources, assumptions and coverage</h2><p>{module.scope}</p>
    <p>The linked pages support the stated concepts. Teaching explanations, control suggestions, cases and answer choices are original. The review date is an editorial check, not a guarantee that a source has not changed since.</p>
    {module.sources.map(s=><article key={s.id} className="lesson-source"><a href={s.url} target="_blank" rel="noopener noreferrer">{s.label}</a><p>{s.supports}</p><small>Reviewed {s.reviewedOn}</small></article>)}
-   <p className="lesson-study-note">This preview prepares the matching written lesson on the server for the Professor and evaluator. Local drafts and quiz results are not sent. Live voice use, persisted assessment and complete curriculum coverage remain separate work.</p>
+   <p className="lesson-study-note">Local drafts and quiz results are not sent as learner evidence. Live voice use, persisted assessment and complete curriculum coverage remain separate work.</p>
   </section>
  </div>;
 }
