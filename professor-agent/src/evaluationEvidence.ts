@@ -28,17 +28,26 @@ export function renderEvidenceTranscript(turns:readonly EvidenceTurn[]):string {
  return evidenceTranscript(turns).map(t=>`#${t.turn} ${t.role==='user'?'LEARNER':'PROFESSOR'}${t.interrupted?' [interrupted]':''}${t.truncated?' [truncated]':''}: ${JSON.stringify(t.text)}`).join('\n');
 }
 function boundaryCharacter(value:string|undefined):boolean{return !!value&&/[\p{L}\p{N}_]/u.test(value);}
+function firstExplicitCorrection(source:string):number|null {
+ const patterns=[/\bsorry(?:\s*[,—-]\s*|\s+)i mean\b/iu,/\bno(?:\s*[,—-]\s*|\s+)that(?:'s| is) wrong\b/iu,/\bsorry(?:\s*[,—-]\s*|\s+)i\b/iu,/\bdesculpa(?:\s*[,—-]\s*|\s+)(?:quero dizer|eu quis dizer)\b/iu];
+ let earliest:number|null=null;
+ for(const pattern of patterns){const match=pattern.exec(source);if(match&&match.index>=0&&(earliest===null||match.index<earliest))earliest=match.index;}
+ return earliest;
+}
 export function groundedQuote(turns:readonly EvidenceTurn[],index:unknown,quote:unknown):string|null {
  if(!Number.isInteger(index)||typeof index!=='number'||index<1||index>120||typeof quote!=='string'||quote.length>900)return null;
  const turn=evidenceTranscript(turns)[index-1];
  if(!turn||turn.role!=='user'||turn.interrupted||turn.truncated||isSupportOnly(turn.text))return null;
  const source=normalize(turn.text),needle=normalize(quote);
  if(needle.length<2||!/[\p{L}\p{N}]/u.test(needle)||isSupportOnly(needle))return null;
+ const correctionAt=firstExplicitCorrection(source);
  // Exact NFC/whitespace-normalized matching: no fuzzy or model-invented quotation repair.
  let at=source.indexOf(needle);
  while(at>=0){
   const end=at+needle.length;
-  if(!(boundaryCharacter(needle[0])&&boundaryCharacter(source[at-1]))&&!(boundaryCharacter(needle.at(-1))&&boundaryCharacter(source[end])))return source.slice(at,end);
+  const hasBoundaries=!(boundaryCharacter(needle[0])&&boundaryCharacter(source[at-1]))&&!(boundaryCharacter(needle.at(-1))&&boundaryCharacter(source[end]));
+  const abandonedBeforeCorrection=correctionAt!==null&&end<=correctionAt;
+  if(hasBoundaries&&!abandonedBeforeCorrection)return source.slice(at,end);
   at=source.indexOf(needle,at+1);
  }
  return null;
