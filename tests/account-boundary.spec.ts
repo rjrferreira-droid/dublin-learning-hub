@@ -24,9 +24,9 @@ const curriculum={
   ],
 } as const;
 type Key=keyof typeof learners;
-type Fixture={profileFail:boolean;memoryFail:boolean;profileDelayMs:number;pendingToken:boolean;apiCalls:number;writes:number;reads:string[];releaseToken:()=>void};
+type Fixture={profileMissing:boolean;profileFail:boolean;memoryFail:boolean;profileDelayMs:number;pendingToken:boolean;apiCalls:number;writes:number;reads:string[];releaseToken:()=>void};
 async function setup(page:Page):Promise<Fixture>{
- const fixture:Fixture={profileFail:false,memoryFail:false,profileDelayMs:0,pendingToken:false,apiCalls:0,writes:0,reads:[],releaseToken:()=>{}};
+ const fixture:Fixture={profileMissing:false,profileFail:false,memoryFail:false,profileDelayMs:0,pendingToken:false,apiCalls:0,writes:0,reads:[],releaseToken:()=>{}};
  const users=new Map<string,Key>();
  let current:Key='rafael';
  const user=(key:Key)=>({id:learners[key].id,email:learners[key].email,aud:'authenticated',role:'authenticated',created_at:'2026-01-01T00:00:00Z',app_metadata:{provider:'email'},user_metadata:{learner_track:learners[key].track,display_name:learners[key].name}});
@@ -60,6 +60,7 @@ async function setup(page:Page):Promise<Fixture>{
      if(req.method()!=='GET'){fixture.writes++;await fulfill(route,{error:'profile_write_not_allowed_in_fixture'},403);return;}
      expect(url.searchParams.get('id')).toBe('eq.'+learners[key].id);
      if(fixture.profileDelayMs)await new Promise(r=>setTimeout(r,fixture.profileDelayMs));
+     if(fixture.profileMissing){await fulfill(route,null);return;}
      await fulfill(route,fixture.profileFail?{code:'XX000',message:'fictional profile outage'}:{display_name:learners[key].name,learner_track:learners[key].track},fixture.profileFail?503:200);return;
    }
    if(url.pathname.startsWith('/rest/v1/')){
@@ -213,4 +214,17 @@ test.describe('simulated account-bound browser journeys',()=>{
    await expect(page.getByTestId('active-learner-card')).toHaveCount(0);
    expect(fixture.reads).toHaveLength(0);expect(fixture.apiCalls).toBe(0);expect(fixture.writes).toBe(0);
  });
+});
+test('editable Auth metadata never creates private-track access when assigned profile is missing',async({page})=>{
+ const fixture=await setup(page);fixture.profileMissing=true;
+ await page.goto('/');await signIn(page);
+ await expect(page.getByRole('heading',{name:'Your learning access is not assigned yet'})).toBeVisible();
+ expect(fixture.writes).toBe(0);expect(fixture.apiCalls).toBe(0);
+ await page.getByRole('button',{name:'Check access again'}).click();
+ await expect(page.getByRole('heading',{name:'Your learning access is not assigned yet'})).toBeVisible();
+ expect(fixture.writes).toBe(0);
+ fixture.profileMissing=false;
+ await page.getByRole('button',{name:'Check access again'}).click();
+ await expect(page.locator('.auth-app')).toBeVisible();
+ expect(fixture.writes).toBe(0);
 });
