@@ -8,12 +8,14 @@ on:
       - 'quality/tests/install-local-preview.py'
       - 'quality/tests/run-local-browser.py'
       - 'quality/tests/local-browser.spec.ts'
+      - 'quality/tests/written-binding-*'
       - 'playwright.local-platform.config.ts'
       - 'src/App.tsx'
       - 'src/components/LessonStudyPanel.tsx'
       - 'src/services/curriculumCatalog.ts'
       - 'quality/preview-backend/**'
       - 'quality/candidates/premium-audio-atomic.sql'
+      - 'quality/candidates/written-professor-binding.sql'
       - 'quality/candidates/*professor*.ts'
       - 'quality/candidates/written-audio-preview.ts'
       - 'supabase/functions/_shared/premium-audio-attempt-flow.ts'
@@ -69,6 +71,12 @@ jobs:
           python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" "$RUNNER_TEMP/local-foundation/install.sql"
       - name: Actual local identity, P1 resolver, zero budget and private signed Storage
         run: node --experimental-strip-types quality/tests/preview-local-platform.mjs "$RUNNER_TEMP/local-platform-status.json"
+      - name: Install unmounted reference binding candidate only in this disposable stack
+        run: python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/candidates/written-professor-binding.sql
+      - name: Actual Auth and PostgREST reference binding denials
+        run: node --experimental-strip-types quality/tests/written-binding-platform.mjs "$RUNNER_TEMP/local-platform-status.json"
+      - name: Reference admission, rollback and concurrent publication in local PostgreSQL
+        run: python3 quality/tests/written-binding-concurrency.py "$RUNNER_TEMP/local-platform-status.json"
       - name: Install local browser
         run: npx playwright install --with-deps chromium
       - name: Actual browser login, published catalog, written lessons and account isolation

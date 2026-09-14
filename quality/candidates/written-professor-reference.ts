@@ -51,11 +51,11 @@ export async function prepareWrittenProfessorReference(input:Input){
   helpBehaviour:'helpBehaviour' in guide?guide.helpBehaviour:null,correctionBoundary:'correctionBoundary' in guide?guide.correctionBoundary:null,languageCoaching:'languageCoaching' in guide?guide.languageCoaching:null},
  sources:m.sources.map(s=>({id:s.id,url:s.url,supports:s.supports,reviewedOn:s.reviewedOn})),
  };
- const identity={lessonId:lesson.id,lessonSlug:lesson.slug,contentVersion:lesson.contentVersion,requestedTrack:input.requestedTrack,studyTrack:track,sequence};
+ const identity={lessonId:lesson.id,moduleId:module.id,courseId:course.id,lessonSlug:lesson.slug,contentVersion:lesson.contentVersion,requestedTrack:input.requestedTrack,studyTrack:track,sequence};
  const technicalBrief='SERVER-AUTHORED WRITTEN REFERENCE. Not learner evidence.\n'+JSON.stringify(context);
  if(technicalBrief.length>14000)throw Error('future_reference_shared_brief_exceeded');
  const lessonContext={title:m.title,objectives:[m.goal,...m.sections.map(s=>s.title)],technicalBrief,interviewAngle:m.caseStudy.transfer};
  const encoded=JSON.stringify({identity,context}),bytes=Buffer.byteLength(encoded,'utf8');
  if(bytes>24000)throw Error('future_reference_size_exceeded');
- return {identity,context,lessonContext,descriptor:{version:'written-reference-candidate-v2',sha256:createHash('sha256').update(encoded).digest('hex'),contextBytes:bytes,includesLearnerDrafts:false,includesLocalCheckpointResults:false,providerAdmission:false}} as const;
+ return {identity,context,lessonContext,descriptor:{version:'written-reference-candidate-v3',sha256:createHash('sha256').update(encoded).digest('hex'),contextBytes:bytes,includesLearnerDrafts:false,includesLocalCheckpointResults:false,providerAdmission:false}} as const;
 }

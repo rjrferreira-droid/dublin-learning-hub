@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {resolveWrittenProfessorPreview} from '../quality/candidates/resolve-written-professor-preview.ts';
 import {prepareWrittenAudioPreview} from '../quality/candidates/written-audio-preview.ts';
+import {mintWrittenProfessorPreview} from '../quality/candidates/mint-written-professor-preview.ts';
 import {sequence3SlugFor} from '../src/learning/sequence3Registry.ts';
 import {sequence4SlugFor} from '../src/learning/sequence4Registry.ts';
 import {remainingSlugFor} from '../src/learning/remainingWrittenRegistry.ts';
@@ -28,6 +29,32 @@ for(const track of Object.keys(tracks) as P1Track[])for(const sequence of [3,4,5
  assert.doesNotMatch(JSON.stringify(r),/PRIVATE_DRAFT|PRIVATE_ANSWER|manuzinha/);
  for(const key of ['whenCorrect','whenUncertain','whenMisconception','whenSelfCorrected','whenAskedForAnswer'] as const)assert.ok(r.context.teachingGuide[key].length>20);
  f.rows.lessons.content_version=2;assert.notEqual((await resolveWrittenProfessorPreview(f.db,f.input,env)).descriptor.sha256,r.descriptor.sha256);
+});
+test('server mint binds authenticated user and complete ancestry, ignoring browser attestations',async()=>{
+ const f=fixture();let calls=0;
+ const service={rpc:async(name:string,args:any)=>{
+  calls++;assert.equal(name,'create_written_professor_reference_v1');assert.equal(args.p_user_id,user);
+  assert.equal(args.p_identity.moduleId,mid);assert.equal(args.p_identity.courseId,cid);
+  assert.equal(args.p_descriptor_version,'written-reference-candidate-v3');assert.doesNotMatch(JSON.stringify(args),/FORGED|PRIVATE/);
+  return {data:{reference_id:id,expires_at:new Date(Date.now()+300000).toISOString(),source_sha256:args.p_source_sha256,descriptor_version:args.p_descriptor_version},error:null};
+ }};
+ const r=await mintWrittenProfessorPreview(f.db,service,{...f.input,userId:'FORGED',identity:{},sha256:'FORGED',draft:'PRIVATE'} as any,env);
+ assert.equal(calls,1);assert.equal(r.reference.descriptor.providerAdmission,false);
+ assert.doesNotMatch(JSON.stringify(r.reference),new RegExp(user));
+ const hash=r.reference.descriptor.sha256;
+ f.rows.modules.course_id=id;f.rows.courses.id=id;
+ assert.notEqual((await resolveWrittenProfessorPreview(f.db,f.input,env)).descriptor.sha256,hash);
+});
+test('failed authorization or malformed mint acknowledgement never produces a usable ticket',async()=>{
+ const f=fixture();let called=false;
+ await assert.rejects(()=>mintWrittenProfessorPreview(f.db,{rpc:()=>{called=true;throw Error('unexpected');}},f.input,{VERCEL_ENV:'production'}),/unavailable/);
+ assert.equal(called,false);
+ for(const variant of ['error','hash','version','id','expiry']){
+  const service={rpc:async(_name:string,args:any)=>({error:variant==='error'?{}:null,data:{reference_id:variant==='id'?'invalid':id,
+   source_sha256:variant==='hash'?'bad':args.p_source_sha256,descriptor_version:variant==='version'?'v0':args.p_descriptor_version,
+   expires_at:variant==='expiry'?'2000-01-01':new Date(Date.now()+300000).toISOString()}})};
+  await assert.rejects(()=>mintWrittenProfessorPreview(f.db,service,f.input,env),/mint_rejected|mint_invalid/);
+ }
 });
 test('environment, request, Auth, profile and each ancestry error stop without later reads',async()=>{
  for(const e of [{VERCEL_ENV:'production'}, {...env,VERCEL_GIT_COMMIT_REF:'main'},{}]){const f=fixture();await assert.rejects(()=>resolveWrittenProfessorPreview(f.db,f.input,e),/unavailable/);assert.deepEqual(f.events,[]);}

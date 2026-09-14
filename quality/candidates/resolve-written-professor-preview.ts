@@ -9,7 +9,7 @@ const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]
  * profile, publication, sequence, version and all content are resolved here.
  * This creates a reference snapshot, not atomic admission or a session capability.
  */
-export async function resolveWrittenProfessorPreview(db:any,input:Request,env:Record<string,string|undefined>){
+export async function resolveAuthenticatedWrittenProfessorPreview(db:any,input:Request,env:Record<string,string|undefined>){
  if(!isP1FeaturePreview(env))throw Error('written_preview_unavailable');
  if(!input||typeof input.lessonId!=='string'||!uuid.test(input.lessonId)||!['rafael_finance','viviane_payroll','english_academy'].includes(input.requestedTrack))throw Error('written_preview_invalid_request');
  const {data:auth,error:authError}=await db.auth.getUser();
@@ -24,9 +24,14 @@ export async function resolveWrittenProfessorPreview(db:any,input:Request,env:Re
  if(me||m?.id!==l.module_id||!uuid.test(m?.course_id)||m?.is_published!==true)throw Error('written_preview_forbidden');
  const {data:c,error:ce}=await db.from('courses').select('id,learner_track,is_active').eq('id',m.course_id).eq('is_active',true).maybeSingle();
  if(ce||c?.id!==m.course_id||c?.learner_track!==input.requestedTrack||c?.is_active!==true)throw Error('written_preview_forbidden');
- return prepareWrittenProfessorReference({profileTrack:profile.learner_track,requestedTrack:input.requestedTrack,requestedLessonId:input.lessonId,resolved:{
+ const reference=await prepareWrittenProfessorReference({profileTrack:profile.learner_track,requestedTrack:input.requestedTrack,requestedLessonId:input.lessonId,resolved:{
   lesson:{id:l.id,moduleId:l.module_id,slug:l.slug,sequence:l.sequence,contentVersion:l.content_version,isPublished:l.is_published},
   module:{id:m.id,courseId:m.course_id,isPublished:m.is_published},
   course:{id:c.id,learnerTrack:c.learner_track,isActive:c.is_active},
  }});
+ return {userId:auth.user.id as string,reference};
+}
+
+export async function resolveWrittenProfessorPreview(db:any,input:Request,env:Record<string,string|undefined>){
+ return (await resolveAuthenticatedWrittenProfessorPreview(db,input,env)).reference;
 }
