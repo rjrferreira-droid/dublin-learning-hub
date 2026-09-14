@@ -5,6 +5,9 @@ on:
     paths:
       - 'quality/candidates/premium-audio-atomic.sql'
       - 'quality/tests/audio-atomic-*'
+      - 'quality/tests/audio-attempt-postgres.mjs'
+      - 'quality/candidates/premium-audio-attempt-flow.ts'
+      - 'supabase/functions/_shared/premium-audio-attempt-flow.ts'
       - '.github/workflows/premium-audio-atomic-candidate.yml'
 permissions:
   contents: read
@@ -31,6 +34,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
       - name: Construct disposable fictional fixture and candidate, without Supabase credentials
         run: |
           test "$PGHOST" = '127.0.0.1'
@@ -45,5 +51,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 --single-transaction -f quality/candidates/premium-audio-atomic.sql
       - name: Verify concurrent admissions, submission fences, receipts, expiry and roles
         run: python3 quality/tests/audio-atomic-concurrency.py
+      - name: Verify candidate orchestration against real SQL with fictional provider/storage
+        run: node --experimental-strip-types quality/tests/audio-attempt-postgres.mjs
       - name: Verify repository unchanged
         run: git diff --exit-code

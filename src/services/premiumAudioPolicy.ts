@@ -10,6 +10,7 @@ export type PremiumAudioErrorCode =
   | 'upload-failed'
   | 'network-failed'
   | 'invalid-response'
+  | 'reconciliation-required'
   | 'unknown';
 export type PremiumAudioErrorPolicy={code:PremiumAudioErrorCode;message:string;retryable:boolean};
 export function premiumAudioBackendErrorPolicy(code:string|null,status?:number):PremiumAudioErrorPolicy{
@@ -20,7 +21,8 @@ export function premiumAudioBackendErrorPolicy(code:string|null,status?:number):
  if(code==='audio_generation_in_progress')return {code:'generation-in-progress',message:'This lesson narration is already being prepared. Try again shortly.',retryable:true};
  if(code==='audio_source_changed')return {code:'source-changed',message:'The lesson changed while narration was being prepared. Reload the lesson and try again.',retryable:true};
  if(code==='openai_not_configured')return {code:'provider-not-configured',message:'Premium Audio generation is not configured in the backend yet.',retryable:false};
- if(code==='tts_failed')return {code:'generation-failed',message:'The narration provider could not generate audio. Retrying is safe when no other generation is in progress.',retryable:true};
- if(code==='audio_upload_failed')return {code:'upload-failed',message:'Narration was generated but could not be stored. Retrying is safe after the backend reports that no generation is still in progress.',retryable:true};
+ if(['audio_reconciliation_required','audio_receipt_unconfirmed','audio_attempt_unavailable','audio_submission_unconfirmed','audio_asset_record_failed'].includes(code??''))return {code:'reconciliation-required',message:'The previous narration attempt needs to be checked before generating another. Existing audio can still be played.',retryable:false};
+ if(code==='tts_failed')return {code:'generation-failed',message:'The narration attempt could not be confirmed. It needs to be checked before generating another.',retryable:false};
+ if(code==='audio_upload_failed')return {code:'upload-failed',message:'Narration could not be stored. The previous attempt needs to be checked before generating another.',retryable:false};
  return {code:'unknown',message:'Premium Audio could not be loaded.',retryable:status==null||status>=500};
 }

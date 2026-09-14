@@ -41,3 +41,7 @@ The earlier statement that P1 handoff/context is not imported by the token API i
 Premium Audio's shared P1 gate is integrated into its **undeployed** Edge source with a default-closed isolated stage. The UI still blocks P1 interactive providers; the catalog/browser tests do not insert any real lessons. Before paid activation, resolve atomic cross-lesson Audio budget admission and uncertain-generation recovery as well as the existing publication/deployment gates. Do not treat per-lesson dedup as an atomic global spend cap.
 
 Use the current feature commit's CI run for final browser/build evidence; the linked runtime document distinguishes local results from remote CI. The LiveKit worker remains `nb67ioJmoKBN`, with no new publication.
+
+## Subsequent continuation: atomic Audio and uncertain attempts
+
+The prior cross-lesson budget gap now has a tested SQL candidate, shared Edge orchestration and disposable PostgreSQL CI; see docs/PREMIUM_AUDIO_ATOMIC_CANDIDATE_2026-09-14.md. This supersedes the old isolated-stage value: the undeployed atomic stage is isolated-preview-atomic-v2. Do not set it against an unreviewed backend. Submitted/uncertain attempts retain their obligations across expiry and month boundaries; no automatic paid retry or invented receipt is allowed. Connected deployment/inventory review, reconciliation evidence and authenticated Preview acceptance remain outstanding.
