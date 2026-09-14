@@ -1,8 +1,16 @@
 name: Reviewed evaluator-only LiveKit update
 on:
-  push:
-    branches: [feat/professor-experience-2026-09-13]
-    paths: ['.github/workflows/livekit-evaluator-reviewed-update.yml']
+  workflow_dispatch:
+    inputs:
+      confirm_update:
+        description: 'Explicitly authorize another reviewed evaluator-only update to the existing V2 agent.'
+        type: boolean
+        required: true
+        default: false
+      expected_current_version:
+        description: 'Exact LiveKit version verified before any future update.'
+        type: string
+        required: true
 permissions:
   contents: read
 concurrency:
@@ -10,7 +18,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   publish-reviewed-evaluator:
-    if: github.repository == 'rjrferreira-droid/dublin-learning-hub' && github.ref == 'refs/heads/feat/professor-experience-2026-09-13'
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_update && github.repository == 'rjrferreira-droid/dublin-learning-hub' && github.ref == 'refs/heads/feat/professor-experience-2026-09-13'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -24,7 +32,6 @@ jobs:
       - name: Prove worker delta is evaluator-only relative to the reviewed live baseline
         run: |
           git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- professor-agent ':!professor-agent/src/evaluation.ts' ':!professor-agent/src/evaluationEvidence.ts'
-          git diff --quiet 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- professor-agent/src/evaluation.ts || true
           test -f professor-agent/src/evaluationEvidence.ts
       - name: Verify candidate before any LiveKit credentials are available
         run: |
@@ -41,7 +48,7 @@ jobs:
           docker build --pull --tag lh-professor-evaluator:${{ github.sha }} professor-agent
           test "$(docker image inspect --format '{{.Config.User}}' lh-professor-evaluator:${{ github.sha }})" = 'node'
           docker run --rm --network none lh-professor-evaluator:${{ github.sha }} npm run typecheck
-          docker run --rm --network none lh-professor-evaluator:${{ github.sha }} node --input-type=module -e "import {createRequire} from 'node:module';const r=createRequire(import.meta.resolve('@livekit/agents'));const s=r('sharp');if(s.versions.sharp!=='0.35.4')throw Error('Reviewed patch missing');await import('@livekit/agents-plugin-openai');console.log('Worker imports and patched native dependency verified');"
+          docker run --rm --network none lh-professor-evaluator:${{ github.sha }} node --input-type=module -e "import {createRequire} from 'node:module';const r=createRequire(import.meta.resolve('@livekit/agents'));const s=r('sharp');if(s.versions.sharp!=='0.35.4')throw Error('Reviewed patch missing');await import('@livekit/agents-plugin-openai');"
           git diff --exit-code
       - name: Install pinned official LiveKit CLI before secrets are available
         shell: bash
@@ -54,14 +61,14 @@ jobs:
           tar -xzf lk.tar.gz lk
           chmod 755 lk
           echo "$RUNNER_TEMP/lh-livekit-cli" >> "$GITHUB_PATH"
-      - name: Update the existing agent once, only from the expected reviewed version
+      - name: Update the existing agent once, only from the explicitly verified version
         env:
           LH_EVALUATOR_UPDATE_AUTHORIZED: '1'
-          LH_EXPECTED_PREVIOUS: '8V38urC92ToK'
+          LH_EXPECTED_PREVIOUS: ${{ inputs.expected_current_version }}
           LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
           LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
           LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
         run: python3 scripts/livekit-evaluator-publish.py
-      - name: Confirm the publication did not rewrite tracked source or config
+      - name: Confirm publication did not rewrite tracked source or config
         if: always()
         run: git diff --exit-code
