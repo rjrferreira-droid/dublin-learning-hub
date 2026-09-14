@@ -3,12 +3,14 @@ import type { StudyTrack } from './teachingPacks.js';
 export type LessonSource={id:string;label:string;url:string;supports:string;reviewedOn:string};
 export type LessonSection={id:string;title:string;paragraphs:readonly string[];supportPt:string;sourceIds:readonly string[]};
 export type CheckpointQuestion={id:string;prompt:string;options:readonly string[];correctIndex:number;explanation:string;reviewSection:string};
+export type LessonPracticeExercise={id:string;question:string;hints:readonly [string,string]|readonly string[];answer:string;explanation:string};
 export type LessonModule={
  track:StudyTrack;lessonId:string;title:string;goal:string;scope:string;sections:readonly LessonSection[];
  terms:readonly {term:string;meaning:string;pt:string;example:string}[];
  visual:{title:string;note:string;headers:readonly [string,string,string];rows:readonly (readonly [string,string,string])[];question:string;answer:string};
  caseStudy:{title:string;scenario:readonly string[];task:string;hints:readonly [string,string];modelAnswer:string;reviewChecks:readonly string[];transfer:string};
  checkpoint:readonly CheckpointQuestion[];sources:readonly LessonSource[];
+ practiceExercises?:readonly LessonPracticeExercise[];
 };
 const reviewedOn='2026-09-13';
 const source=(id:string,label:string,url:string,supports:string):LessonSource=>({id,label,url,supports,reviewedOn});
@@ -163,8 +165,4 @@ export const LESSON_MODULES:Readonly<Record<StudyTrack,LessonModule>>={
 export function lessonModuleFor(track:StudyTrack,lessonId:string):LessonModule|null {
  const module=LESSON_MODULES[track];
  return module&&module.lessonId===lessonId?module:null;
-}
-export function checkLocalChoice(question:CheckpointQuestion,selected:unknown):'correct'|'incorrect'|'unanswered'{
- if(typeof selected!=='number'||!Number.isInteger(selected)||selected<0||selected>=question.options.length)return 'unanswered';
- return selected===question.correctIndex?'correct':'incorrect';
 }
