@@ -33,7 +33,7 @@ jobs:
           npm --prefix professor-agent audit --audit-level=high
           npm --prefix professor-agent run typecheck
           node --experimental-strip-types --test tests/evaluation-evidence.test.ts tests/feedback-details.test.ts
-          npx --no-install esbuild professor-agent/src/evaluation.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/live-evaluator-candidate.mjs
+          npx --no-install esbuild professor-agent/src/evaluation.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-evaluator.mjs
           OPENAI_API_KEY=synthetic-fixture-not-a-key node --experimental-test-module-mocks --test tests/evaluator-evidence.integration.mjs
           python3 -m py_compile scripts/livekit-evaluator-publish.py
       - name: Build the exact worker image and verify the reviewed dependency patch offline
