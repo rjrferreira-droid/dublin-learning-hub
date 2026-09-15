@@ -55,7 +55,7 @@ def auth(query):
 
 def cleanup():
     # Delete only this test's committed, never-dispatched validation admissions.
-    rows = json.loads(sql(f"select coalesce(json_agg(json_build_object('id',s.id,'rid',s.budget_reservation_id)),'[]') from ai_tutor_sessions s join lh_internal.written_professor_references r on r.bound_session_id=s.id where s.user_id='{finance}' and s.room_name like 'validation:%' and s.dispatch_id is null"))
+    rows = json.loads(sql("select coalesce(json_agg(json_build_object('id',s.id,'rid',s.budget_reservation_id)),'[]') from ai_tutor_sessions s join lh_internal.written_professor_references r on r.bound_session_id=s.id join profiles p on p.id=s.user_id where p.display_name in ('Fictional Finance','Fictional Payroll') and s.room_name like 'validation:%' and s.dispatch_id is null"))
     for row in rows:
         sid, rid = str(uuid.UUID(row['id'])), str(uuid.UUID(row['rid']))
         sql(f"begin;delete from lh_internal.written_professor_references where bound_session_id='{sid}';delete from ai_tutor_sessions where id='{sid}';delete from professor_budget_reservations where id='{rid}';commit")
@@ -192,6 +192,11 @@ try:
 finally:
     cleanup()
     sql(f"update lessons set content_version={version},is_published=true where id='{lesson}'")
+    sql('update professor_budget_settings set monthly_budget_usd=0;update learning_hub_budget_settings set ai_hard_cap_usd=0,professor_cap_usd=0,premium_audio_cap_usd=0')
+try:
+    subprocess.run(['node','--experimental-strip-types','quality/tests/written-binding-admission.mjs',sys.argv[1]],check=True,timeout=90)
+finally:
+    cleanup()
     sql('update professor_budget_settings set monthly_budget_usd=0;update learning_hub_budget_settings set ai_hard_cap_usd=0,professor_cap_usd=0,premium_audio_cap_usd=0')
 assert sql('select count(*) from ai_tutor_sessions') == '0'
 assert sql('select count(*) from professor_budget_reservations') == '0'

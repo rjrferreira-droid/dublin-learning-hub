@@ -8,5 +8,5 @@ export async function mintAuthenticatedProfessorReference<T extends {identity:un
  if(!ticket||ticket.source_sha256!==reference.descriptor.sha256||ticket.descriptor_version!==reference.descriptor.version
   ||typeof ticket.reference_id!=='string'||!uuid.test(ticket.reference_id)
   ||typeof ticket.expires_at!=='string'||!Number.isFinite(Date.parse(ticket.expires_at))||Date.parse(ticket.expires_at)<=Date.now())throw Error('written_preview_mint_invalid');
- return {reference,ticket};
+ return {reference,ticket,userId};
 }
