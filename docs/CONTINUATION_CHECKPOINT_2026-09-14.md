@@ -128,3 +128,8 @@ Local-route checkpoint d2d2100d26fd8dcb100cc5205529fbe575b59d43 passed full CI 3
 ## Current authorization: adopt existing V2 — 15 September
 
 The owner now authorizes reuse of v2-development (aazfyosqqeujureksqjs), superseding the earlier new-isolated-target prerequisite. Do not ask for that decision again. Main, application promotion, P1 publication, paid tests, worker changes and historical SQL restrictions remain excluded. See docs/V2_ADOPTION_2026-09-15.md for the successful read-only inventory: existing learner/session data, one unresolved USD 4 reservation, nonzero budgets, legacy callable admission and missing Audio receipt columns. Preserve the data and hold. The empty foundation installer remains unsuitable for V2; next work is an incremental compatibility adaptation and target-specific recovery evidence, not another target-approval loop. No connected write occurred.
+
+
+## Connected V2 continuation: contain direct legacy admission
+
+The tested access-only SQL at 9c447234fb589d9152ce46559b84b2b839edd0b5 was applied to authorized V2 as lh_v2_contain_legacy_direct_admission. Authenticated and service_role direct EXECUTE grants were revoked; owner/body, current atomic startup, every existing data count, budgets and the unresolved USD 4 hold were preserved in post-checks. PostgreSQL CI 35037095052 passed denial, populated-data preservation, rollback, inverse grants and ACL-drift rejection. See docs/V2_LEGACY_CONTAINMENT_2026-09-15.md. No need to repeat this write. The legacy routine still exists and the Audio installer still deliberately rejects it; do not bypass that guard. Full-database recovery is still unverified; the tested inverse applies only to these grants. P1/worker/providers/main remain unchanged.
