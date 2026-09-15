@@ -15,7 +15,7 @@ function notAborted(signal?:AbortSignal){if(signal?.aborted)throw new DOMExcepti
  * attempted at most once per prepared object; durable replay protection is SQL.
  * Only acknowledgement is public. Private context uses a server getter so a
  * JSON serialization of the result cannot accidentally include callback secrets.
- * A future provider path still needs a separate durable one-shot dispatch fence. */
+ * The separate dispatch candidate is also unmounted; this function never submits. */
 export async function prepareBoundProfessorAdmission(db:any,serviceDb:any,input:Input,env:Record<string,string|undefined>,signal?:AbortSignal){
  notAborted(signal);
  if(!input||!isUuid(input.requestId)||!professorModes.includes(input.mode)||!['p1','written'].includes(input.kind))throw Error('professor_admission_request_invalid');
@@ -53,7 +53,11 @@ export async function prepareBoundProfessorAdmission(db:any,serviceDb:any,input:
    const acknowledgement:AdmissionAcknowledgement={...structuredClone(receipt),sessionId:r.session_id,reservationId:r.reservation_id,
     roomName:r.room_name,validationMode:r.validation_mode,qualityTier:r.quality_tier,maxSessionSeconds:r.max_session_seconds,providerAdmission:false};
    try{assertProfessorAdmissionAcknowledgement(acknowledgement,receipt);}catch{throw new ProfessorAdmissionUnconfirmed();}
-   return {status:'admitted' as const,acknowledgement,getServerContext:()=>({callbackToken,lessonContext:minted.reference.lessonContext,reservationUsd:r.reservation_usd as number})};
+   // Capture immutable bytes before exposing any mutable acknowledgement/context.
+   const dispatchEnvelope=JSON.stringify({acknowledgement,lessonContext:minted.reference.lessonContext,callbackToken});
+   return {status:'admitted' as const,acknowledgement,
+    getDispatchEnvelope:()=>dispatchEnvelope,
+    getServerContext:()=>({callbackToken,lessonContext:structuredClone(minted.reference.lessonContext),reservationUsd:r.reservation_usd as number})};
   },
  };
 }

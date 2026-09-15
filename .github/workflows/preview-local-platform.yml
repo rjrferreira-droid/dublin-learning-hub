@@ -16,6 +16,7 @@ on:
       - 'quality/preview-backend/**'
       - 'quality/candidates/premium-audio-atomic.sql'
       - 'quality/candidates/written-professor-binding.sql'
+      - 'quality/candidates/professor-dispatch-fence.sql'
       - 'quality/candidates/*professor*.ts'
       - 'quality/candidates/written-audio-preview.ts'
       - 'supabase/functions/_shared/premium-audio-attempt-flow.ts'
@@ -47,7 +48,7 @@ jobs:
           node-version: '24'
       - run: npm ci
       - name: Typecheck the unmounted reference admission and acknowledgement adapters
-        run: npx --no-install tsc --noEmit --allowImportingTsExtensions --module NodeNext --target ES2022 --resolveJsonModule --esModuleInterop --skipLibCheck --strict quality/candidates/prepare-bound-professor-admission.ts quality/candidates/professor-admission-contract.ts
+        run: npx --no-install tsc --noEmit --allowImportingTsExtensions --module NodeNext --target ES2022 --resolveJsonModule --esModuleInterop --skipLibCheck --strict quality/candidates/prepare-bound-professor-admission.ts quality/candidates/professor-admission-contract.ts quality/candidates/professor-dispatch-candidate.ts
       - uses: supabase/setup-cli@v3
         with:
           version: 2.117.0
@@ -74,7 +75,9 @@ jobs:
       - name: Actual local identity, P1 resolver, zero budget and private signed Storage
         run: node --experimental-strip-types quality/tests/preview-local-platform.mjs "$RUNNER_TEMP/local-platform-status.json"
       - name: Install unmounted reference binding candidate only in this disposable stack
-        run: python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/candidates/written-professor-binding.sql
+        run: |
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/candidates/written-professor-binding.sql
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/candidates/professor-dispatch-fence.sql
       - name: Actual Auth and PostgREST reference binding denials
         run: node --experimental-strip-types quality/tests/written-binding-platform.mjs "$RUNNER_TEMP/local-platform-status.json"
       - name: Reference admission, rollback and concurrent publication in local PostgreSQL

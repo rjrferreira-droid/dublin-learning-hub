@@ -95,3 +95,8 @@ Initial binding passed at 6f06c9163a26a8334dc6ac112885ff3f8ad604ca: full CI 3489
 ## 15 September continuation: admission acknowledgement
 
 P1 binding finished green at f61a93c07caf3b3c36182631883dae296683a5b9: full CI 34890870937 and platform CI 34890871249. The next unmounted adapter connects Auth/reference/mint/bound-start, captures an immutable server request, produces an exact public acknowledgement and keeps callback/context out of ordinary JSON serialization. Browser-safe preflight and post-admission checks reject account/request/identity/reference drift. Lost or invalid acknowledgement preserves the possibility of an existing reservation; no automatic retry, release or provider follows. See docs/PROFESSOR_ADMISSION_CONFIRMATION_2026-09-15.md and the matching CI for real HTTP plus existing concurrency/browser results. Durable dispatch and active endpoint mounting remain separate work; all connected deployment/publication boundaries remain unchanged.
+
+
+## Subsequent continuation: durable dispatch fence and read-only observation
+
+Previous green head ddc84a34a28f3396e48029d22752de09ac64d831 passed full CI 35020832479 and disposable platform CI 35020832485. Added an unmounted, service-only durable one-shot dispatch candidate with immutable private envelopes, transactional unresolved holds, exact identity revalidation and owner-scoped observation. Lost acknowledgements cannot trigger another provider submission or release budget. Provider IDs are observations, never completion/cost/evidence. See docs/PROFESSOR_DISPATCH_FENCE_2026-09-15.md and matching feature-head CI. No active endpoint, connected installation, published lesson or worker was changed.

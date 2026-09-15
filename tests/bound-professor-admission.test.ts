@@ -32,6 +32,10 @@ for(const kind of ['p1','written'] as const)for(const track of Object.keys(track
  assert.doesNotMatch(JSON.stringify(result),new RegExp(result.getServerContext().callbackToken));
  assert.doesNotMatch(JSON.stringify(result),/technicalBrief|callbackToken/);
  assert.doesNotMatch(JSON.stringify(result),/PRIVATE_DRAFT|PRIVATE_ANSWER|FORGED/);
+ const immutable=result.getDispatchEnvelope();
+ result.getServerContext().lessonContext.technicalBrief='MUTATED_PRIVATE_COPY';
+ assert.equal(result.getDispatchEnvelope(),immutable);
+ assert.doesNotMatch(immutable,/PRIVATE_DRAFT|PRIVATE_ANSWER|FORGED|MUTATED_PRIVATE_COPY/);
  assert.equal(f.rpcArgs[0].p_validation_mode,true);
  assert.deepEqual(f.events,['auth','profiles','lessons','modules','courses','create_written_professor_reference_v1','auth','start_written_professor_session_v1']);
  await assert.rejects(()=>prepared.start(),/already_used/);assert.equal(f.rpcArgs.length,1);

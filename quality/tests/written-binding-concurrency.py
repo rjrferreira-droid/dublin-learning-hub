@@ -54,8 +54,8 @@ def auth(query):
     return f"select set_config('request.jwt.claim.sub','{finance}',true);set local role authenticated;{query}"
 
 def cleanup():
-    # Delete only this test's committed, never-dispatched validation admissions.
-    rows = json.loads(sql("select coalesce(json_agg(json_build_object('id',s.id,'rid',s.budget_reservation_id)),'[]') from ai_tutor_sessions s join lh_internal.written_professor_references r on r.bound_session_id=s.id join profiles p on p.id=s.user_id where p.display_name in ('Fictional Finance','Fictional Payroll') and s.room_name like 'validation:%' and s.dispatch_id is null"))
+    # Only fictional validation rows: never submitted or explicitly fake fixture IDs.
+    rows = json.loads(sql("select coalesce(json_agg(json_build_object('id',s.id,'rid',s.budget_reservation_id)),'[]') from ai_tutor_sessions s join lh_internal.written_professor_references r on r.bound_session_id=s.id join profiles p on p.id=s.user_id where p.display_name in ('Fictional Finance','Fictional Payroll') and s.room_name like 'validation:%' and (s.dispatch_id is null or left(s.dispatch_id,8)='fixture_')"))
     for row in rows:
         sid, rid = str(uuid.UUID(row['id'])), str(uuid.UUID(row['rid']))
         sql(f"begin;delete from lh_internal.written_professor_references where bound_session_id='{sid}';delete from ai_tutor_sessions where id='{sid}';delete from professor_budget_reservations where id='{rid}';commit")
@@ -189,12 +189,71 @@ try:
         sql(f"delete from lh_internal.premium_audio_attempts where id='{attempt}' and state='reserved'")
         sql('update learning_hub_budget_settings set ai_hard_cap_usd=10')
     check('new Professor binding shares existing Audio global cap under both overlapping launch orders')
+
+    ticket, request = mint(), str(uuid.uuid4())
+    admission = last_json(sql('begin;' + auth(start(ticket, request)) + ';commit'))
+    ack = {'requestId':request,'userId':finance,'mode':'chapter_conversation',
+        'reference':{'id':ticket,'sha256':admission['written_reference']['source_sha256'],'version':admission['written_reference']['descriptor_version'],'identity':identity},
+        'sessionId':admission['session_id'],'reservationId':admission['reservation_id'],'roomName':admission['room_name'],
+        'validationMode':True,'qualityTier':'premium','maxSessionSeconds':admission['max_session_seconds'],'providerAdmission':False}
+    encoded = json.dumps(ack).replace("'", "''")
+    claim_id = str(uuid.uuid4())
+    claim = f"select claim_professor_dispatch_v1('{encoded}'::jsonb,repeat('a',64),repeat('b',64),'{claim_id}')"
+    observe = f"select observe_professor_dispatch_v1('{ticket}','{request}')"
+    assert last_json(sql('begin;' + auth(observe) + ';rollback'))['state'] == 'admitted_not_claimed'
+    for role in ('anon','authenticated'):
+        sql(f'begin;set local role {role};' + claim + ';rollback', error='permission denied')
+    sql(f"update lessons set content_version={version+1} where id='{lesson}'")
+    sql('set role service_role;' + claim, error='written_reference_stale_or_forbidden')
+    sql(f"update lessons set content_version={version} where id='{lesson}'")
+    assert sql(f"select dispatch_claim_id is null from lh_internal.written_professor_references where id='{ticket}'") == 't'
+    check('service-only dispatch claim revalidates authored version after admission')
+
+    sql("alter table professor_budget_reservations add constraint fictional_claim_failure check(status<>'unresolved')")
+    try:
+        sql('set role service_role;' + claim, error='fictional_claim_failure')
+        assert sql(f"select dispatch_claim_id is null from lh_internal.written_professor_references where id='{ticket}'") == 't'
+        assert sql(f"select status from professor_budget_reservations where id='{ack['reservationId']}'") == 'active'
+    finally:
+        sql('alter table professor_budget_reservations drop constraint fictional_claim_failure')
+    check('reservation transition failure rolls back durable claim atomically')
+
+    with Connection('dispatch_first_claim') as first, Connection('dispatch_second_claim') as second:
+        first.send('set local role service_role;' + claim + ";select 'claim_first_ready'"); first.until('claim_first_ready')
+        second.send('set local role service_role;' + claim + ";select 'claim_second_ready'"); waiting(second)
+        first.send('commit'); first.close()
+        second.until('claim_second_ready'); second.send('commit'); second.close()
+        assert last_json('\n'.join(first.lines))['claimed'] is True
+        assert last_json('\n'.join(second.lines)) == {'claimed':False,'reason':'dispatch_already_claimed'}
+    observation = last_json(sql('begin;' + auth(observe) + ';rollback'))
+    assert observation == {'state':'dispatch_unconfirmed','sessionId':ack['sessionId'],'providerAdmission':False,'retryAllowed':False}
+    assert sql(f"select status from professor_budget_reservations where id='{ack['reservationId']}'") == 'unresolved'
+    sql(f"update lh_internal.written_professor_references set expires_at=now()-interval '40 days' where id='{ticket}';update professor_budget_reservations set month_start=(now()-interval '40 days')::date,created_at=now()-interval '40 days' where id='{ack['reservationId']}'")
+    assert last_json(sql('set role service_role;' + claim))['claimed'] is False
+    assert last_json(sql("select lh_internal.professor_reservation_exposure(now())"))['carriedReservedUsd'] > 0
+    check('overlapping claims return one positive result; expired cross-month uncertainty retains budget and forbids retry')
+
+    # A learner-written public dispatch_id is never a verified private receipt.
+    assert last_json(sql(f"begin;" + auth(f"update ai_tutor_sessions set dispatch_id='fixture_forged' where id='{ack['sessionId']}';" + observe) + ';rollback'))['state'] == 'dispatch_unconfirmed'
+    assert last_json(sql('begin;' + auth(observe) + ';rollback'))['state'] == 'dispatch_unconfirmed'
+    record = f"select record_professor_dispatch_v1('{ticket}','{finance}','{claim_id}',repeat('b',64),'fixture_sql_ack')"
+    assert sql('set role service_role;' + record) == 't'
+    assert sql('set role service_role;' + record) == 't'
+    sql('set role service_role;' + record.replace('fixture_sql_ack','fixture_conflicting'), error='dispatch_receipt_conflict')
+    assert last_json(sql('begin;' + auth(observe) + ';rollback'))['state'] == 'dispatch_acknowledged'
+    assert sql(f"select status from professor_budget_reservations where id='{ack['reservationId']}'") == 'unresolved'
+    check('late provider-ID observation is idempotent, conflict-safe and cannot settle costs or release holds')
 finally:
     cleanup()
     sql(f"update lessons set content_version={version},is_published=true where id='{lesson}'")
     sql('update professor_budget_settings set monthly_budget_usd=0;update learning_hub_budget_settings set ai_hard_cap_usd=0,professor_cap_usd=0,premium_audio_cap_usd=0')
 try:
     subprocess.run(['node','--experimental-strip-types','quality/tests/written-binding-admission.mjs',sys.argv[1]],check=True,timeout=90)
+finally:
+    cleanup()
+    sql('update professor_budget_settings set monthly_budget_usd=0;update learning_hub_budget_settings set ai_hard_cap_usd=0,professor_cap_usd=0,premium_audio_cap_usd=0')
+try:
+    subprocess.run(['node','--experimental-strip-types','quality/tests/written-binding-dispatch.mjs',sys.argv[1]],check=True,timeout=90)
 finally:
     cleanup()
     sql('update professor_budget_settings set monthly_budget_usd=0;update learning_hub_budget_settings set ai_hard_cap_usd=0,professor_cap_usd=0,premium_audio_cap_usd=0')
