@@ -6,6 +6,23 @@ const learners = {
   rafael:{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',email:'finance-fixture@example.invalid',track:'rafael_finance',name:'Rafael'},
   viviane:{id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',email:'payroll-fixture@example.invalid',track:'viviane_payroll',name:'Viviane'},
 } as const;
+const curriculum={
+  courses:[
+    {id:'11111111-1111-4111-8111-111111111111',slug:'finance-ireland-v2',learner_track:'rafael_finance'},
+    {id:'22222222-2222-4222-8222-222222222222',slug:'irish-payroll-v2',learner_track:'viviane_payroll'},
+    {id:'33333333-3333-4333-8333-333333333333',slug:'english-academy',learner_track:'english_academy'},
+  ],
+  modules:[
+    {id:'44444444-4444-4444-8444-444444444444',course_id:'11111111-1111-4111-8111-111111111111',slug:'ifrs-reporting',sequence:1},
+    {id:'55555555-5555-4555-8555-555555555555',course_id:'22222222-2222-4222-8222-222222222222',slug:'gross-to-net',sequence:1},
+    {id:'66666666-6666-4666-8666-666666666666',course_id:'33333333-3333-4333-8333-333333333333',slug:'spoken-fluency',sequence:1},
+  ],
+  lessons:[
+    {id:'b3639582-3c32-4147-a4b3-84237d11a66e',module_id:'44444444-4444-4444-8444-444444444444',slug:'ifrs-18-group-reporting-irish-statutory',title:'IFRS 18, Group Reporting & Irish Statutory Accounts',subtitle:null,sequence:1,estimated_minutes:15},
+    {id:'6ffda415-3b18-46ab-afaa-414f81a7eb31',module_id:'55555555-5555-4555-8555-555555555555',slug:'gross-to-net-rpn-paye-usc-prsi',title:'Gross-to-Net: RPN, PAYE, USC & PRSI',subtitle:null,sequence:1,estimated_minutes:15},
+    {id:'f455a740-f50f-4eb7-95a7-9e4129ca4a68',module_id:'66666666-6666-4666-8666-666666666666',slug:'story-past-forms-rhythm-follow-up',title:'Tell a story naturally: past forms, rhythm & follow-up questions',subtitle:null,sequence:1,estimated_minutes:15},
+  ],
+} as const;
 type Key=keyof typeof learners;
 type Fixture={profileFail:boolean;memoryFail:boolean;profileDelayMs:number;pendingToken:boolean;apiCalls:number;writes:number;reads:string[];releaseToken:()=>void};
 async function setup(page:Page):Promise<Fixture>{
@@ -48,6 +65,15 @@ async function setup(page:Page):Promise<Fixture>{
    if(url.pathname.startsWith('/rest/v1/')){
      fixture.reads.push(url.pathname+url.search);
      if(req.method()!=='GET'){fixture.writes++;await fulfill(route,{error:'write_forbidden'},403);return;}
+     if(url.pathname.endsWith('/courses')){
+       expect(url.searchParams.get('user_id')).toBeNull();expect(url.searchParams.get('is_active')).toBe('eq.true');await fulfill(route,curriculum.courses);return;
+     }
+     if(url.pathname.endsWith('/modules')){
+       expect(url.searchParams.get('user_id')).toBeNull();expect(url.searchParams.get('is_published')).toBe('eq.true');await fulfill(route,curriculum.modules);return;
+     }
+     if(url.pathname.endsWith('/lessons')){
+       expect(url.searchParams.get('user_id')).toBeNull();expect(url.searchParams.get('is_published')).toBe('eq.true');await fulfill(route,curriculum.lessons);return;
+     }
      expect(url.searchParams.get('user_id')).toBe('eq.'+learners[key].id);
      if(fixture.memoryFail){await fulfill(route,{code:'XX000',message:'fictional history outage'},503);return;}
      if(url.pathname.endsWith('/user_error_bank')){

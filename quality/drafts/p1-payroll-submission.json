@@ -1,0 +1,177 @@
+{
+  "version": "p1-payroll-submission-draft-1",
+  "status": "full_draft_not_published_to_database",
+  "track": "payroll",
+  "roadmapSequence": 2,
+  "reviewedOn": "2026-09-14",
+  "workingTitle": "RPN, pay date, Employment ID & payroll submission workflow",
+  "subtitle": "Run the identity-to-submission chain before explaining a deduction",
+  "targetDurationMinutes": 20,
+  "primaryTeachingLanguage": "en",
+  "supportLanguage": "pt-BR",
+  "goal": "Run the evidence sequence from employee/employment identity and the applicable RPN through pay date and payroll submission, then diagnose a fictional exception without inventing a tax result.",
+  "scope": "Operational Irish payroll foundation for a payroll/HR operations learner. It teaches current 2026 RPN transition rules, Employment ID continuity, pay-date reporting and correction workflow. It does not calculate current PAYE, USC or PRSI rates and does not replace Revenue guidance or payroll-software instructions.",
+  "learningObjectives": [
+    "Confirm the employee and employment identity before calculating or submitting payroll.",
+    "Use the correct 2026 RPN and distinguish an unavailable RPN from permission to reuse an old one.",
+    "Explain why pay date determines the reporting period and reporting deadline.",
+    "Diagnose a wrong RPN, Employment ID or pay-date issue before changing net pay.",
+    "Explain a verified payroll issue to an employee without blaming Revenue or promising an amount before the evidence is complete."
+  ],
+  "databaseFieldDraft": {
+    "technical_brief_pt": "Para pagamentos feitos em 2026, use o RPN aplicável de 2026; não reutilize um RPN de 2025. Para o primeiro payroll de 2026, solicite RPNs para os empregados sob cada employer registered number e opere os dados retornados. Se não houver RPN disponível, aplique a emergency basis conforme a orientação atual da Revenue, em vez de inventar créditos. O Employment ID deve permanecer o mesmo durante um período contínuo de emprego, inclusive entre anos fiscais. A data de pagamento determina o período da payroll submission e a Revenue exige o reporte no ou antes do pay date. Correções devem seguir a rota suportada por payroll software ou ROS e preservar o audit trail.",
+    "manager_commentary_pt": "Quando o net pay muda, não comece explicando uma alíquota. Primeiro prove que a identidade do emprego, o RPN e a data de pagamento estão corretos. Só então explique a diferença. Isso reduz retrabalho e evita transformar um erro de processo em uma conclusão tributária falsa.",
+    "worked_example_pt": "Caso fictício: salário não mudou; o primeiro payroll de 2026 usou um RPN de 2025 e o arquivo alterou o Employment ID de 7 para 8 apesar de o emprego ser contínuo. O pay date é 30 de janeiro de 2026. Conclusões seguras: o RPN do ano anterior não deve ser usado; o Employment ID de um emprego contínuo não deve ser trocado por causa da virada do ano; deve-se obter/reconciliar o RPN de 2026 e o Employment ID correto; a submissão pertence ao período determinado pelo pay date e deve ser reportada no ou antes desse dia. Não é possível concluir o valor correto do imposto sem o RPN e os demais dados aplicáveis.",
+    "ireland_overlay_pt": "Esta aula é específica de payroll irlandês e usa orientações oficiais da Revenue para 2026. Qualquer regra sensível a data deve ser reverificada antes de publicação e antes de uso operacional real.",
+    "global_core_pt": "O princípio operacional é controle antes de cálculo: identidade correta, dados fiscais corretos para o período, data de pagamento correta, submissão rastreável e correção documentada.",
+    "common_mistakes_pt": "Reutilizar RPN do ano anterior; trocar Employment ID apenas porque virou o ano; tratar pay date como data interna de processamento; inventar créditos quando o RPN está indisponível; explicar um valor de imposto antes de verificar o RPN; corrigir o net pay sem corrigir ou reconciliar a submissão; confundir hipótese com causa confirmada.",
+    "interview_angle_pt": "Explique como você investigaria uma diferença de net pay sem assumir que a alíquota mudou: identidade, RPN, pay date, submissão, evidência e comunicação ao empregado."
+  },
+  "sections": [
+    {
+      "id": "pay-id",
+      "title": "1. Identify the employment before calculating",
+      "paragraphs": [
+        "Payroll identity has more than one layer. You need the employee, the employer registration and the correct Employment ID for the relevant employment. The Employment ID distinguishes separate employments and different periods of employment with the same employer.",
+        "For a continuous period of employment, the Employment ID stays the same; it is not changed simply because a new tax year starts. A new period of employment can require a new identifier under the relevant Revenue rules, so the operational question is whether the employment is continuous, not whether the calendar changed.",
+        "Before investigating a tax difference, reconcile the employment shown in payroll software with the Revenue record. A wrong identifier can create the appearance of a tax problem when the first failure is actually master-data or submission identity."
+      ],
+      "supportPt": "O Employment ID é do emprego, não do ano. Primeiro confirme se o vínculo é contínuo e se o identificador usado é o correto.",
+      "sourceRefs": ["employment-id", "submission-2026"]
+    },
+    {
+      "id": "pay-rpn",
+      "title": "2. Use the correct RPN for the pay period",
+      "paragraphs": [
+        "Revenue states that 2026 RPNs became available in early December 2025 and are updated in real time from 1 January 2026. A 2025 RPN must not be used for payments made in 2026.",
+        "For the first payroll run of 2026, request RPNs for employees under each relevant employer registered number and operate the details returned, including nil credits or nil rate bands where that is what the RPN contains. If no RPN is available, use the emergency basis required by the current Revenue guidance rather than inventing tax credits or copying an old notification.",
+        "Operationally, the RPN is evidence for the calculation. It is not a narrative excuse. If an employee asks why a deduction changed, first identify the RPN used and compare the relevant input to the prior run before giving a cause."
+      ],
+      "supportPt": "Pagamento em 2026 exige RPN aplicável de 2026. Sem RPN, siga a emergency basis vigente; não copie créditos antigos.",
+      "sourceRefs": ["rpn-2026", "submission-2026"]
+    },
+    {
+      "id": "pay-date",
+      "title": "3. Pay date controls the reporting period",
+      "paragraphs": [
+        "The pay date is the date the employee is paid and Revenue uses it to determine which reporting period the payroll submission belongs to. Employers must report pay and deductions on or before the date they make the payment.",
+        "For a bank transfer, Revenue describes the pay date as the date on which the funds are scheduled to be available in the employee's bank account. A payroll processing date, file creation date or accounting-period preference does not replace the actual pay-date rule.",
+        "Keep the payroll run reference and other required submission fields as part of the audit trail. This lets operations distinguish an original run from corrections or multiple submissions without changing the underlying facts."
+      ],
+      "supportPt": "A data de processamento não substitui a data de pagamento. O pay date define o período e o prazo de reporte.",
+      "sourceRefs": ["pay-date", "submission-details"]
+    },
+    {
+      "id": "pay-correction",
+      "title": "4. Diagnose before correcting",
+      "paragraphs": [
+        "When a payroll submission is wrong, first classify the problem: wrong employee/employment identity, wrong RPN/input, wrong pay date, wrong reported amount or another data issue. Do not force the employee's current net pay to match a previous month as a shortcut.",
+        "Revenue allows corrections through payroll software or ROS. The exact correction depends on what was wrong, and corrected submissions can replace incorrect information. The process should preserve the original audit trail and link the correction to the underlying error.",
+        "Employee communication should separate what is confirmed from what is still being checked. A safe structure is: 'We found an issue in the payroll input/submission, we are reconciling it against the current Revenue record, and I will confirm the financial impact once that check is complete.'"
+      ],
+      "supportPt": "Corrija a causa e a submissão, não apenas o valor percebido pelo empregado. Diferencie fato confirmado de impacto ainda em apuração.",
+      "sourceRefs": ["corrections", "employment-id"]
+    }
+  ],
+  "vocabulary": [
+    {"term":"Revenue Payroll Notification (RPN)","meaning":"The Revenue notification containing tax information used by the employer for payroll deductions.","pt":"notificação da Revenue para o payroll","example":"Before the first 2026 payroll, request the applicable RPN."},
+    {"term":"Employment ID","meaning":"The identifier used to distinguish an employee's separate employments or periods of employment with the same employer.","pt":"identificador do vínculo empregatício","example":"A continuous employment keeps the same Employment ID across the year-end transition."},
+    {"term":"pay date","meaning":"The date the employee is paid, used to determine the payroll submission period.","pt":"data de pagamento","example":"The submission belongs to the period determined by the pay date."},
+    {"term":"payroll run reference","meaning":"A reference used to identify the payroll event and support reconciliation of related submissions or corrections.","pt":"referência da execução do payroll","example":"Keep the payroll run reference when tracing a correction."},
+    {"term":"emergency basis","meaning":"The tax treatment required by current Revenue rules when the necessary RPN is unavailable.","pt":"base emergencial","example":"Do not invent credits when there is no RPN; follow the emergency basis rules."},
+    {"term":"correction trail","meaning":"The documented link between an original payroll error, the correction and the evidence supporting it.","pt":"trilha de correção","example":"The correction trail shows what changed and why."}
+  ],
+  "visual": {
+    "title": "Payroll evidence chain",
+    "headers": ["Control point", "Question", "Evidence"],
+    "rows": [
+      ["Employment", "Is this the correct employee and continuous employment?", "PPSN/employer record + Employment ID"],
+      ["RPN", "Is this the applicable RPN for this payment?", "Current RPN number/details"],
+      ["Pay date", "When is the employee actually paid?", "Scheduled funds-available date / payment evidence"],
+      ["Submission", "Was it reported on time with the correct identifiers?", "Payroll submission + run reference"],
+      ["Correction", "If wrong, what fact must be replaced?", "Original line/item + corrected submission/audit trail"]
+    ],
+    "question": "At which point should you explain the exact tax impact to the employee?",
+    "answer": "Only after the relevant identity, RPN, pay-date and submission facts are reconciled sufficiently to support the explanation."
+  },
+  "workedCase": {
+    "title": "First payroll of 2026 with two control breaks",
+    "facts": [
+      "Fictional employee remains continuously employed across 2025 and 2026.",
+      "Monthly gross salary is unchanged.",
+      "The first 2026 payroll run accidentally uses a 2025 RPN.",
+      "The payroll file changes the Employment ID from 7 to 8 even though the employment is continuous.",
+      "The employee's pay date is 30 January 2026.",
+      "No current RPN values or tax rates are supplied in the exercise."
+    ],
+    "task": "Identify what is definitely wrong, what should be retrieved/reconciled, what the reporting deadline is and what cannot yet be concluded about the employee's tax amount.",
+    "hints": [
+      "Separate year-specific RPN rules from Employment ID continuity.",
+      "Do not calculate a tax difference without the current RPN and applicable payroll facts."
+    ],
+    "modelAnswer": "Two control failures are confirmed. First, a 2025 RPN should not be used for a payment made in 2026; retrieve and operate the applicable 2026 RPN. Second, a continuous employment should not receive a new Employment ID just because the tax year changed; reconcile the payroll record and Revenue employment record to the correct identifier. The payroll submission must be made on or before the 30 January pay date and belong to the period determined by that date. Because the exercise does not provide the correct 2026 RPN values or all tax inputs, we cannot conclude the correct tax amount or promise a refund. If an incorrect submission was already made, use the supported correction route and preserve the audit trail.",
+    "reviewChecks": [
+      "Did the learner identify the old RPN as wrong for a 2026 payment?",
+      "Did the learner preserve the Employment ID for the continuous employment?",
+      "Did the learner link reporting to the actual pay date?",
+      "Did the learner refuse to invent the correct tax amount before obtaining the necessary data?"
+    ],
+    "employeeFacingTransfer": "Explain the issue in plain professional English without saying Revenue made an error unless evidence proves that."
+  },
+  "workshops": [
+    {
+      "id": "pay-sub-w1",
+      "title": "First payroll of the year",
+      "prompt": "The system still has last year's RPN, but the 2026 pay file is due today. What is the safe sequence?",
+      "expected": "Request/use the applicable 2026 RPN. If no RPN is available, follow the current emergency-basis rules. Do not reuse the 2025 RPN or invent credits. Keep the reporting deadline linked to the pay date."
+    },
+    {
+      "id": "pay-sub-w2",
+      "title": "Two active employments",
+      "prompt": "One employee has two genuinely separate active employments with the same employer. Should both use one Employment ID?",
+      "expected": "No. Separate employments need identifiers that distinguish them. Request/use the RPN and payroll data for the correct employment rather than combining the records."
+    },
+    {
+      "id": "pay-sub-w3",
+      "title": "Incorrect submission already filed",
+      "prompt": "A payroll submission reported the wrong amount for one employee. The employee has already been paid. What should the payroll specialist do first?",
+      "expected": "Identify the exact erroneous field/line and supporting correct facts, then use the payroll software or ROS correction route. Do not change unrelated current-period pay merely to offset the reporting error."
+    }
+  ],
+  "checkpoint": [
+    {"id":"pay-sub-q1","prompt":"Which RPN should be used for a payment made in 2026?","options":["The latest 2025 RPN if salary is unchanged","The applicable 2026 RPN","Any RPN with the same Employment ID","No RPN is needed in the first run"],"correctIndex":1,"explanation":"Revenue explicitly says not to use a 2025 RPN for payments made in 2026."},
+    {"id":"pay-sub-q2","prompt":"What happens to the Employment ID for a continuous employment across tax years?","options":["It must change every January","It remains the same","It becomes the payroll run reference","It is replaced by the RPN number"],"correctIndex":1,"explanation":"The Employment ID remains the same for a continuous period of employment, including across tax years."},
+    {"id":"pay-sub-q3","prompt":"What determines which payroll submission period a payment belongs to?","options":["The GL posting date","The payroll file creation date","The pay date","The date HR approved payroll"],"correctIndex":2,"explanation":"Revenue uses the pay date to determine the period."},
+    {"id":"pay-sub-q4","prompt":"No RPN is available. What is the safest response?","options":["Reuse last year's RPN","Invent tax credits based on prior month","Apply the current emergency-basis rules and investigate the missing RPN","Delay all reporting until next month"],"correctIndex":2,"explanation":"Current Revenue guidance requires emergency basis where no RPN is available; old credits should not be invented or reused."},
+    {"id":"pay-sub-q5","prompt":"An employee asks for the exact refund before the correct RPN is retrieved. What should you do?","options":["Estimate a refund from last month","Promise that Revenue will refund it","Explain the confirmed process issue and confirm the amount only after reconciliation","Say the employer has no responsibility"],"correctIndex":2,"explanation":"Separate the verified process issue from an amount that is not yet supported by evidence."}
+  ],
+  "professorGuide": {
+    "opening": "Give the learner the fictional first-payroll scenario and ask: 'What would you check before touching the tax amount?'",
+    "challengePrompts": [
+      "Is that a tax conclusion or an identity/control conclusion?",
+      "What makes the Employment ID wrong here?",
+      "Which date controls the Revenue reporting period?",
+      "What can you safely tell the employee before you know the correct RPN values?"
+    ],
+    "helpBehaviour": "Provide one operational layer at a time: employment identity, then RPN, then pay date, then correction. Asking for help is not an error.",
+    "languageCoaching": "After the technical answer is correct, ask for a shorter employee-facing version in professional English. Do not mix English quality into the payroll-technical score."
+  },
+  "assessmentBoundaries": [
+    "Identity/control failure versus tax-calculation conclusion.",
+    "Confirmed fact versus hypothesis.",
+    "Employment ID versus RPN number versus payroll run reference.",
+    "Pay date versus internal processing date.",
+    "Employee-facing explanation versus internal correction/audit trail.",
+    "Current Revenue rule versus fictional exercise amount.",
+    "Help request or self-correction versus persistent demonstrated error."
+  ],
+  "officialSources": [
+    {"id":"rpn-2026","url":"https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/transitional-arrangements/requesting-rpn.aspx","supports":"2026 RPN availability, prohibition on using 2025 RPNs for 2026 payments, first-run RPN requests and emergency basis when no RPN is available."},
+    {"id":"submission-2026","url":"https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/transitional-arrangements/payroll-submissions.aspx","supports":"2026 payroll-submission transition controls, correct year and continuity of Employment ID across the year transition."},
+    {"id":"employment-id","url":"https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/employment-identifier.aspx","supports":"Purpose and continuity of Employment ID and its use for separate employments or periods of employment."},
+    {"id":"pay-date","url":"https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/pay-date.aspx","supports":"Requirement to report on or before payment and definition of pay date for different payment methods."},
+    {"id":"submission-details","url":"https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/what-other-details-go-into-payroll-submission.aspx","supports":"Payroll run reference, RPN number, Employment ID, pay date and other submission fields."},
+    {"id":"corrections","url":"https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/corrections.aspx","supports":"Current correction routes through payroll software or ROS and replacement of incorrect submission information."}
+  ],
+  "publicationGate": "Recheck Revenue sources at publication time + authored-content QA + tests + separate database publication/deployment decision. No current tax rates are embedded in this draft."
+}

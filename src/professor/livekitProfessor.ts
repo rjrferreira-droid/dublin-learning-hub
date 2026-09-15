@@ -1,7 +1,10 @@
+import {p1SlugFor} from '../learning/p1RuntimeRegistry';
+import {sameWorkshopSelection} from '../learning/workshopSelection';
 import { Room, RoomEvent, type RemoteAudioTrack, Track } from 'livekit-client';
 import { supabase } from '../services/supabase';
 import type { TutorSessionRequest } from '../services/contracts';
 import { observedProfessorState, type ProfessorVoiceState } from './voiceState';
+import {sameSessionPreparation} from '../learning/sessionPreparation';
 
 type ProfessorTokenResponse = {
  serverUrl:string;token:string;roomName:string;participantIdentity:string;
@@ -10,7 +13,7 @@ type ProfessorTokenResponse = {
 };
 export type ProfessorConnection = {
  room:Room;roomName:string;participantIdentity:string;sessionId:string;maxSessionSeconds:number;
- professorProfile:ProfessorTokenResponse['professorProfile'];validationMode:boolean;disconnect:()=>Promise<void>;
+ professorProfile:ProfessorTokenResponse['professorProfile'];validationMode:boolean;disconnect:()=>Promise<void>;setMicrophoneEnabled:(enabled:boolean)=>Promise<void>;
 };
 function errorMessage(code:string):string {
  if(code==='professor_not_configured')return 'Professor voice infrastructure is not configured yet.';
@@ -29,11 +32,19 @@ async function requestProfessorToken(request:TutorSessionRequest,signal?:AbortSi
  if(error)throw error;
  if(!data.session?.access_token)throw new Error('Sign in before starting the Professor.');
  if(expectedUserId&&data.session.user.id!==expectedUserId)throw new Error('The signed-in account changed. Start again from the correct account.');
- const response=await fetch('/api/livekit-token',{method:'POST',signal,headers:{'content-type':'application/json',authorization:`Bearer ${data.session.access_token}`},body:JSON.stringify({lessonId:request.lessonId,learnerId:request.learnerId,track:request.track,mode:request.mode,languageProfile:request.languageProfile,validationMode:request.validationMode===true})});
+ const response=await fetch('/api/livekit-token',{method:'POST',signal,headers:{'content-type':'application/json',authorization:`Bearer ${data.session.access_token}`},body:JSON.stringify({lessonId:request.lessonId,learnerId:request.learnerId,track:request.track,mode:request.mode,languageProfile:request.languageProfile,validationMode:request.validationMode===true,sessionPreparation:request.sessionPreparation,workshopSelection:request.workshopSelection})});
  const body=await response.json().catch(()=>({}));requireNotAborted(signal);
  if(!response.ok)throw new Error(errorMessage(typeof body?.error==='string'?body.error:'professor_connection_failed'));
  if(typeof body.sessionId!=='string'||!Number.isInteger(body.maxSessionSeconds)||body.maxSessionSeconds<60||body.maxSessionSeconds>1200||typeof body.roomName!=='string'||typeof body.validationMode!=='boolean')throw new Error('Professor session confirmation is incomplete. No microphone was opened.');
  if(body.roomName.startsWith('validation:')!==body.validationMode||(request.validationMode===true&&!body.validationMode))throw new Error('Validation protection could not be confirmed. No microphone was opened.');
+ if(request.sessionPreparation && (!body.sessionPreparation || !sameSessionPreparation(request.sessionPreparation,body.sessionPreparation)))throw new Error('Session preferences could not be confirmed. No microphone was opened.');
+ const expectedProfile=request.track==='rafael_finance'?'finance':request.track==='viviane_payroll'?'payroll':'english';
+ const expectedLessonId=request.track==='english_academy'&&request.lessonId==='english-golden-lesson'?'f455a740-f50f-4eb7-95a7-9e4129ca4a68':request.lessonId;
+ if(body.lessonId!==expectedLessonId||body.mode!==request.mode||body.professorProfile!==expectedProfile)throw new Error('Lesson identity could not be confirmed. No microphone was opened.');
+ const goldenIds={finance:'b3639582-3c32-4147-a4b3-84237d11a66e',payroll:'6ffda415-3b18-46ab-afaa-414f81a7eb31',english:'f455a740-f50f-4eb7-95a7-9e4129ca4a68'};
+ if(expectedLessonId!==goldenIds[expectedProfile] && (body.teachingContent?.source!=='server-authored-reviewed-p1'||body.teachingContent?.lessonSlug!==p1SlugFor(expectedProfile)||typeof body.teachingContent?.sha256!=='string'||! /^[0-9a-f]{64}$/.test(body.teachingContent.sha256)))throw new Error('P1 lesson reference could not be confirmed. No microphone was opened.');
+ if(body.teachingContent && (body.teachingContent.lessonId!==expectedLessonId||body.teachingContent.track!==expectedProfile))throw new Error('Lesson reference could not be confirmed. No microphone was opened.');
+ if(!sameWorkshopSelection(request.workshopSelection,body.workshopSelection))throw new Error('Workshop reference could not be confirmed. No microphone was opened.');
  return body as ProfessorTokenResponse;
 }
 export async function connectProfessor(request:TutorSessionRequest,options?:{
@@ -45,6 +56,7 @@ export async function connectProfessor(request:TutorSessionRequest,options?:{
  const room=new Room({adaptiveStream:true,dynacast:true});
  const initialAudioUnlock=room.startAudio().catch(()=>undefined);
  let closing=false;
+ let disconnectPromise:Promise<void>|null=null;
  const active=()=>!signal?.aborted&&!closing;
  const emitState=()=>{if(active())options?.onProfessorState?.(observedProfessorState([...room.remoteParticipants.values()]));};
  room.on(RoomEvent.TrackSubscribed,track=>{if(active()&&track.kind===Track.Kind.Audio)options?.onRemoteAudio?.(track as RemoteAudioTrack);});
@@ -55,10 +67,14 @@ export async function connectProfessor(request:TutorSessionRequest,options?:{
  room.on(RoomEvent.Reconnecting,()=>{if(active())options?.onProfessorState?.('reconnecting');});
  room.on(RoomEvent.Reconnected,emitState);
  room.on(RoomEvent.Disconnected,()=>{if(active())options?.onDisconnected?.();});
- async function disconnect(){
+ function disconnect():Promise<void>{
+  if(disconnectPromise)return disconnectPromise;
   closing=true;signal?.removeEventListener('abort',onAbort);
-  await room.localParticipant.setMicrophoneEnabled(false).catch(()=>undefined);
-  await room.disconnect();
+  disconnectPromise=(async()=>{
+   await room.localParticipant.setMicrophoneEnabled(false).catch(()=>undefined);
+   await room.disconnect();
+  })();
+  return disconnectPromise;
  }
  function onAbort(){void disconnect().catch(()=>undefined);}
  signal?.addEventListener('abort',onAbort,{once:true});
@@ -69,6 +85,11 @@ export async function connectProfessor(request:TutorSessionRequest,options?:{
   options?.onAudioPlaybackStatusChanged?.(room.canPlaybackAudio);
   emitState();
   await room.localParticipant.setMicrophoneEnabled(true);requireNotAborted(signal);
-  return {room,roomName:credentials.roomName,participantIdentity:credentials.participantIdentity,sessionId:credentials.sessionId,maxSessionSeconds:credentials.maxSessionSeconds,professorProfile:credentials.professorProfile,validationMode:credentials.validationMode,disconnect};
+  async function setMicrophoneEnabled(enabled:boolean){
+   if(!active())throw new Error('Professor connection is no longer active.');
+   await room.localParticipant.setMicrophoneEnabled(enabled);
+   if(!active()){await room.localParticipant.setMicrophoneEnabled(false).catch(()=>undefined);throw new Error('Professor connection changed.');}
+  }
+  return {room,roomName:credentials.roomName,participantIdentity:credentials.participantIdentity,sessionId:credentials.sessionId,maxSessionSeconds:credentials.maxSessionSeconds,professorProfile:credentials.professorProfile,validationMode:credentials.validationMode,disconnect,setMicrophoneEnabled};
  }catch(cause){await disconnect().catch(()=>undefined);throw cause;}
 }

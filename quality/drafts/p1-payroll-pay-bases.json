@@ -1,0 +1,175 @@
+{
+  "version":"p1-payroll-pay-bases-draft-1",
+  "status":"full_draft_not_published_to_database",
+  "track":"payroll",
+  "roadmapSequence":3,
+  "reviewedOn":"2026-09-14",
+  "workingTitle":"Pay bases, pensions & statutory deductions without one-base thinking",
+  "subtitle":"Reconcile gross pay, Income Tax pay, USC pay and PRSI pay before calculating deductions",
+  "targetDurationMinutes":20,
+  "primaryTeachingLanguage":"en",
+  "supportLanguage":"pt-BR",
+  "goal":"Explain why Irish payroll does not use one universal pay base for every statutory deduction, reconcile supplied pay bases with an approved employee pension contribution, and separate pay-base logic from the actual tax/USC/PRSI calculation.",
+  "scope":"Operational Irish payroll foundation using current Revenue definitions reviewed on 14 September 2026. It teaches pay-base construction and pension distinctions without embedding current tax, USC or PRSI rates. It does not calculate an employee's final statutory liabilities, determine pension eligibility/relief limits, or replace Revenue/DSP guidance.",
+  "learningObjectives":[
+    "Distinguish gross pay from pay for Income Tax, pay for USC and pay for employee PRSI.",
+    "Explain the supplied effect of an employee contribution to an approved pension scheme on the Income Tax pay base without applying that same reduction to USC or PRSI.",
+    "Keep employee pension contributions, employer pension contributions and employer PRSI conceptually separate.",
+    "Reconcile pay-base fields before troubleshooting the final deduction amount.",
+    "State clearly when current RPN, PRSI class, scheme conditions or other current rules are still needed before a real payroll result can be calculated."
+  ],
+  "databaseFieldDraft":{
+    "technical_brief_pt":"A payroll submission irlandesa contém bases de pay distintas. A Revenue orienta que gross pay inclui salários e outros componentes relevantes antes das deduções. Para Income Tax, contribuições regulares do empregado para um fundo/scheme de pensão aprovado podem ser excluídas da base quando as condições aplicáveis são atendidas. Para USC, a Revenue orienta operar sobre gross pay antes da dedução dessas contribuições. Para PRSI do empregado, a base inclui gross pay e as contribuições do empregado para pension schemes/PRSAs e outros itens especificados continuam chargeable para PRSI. Logo, não se deve copiar uma única taxable base para PAYE, USC e PRSI. A obrigação final ainda depende do RPN, PRSI class e regras atuais aplicáveis.",
+    "manager_commentary_pt":"Quando PAYE, USC ou PRSI parecem errados, primeiro reconcilie as bases. Um sistema pode ter um cálculo matematicamente perfeito sobre uma base incorreta. O especialista deve conseguir explicar qual componente entrou ou saiu de cada base e por quê antes de discutir a alíquota final.",
+    "worked_example_pt":"Exemplo fictício e limitado à base: gross cash pay de 4.000 e contribuição regular do empregado de 200 para um pension scheme aprovado, assumindo que a contribuição é elegível para o tratamento indicado pela Revenue para Income Tax. Pay for Income Tax = 3.800; pay for USC = 4.000; pay for employee PRSI = 4.000. Esses valores são bases, não os valores de PAYE, USC ou PRSI a pagar. A aula não fornece rates, bands, credits nem PRSI class para calcular as deduções finais.",
+    "ireland_overlay_pt":"Toda a aula é específica ao payroll irlandês e usa Revenue como fonte. Como regras de pensão e payroll são sensíveis a data e ao tipo de scheme, a fonte deve ser revista novamente antes da publicação e de uso operacional real.",
+    "global_core_pt":"O princípio de controle é separar componentes de remuneração, bases estatutárias e deduções finais. Uma diferença de base deve ser resolvida antes de atribuir a variação a uma rate, band ou credit.",
+    "common_mistakes_pt":"Deduzir pension contribution de USC ou PRSI só porque foi deduzida da base de Income Tax; confundir gross pay com taxable pay; tratar employer PRSI como desconto do empregado; presumir que toda contribuição de pensão tem o mesmo tratamento; calcular imposto final sem RPN; inventar PRSI class; explicar uma diferença como rate change antes de reconciliar as bases.",
+    "interview_angle_pt":"Receba um payslip fictício com gross pay e pension contribution e explique, em linguagem simples, por que as bases para Income Tax, USC e PRSI podem ser diferentes antes mesmo de olhar as taxas."
+  },
+  "sections":[
+    {
+      "id":"pay-base-gross",
+      "title":"1. Gross pay is the starting record, not a universal statutory base",
+      "paragraphs":[
+        "Revenue's payroll-submission guidance starts with gross pay before deductions. Gross pay can include wages or salary and other relevant pay components such as bonuses, overtime, holiday pay, commission and notional pay where applicable.",
+        "That gross-pay field is not permission to use one number mechanically for every statutory calculation. The payroll process then derives or reports the appropriate pay basis for Income Tax, USC and PRSI using the rules that apply to each charge.",
+        "A useful reconciliation starts with components, not deductions: basic pay, overtime, bonus, notional pay and any relevant pension or approved health contribution. From that component map, build each statutory base deliberately."
+      ],
+      "supportPt":"Gross pay é o ponto de partida. Não conclua que todas as bases estatutárias serão iguais só porque começam na mesma remuneração.",
+      "sourceRefs":["pay-details","what-pay-includes"]
+    },
+    {
+      "id":"pay-base-income-tax",
+      "title":"2. Income Tax pay can reflect approved employee pension contributions",
+      "paragraphs":[
+        "Revenue states that pay for Income Tax starts from gross pay but excludes qualifying regular employee payments into an approved pension or superannuation fund when the relevant conditions are met. PAYE is then operated on the resulting taxable pay using the employee's applicable Revenue Payroll Notification and other current rules.",
+        "The key control is to prove the contribution and scheme treatment before reducing the pay base. A line labelled 'pension' in payroll data is not enough on its own to establish the treatment or the employee's relief entitlement.",
+        "This lesson therefore stops at the pay base. It does not insert 2026 tax bands, credits or rates into the exercise and it does not infer relief limits from the employee's contribution amount."
+      ],
+      "supportPt":"Uma contribuição elegível pode reduzir pay for Income Tax, mas só depois de confirmar o tipo e as condições aplicáveis. A aula não calcula o PAYE final.",
+      "sourceRefs":["pay-details","employee-pension"]
+    },
+    {
+      "id":"pay-base-usc-prsi",
+      "title":"3. Do not copy the Income Tax base into USC or PRSI",
+      "paragraphs":[
+        "Revenue states that USC is operated on gross pay before employee pension contributions are deducted. This means a pension reduction used for Income Tax does not simply flow through to the USC pay base.",
+        "For employee PRSI, Revenue's payroll-submission guidance says the relevant gross pay includes applicable notional pay or benefits and remains fully chargeable on specified employee pension and related contributions. The employee's actual PRSI deduction still depends on the relevant PRSI class and current social-insurance rules.",
+        "When a system shows different Income Tax, USC and PRSI pay bases, the difference can be correct. The control question is whether each difference is supported by the relevant pay component and rule, not whether all three figures look visually consistent."
+      ],
+      "supportPt":"Pension contribution pode reduzir a base de Income Tax sem reduzir USC ou PRSI. Bases diferentes não significam erro automaticamente.",
+      "sourceRefs":["pay-details","employee-pension"]
+    },
+    {
+      "id":"pay-base-employer",
+      "title":"4. Employee deductions and employer costs are different layers",
+      "paragraphs":[
+        "Employee pension contributions and employer pension contributions are not the same payroll event. Employer contributions can have their own scheme-specific treatment and reporting requirements; Revenue's current guidance lists qualifying employer contributions to specified retirement arrangements that are not treated as benefit in kind, subject to the applicable conditions and limits.",
+        "Employer PRSI is also an employer liability, not another deduction from the employee's net pay. The payroll submission separately reports employee PRSI and employer PRSI amounts.",
+        "A strong payroll explanation therefore separates three questions: what reduces employee cash, what changes a statutory pay base, and what is an additional employer cost. Mixing these layers is one of the fastest ways to produce a plausible but wrong gross-to-net explanation."
+      ],
+      "supportPt":"Separe desconto do empregado, base estatutária e custo do empregador. Eles podem estar conectados, mas não são a mesma coisa.",
+      "sourceRefs":["pension-employer","benefit-info","pay-details"]
+    }
+  ],
+  "vocabulary":[
+    {"term":"gross pay","meaning":"Employee pay before deductions, including the applicable pay components Revenue requires in the gross-pay field.","pt":"remuneração bruta","example":"Start the reconciliation with gross pay and its components."},
+    {"term":"pay for Income Tax","meaning":"The pay base on which PAYE is operated after applicable exclusions such as qualifying employee pension contributions under the relevant rules.","pt":"base para Income Tax","example":"The supplied pension contribution reduces pay for Income Tax in the fictional case."},
+    {"term":"pay for USC","meaning":"The pay base used for Universal Social Charge under Revenue's applicable rules.","pt":"base para USC","example":"The pension contribution is not deducted from the USC pay base in this exercise."},
+    {"term":"pay for employee PRSI","meaning":"The pay base used for the employee PRSI calculation under the applicable social-insurance rules.","pt":"base para PRSI do empregado","example":"The exercise keeps the pension contribution in the PRSI pay base."},
+    {"term":"approved pension scheme","meaning":"A pension arrangement whose tax treatment depends on the scheme and conditions recognised under current Revenue rules.","pt":"plano de pensão aprovado","example":"Confirm the approved scheme treatment before reducing the Income Tax pay base."},
+    {"term":"employer contribution","meaning":"An amount contributed by the employer to an applicable retirement arrangement, separate from the employee's own deduction.","pt":"contribuição do empregador","example":"Do not subtract the employer contribution from the employee's cash pay unless a separate rule requires an employee deduction."}
+  ],
+  "visual":{
+    "title":"One gross pay, several payroll layers",
+    "headers":["Layer","Fictional base","Question before accepting it"],
+    "rows":[
+      ["Gross pay","4,000","Which pay components are included?"],
+      ["Pay for Income Tax","3,800","Is the 200 employee pension contribution eligible for this treatment?"],
+      ["Pay for USC","4,000","Was any pension amount incorrectly removed?"],
+      ["Pay for employee PRSI","4,000","Does the PRSI base reflect the applicable class/rules?"],
+      ["Employer costs","Separate","Which amounts are employer liabilities rather than employee deductions?"]
+    ],
+    "question":"Why should a payroll reviewer not force all three statutory bases to 3,800?",
+    "answer":"Because the supplied pension contribution affects the Income Tax pay base differently from USC and PRSI under the Revenue guidance used for this exercise."
+  },
+  "workedCase":{
+    "title":"Approved employee pension contribution: base reconciliation only",
+    "facts":[
+      "Fictional monthly gross cash pay is 4,000.",
+      "The employee makes a regular 200 contribution to an approved pension scheme through payroll.",
+      "For this exercise, assume the contribution meets the conditions to be deducted when determining pay for Income Tax.",
+      "There are no other pay components, benefits, PHB contributions or deductions in the base-reconciliation exercise.",
+      "No RPN values, Income Tax/USC rates or PRSI class are supplied."
+    ],
+    "calculation":{
+      "grossPay":4000,
+      "employeePensionContribution":200,
+      "payForIncomeTax":3800,
+      "payForUSC":4000,
+      "payForEmployeePRSI":4000,
+      "units":"fictional currency units; bases only"
+    },
+    "task":"Reconcile the three pay bases and explain what you still need before calculating the actual PAYE, USC and PRSI deductions.",
+    "hints":[
+      "Do not apply the pension reduction automatically to all three bases.",
+      "Separate the base from the rate/credit/class information needed for the final deduction."
+    ],
+    "modelAnswer":"Gross pay is 4,000. Under the supplied assumption, the 200 approved employee pension contribution reduces pay for Income Tax to 3,800. Revenue's guidance used for this exercise keeps the pension contribution in the USC and employee-PRSI pay bases, so each remains 4,000. These are only bases. To calculate the actual deductions I still need the applicable RPN information for Income Tax/USC, the employee's PRSI class and any other current facts required by the payroll rules. I would not infer the final tax or PRSI amounts from these bases alone.",
+    "reviewChecks":[
+      "Did the learner reduce only the supplied Income Tax pay base by 200?",
+      "Did the learner keep USC and PRSI bases at 4,000 under the supplied facts?",
+      "Did the learner avoid calculating final deductions without RPN/rates/class information?",
+      "Did the learner distinguish employee deductions from employer costs?"
+    ],
+    "employeeFacingTransfer":"Explain in plain English why a pension contribution can change taxable pay for Income Tax without making every statutory base smaller."
+  },
+  "workshops":[
+    {"id":"pay-base-w1","title":"Pension amount copied into every base","prompt":"A payroll file reduces gross pay by the employee pension contribution for Income Tax, USC and PRSI. What should you investigate first?","expected":"Confirm the pension/scheme treatment, then rebuild each statutory pay base separately. Under the current Revenue guidance used here, a qualifying employee pension contribution can reduce Income Tax pay while remaining in USC and PRSI bases."},
+    {"id":"pay-base-w2","title":"Approved permanent health contribution","prompt":"An approved employee permanent-health contribution appears in payroll. Can you assume it reduces Income Tax, USC and PRSI bases equally?","expected":"No. Revenue's current payroll guidance describes Income Tax relief but not equivalent USC/PRSI relief for approved PHB contributions. Verify the current rule and build each base separately rather than copying one treatment."},
+    {"id":"pay-base-w3","title":"Employer pension contribution confused with employee deduction","prompt":"A manager sees a 300 employer pension contribution and asks why employee net pay did not fall by 300. What is the key explanation?","expected":"An employer contribution is a separate employer-side item, not automatically an employee cash deduction. Confirm the scheme-specific treatment/reporting rather than subtracting it from net pay."}
+  ],
+  "checkpoint":[
+    {"id":"pay-base-q1","prompt":"What is the safest description of gross pay in this lesson?","options":["The final PAYE base in every case","The starting pay record before deductions, from which statutory bases are determined","Net pay plus employer PRSI","Only basic salary"],"correctIndex":1,"explanation":"Gross pay is the starting remuneration field; the applicable statutory pay bases can then differ."},
+    {"id":"pay-base-q2","prompt":"Under the worked-case assumption, what is pay for Income Tax?","options":["4,200","4,000","3,800","200"],"correctIndex":2,"explanation":"The qualifying 200 employee pension contribution is deducted from the 4,000 gross pay for this Income Tax base exercise."},
+    {"id":"pay-base-q3","prompt":"Under the worked-case facts, what happens to the USC pay base because of the 200 pension contribution?","options":["It falls to 3,800","It remains 4,000","It becomes 200","It cannot include gross pay"],"correctIndex":1,"explanation":"Revenue's guidance says USC is operated on gross pay before employee pension contributions are deducted."},
+    {"id":"pay-base-q4","prompt":"Do the three pay bases let you calculate the employee's final PAYE, USC and PRSI amounts?","options":["Yes, no other data is needed","No; current RPN/rates and PRSI-class facts are still needed","Yes, use last year's rates","Only employer PRSI is needed"],"correctIndex":1,"explanation":"The lesson deliberately separates pay-base logic from the current calculation parameters needed for actual deductions."},
+    {"id":"pay-base-q5","prompt":"How should an employer pension contribution normally be treated in a gross-to-net explanation?","options":["Automatically subtract it from employee cash","Treat it as a separate employer-side item and verify scheme-specific rules","Call it employee PRSI","Use it to reduce every statutory base"],"correctIndex":1,"explanation":"Employer pension contributions are separate from employee deductions and require their own applicable treatment/reporting analysis."}
+  ],
+  "professorGuide":{
+    "opening": "Give only gross pay 4,000 and employee pension contribution 200. Ask the learner to predict whether all statutory bases must be 3,800, then require a reason before revealing the official treatment used by the exercise.",
+    "challengePrompts": [
+      "Which number are you calling taxable pay, and for which charge?",
+      "Why did you remove the pension from USC?",
+      "What fact is still missing before you can calculate PRSI?",
+      "Is that 300 an employee deduction or an employer-side contribution?"
+    ],
+    "helpBehaviour": "If the learner is stuck, ask them to build three labelled columns: Income Tax, USC and PRSI. Do not supply current rates as a shortcut.",
+    "languageCoaching": "Once technically correct, ask for a short employee-facing explanation in English. Keep payroll accuracy separate from grammar and fluency.",
+    "whenCorrect": "Ask for an employee-facing explanation distinguishing the three statutory bases.",
+    "whenUncertain": "Label Income Tax, USC and PRSI separately and identify which supplied fact is missing.",
+    "whenMisconception": "Ask which charge the learner means by taxable pay. Revisit the supplied pension treatment without inventing rates or assuming every base is identical.",
+    "whenSelfCorrected": "Acknowledge the corrected explanation and ask a brief transfer question. Do not assess an abandoned statement as the final answer.",
+    "whenAskedForAnswer": "Ask whether the learner prefers one hint or the worked answer. If requested, explain the authored answer, then invite a fresh application; disclosure is not demonstrated mastery.",
+    "evidenceBoundary": "This guide is an authored teaching expectation, not observed model behaviour or learner evidence. Assess only actual session contributions. Help-seeking is not an error; transcript text cannot establish pronunciation, accent or acoustic fluency."
+  },
+  "assessmentBoundaries":[
+    "Gross pay versus pay for Income Tax versus pay for USC versus pay for PRSI.",
+    "Pay-base error versus final deduction/rate error.",
+    "Employee pension contribution versus employer pension contribution.",
+    "Employee deduction versus employer cost.",
+    "Supplied approved-scheme assumption versus unsupported eligibility conclusion.",
+    "Current Revenue rule versus fictional exercise amount.",
+    "Technical payroll reasoning versus English-language quality.",
+    "Help request/self-correction versus persistent demonstrated error."
+  ],
+  "officialSources":[
+    {"id":"pay-details","url":"https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/what-employee-pay-details-do-you-include.aspx","supports":"Current Revenue definitions of gross pay, pay for Income Tax, pay for USC, pay for employee PRSI, statutory deduction fields and permanent-health contribution treatment."},
+    {"id":"employee-pension","url":"https://www.revenue.ie/en/employing-people/what-constitutes-pay/employees-pension-payments/index.aspx","supports":"Current Revenue overview that qualifying employee pension contributions may reduce the Income Tax pay base but are not deducted from gross pay for USC or PRSI calculations."},
+    {"id":"what-pay-includes","url":"https://www.revenue.ie/en/employing-people/what-constitutes-pay/what-pay-includes/index.aspx","supports":"Examples of pay components such as salary, overtime, bonuses, commission and benefits used to frame the gross-pay starting point."},
+    {"id":"benefit-info","url":"https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/what-benefit-information-do-you-provide.aspx","supports":"Current payroll-submission fields for benefits and employer retirement-scheme contributions, used only for the employer-side distinction."},
+    {"id":"pension-employer","url":"https://www.revenue.ie/en/employing-people/benefit-in-kind-for-employers/other-benefits/pension-contributions.aspx","supports":"Current Revenue treatment of specified employer retirement contributions and the need to consider scheme-specific conditions rather than treating them as employee deductions."}
+  ],
+  "publicationGate":"Recheck Revenue sources immediately before publication + authored-content QA + arithmetic/base tests + Professor/evaluator contract tests + separate database publication/deployment decision. No current statutory rates are embedded in this draft."
+}

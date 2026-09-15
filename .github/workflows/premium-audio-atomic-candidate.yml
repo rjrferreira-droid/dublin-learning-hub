@@ -1,0 +1,69 @@
+name: Isolated Premium Audio atomic budget candidate
+on:
+  push:
+    branches: [feat/professor-experience-2026-09-13]
+    paths:
+      - 'quality/candidates/premium-audio-atomic.sql'
+      - 'quality/tests/audio-atomic-*'
+      - 'quality/preview-backend/**'
+      - 'quality/tests/preview-package*'
+      - 'quality/tests/audio-attempt-postgres.mjs'
+      - 'quality/candidates/premium-audio-attempt-flow.ts'
+      - 'supabase/functions/_shared/premium-audio-attempt-flow.ts'
+      - '.github/workflows/premium-audio-atomic-candidate.yml'
+permissions:
+  contents: read
+jobs:
+  real-postgres-concurrency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ephemeral-test-only
+          POSTGRES_DB: learning_hub_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGDATABASE: learning_hub_test
+      PGUSER: postgres
+      PGPASSWORD: ephemeral-test-only
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Construct disposable fictional fixture and candidate, without Supabase credentials
+        run: |
+          test "$PGHOST" = '127.0.0.1'
+          test "$PGDATABASE" = 'learning_hub_test'
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/fixture-budget.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913153700_lh_professor_completion_integrity.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913154315_lh_serialize_learning_updates.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913155850_lh_usage_settlement_integrity.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913161005_lh_atomic_professor_start.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913165704_lh_reservation_lifecycle.sql
+          psql -v ON_ERROR_STOP=1 -f quality/tests/audio-atomic-fixture.sql
+          python3 quality/tests/preview-package.test.py
+          python3 quality/preview-backend/build-package.py /tmp/learning-hub-preview-package
+          python3 quality/tests/preview-package-postgres.py install /tmp/learning-hub-preview-package
+      - name: Verify concurrent admissions, submission fences, receipts, expiry and roles
+        run: python3 quality/tests/audio-atomic-concurrency.py
+      - name: Verify candidate orchestration against real SQL with fictional provider/storage
+        run: node --experimental-strip-types quality/tests/audio-attempt-postgres.mjs
+      - name: Verify nondestructive stop with pending obligations
+        run: python3 quality/tests/preview-package-postgres.py stop /tmp/learning-hub-preview-package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: isolated-backend-review-package
+          path: /tmp/learning-hub-preview-package
+          retention-days: 7
+          if-no-files-found: error
+      - name: Verify repository unchanged
+        run: git diff --exit-code

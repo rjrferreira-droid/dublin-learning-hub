@@ -1,0 +1,13 @@
+# Read-only Professor recovery candidate — 15 September 2026
+
+Continues f21db30212aec259c0fb47129d552dffb0a932a1, with full CI 35028006986 and disposable platform CI 35028006918 green. The durable dispatch SQL, provider registry, live worker and active endpoints are unchanged.
+
+The browser-safe, unmounted controller queries only observe_professor_dispatch_v1 using an authenticated client. It captures a detached server-preflight receipt and a selection/account epoch. Auth.getUser is checked before and after the RPC. The current scope must retain the exact account, request, reference/hash/version and complete lesson identity. Callers must increment epoch on every account or selection transition, including switching away and back, and dispose on unmount.
+
+Older overlapping refreshes, cancellation, disposal and scope changes discard late results. A newer failed refresh cannot revive an older response. There are no timers, automatic retries, provider calls, browser storage writes, service credentials or reservation mutations. Explicit read-only refresh is supported; retryAllowed:false always refers to a new session/provider attempt, not another status read.
+
+The strict response contract admits exactly four observation states, a compatible nullable session UUID and two false capability flags. Unknown states, inconsistent IDs, extra secret fields and capability-bearing responses fail closed. Errors expose no raw Auth/PostgREST/provider details. User-facing copy distinguishes reservation, uncertain dispatch and observed acknowledgement, without claiming connection, completion, cost settlement, mastery or pronunciation. No admission observed is only a point-in-time read, never proof of cancellation.
+
+Verification: 20 new Node tests exercise all states, account/lesson/version/reference drift, Auth changes, cancellation, disposal, overlapping reads, malformed responses and error redaction. The real disposable Auth/PostgREST test adds all four validated recovery states, late-response discard after an actual owner-scoped RPC, and cross-account controller rejection. It preserves the same fake submission count and zero actual provider calls, then restores all fictional budgets and deletes restricted fixture rows before real browser regression. Full CI and local-platform CI at the matching PR head are authoritative remote evidence; existing browser scenarios do not yet mount this new controller.
+
+Remaining boundary: mounting into the authenticated hosted Preview requires the separately approved isolated backend and reviewed active route wiring. Production, main/V2, P1 publication and LiveKit nb67ioJmoKBN remain unchanged. This candidate is prepared integration code, not a claim of live recovery acceptance.

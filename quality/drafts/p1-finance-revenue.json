@@ -1,0 +1,180 @@
+{
+  "version": "p1-finance-revenue-draft-1",
+  "status": "full_draft_not_published_to_database",
+  "track": "finance",
+  "roadmapSequence": 2,
+  "reviewedOn": "2026-09-14",
+  "workingTitle": "Revenue judgement: contracts, performance obligations & cut-off",
+  "subtitle": "IFRS 15 logic first, close evidence second, Irish statutory basis kept separate",
+  "targetDurationMinutes": 20,
+  "primaryTeachingLanguage": "en",
+  "supportLanguage": "pt-BR",
+  "goal": "Apply the IFRS 15 five-step model to a compact close scenario, distinguish billing from recognition, and explain what evidence is still needed before revenue is booked or deferred.",
+  "scope": "Professional foundation for a multinational finance learner. It teaches the five-step logic, a year-end cut-off case, one implementation control and a separate Irish FRS 102 bridge. It is not a complete IFRS 15 course, contract-law opinion, tax analysis, statutory-accounts preparation or audit conclusion.",
+  "learningObjectives": [
+    "Identify the customer contract and the distinct promised goods or services before looking at the invoice date or GL account.",
+    "Separate transaction-price allocation from the timing of revenue recognition.",
+    "Use transfer-of-control evidence and cut-off controls rather than billing date alone.",
+    "Explain a concise year-end revenue conclusion and the unresolved evidence still required.",
+    "Keep an IFRS group-package conclusion separate from a local FRS 102 statutory-basis assessment."
+  ],
+  "databaseFieldDraft": {
+    "technical_brief_pt": "A lógica central é separar contrato, obrigações de desempenho, preço, alocação e transferência de controle. A data da fatura não determina sozinha o reconhecimento. No fechamento, o aluno deve identificar a evidência de entrega/aceite ou prestação do serviço e explicar o efeito de cut-off. Para uma entidade irlandesa que use FRS 102, a conclusão estatutária local deve ser avaliada na base aplicável; as alterações do Periodic Review 2024, em sua maioria efetivas para períodos iniciados em ou após 1 de janeiro de 2026, introduziram uma nova Section 23 com um modelo de cinco etapas proporcionalmente alinhado ao IFRS 15, mas isso não transforma FRS 102 em IFRS.",
+    "manager_commentary_pt": "Em uma conversa de controller/CFO, não comece pela nota fiscal. Comece pelo que foi prometido ao cliente, o que foi efetivamente transferido e qual evidência sustenta essa conclusão. Depois mostre a ponte para o valor reconhecido e deixe explícito o que ainda precisa de confirmação.",
+    "worked_example_pt": "Contrato fictício de fim de ano com hardware e suporte. O hardware é entregue e aceito em 29 de dezembro; o suporte começa em 1 de janeiro. Só depois de concluir a lógica de reconhecimento, são fornecidos os valores: preço do contrato 108, preços de venda separados relativos 100 para hardware e 20 para suporte. A alocação é 90 para hardware e 18 para suporte. Sob os fatos fornecidos, 90 é reconhecido quando o controle do hardware é transferido; o componente de suporte começa a ser reconhecido apenas quando a obrigação de serviço começa a ser satisfeita. A fatura integral em 28 de dezembro não muda essa lógica.",
+    "ireland_overlay_pt": "FRS 102 é uma base distinta aplicável no Reino Unido e na República da Irlanda. A Periodic Review 2024 tem data principal de vigência em 1 de janeiro de 2026 e introduziu uma nova Section 23 Revenue from Contracts with Customers com modelo de cinco etapas. O aluno deve confirmar a base estatutária real da entidade e não copiar automaticamente a conclusão do pacote IFRS do grupo.",
+    "global_core_pt": "IFRS 15 reconhece receita para representar a transferência de bens ou serviços prometidos ao cliente pelo valor da contraprestação esperada. O modelo: identificar contrato, identificar obrigações de desempenho, determinar preço da transação, alocar o preço e reconhecer quando ou à medida que cada obrigação é satisfeita.",
+    "common_mistakes_pt": "Usar a data da fatura como prova suficiente; confundir faturamento com reconhecimento; alocar preço sem antes identificar obrigações; assumir que entrega física sempre prova transferência de controle; copiar a conclusão IFRS para FRS 102 sem confirmar a base e os fatos; transformar falta de evidência em uma conclusão assertiva.",
+    "interview_angle_pt": "Explique em 30 segundos: qual é a conclusão de cut-off, qual evidência a sustenta, qual valor fica reconhecido/deferido e qual é o próximo controle ou confirmação necessária."
+  },
+  "sections": [
+    {
+      "id": "fin-rev-contract",
+      "title": "1. Start with the contract and promised transfer",
+      "paragraphs": [
+        "Revenue analysis starts with the customer contract, not with the invoice or the revenue account. First identify the enforceable arrangement and the promises made to the customer. Under IFRS 15, distinct promised goods or services are identified as performance obligations and become the units you analyse through the rest of the model.",
+        "A useful close habit is to ask three questions before touching the number: What exactly did we promise? Which promises are distinct? What evidence shows that the customer obtained control of each promised item? This prevents an invoice, shipment status or account description from replacing the accounting judgement.",
+        "In a bundled contract, hardware and support may require separate analysis. The fact that both appear on one invoice does not prove that both are recognised at the same time."
+      ],
+      "supportPt": "Comece pelo contrato e pelas promessas ao cliente. Uma única fatura pode conter obrigações com momentos de reconhecimento diferentes.",
+      "sourceRefs": ["ifrs15"]
+    },
+    {
+      "id": "fin-rev-price",
+      "title": "2. Transaction price and timing are separate judgements",
+      "paragraphs": [
+        "After identifying the performance obligations, determine the transaction price and allocate it to those obligations, normally using relative stand-alone selling prices. Only then decide when each allocated amount is recognised.",
+        "This separation matters because a contract can be priced today but satisfied across different dates. A good answer does not jump from 'the invoice is 108' to 'revenue is 108'. It explains which obligation receives which share and when that obligation is satisfied.",
+        "For an obligation satisfied over time, the measure of progress should depict the entity's performance in transferring control. For a point-in-time obligation, focus on the facts that support when control transferred."
+      ],
+      "supportPt": "Preço e timing são decisões diferentes. Primeiro aloque; depois avalie quando cada obrigação é satisfeita.",
+      "sourceRefs": ["ifrs15"]
+    },
+    {
+      "id": "fin-rev-cutoff",
+      "title": "3. Close evidence: invoice date is not the whole answer",
+      "paragraphs": [
+        "At year-end, cut-off is an evidence problem as much as an accounting problem. Delivery records, acceptance evidence, contractual terms, service start dates and exception reports help establish whether the promised transfer occurred before or after the reporting date.",
+        "A strong control does not merely scan for invoices dated around 31 December. It links material or unusual billed items to fulfilment evidence, records exceptions and assigns a reviewer. If evidence is missing, the correct response is to escalate or defer the conclusion, not invent certainty.",
+        "For management communication, state the conclusion first, then one decisive fact, then the unresolved item. Example structure: 'The hardware component is recognised before year-end because control transferred on 29 December; support begins next year; I still need the acceptance evidence attached to the close file.'"
+      ],
+      "supportPt": "Cut-off exige evidência de transferência, não apenas data de emissão. A falta de documento deve aparecer como pendência, não como certeza inventada.",
+      "sourceRefs": ["ifrs15"]
+    },
+    {
+      "id": "fin-rev-ireland",
+      "title": "4. Irish statutory bridge without framework mixing",
+      "paragraphs": [
+        "An Irish entity may prepare local statutory financial statements under FRS 102 rather than adopted IFRS, depending on its actual reporting basis and eligibility. That local basis must be confirmed rather than inferred from the group reporting package.",
+        "The FRC's Periodic Review 2024 has a principal effective date of 1 January 2026. The revised FRS 102 Section 23 introduces a single five-step model for revenue from contracts with customers and is proportionately aligned with IFRS 15. Greater alignment does not mean the two frameworks are identical in every requirement, transition choice or disclosure.",
+        "A practical controller workflow is therefore two-column: group IFRS conclusion and local statutory conclusion. Reuse common contract facts, but document the applicable framework, differences or accommodations, transition status and reviewer before assuming one output proves the other."
+      ],
+      "supportPt": "FRS 102 de 2026 também usa um modelo de cinco etapas para receita, mas continua sendo uma base própria. Confirme a base local antes de copiar a conclusão do grupo.",
+      "sourceRefs": ["frs102", "frs102facts"]
+    }
+  ],
+  "vocabulary": [
+    {"term":"performance obligation","meaning":"A promise in a customer contract to transfer a distinct good or service.","pt":"obrigação de desempenho","example":"The hardware and support are assessed as separate performance obligations in this case."},
+    {"term":"transaction price","meaning":"The consideration the entity expects to be entitled to for transferring promised goods or services.","pt":"preço da transação","example":"We determine the transaction price before allocating it to the promises."},
+    {"term":"stand-alone selling price","meaning":"The price at which a promised good or service would be sold separately to a customer.","pt":"preço de venda individual","example":"The relative stand-alone selling prices drive the allocation in the exercise."},
+    {"term":"transfer of control","meaning":"The point or pattern at which the customer obtains control of the promised good or service.","pt":"transferência de controle","example":"The invoice date is not enough; we need evidence of transfer of control."},
+    {"term":"cut-off","meaning":"The control that transactions are recorded in the correct reporting period.","pt":"corte contábil","example":"The year-end cut-off test links billed items to fulfilment evidence."},
+    {"term":"contract liability","meaning":"An obligation to transfer goods or services for consideration already received or due, subject to the applicable accounting facts.","pt":"passivo contratual","example":"The support allocation remains unrecognised at year-end in the fictional example."}
+  ],
+  "visual": {
+    "title": "Five decisions before the journal entry",
+    "headers": ["Question", "Evidence", "Decision"],
+    "rows": [
+      ["What contract exists?", "Approved terms / customer arrangement", "Contract in scope"],
+      ["What was promised?", "Goods and service commitments", "Performance obligations"],
+      ["How much consideration?", "Pricing terms and assumptions", "Transaction price"],
+      ["How is price split?", "Stand-alone selling price evidence", "Allocation"],
+      ["What transferred by close?", "Delivery / acceptance / service evidence", "Recognise or defer"]
+    ],
+    "question": "Which row would an invoice date alone answer?",
+    "answer": "None of them conclusively. An invoice can be relevant evidence, but it does not replace the contract, allocation and transfer-of-control analysis."
+  },
+  "workedCase": {
+    "title": "29 December hardware, 1 January support",
+    "stage1Facts": [
+      "A fictional customer contract includes one hardware unit and one year of support.",
+      "The invoice for both items is issued on 28 December.",
+      "The hardware is delivered and customer acceptance is evidenced on 29 December.",
+      "The support service starts on 1 January of the next year and is provided over that following year.",
+      "Assume the contract is valid and the hardware and support are distinct promises for this exercise."
+    ],
+    "stage1Task": "Before seeing any amounts, state which facts determine recognition at 31 December and which fact does not determine recognition by itself.",
+    "numericExtension": {
+      "contractPrice": 108,
+      "hardwareStandaloneSellingPrice": 100,
+      "supportStandaloneSellingPrice": 20,
+      "allocatedHardware": 90,
+      "allocatedSupport": 18,
+      "units": "fictional currency units"
+    },
+    "hints": [
+      "Allocate the 108 using the 100:20 relative stand-alone selling-price ratio.",
+      "Then ask which performance obligation has been satisfied by 31 December."
+    ],
+    "modelAnswer": "The invoice date alone does not determine revenue. The relative stand-alone selling-price ratio is 100:20, so the 108 contract price allocates 90 to hardware and 18 to support. Under the supplied facts, control of the hardware transferred on 29 December, so 90 is recognised before year-end. The support service does not begin until 1 January, so the 18 support allocation is not recognised at 31 December. The close file should retain the contract, allocation support and delivery/acceptance evidence. If the local Irish entity reports under FRS 102, that statutory conclusion must be checked under its applicable Section 23 requirements rather than assumed from the group package.",
+    "reviewChecks": [
+      "Did the answer distinguish billing from recognition?",
+      "Did it identify and allocate the two promises before deciding timing?",
+      "Did it cite the supplied transfer evidence rather than invent another fact?",
+      "Did it keep the local statutory reporting basis separate from the group IFRS conclusion?"
+    ],
+    "transfer": "Give the CFO version in no more than three sentences: conclusion, decisive evidence and next control action."
+  },
+  "workshops": [
+    {
+      "id": "fin-rev-w1",
+      "title": "Simple goods cut-off",
+      "prompt": "A machine is invoiced on 30 December, shipped on 31 December and accepted by the customer on 3 January. The contract terms supplied for the exercise say control passes only on customer acceptance. What is the year-end revenue conclusion?",
+      "expected": "Do not recognise the machine revenue at 31 December under the supplied assumption because the decisive transfer condition occurs on 3 January. The 30 December invoice does not override the control condition."
+    },
+    {
+      "id": "fin-rev-w2",
+      "title": "Goods plus service bundle",
+      "prompt": "A bundled product is transferred before close but a separate training service starts next month. What sequence should you follow before calculating revenue?",
+      "expected": "Identify the promises, determine and allocate the transaction price, then recognise the product allocation based on its transfer and the training allocation as that service is satisfied."
+    },
+    {
+      "id": "fin-rev-w3",
+      "title": "Missing evidence / modification",
+      "prompt": "A customer email changes the support scope on 29 December, but the approved amendment and stand-alone pricing are missing. The business wants the close entry today. What do you do?",
+      "expected": "Do not invent the modification accounting or allocation. Isolate the missing evidence, quantify only what is supported, escalate the unresolved contract change and document the close exception."
+    }
+  ],
+  "checkpoint": [
+    {"id":"fin-rev-q1","prompt":"What should come before analysing the invoice date?","options":["Identify the contract and promised goods/services","Post the full invoice to revenue","Choose the local statutory framework after the journal entry","Assume shipment equals control"],"correctIndex":0,"explanation":"The accounting model starts with the contract and promises, not the invoice date."},
+    {"id":"fin-rev-q2","prompt":"A contract has two distinct promises. What normally determines allocation between them?","options":["Invoice line order","Relative stand-alone selling prices","The largest GL account","The customer's payment date"],"correctIndex":1,"explanation":"The exercise uses relative stand-alone selling prices to allocate the transaction price."},
+    {"id":"fin-rev-q3","prompt":"Which statement about billing is strongest?","options":["Billing always creates revenue","Billing is irrelevant to every accounting question","Billing may be evidence but does not by itself determine revenue recognition","Billing and transfer of control always occur together"],"correctIndex":2,"explanation":"Billing can matter, but recognition depends on the contract and satisfaction of the performance obligation."},
+    {"id":"fin-rev-q4","prompt":"In the worked case, how much of the 108 is allocated to hardware?","options":["18","90","100","108"],"correctIndex":1,"explanation":"The 100:20 relative ratio allocates 90 to hardware and 18 to support."},
+    {"id":"fin-rev-q5","prompt":"What is the safest Irish statutory approach?","options":["Copy the IFRS group conclusion automatically","Assume every Irish company uses IFRS","Confirm the local reporting basis and assess FRS 102 separately where applicable","Ignore the 2026 FRS 102 changes"],"correctIndex":2,"explanation":"The group package and local statutory accounts may use different reporting bases even where their revenue models are more aligned from 2026."}
+  ],
+  "professorGuide": {
+    "opening": "Ask the learner to explain why an invoice dated before year-end is not enough to prove revenue. Do not give the five steps immediately unless help is requested.",
+    "challengePrompts": [
+      "What exactly did the customer obtain by 31 December?",
+      "You're using the invoice as evidence. What accounting question does it still not answer?",
+      "Give me the controller version: conclusion, evidence, unresolved item.",
+      "Would you automatically use the same conclusion in Irish statutory accounts? Why not?"
+    ],
+    "helpBehaviour": "If the learner asks for help, give one scaffold at a time: contract/promises first, then allocation, then transfer timing. A help request is not evidence of failure.",
+    "correctionBoundary": "Technical revenue reasoning and English fluency are scored separately. Do not turn a language imperfection into a revenue error or vice versa."
+  },
+  "assessmentBoundaries": [
+    "Invoice or billing evidence versus revenue recognition conclusion.",
+    "Supplied contract fact versus learner assumption.",
+    "Allocation error versus timing-of-recognition error.",
+    "IFRS group package versus local FRS 102 statutory basis.",
+    "Technical accounting correctness versus English communication quality.",
+    "Help request or self-correction versus demonstrated persistent error."
+  ],
+  "officialSources": [
+    {"id":"ifrs15","url":"https://www.ifrs.org/issued-standards/list-of-standards/ifrs-15-revenue-from-contracts-with-customers/","supports":"IFRS 15 objective and five-step revenue-recognition model, including recognition when or as a performance obligation is satisfied."},
+    {"id":"frs102","url":"https://www.frc.org.uk/library/standards-codes-policy/accounting-and-reporting/uk-accounting-standards/frs-102/","supports":"Current FRS 102 edition, Republic of Ireland applicability and Periodic Review 2024 principal effective date of 1 January 2026."},
+    {"id":"frs102facts","url":"https://www.frc.org.uk/library/standards-codes-policy/accounting-and-reporting/uk-accounting-standards/frs-factsheets/","supports":"FRC implementation material, including Factsheet 10 on the revised Section 23 Revenue from Contracts with Customers effective with the 2026 amendments."}
+  ],
+  "publicationGate": "Source review + authored-content QA + tests + separate database publication/deployment decision. This file alone must never create or update a database lesson."
+}

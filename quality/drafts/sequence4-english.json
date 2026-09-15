@@ -1,0 +1,302 @@
+{
+  "version": "sequence4-written-draft-1",
+  "status": "full_draft_not_published_to_database",
+  "track": "english",
+  "slug": "professional-emails-requests-follow-up",
+  "roadmapSequence": 4,
+  "reviewedOn": "2026-09-14",
+  "module": {
+    "track": "english",
+    "title": "Professional emails: clear requests and useful follow-up",
+    "goal": "Write a concise request with a reason, precise deadline and a workable next step.",
+    "scope": "Professional written English using original fictional workplace cases. Valid regional English is accepted. No CEFR certification, pronunciation inference or assessment of technical Finance/Payroll competence.",
+    "sections": [
+      {
+        "id": "eng4-purpose",
+        "title": "1. Make the action easy to find",
+        "paragraphs": [
+          "For this lesson, use a reader test: after one quick read, can the recipient identify what you need and when? Begin with a specific subject and put the main request near the start. Add only the context needed to act. This is a practice structure, not a rule that every email must have the same number of sentences.",
+          "Original contrast: “Update” gives little information. “Invoice 482: approval needed by 16 September” tells the reader the object and action. “I am writing regarding a number of matters” delays the request. Try “Could you confirm whether invoice 482 is approved for payment?” instead."
+        ],
+        "supportPt": "O leitor precisa identificar ação e prazo rapidamente. Use assunto específico e coloque o pedido perto do início.",
+        "sourceIds": [
+          "emails"
+        ]
+      },
+      {
+        "id": "eng4-request",
+        "title": "2. Be polite and precise",
+        "paragraphs": [
+          "British Council enquiry practice distinguishes question forms and how to ask for a response. In our original request, “Could you confirm the approved amount?” is a clear polite question. More words do not automatically make a request more considerate. Avoid hiding a required action behind several layers of apology.",
+          "Original deadline exercise: “by 3 p.m. Dublin time on 16 September” specifies a latest response time. “On 16 September” names a day, while “until 16 September” usually describes a continuing state or activity. If the deadline matters across locations, state the time reference. Do not silently convert Dublin time into a fixed year-round UTC offset."
+        ],
+        "supportPt": "Polidez não exige excesso de palavras. “By” marca prazo final; especifique data e referência de horário quando necessário.",
+        "sourceIds": [
+          "enquiries"
+        ]
+      },
+      {
+        "id": "eng4-follow",
+        "title": "3. Follow up without inventing blame",
+        "paragraphs": [
+          "Original follow-up: “Following up on invoice 482: we still need the approval status to prepare the payment list. Could you confirm it by 3 p.m. Dublin time on 16 September? If that is not possible, please let me know when you can respond.” It identifies the outstanding action and offers a useful fallback.",
+          "Compare “You ignored my email.” That asserts an intention you may not know. Describe the visible fact instead: the approval is still outstanding. If an earlier deadline has passed, name it accurately and agree a new action. Do not promise that the payment will happen when approval is still missing."
+        ],
+        "supportPt": "No follow-up, descreva a pendência sem inventar intenção. Ofereça uma alternativa útil caso o prazo não seja viável.",
+        "sourceIds": [
+          "emails"
+        ]
+      },
+      {
+        "id": "eng4-check",
+        "title": "4. Proofread meaning as well as spelling",
+        "paragraphs": [
+          "British Council proofreading guidance covers spelling, agreement and punctuation. Use two passes in this original exercise: first check whether the request, date and attachment reference are correct; then check language. A spellchecker cannot tell you that the invoice number is wrong or that the promised attachment is absent.",
+          "Original repair: “The figures is attached; please confirms the amount.” becomes “The figures are attached; please confirm the amount.” Only say that something is attached when it is. Accept consistent valid UK, Irish or US wording when the meaning works; the goal is an effective email, not imitation of a single model answer."
+        ],
+        "supportPt": "Revise primeiro o sentido e os dados, depois a gramática. Não declare um anexo inexistente.",
+        "sourceIds": [
+          "proof"
+        ]
+      }
+    ],
+    "terms": [
+      {
+        "term": "Outstanding",
+        "meaning": "Still awaiting completion in this context.",
+        "pt": "pendente",
+        "example": "The approval is outstanding."
+      },
+      {
+        "term": "By",
+        "meaning": "No later than a stated deadline.",
+        "pt": "até, como prazo final",
+        "example": "Please reply by 3 p.m."
+      },
+      {
+        "term": "Follow up",
+        "meaning": "Return to an earlier request or issue.",
+        "pt": "retomar um pedido",
+        "example": "I am following up on the approval."
+      },
+      {
+        "term": "Confirm",
+        "meaning": "State that information is correct or a decision is settled.",
+        "pt": "confirmar",
+        "example": "Could you confirm the amount?"
+      },
+      {
+        "term": "Attachment",
+        "meaning": "File included with an email.",
+        "pt": "anexo",
+        "example": "Check the attachment before sending."
+      },
+      {
+        "term": "Fallback",
+        "meaning": "Alternative next step if the preferred action is unavailable.",
+        "pt": "alternativa",
+        "example": "Please suggest another response time."
+      }
+    ],
+    "visual": {
+      "title": "A request the reader can act on",
+      "note": "Original writing scaffold; alternative natural structures are welcome.",
+      "headers": [
+        "Function",
+        "Reader question",
+        "Original example"
+      ],
+      "rows": [
+        [
+          "Subject",
+          "What is this about?",
+          "Invoice 482: approval status"
+        ],
+        [
+          "Request",
+          "What should I do?",
+          "Confirm whether it is approved"
+        ],
+        [
+          "Reason",
+          "Why now?",
+          "Prepare the payment list"
+        ],
+        [
+          "Deadline",
+          "By when?",
+          "3 p.m. Dublin time, 16 September"
+        ],
+        [
+          "Fallback",
+          "What if I cannot?",
+          "Suggest another response time"
+        ]
+      ],
+      "question": "Does adding “urgent” replace a deadline?",
+      "answer": "No. A specific response time helps the reader plan; urgency alone does not specify it."
+    },
+    "caseStudy": {
+      "title": "Request an approval without promising payment",
+      "scenario": [
+        "Fictional colleague Aoife owns the approval decision for invoice 482.",
+        "You need the approval status to prepare a payment list. Approval is not yet confirmed.",
+        "Requested response deadline: 3 p.m. Dublin time on 16 September. No attachment is supplied.",
+        "If Aoife cannot respond by then, ask for an alternative response time."
+      ],
+      "task": "Write a short email with subject, request, reason, deadline and fallback. Then write a one-sentence follow-up that avoids blame.",
+      "hints": [
+        "Ask for the approval status, not an unconfirmed payment promise.",
+        "Preserve the deadline and do not claim an attachment exists."
+      ],
+      "modelAnswer": "Subject: Invoice 482 — approval status needed\nHi Aoife,\nCould you confirm by 3 p.m. Dublin time on 16 September whether invoice 482 is approved for payment? We need the status to prepare the payment list. If you cannot respond by then, please suggest another time.\nThanks,\nAlex\nFollow-up: I am following up on the approval status for invoice 482; could you confirm when you can respond?",
+      "reviewChecks": [
+        "Specific invoice and approval-status request.",
+        "Deadline preserves date, time and Dublin reference.",
+        "Reason and fallback are clear without invented approval or attachment.",
+        "Natural alternative wording accepted; follow-up avoids unsupported blame."
+      ],
+      "transfer": "For a vendor enquiry, adjust the greeting and context to the relationship while retaining an actionable request. Do not make every message more formal by default."
+    },
+    "checkpoint": [
+      {
+        "id": "eng4-q1",
+        "prompt": "Which subject is most actionable for the case?",
+        "options": [
+          "Hello",
+          "Invoice 482: approval status needed",
+          "Various matters"
+        ],
+        "correctIndex": 1,
+        "explanation": "It names the item and required action.",
+        "reviewSection": "eng4-purpose"
+      },
+      {
+        "id": "eng4-q2",
+        "prompt": "Which expression sets a latest response time?",
+        "options": [
+          "Until 3 p.m.",
+          "By 3 p.m. Dublin time on 16 September",
+          "Whenever"
+        ],
+        "correctIndex": 1,
+        "explanation": "By sets a deadline; the date and time reference reduce ambiguity.",
+        "reviewSection": "eng4-request"
+      },
+      {
+        "id": "eng4-q3",
+        "prompt": "Which follow-up avoids unsupported blame?",
+        "options": [
+          "You deliberately ignored me",
+          "The approval is still outstanding; when can you respond?",
+          "You never do your job"
+        ],
+        "correctIndex": 1,
+        "explanation": "It describes the pending action without inventing intention.",
+        "reviewSection": "eng4-follow"
+      },
+      {
+        "id": "eng4-q4",
+        "prompt": "Choose the grammatical request.",
+        "options": [
+          "Please confirms the figures",
+          "Please confirming the figures",
+          "Please confirm the figures"
+        ],
+        "correctIndex": 2,
+        "explanation": "Use the base form after please in this imperative.",
+        "reviewSection": "eng4-check"
+      },
+      {
+        "id": "eng4-q5",
+        "prompt": "A clear response uses valid US English. What should the review do?",
+        "options": [
+          "Accept it and coach any relevant local preference separately",
+          "Mark it wrong",
+          "Infer weak pronunciation"
+        ],
+        "correctIndex": 0,
+        "explanation": "Valid regional wording is not an error; writing does not establish pronunciation.",
+        "reviewSection": "eng4-check"
+      }
+    ],
+    "practiceExercises": [
+      {
+        "id": "eng4-p1",
+        "question": "Rewrite: “Send that thing ASAP.” The item is invoice 482 and the requested deadline is 3 p.m. Dublin time on 16 September.",
+        "hints": [
+          "Name the item.",
+          "Use a polite request with the full deadline."
+        ],
+        "answer": "Could you send invoice 482 by 3 p.m. Dublin time on 16 September, please?",
+        "explanation": "Can you / please send are also acceptable when suitable for the relationship."
+      },
+      {
+        "id": "eng4-p2",
+        "question": "Repair: “The report are ready. Please confirms the totals.”",
+        "hints": [
+          "Report is singular.",
+          "Please takes the base verb here."
+        ],
+        "answer": "The report is ready. Please confirm the totals.",
+        "explanation": "Two agreement/form errors are repaired without changing the facts."
+      },
+      {
+        "id": "eng4-p3",
+        "question": "A colleague cannot meet the deadline. Write a response that obtains a next step without inventing an extension already approved.",
+        "hints": [
+          "Ask for a feasible response time.",
+          "Keep any wider deadline change conditional."
+        ],
+        "answer": "Thanks for letting me know. When could you send the approval status? I will check whether that timing works for the payment list.",
+        "explanation": "A feasible next step is stronger than an unsupported promise."
+      }
+    ],
+    "sources": [
+      {
+        "id": "emails",
+        "label": "British Council — English for emails",
+        "url": "https://learnenglish.britishcouncil.org/free-resources/business/english-emails",
+        "supports": "Writing, organising and checking workplace emails. Original workplace scenarios below are independently authored.",
+        "reviewedOn": "2026-09-14"
+      },
+      {
+        "id": "enquiries",
+        "label": "British Council — Enquiries",
+        "url": "https://learnenglish.britishcouncil.org/free-resources/business/english-emails/unit-6-enquiries",
+        "supports": "Question formation and requesting a response.",
+        "reviewedOn": "2026-09-14"
+      },
+      {
+        "id": "proof",
+        "label": "British Council — Proofreading",
+        "url": "https://learnenglish.britishcouncil.org/free-resources/business/english-emails/unit-8-proofreading",
+        "supports": "Spelling, agreement and punctuation review.",
+        "reviewedOn": "2026-09-14"
+      }
+    ]
+  },
+  "professorGuide": {
+    "opening": "Ask the learner what the recipient must do before showing the model email.",
+    "challengePrompts": [
+      "Can I identify the request in one read?",
+      "Does your sentence promise something the case has not confirmed?",
+      "How would you respond if the recipient cannot meet the deadline?"
+    ],
+    "correctionBoundary": "Prioritise errors that change the request or timing, then offer one language repair. Accept natural alternatives, do not infer pronunciation from text, and do not claim a CEFR level.",
+    "whenCorrect": "Ask for a shorter follow-up preserving the requested action, deadline and approval status.",
+    "whenUncertain": "Offer a request-and-deadline frame, then ask the learner to write their own complete request.",
+    "whenMisconception": "Ask whether the draft promises payment or requests approval; remove unsupported commitments while accepting alternative polite phrasing.",
+    "whenSelfCorrected": "Acknowledge the corrected explanation and ask a brief transfer question. Do not assess an abandoned statement as the final answer.",
+    "whenAskedForAnswer": "Ask whether the learner prefers one hint or the worked answer. If requested, explain the authored answer, then invite a fresh application; disclosure is not demonstrated mastery.",
+    "evidenceBoundary": "This guide is an authored teaching expectation, not observed model behaviour or learner evidence. Assess only actual session contributions. Help-seeking is not an error; transcript text cannot establish pronunciation, accent or acoustic fluency."
+  },
+  "assessmentBoundaries": [
+    "Authored references are not learner evidence or mastery.",
+    "No pronunciation or acoustic fluency inference from text.",
+    "Accept supported alternative answers and self-correction.",
+    "Local drafts and checkpoint answers must never enter Professor payloads.",
+    "This guide is offline only; sequence 4 is not admitted to Professor/evaluator/Audio."
+  ],
+  "publicationGate": "Separate content review and exact identity acceptance before any explicitly authorized database publication. No provider activation implied."
+}

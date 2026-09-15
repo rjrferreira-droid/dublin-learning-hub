@@ -1,0 +1,15 @@
+# Local HTTP route rehearsal — 15 September 2026
+
+Continues green 4fb7b5f230957b42f7eb5da5bdb163ed8227675a (full CI 35031765113 and disposable platform CI 35031765098). Reuses the existing authenticated reference, atomic admission, worker metadata and recovery candidates. No active API, SQL or connected backend changes.
+
+A local-only HTTP host now exposes preflight and start rehearsal routes. Each request verifies its bearer with actual Auth. Preflight accepts only kind, lessonId, requestedTrack, requestId and mode; drafts, callbacks, user IDs and other overposted fields are rejected. Lesson context and reference minting remain server-owned. Start accepts only the reference and request IDs, rechecks ownership, and consumes its entry before awaiting admission. Wrong-account requests cannot consume another owner's entry; repeated/concurrent starts do not invoke it twice. Responses explicitly select public receipt/acknowledgement fields. No dispatch, microphone, token or provider route exists.
+
+The host binds only 127.0.0.1:4174 and accepts the local browser origin on port 4173. It checks Host, Origin, method, JSON content type and a 4096-byte body limit, disables caching and blocks backend fetches outside the disposable API origin. Service keys remain in the server process; the browser sends only its fictional access token and public request data.
+
+This is explicitly a process-local rehearsal, NOT durable hosted routing: at most 128 pending/in-flight preflights, four-minute retention, no persistence or failover. Expiry/restart cannot prove that admission rolled back or authorize a new paid attempt. Entries may capture an earlier Auth client, so hosted refresh/session handling remains separate. No production route may import this server or treat the ephemeral map as a deployment-ready store. Unknown admission results stay uncertain and consumed; there is no automatic reserve release or provider retry.
+
+Validation: 528 Node contracts passed locally, including eight new route isolation/lifecycle cases. Strict TypeScript and Python/JavaScript syntax checks passed. The expanded disposable platform browser gate exercises 28 authorized account/course/sequence combinations per width, matching exact lesson ID/slug/track at preflight and requiring the real zero-budget atomic denial at start. It also checks another owner's start rejection, replay, unauthenticated preparation, forbidden course preparation, overposting and transport restrictions. Existing product/catalog and recovery browser cases remain separate.
+
+A post-browser read-only audit requires zero sessions, reservations and usage rows and all budgets still zero. Preflight reference rows are temporary fictional fixtures, discarded with the local stack. The matching feature-head full/platform CI is authoritative for actual browser and HTTP results; no real provider is called.
+
+Remaining: a separately reviewed isolated hosted backend and durable route/session design, active product mounting, full live voice/provider acceptance and listening quality. PR #3 remains DRAFT; P1 stays unpublished in connected Supabase, main/V2 excluded and LiveKit nb67ioJmoKBN unchanged.

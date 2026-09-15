@@ -1,0 +1,38 @@
+{
+  "version":"golden-lesson-readiness-1",
+  "status":"offline_gates_verified_separately_from_live_acceptance",
+  "scope":"One reference lesson per current core track; not whole-course completion.",
+  "tracks":{
+    "finance":{"lessonId":"b3639582-3c32-4147-a4b3-84237d11a66e","referenceLesson":"IFRS 18, Group Reporting & Irish Statutory Accounts"},
+    "payroll":{"lessonId":"6ffda415-3b18-46ab-afaa-414f81a7eb31","referenceLesson":"Gross-to-Net: RPN, PAYE, USC & PRSI"},
+    "english":{"lessonId":"f455a740-f50f-4eb7-95a7-9e4129ca4a68","referenceLesson":"Tell a story naturally: past forms, rhythm & follow-up questions"}
+  },
+  "offlineRequired":[
+    "lesson-specific written teaching sections with explicit scope and sources",
+    "vocabulary/language support",
+    "worked visual or evidence table",
+    "worked case with hints and review criteria",
+    "fixed-answer checkpoint with explanatory remediation",
+    "three local application workshop variants",
+    "server-authored teacher/evaluator reference selection",
+    "enum-only session preparation",
+    "adversarial evaluator source-evidence gates",
+    "lesson-scoped conversation continuity and account boundaries",
+    "validation feedback isolation from mastery/Error Bank",
+    "bounded callback delivery and post-session read-only receipt contracts"
+  ],
+  "preparedButNotLive":[
+    "newer evaluator combined-help and deterministic self-correction guards after published LiveKit version nb67ioJmoKBN",
+    "callback delivery settlement-reserve candidate",
+    "per-session receipt Edge Function and receipt UI"
+  ],
+  "liveAcceptanceRequired":[
+    "real microphone/audio connection and turn-taking",
+    "human-perceived Professor naturalness and response timing",
+    "semantic evaluator fairness on real learner responses",
+    "saved validation feedback visible while mastery/Error Bank remain unchanged",
+    "session usage/reservation reconciliation on real session data",
+    "Premium Audio real generation/cache/playback where included in the lesson experience"
+  ],
+  "completionRule":"A reference lesson is not end-to-end Golden-Lesson accepted until every offlineRequired item is verified and every applicable liveAcceptanceRequired item has direct real-session evidence. preparedButNotLive never counts as live acceptance."
+}

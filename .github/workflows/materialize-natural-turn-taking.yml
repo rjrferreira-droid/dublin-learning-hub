@@ -1,0 +1,33 @@
+name: Verify natural turn-taking materialization
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/feat/professor-experience-2026-09-13'
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      VITE_SUPABASE_URL: https://lh-ui.invalid
+      VITE_SUPABASE_PUBLISHABLE_KEY: fictional-turn-taking-fixture-not-a-key
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify the one-time patch is already materialized and idempotent
+        run: |
+          node scripts/materialize-natural-turn-taking.mjs
+          git diff --exit-code
+      - name: Compile worker and verify turn-taking contracts
+        run: |
+          npm ci
+          npm --prefix professor-agent ci
+          npm --prefix professor-agent run typecheck
+          node --experimental-strip-types --test tests/professor-turn-taking.test.ts
+      - name: Boundary
+        run: echo 'Read-only verification only. No LiveKit credentials, deployment or source writes.' >> "$GITHUB_STEP_SUMMARY"

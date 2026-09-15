@@ -1,0 +1,74 @@
+name: Reviewed evaluator-only LiveKit update
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_update:
+        description: 'Explicitly authorize another reviewed evaluator-only update to the existing V2 agent.'
+        type: boolean
+        required: true
+        default: false
+      expected_current_version:
+        description: 'Exact LiveKit version verified before any future update.'
+        type: string
+        required: true
+permissions:
+  contents: read
+concurrency:
+  group: learning-hub-professor-v2
+  cancel-in-progress: false
+jobs:
+  publish-reviewed-evaluator:
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_update && github.repository == 'rjrferreira-droid/dublin-learning-hub' && github.ref == 'refs/heads/feat/professor-experience-2026-09-13'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Prove worker delta is evaluator-only relative to the reviewed live baseline
+        run: |
+          git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- professor-agent ':!professor-agent/src/evaluation.ts' ':!professor-agent/src/evaluationEvidence.ts'
+          test -f professor-agent/src/evaluationEvidence.ts
+      - name: Verify candidate before any LiveKit credentials are available
+        run: |
+          npm ci
+          npm --prefix professor-agent ci
+          npm --prefix professor-agent audit --audit-level=high
+          npm --prefix professor-agent run typecheck
+          node --experimental-strip-types --test tests/evaluation-evidence.test.ts tests/feedback-details.test.ts
+          npx --no-install esbuild professor-agent/src/evaluation.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-evaluator.mjs
+          OPENAI_API_KEY=synthetic-fixture-not-a-key node --experimental-test-module-mocks --test tests/evaluator-evidence.integration.mjs
+          python3 -m py_compile scripts/livekit-evaluator-publish.py
+      - name: Build the exact worker image and verify the reviewed dependency patch offline
+        run: |
+          docker build --pull --tag lh-professor-evaluator:${{ github.sha }} professor-agent
+          test "$(docker image inspect --format '{{.Config.User}}' lh-professor-evaluator:${{ github.sha }})" = 'node'
+          docker run --rm --network none lh-professor-evaluator:${{ github.sha }} npm run typecheck
+          docker run --rm --network none lh-professor-evaluator:${{ github.sha }} node --input-type=module -e "import {createRequire} from 'node:module';const r=createRequire(import.meta.resolve('@livekit/agents'));const s=r('sharp');if(s.versions.sharp!=='0.35.4')throw Error('Reviewed patch missing');await import('@livekit/agents-plugin-openai');"
+          git diff --exit-code
+      - name: Install pinned official LiveKit CLI before secrets are available
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/lh-livekit-cli"
+          cd "$RUNNER_TEMP/lh-livekit-cli"
+          curl --fail --silent --show-error --location --proto '=https' --proto-redir '=https' --max-time 90 --output lk.tar.gz https://github.com/livekit/livekit-cli/releases/download/v2.18.6/lk_2.18.6_linux_amd64.tar.gz
+          echo 'fa6441e315376a64fcfa173c64ee6c9dcf8bd25d40320aa99b690045832980fe  lk.tar.gz' | sha256sum --check
+          tar -xzf lk.tar.gz lk
+          chmod 755 lk
+          echo "$RUNNER_TEMP/lh-livekit-cli" >> "$GITHUB_PATH"
+      - name: Update the existing agent once, only from the explicitly verified version
+        env:
+          LH_EVALUATOR_UPDATE_AUTHORIZED: '1'
+          LH_EXPECTED_PREVIOUS: ${{ inputs.expected_current_version }}
+          LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
+          LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
+          LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
+        run: python3 scripts/livekit-evaluator-publish.py
+      - name: Confirm publication did not rewrite tracked source or config
+        if: always()
+        run: git diff --exit-code

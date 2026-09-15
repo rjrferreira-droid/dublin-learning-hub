@@ -1,4 +1,10 @@
+import { resolvePreviewP1Lesson } from '../server/p1-preview-runtime.js';
+import {parseWorkshopSelection,selectedWorkshop} from '../src/learning/workshopSelection.js';
 import { voiceValidationPlan } from '../server/voice-validation.js';
+import {parseSessionPreparation,teachingApproachBrief} from '../src/learning/sessionPreparation.js';
+import { buildWrittenLessonContext } from '../server/written-lesson-context.js';
+import { LESSON_MODULES } from '../src/learning/lessonModules.js';
+import { STUDY_PACKS } from '../src/learning/teachingPacks.js';
 import { startProfessorAtomically, ProfessorStartupError } from '../server/professor-start.js';
 import { randomUUID } from 'node:crypto';
 import { requestedLearnerMatchesAccount } from '../src/auth/identity.js';
@@ -284,6 +290,12 @@ export default async function handler(req: any, res: any) {
   const mode = typeof body?.mode === 'string' && allowedModes.has(body.mode) ? body.mode : null;
   const validationMode = body?.validationMode === true;
   if (!body || !lessonId || !track || !mode) return send(res, 400, { error: 'invalid_professor_request' });
+  let sessionPreparation: ReturnType<typeof parseSessionPreparation>;
+  try { sessionPreparation=parseSessionPreparation(body.sessionPreparation); }
+  catch { return send(res,400,{error:'invalid_session_preparation'}); }
+  let workshopSelection: ReturnType<typeof parseWorkshopSelection>;
+  try { workshopSelection=parseWorkshopSelection(body.workshopSelection); }
+  catch { return send(res,400,{error:'invalid_workshop_selection'}); }
 
   const { data: learnerProfile, error: profileError } = await db
     .from('profiles')
@@ -295,8 +307,33 @@ export default async function handler(req: any, res: any) {
   }
 
   if (!requestedLearnerMatchesAccount(learnerProfile.learner_track,body.learnerId)) return send(res,403,{error:'professor_learner_mismatch'});
+  try { selectedWorkshop(profileForTrack(track),workshopSelection); }
+  catch { return send(res,403,{error:'workshop_track_mismatch'}); }
 
   let lessonContext: LessonContext;
+  let persistenceLessonId: string | null;
+  let writtenLesson: ReturnType<typeof buildWrittenLessonContext> | {
+    context: LessonContext; descriptor: Awaited<ReturnType<typeof resolvePreviewP1Lesson>>['teachingContent'];
+  };
+  const goldenId = LESSON_MODULES[profileForTrack(track)].lessonId;
+  const isGoldenRequest = lessonId === goldenId || (track === 'english_academy' && lessonId === 'english-golden-lesson');
+  if (!isGoldenRequest) {
+    // Unknown/next-lesson IDs must never flow through the English Golden-Lesson alias resolver.
+    if (workshopSelection) return send(res,409,{error:'workshop_lesson_mismatch'});
+    try {
+      const handoff = await resolvePreviewP1Lesson(db, {
+        profileTrack: learnerProfile.learner_track, requestedTrack: track, requestedLessonId: lessonId,
+        approachBrief: teachingApproachBrief(sessionPreparation,profileForTrack(track)),
+      }, process.env);
+      persistenceLessonId = handoff.lessonId;
+      lessonContext = handoff.context;
+      writtenLesson = {context: handoff.context, descriptor: handoff.teachingContent};
+    } catch (cause) {
+      const code = cause instanceof Error && cause.message === 'p1_preview_runtime_unavailable'
+        ? 'p1_preview_runtime_unavailable' : 'professor_lesson_forbidden';
+      return send(res,403,{error:code});
+    }
+  } else {
   if (requiresPublishedTechnicalLesson(track)) {
     const technicalLesson = await publishedTechnicalLesson(supabase as UntypedSupabaseClient, lessonId);
     if (!technicalLesson || technicalLesson.track !== track) return send(res, 403, { error: 'professor_lesson_forbidden' });
@@ -305,11 +342,32 @@ export default async function handler(req: any, res: any) {
     lessonContext = englishGoldenLessonContext();
   }
 
-  const persistenceLessonId = await resolvePersistenceLessonId(db, track, lessonId);
+  persistenceLessonId = await resolvePersistenceLessonId(db, track, lessonId);
   if (!persistenceLessonId) return send(res, 503, { error: 'professor_session_persistence_unavailable' });
+
+  // Choose authored content only after authenticated track/lesson resolution and BEFORE reserving.
+  // Browser-supplied lessonContext, answers and drafts are intentionally ignored.
+  try {
+    writtenLesson = buildWrittenLessonContext({
+      profileTrack: learnerProfile.learner_track, requestedTrack: track,
+      requestedLessonId: lessonId, resolvedLessonId: persistenceLessonId,
+      workshopSelection,
+      approachBrief: teachingApproachBrief(sessionPreparation,profileForTrack(track)),
+    }, LESSON_MODULES, STUDY_PACKS);
+    if (body.sessionPreparation!==undefined && !writtenLesson) return send(res,409,{error:'session_preparation_unavailable'});
+    if (writtenLesson) lessonContext = writtenLesson.context;
+  } catch (cause) {
+    if(cause instanceof Error && cause.message==='workshop_lesson_mismatch')return send(res,409,{error:'workshop_lesson_mismatch'});
+    return send(res, 503, {error:'written_lesson_context_unavailable'});
+  }
+
+  }
+
 
   const professorProfile = profileForTrack(track);
   const languageProfile = normalizeLanguageProfile(body.languageProfile);
+  if(sessionPreparation.support==='pt-BR') languageProfile.supportLanguage='pt-BR';
+  if(sessionPreparation.support==='en') { languageProfile.supportLanguage='en'; languageProfile.professorEnglishSharePct=100; }
   const requestedRoomName = `${validationMode ? 'validation:' : ''}lh-${randomUUID()}`;
   const participantIdentity = `learner-${randomUUID()}`;
   let startup: Awaited<ReturnType<typeof startProfessorAtomically>>;
@@ -331,6 +389,9 @@ export default async function handler(req: any, res: any) {
     qualityTier: budget.qualityTier,
     languageProfile,
     lessonContext,
+    teachingContent: writtenLesson?.descriptor ?? null,
+    sessionPreparation,
+    workshopSelection,
     budgetReservationId: budget.reservationId,
     budgetReservationUsd: budget.reservationUsd,
     globalAiCapUsd: budget.globalAiCapUsd,
@@ -391,6 +452,9 @@ export default async function handler(req: any, res: any) {
       reservedAfterUsd: budget.reservedAfterUsd,
       dispatchId,
       sessionId: persistence.sessionId,
+      teachingContent: writtenLesson?.descriptor ?? null,
+      sessionPreparation: writtenLesson ? sessionPreparation : null,
+      workshopSelection,
     });
   } catch (cause) {
     // An HTTP failure is not proof that no agent was dispatched: preserve its reserve.

@@ -1,0 +1,45 @@
+name: Existing V2 incremental adoption
+on:
+  push:
+    branches: [feat/professor-experience-2026-09-13]
+    paths:
+      - 'quality/candidates/v2-legacy-admission-containment.sql'
+      - 'quality/tests/v2-legacy-containment.py'
+      - '.github/workflows/v2-adoption.yml'
+permissions:
+  contents: read
+jobs:
+  preserve-existing-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ephemeral-test-only
+          POSTGRES_DB: learning_hub_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGDATABASE: learning_hub_test
+      PGUSER: postgres
+      PGPASSWORD: ephemeral-test-only
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Prepare fictional populated PostgreSQL without connected credentials
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -f supabase/tests/fixture-budget.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20260913153700_lh_professor_completion_integrity.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20260913154315_lh_serialize_learning_updates.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20260913155850_lh_usage_settlement_integrity.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20260913161005_lh_atomic_professor_start.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20260913165704_lh_reservation_lifecycle.sql
+      - name: Verify containment, original state, unresolved hold and reversible grants
+        run: python3 quality/tests/v2-legacy-containment.py
+      - name: Verify no generated repository changes
+        run: git diff --exit-code

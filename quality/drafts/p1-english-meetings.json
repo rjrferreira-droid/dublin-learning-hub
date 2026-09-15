@@ -1,0 +1,176 @@
+{
+  "version": "p1-english-meetings-draft-1",
+  "status": "full_draft_not_published_to_database",
+  "track": "english",
+  "roadmapSequence": 2,
+  "reviewedOn": "2026-09-14",
+  "workingTitle": "Clarify, check understanding & handle meetings",
+  "subtitle": "Natural participation, concise disagreement and conversational repair",
+  "targetDurationMinutes": 20,
+  "primaryTeachingLanguage": "en",
+  "supportLanguage": "pt-BR_if_needed",
+  "goal": "Participate naturally in a work meeting by clarifying an ambiguous point, checking understanding, stating a concise view and reconnecting after a short interruption or detour.",
+  "scope": "Professional spoken-English lesson for Dublin/workplace readiness. It focuses on interaction, clarity, repair, concise reasoning and listening behaviour. It does not treat accent as an error, does not require one UK/US variety, and does not convert a help request or self-correction into a language deficit.",
+  "learningObjectives": [
+    "Enter a discussion by connecting to the previous speaker instead of delivering a memorised mini-speech.",
+    "Use clarification and checking-understanding language before disagreeing with an ambiguous point.",
+    "State a view with a headline, one reason and an appropriate caveat.",
+    "Repair misunderstanding or interruption and return the conversation to the meeting objective.",
+    "Use natural UK/Irish-appropriate professional language while accepting valid UK and US variants."
+  ],
+  "databaseFieldDraft": {
+    "technical_brief_pt": "A habilidade central é interação, não performance decorada. O aluno deve ouvir o ponto anterior, pedir esclarecimento quando necessário, resumir o entendimento, apresentar sua posição de forma curta e reconectar a conversa depois de interrupções. A avaliação deve separar conclusão da tarefa, gramática, vocabulário, fluência e comunicação profissional. Sotaque não é tratado como erro por si só; variantes válidas do inglês britânico e americano são aceitas.",
+    "manager_commentary_pt": "Em reuniões reais, comunicação forte não significa falar mais. Significa entrar no momento certo, esclarecer antes de discordar, resumir com precisão e fechar com um próximo passo. O professor deve soar como colega/gestor experiente, não como examinador.",
+    "worked_example_pt": "Cenário fictício de variance mensal: alguém diz que estamos 300 acima do plano, provavelmente por timing, mas também houve aumento de preço em compras. O aluno precisa primeiro perguntar o que está confirmado, depois resumir a resposta, dar uma visão curta e propor o próximo check. A resposta modelo usa linguagem natural e deixa explícita a incerteza, em vez de fingir que timing e price effect já foram separados.",
+    "ireland_overlay_pt": "Para comunicação profissional em Dublin, a aula privilegia clareza, tom colaborativo e convenções britânicas/irlandesas quando relevante, sem marcar variantes americanas válidas como erradas. Não há treinamento de sotaque irlandês obrigatório.",
+    "global_core_pt": "Uma boa contribuição de reunião normalmente faz uma destas coisas: esclarece, resume, acrescenta evidência, desafia uma suposição ou propõe um próximo passo. O objetivo é mover a conversa, não demonstrar complexidade linguística.",
+    "common_mistakes_pt": "Entrar com discurso memorizado; discordar antes de entender; usar excesso de hedging até perder a mensagem; fingir certeza; repetir toda a fala anterior; responder a duas ou três perguntas ao mesmo tempo; perder o fio após interrupção; confundir sotaque com clareza; aceitar apenas uma variante regional válida.",
+    "interview_angle_pt": "Em situações profissionais, pratique respostas de 20 a 30 segundos com headline, reason, caveat e next step. Em temas casuais ou colaborativos, deixe a conversa mais natural e menos estruturada."
+  },
+  "sections": [
+    {
+      "id": "eng-meet-enter",
+      "title": "1. Enter the conversation without over-formality",
+      "paragraphs": [
+        "Natural meeting participation starts by listening for the thread you are joining. Instead of launching a prepared speech, connect your contribution to what was just said: 'On that point...', 'I think the key issue is...', or simply 'Can I add one thing?'.",
+        "The contribution should earn its place. Clarify, add evidence, challenge an assumption or propose a next step. If the previous speaker has already made your point, move the conversation forward rather than repeating it in different words.",
+        "Short turns often sound more confident than over-prepared paragraphs. One useful idea, then give the floor back."
+      ],
+      "supportPt": "Entre na conversa pelo ponto anterior. Não transforme cada contribuição em uma mini-apresentação.",
+      "sourceRefs": ["managing-meetings", "business"]
+    },
+    {
+      "id": "eng-meet-clarify",
+      "title": "2. Clarify before disagreeing",
+      "paragraphs": [
+        "When a statement is ambiguous, clarification is stronger than immediate disagreement. Ask what the speaker means, then check your understanding before challenging the conclusion.",
+        "Useful patterns include: 'When you say timing, do you mean the cost will reverse next month?', 'Just to check I've understood you...', and 'So your view is that most of the variance is temporary — is that right?'. These phrases are tools, not scripts; vary them naturally.",
+        "Clarification also reduces language risk in multinational meetings. The British Council's meeting guidance explicitly recommends asking for clarification, summarising and checking agreement rather than assuming everyone understood the same thing."
+      ],
+      "supportPt": "Antes de discordar, confirme o significado. Uma pergunta curta pode evitar uma discussão inteira baseada em entendimento errado.",
+      "sourceRefs": ["managing-meetings"]
+    },
+    {
+      "id": "eng-meet-view",
+      "title": "3. State a view with evidence and uncertainty",
+      "paragraphs": [
+        "A concise professional view can follow a simple rhythm: headline, reason, caveat. Example: 'I don't think we can call this timing yet. The purchase-price increase looks real, but we still need the volume bridge before separating the two effects.'",
+        "Hedging is useful when it reflects genuine uncertainty. It becomes weak communication when every sentence is softened until the listener cannot identify your recommendation. Prefer precise limits: 'Based on what we have now...', 'I’m not convinced that...', 'The part we still need to verify is...'.",
+        "If you are confident, be concise rather than aggressive. If you are uncertain, say what evidence would change the conclusion."
+      ],
+      "supportPt": "Headline + reason + caveat. Incerteza bem expressa é profissional; vagueza permanente não é.",
+      "sourceRefs": ["business", "c1-listening"]
+    },
+    {
+      "id": "eng-meet-repair",
+      "title": "4. Repair and follow up",
+      "paragraphs": [
+        "Real meetings include interruptions, side questions and misunderstandings. Good speakers repair the exchange instead of restarting from the beginning. A short repair can be: 'Sorry, I meant the volume effect, not the price effect', or 'Let me rephrase that'.",
+        "After a detour, reconnect explicitly: 'Coming back to the variance...', 'The decision we still need is...', or 'So the next check is...'. This keeps the meeting focused without sounding rigid.",
+        "Silence or a request for help is not automatically a deficit. In remote and multilingual teams, people may be thinking, checking meaning or dealing with turn-taking. The tutor should respond to the conversational need first, then correct language only if the correction still adds value."
+      ],
+      "supportPt": "Não reinicie tudo depois de uma interrupção. Corrija o ponto, reconecte ao objetivo e continue.",
+      "sourceRefs": ["remote-teams", "managing-meetings"]
+    }
+  ],
+  "vocabulary": [
+    {"term":"clarify","meaning":"Make the meaning of a point more precise or easier to understand.","pt":"esclarecer","example":"Can I clarify what you mean by timing?"},
+    {"term":"check understanding","meaning":"Confirm that your interpretation of another person's point is correct.","pt":"confirmar entendimento","example":"Just to check I've understood you, the cost should reverse next month?"},
+    {"term":"caveat","meaning":"A limitation or condition attached to a conclusion.","pt":"ressalva","example":"My caveat is that we haven't separated the volume effect yet."},
+    {"term":"rephrase","meaning":"Express the same idea again in a clearer or different way.","pt":"reformular","example":"Let me rephrase that: I'm questioning the assumption, not the total."},
+    {"term":"park a point","meaning":"Temporarily set aside a topic that is not the current priority so it can be revisited later.","pt":"deixar um ponto para depois","example":"Can we park the supplier-contract issue and come back to the variance?"},
+    {"term":"next check","meaning":"The specific verification needed before a conclusion or decision is final.","pt":"próxima verificação","example":"The next check is the purchase-price bridge by product."}
+  ],
+  "usefulLanguage": {
+    "enter": ["Can I add one thing?", "On that point...", "I think the key issue is..."],
+    "clarify": ["When you say X, do you mean...?", "Just to check I've understood you...", "Could you clarify what changed?"],
+    "disagree": ["I'm not sure I'd read it that way.", "I see the point, but I think we're mixing two effects.", "I don't think we have enough evidence to conclude that yet."],
+    "repair": ["Sorry, I meant X, not Y.", "Let me rephrase that.", "Coming back to the main point..."],
+    "close": ["So the next check is...", "The decision we still need is...", "Can we confirm the owner and timing for that?"],
+    "note": "These are examples, not mandatory scripts. Valid natural alternatives should be accepted."
+  },
+  "workedCase": {
+    "title": "Timing or real cost increase?",
+    "meetingContext": "A fictional monthly finance meeting. One manager says: 'We're about 300k over plan. I think it's mostly timing, although procurement also mentioned higher supplier prices.'",
+    "task": [
+      "Ask one clarifying question before giving your view.",
+      "After the professor answers, summarise the point in one sentence.",
+      "Give a concise view with one reason and one caveat.",
+      "Propose one useful next check."
+    ],
+    "professorReplyAfterClarification": "Procurement confirms some unit-price increases, but we have not yet separated price, volume and timing effects in the bridge.",
+    "modelInteraction": [
+      "Learner: 'When you say mostly timing, do we already know how much should reverse next month?'",
+      "Professor: 'Not yet. Procurement confirms some unit-price increases, but the bridge has not separated price, volume and timing.'",
+      "Learner: 'So timing is still a hypothesis, while at least part of the price increase is real. I wouldn't call the whole 300k temporary yet; the next check is to split the variance into price, volume and timing before we forecast the reversal.'"
+    ],
+    "reviewChecks": [
+      "Did the learner clarify before disagreeing?",
+      "Did the summary preserve the uncertainty rather than invent a percentage?",
+      "Was the view concise and professionally direct?",
+      "Did the learner propose a concrete next check?"
+    ],
+    "alternateValidForms": "UK, Irish and US wording are all acceptable when clear and natural. The evaluator should not require the exact model phrases."
+  },
+  "workshops": [
+    {
+      "id": "eng-meet-w1",
+      "title": "Clarify a vague variance explanation",
+      "prompt": "A colleague says, 'The overspend is basically phasing.' Ask one natural question that tests what 'phasing' means in this case.",
+      "expected": "Any concise clarification that asks what is expected to reverse/move and on what evidence. Exact wording is not required."
+    },
+    {
+      "id": "eng-meet-w2",
+      "title": "Disagree with an assumption politely",
+      "prompt": "Your manager says a forecast issue is definitely one-off, but the data only supports that as a possibility. Respond in one or two sentences.",
+      "expected": "A clear but collaborative challenge that distinguishes the current evidence from the stronger claim. Excessive apology is not required."
+    },
+    {
+      "id": "eng-meet-w3",
+      "title": "Recover after misunderstanding",
+      "prompt": "You accidentally say 'price effect' when you meant 'volume effect', and someone interrupts to question the number. Repair the statement and reconnect to the decision.",
+      "expected": "Brief self-correction, then a return to the main point or next decision. The abandoned phrase should not be scored as a persistent error after a clear self-correction."
+    }
+  ],
+  "checkpoint": [
+    {"id":"eng-meet-q1","prompt":"A colleague's explanation is ambiguous. What is usually the best first move?","options":["Deliver your full counterargument","Ask a concise clarification question","Stay silent for the whole meeting","Repeat their sentence word for word"],"correctIndex":1,"explanation":"Clarifying first reduces the risk of disagreeing with a meaning the speaker did not intend."},
+    {"id":"eng-meet-q2","prompt":"Which response best expresses evidence-based uncertainty?","options":["It's definitely timing","Maybe, perhaps, possibly, I don't know","I don't think we can call it timing yet; we still need the price-volume bridge","You're wrong"],"correctIndex":2,"explanation":"It states a view, gives the evidence gap and avoids false certainty."},
+    {"id":"eng-meet-q3","prompt":"After a side discussion, what is a natural way to reconnect?","options":["Restart the meeting from the beginning","Coming back to the variance, the next check is...","Ignore the decision","Apologise for several sentences"],"correctIndex":1,"explanation":"A short signpost reconnects the group to the objective without sounding scripted."},
+    {"id":"eng-meet-q4","prompt":"A learner says a valid American expression in a Dublin-focused course. What should happen?","options":["Mark it wrong automatically","Accept it and explain UK/Irish preference only if useful","Force an Irish accent","Convert the technical score to zero"],"correctIndex":1,"explanation":"Valid UK and US variants are both accepted; local preference can be explained when useful."},
+    {"id":"eng-meet-q5","prompt":"The learner asks, 'Can you explain what you mean?' What does that prove?","options":["A grammar error","A vocabulary failure","Nothing by itself about mastery; answer the clarification first","That the learner should lose fluency points"],"correctIndex":2,"explanation":"A help/clarification request is conversational behaviour, not automatic evidence of a language deficit."}
+  ],
+  "professorGuide": {
+    "opening": "Start directly with the fictional meeting statement and ask the learner what they would say next. Do not announce a grammar exercise.",
+    "conversationRules": [
+      "Ask one main question at a time.",
+      "Do not praise every answer or paraphrase the learner's whole turn.",
+      "Allow hesitation and self-correction before rescuing the learner.",
+      "If the learner asks for clarification, satisfy that request before correcting unrelated language.",
+      "Use follow-up questions that depend on the learner's actual answer so the exchange cannot be completed from a memorised script."
+    ],
+    "challengePrompts": [
+      "What exactly are you asking them to clarify?",
+      "Can you make that more direct without sounding aggressive?",
+      "What's your evidence for that conclusion?",
+      "You lost the thread after the interruption — bring us back in one sentence."
+    ],
+    "correctionBoundary": "Correct meaning-changing, recurring or target-skill errors selectively. Do not treat accent alone as error. Do not treat a clear self-correction as a persistent retained mistake."
+  },
+  "assessmentBoundaries": [
+    "Task completion versus grammar accuracy.",
+    "Professional clarity versus accent.",
+    "Valid UK/Irish wording versus valid US wording.",
+    "Help or clarification request versus language deficit.",
+    "Self-corrected abandoned wording versus persistent error.",
+    "Technical meeting reasoning versus English-language quality.",
+    "Hesitation for thinking versus inability to communicate."
+  ],
+  "officialSources": [
+    {"id":"managing-meetings","url":"https://learnenglish.britishcouncil.org/free-resources/business","supports":"British Council business-English material including meeting management, clarification, participation and workplace communication."},
+    {"id":"business","url":"https://learnenglish.britishcouncil.org/free-resources/business","supports":"Workplace communication resources used as the professional-language reference layer."},
+    {"id":"b1-listening","url":"https://learnenglish.britishcouncil.org/free-resources/listening/b1","supports":"Intermediate listening practice covering clear standard speech in meetings, calls and interviews."},
+    {"id":"c1-listening","url":"https://learnenglish.britishcouncil.org/free-resources/listening/c1","supports":"Advanced listening contexts including complex talks, interviews and project meetings."},
+    {"id":"remote-teams","url":"https://learnenglish.britishcouncil.org/free-resources/business","supports":"Business-English material on remote-team communication, turn-taking, silence and meeting effectiveness."}
+  ],
+  "publicationGate": "Authored-content QA + source review + conversation/evaluator tests + separate database publication/deployment decision. This draft must not be treated as evidence of learner performance."
+}

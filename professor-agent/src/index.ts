@@ -390,6 +390,10 @@ export default defineAgent({
     const voiceName = process.env.OPENAI_REALTIME_VOICE || 'marin';
     const sessionLimitSeconds = maxSessionSeconds(metadata);
     const intensity = coachingIntensity(profile, metadata);
+    // Deterministic word-count cut-ins are an oral-mock pressure tool only. Normal, coaching,
+    // validation, case and English-conversation sessions rely on semantic turn detection and
+    // the learner explicitly yielding the floor; this avoids robotic mid-answer interruptions.
+    const automaticMidTurnCoaching = metadata.mode === 'oral_mock';
     const startedAt = Date.now();
     const transcript: TranscriptTurn[] = [];
     let closeReason = 'session_closed';
@@ -430,6 +434,7 @@ export default defineAgent({
     session.on(voice.AgentSessionEventTypes.UserInputTranscribed, (event: any) => {
       const spoken = typeof event?.transcript === 'string' ? event.transcript.trim() : '';
       if (!spoken) return;
+      if (!automaticMidTurnCoaching) return;
 
       partialUserTranscript = mergeStreamingTranscript(partialUserTranscript, spoken);
       const threshold = interruptionThresholdWords(profile, intensity);

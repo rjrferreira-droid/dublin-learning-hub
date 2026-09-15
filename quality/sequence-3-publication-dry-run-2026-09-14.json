@@ -1,0 +1,20 @@
+{
+  "version":"sequence-3-publication-dry-run-1",
+  "status":"read_only_slot_check_passed",
+  "checkedOn":"2026-09-14",
+  "project":"aazfyosqqeujureksqjs",
+  "scope":"Read-only validation only. No curriculum or learner row was changed.",
+  "targets":[
+    {"track":"finance","courseSlug":"finance-ireland-v2","moduleSlug":"ifrs-reporting","draftPath":"quality/drafts/p1-finance-leases.json","targetSlug":"leases-recognition-close-controls-local-framework","targetSequence":3,"matchingModules":1,"targetSlugRows":0,"targetSequenceRows":0,"currentMaxSequence":1,"slot":"free"},
+    {"track":"payroll","courseSlug":"irish-payroll-v2","moduleSlug":"gross-to-net","draftPath":"quality/drafts/p1-payroll-pay-bases.json","targetSlug":"pay-bases-pensions-statutory-deductions","targetSequence":3,"matchingModules":1,"targetSlugRows":0,"targetSequenceRows":0,"currentMaxSequence":1,"slot":"free"},
+    {"track":"english","courseSlug":"english-academy","moduleSlug":"spoken-fluency","draftPath":"quality/drafts/p1-english-variances.json","targetSlug":"explain-numbers-variances-stakeholders","targetSequence":3,"matchingModules":1,"targetSlugRows":0,"targetSequenceRows":0,"currentMaxSequence":1,"slot":"free"}
+  ],
+  "publicationRules":[
+    "Sequence 2 must be resolved first; this dry-run does not authorise skipping lesson order.",
+    "Recheck the live catalog immediately before any future insert.",
+    "Resolve module IDs from course/module slugs at execution time.",
+    "Insert future lessons as is_published=false, attach reviewed content, test, then make any publish=true decision separately.",
+    "Do not create learner progress, mastery, review, Error Bank or audio rows during curriculum publication."
+  ],
+  "authorization":"This dry-run is not authorization to write to Supabase."
+}
