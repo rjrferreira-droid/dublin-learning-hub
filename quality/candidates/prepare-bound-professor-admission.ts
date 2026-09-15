@@ -54,7 +54,7 @@ export async function prepareBoundProfessorAdmission(db:any,serviceDb:any,input:
     roomName:r.room_name,validationMode:r.validation_mode,qualityTier:r.quality_tier,maxSessionSeconds:r.max_session_seconds,providerAdmission:false};
    try{assertProfessorAdmissionAcknowledgement(acknowledgement,receipt);}catch{throw new ProfessorAdmissionUnconfirmed();}
    // Capture immutable bytes before exposing any mutable acknowledgement/context.
-   const dispatchEnvelope=JSON.stringify({acknowledgement,lessonContext:minted.reference.lessonContext,callbackToken});
+   const dispatchEnvelope=JSON.stringify({acknowledgement,lessonContext:minted.reference.lessonContext,callbackToken,reservationUsd:r.reservation_usd});
    return {status:'admitted' as const,acknowledgement,
     getDispatchEnvelope:()=>dispatchEnvelope,
     getServerContext:()=>({callbackToken,lessonContext:structuredClone(minted.reference.lessonContext),reservationUsd:r.reservation_usd as number})};

@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {prepareLocalProfessorWorkerJob} from '../quality/candidates/professor-worker-job.ts';
 import {createHash} from 'node:crypto';
 import {prepareBoundProfessorAdmission,ProfessorAdmissionUnconfirmed} from '../quality/candidates/prepare-bound-professor-admission.ts';
 import {assertProfessorAdmissionAcknowledgement,assertProfessorReferenceReceipt} from '../quality/candidates/professor-admission-contract.ts';
@@ -32,6 +33,12 @@ for(const kind of ['p1','written'] as const)for(const track of Object.keys(track
  assert.doesNotMatch(JSON.stringify(result),new RegExp(result.getServerContext().callbackToken));
  assert.doesNotMatch(JSON.stringify(result),/technicalBrief|callbackToken/);
  assert.doesNotMatch(JSON.stringify(result),/PRIVATE_DRAFT|PRIVATE_ANSWER|FORGED/);
+ const worker=prepareLocalProfessorWorkerJob(result,{supabaseOrigin:'http://127.0.0.1:54321',publishableKey:'fixture.'+Buffer.from(JSON.stringify({role:'anon'})).toString('base64url')+'.fixture'});
+ const workerMetadata=JSON.parse(worker.getWorkerJob().metadata);
+ assert.equal(workerMetadata.professorProfile,track);assert.equal(workerMetadata.lessonId,ids.lesson);
+ assert.deepEqual(workerMetadata.lessonContext,result.getServerContext().lessonContext);
+ assert.equal(workerMetadata.persistence.sessionId,ids.session);assert.equal(workerMetadata.budgetReservationId,ids.reservation);
+ assert.equal(workerMetadata.budgetReservationUsd,0.10);assert.doesNotMatch(JSON.stringify(worker),/technicalBrief|callbackToken/);
  const immutable=result.getDispatchEnvelope();
  result.getServerContext().lessonContext.technicalBrief='MUTATED_PRIVATE_COPY';
  assert.equal(result.getDispatchEnvelope(),immutable);

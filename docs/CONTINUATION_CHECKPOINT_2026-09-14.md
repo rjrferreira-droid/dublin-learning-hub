@@ -105,3 +105,8 @@ Previous green head ddc84a34a28f3396e48029d22752de09ac64d831 passed full CI 3502
 ## Subsequent continuation: scoped read-only Professor recovery
 
 The durable dispatch checkpoint f21db30212aec259c0fb47129d552dffb0a932a1 passed full CI 35028006986 and disposable platform CI 35028006918. Added an unmounted browser-safe recovery controller with exact captured receipt/epoch, Auth verification before/after observation, cancellation/disposal and stale-response suppression. Four strictly validated observation states never authorize another session or infer learning/cost completion. See docs/PROFESSOR_RECOVERY_2026-09-15.md and the matching feature-head CI for Node and actual Auth/PostgREST evidence. No SQL, active route, connected backend or worker change.
+
+
+## Subsequent continuation: immutable worker metadata through dispatch
+
+Recovery checkpoint 39672a9981f6cf869fe0e49eca979a127c430279 passed full CI 35028919463 and platform CI 35028919460. Added a strictly loopback-only worker-job assembler, binding complete authored context, actual reservation amount, session and callback destination into the exact durable dispatch payload. Tests use pure functions extracted from the published worker and feed the assembled metadata to the published evaluator; actual Auth/PostgREST admission/claim/observation still uses a fake submission. See docs/PROFESSOR_WORKER_WIRING_2026-09-15.md and matching CI. No worker deployment, connected write or active endpoint mounting.

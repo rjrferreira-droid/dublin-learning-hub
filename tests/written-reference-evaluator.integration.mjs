@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import {prepareLocalProfessorWorkerJob} from '../quality/candidates/professor-worker-job.ts';
 import {prepareWrittenProfessorReference} from '../quality/candidates/written-professor-reference.ts';
 import {sequence3SlugFor} from '../src/learning/sequence3Registry.ts';
 import {sequence4SlugFor} from '../src/learning/sequence4Registry.ts';
@@ -19,7 +21,11 @@ for(const track of Object.keys(tracks))for(const sequence of [3,4,5,6,7,8])test(
  const slug=sequence===3?sequence3SlugFor(track):sequence===4?sequence4SlugFor(track):remainingSlugFor(track,sequence);
  const ref=await prepareWrittenProfessorReference({profileTrack:track==='payroll'?tracks.payroll:tracks.finance,requestedTrack:tracks[track],requestedLessonId:id,resolved:{lesson:{id,moduleId:mid,slug,sequence,contentVersion:1,isPublished:true},module:{id:mid,courseId:cid,isPublished:true},course:{id:cid,learnerTrack:tracks[track],isActive:true}},draft:'PRIVATE_LOCAL_DRAFT',answers:['PRIVATE_LOCAL_ANSWER']});
  referenceAnswer=ref.context.authoredCase.referenceAnswer;payload=null;
- const result=await evaluateProfessorSession([{role:'user',text:'Could you explain the first step?'}],{track:tracks[track],mode:track==='english'?'general_conversation':'chapter_conversation',lessonContext:ref.lessonContext});
+ const acknowledgement={requestId:randomUUID(),userId:randomUUID(),mode:track==='english'?'general_conversation':'chapter_conversation',reference:{id:randomUUID(),sha256:ref.descriptor.sha256,version:ref.descriptor.version,identity:ref.identity},sessionId:randomUUID(),reservationId:randomUUID(),roomName:'validation:lh-'+randomUUID(),validationMode:true,qualityTier:'premium',maxSessionSeconds:60,providerAdmission:false};
+ const envelope=JSON.stringify({acknowledgement,lessonContext:ref.lessonContext,callbackToken:'b'.repeat(64),reservationUsd:0.1});
+ const job=prepareLocalProfessorWorkerJob({acknowledgement,getDispatchEnvelope:()=>envelope},{supabaseOrigin:'http://127.0.0.1:54321',publishableKey:'fixture.'+Buffer.from(JSON.stringify({role:'anon'})).toString('base64url')+'.fixture'});
+ const metadata=JSON.parse(job.getWorkerJob().metadata);
+ const result=await evaluateProfessorSession([{role:'user',text:'Could you explain the first step?'}],metadata);
  assert.ok(payload);assert.equal(payload.store,false);
  const text=payload.input.find(x=>x.role==='user').content;
  const [context,transcript]=text.split('\n\nTRANSCRIPT\n');

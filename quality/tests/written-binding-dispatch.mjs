@@ -5,6 +5,7 @@ import {dirname,join} from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {createClient} from '@supabase/supabase-js';
 import {prepareBoundProfessorAdmission} from '../candidates/prepare-bound-professor-admission.ts';
+import {prepareLocalProfessorWorkerJob} from '../candidates/professor-worker-job.ts';
 import {createProfessorRecoveryController,ProfessorObservationDiscarded} from '../candidates/professor-recovery-controller.ts';
 import {runProfessorDispatchCandidate,ProfessorDispatchUnconfirmed} from '../candidates/professor-dispatch-candidate.ts';
 const status=JSON.parse(readFileSync(process.argv[2],'utf8'));
@@ -36,8 +37,9 @@ try{
  assert.ok((await clients.payroll.rpc('observe_professor_dispatch_v1',observeArgs)).error);
  assert.ok((await clients.finance.rpc('observe_professor_dispatch_v1',{...observeArgs,p_request_id:randomUUID()})).error);
  assert.ok((await clients.finance.rpc('claim_professor_dispatch_v1',{p_ack:admitted.acknowledgement,p_callback_hash:'a'.repeat(64),p_payload_sha256:'b'.repeat(64),p_claim_id:randomUUID()})).error);
- const submit=async encoded=>{fakeSubmissions++;const privateEnvelope=JSON.parse(encoded);assert.equal(privateEnvelope.acknowledgement.sessionId,admitted.acknowledgement.sessionId);assert.equal(privateEnvelope.callbackToken,admitted.getServerContext().callbackToken);return {id:'fixture_http_dispatch'};};
- const results=await Promise.all([runProfessorDispatchCandidate(admin,admitted,env,submit),runProfessorDispatchCandidate(admin,{...admitted},env,submit)]);
+ const worker=prepareLocalProfessorWorkerJob(admitted,{supabaseOrigin:api.origin,publishableKey:status.ANON_KEY});
+ const submit=async encoded=>{fakeSubmissions++;const privateEnvelope=JSON.parse(encoded);assert.equal(privateEnvelope.acknowledgement.sessionId,admitted.acknowledgement.sessionId);assert.equal(privateEnvelope.callbackToken,admitted.getServerContext().callbackToken);const job=privateEnvelope.workerJob;assert.equal(job.roomName,admitted.acknowledgement.roomName);const metadata=JSON.parse(job.metadata);assert.deepEqual(metadata.lessonContext,admitted.getServerContext().lessonContext);assert.equal(metadata.persistence.sessionId,admitted.acknowledgement.sessionId);assert.equal(metadata.persistence.completionUrl,api.origin+'/functions/v1/professor-session-complete');assert.equal(metadata.budgetReservationId,admitted.acknowledgement.reservationId);assert.equal(metadata.budgetReservationUsd,admitted.getServerContext().reservationUsd);return {id:'fixture_http_dispatch'};};
+ const results=await Promise.all([runProfessorDispatchCandidate(admin,worker,env,submit),runProfessorDispatchCandidate(admin,{...worker},env,submit)]);
  assert.deepEqual(results.map(x=>x.state).sort(),['acknowledged','already_claimed']);assert.equal(fakeSubmissions,1);
  const observed=ok(await clients.finance.rpc('observe_professor_dispatch_v1',observeArgs));
  assert.deepEqual(observed,{state:'dispatch_acknowledged',sessionId:admitted.acknowledgement.sessionId,providerAdmission:false,retryAllowed:false});
@@ -64,7 +66,7 @@ try{
  assert.equal(ok(await admin.from('professor_budget_reservations').select('status').eq('id',uncertain.acknowledgement.reservationId).single()).status,'unresolved');
  assert.equal((await uncertainRecovery.refresh()).state,'dispatch_unconfirmed');uncertainRecovery.dispose();
  assert.deepEqual(ok(await admin.from('ai_usage_log').select('id')),[]);
- console.log(JSON.stringify({status:'passed',realAuthPostgrest:true,durableConcurrentClaim:true,lostCommittedClaimCannotRetry:true,isolatedOwnerObservation:true,validatedRecoveryStates:4,lateObservationDiscarded:true,fakeSubmissions,providerCalls:0,connectedWrites:0}));
+ console.log(JSON.stringify({status:'passed',realAuthPostgrest:true,durableConcurrentClaim:true,lostCommittedClaimCannotRetry:true,isolatedOwnerObservation:true,validatedRecoveryStates:4,lateObservationDiscarded:true,immutableWorkerJobBound:true,fakeSubmissions,providerCalls:0,connectedWrites:0}));
 }finally{
  ok(await admin.from('professor_budget_settings').update({monthly_budget_usd:0}).eq('feature','professor_livekit'));
  ok(await admin.from('learning_hub_budget_settings').update({ai_hard_cap_usd:0,professor_cap_usd:0}).eq('id',1));
