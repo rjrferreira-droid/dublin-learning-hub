@@ -113,3 +113,8 @@ Recovery checkpoint 39672a9981f6cf869fe0e49eca979a127c430279 passed full CI 3502
 
 
 Extended the same local-platform gate with actual desktop/mobile browser recovery against disposable Auth/PostgREST. A CI-only browser bundle and server-minted public preflight fixtures verify owner reads, cross-account denial, late-response discard and logout, with all provider/data-write routes blocked. Normal application/Vercel builds do not include this harness. Use the final matching full/platform CI for the verdict.
+
+
+## Subsequent continuation: browser-to-HTTP-to-atomic-start rehearsal
+
+Worker/browser checkpoint 4fb7b5f230957b42f7eb5da5bdb163ed8227675a passed full CI 35031765113 and platform CI 35031765098. Added a loopback-only HTTP rehearsal with actual bearer Auth, strict preflight/start bodies, server-owned reference minting, owner-bound single-use preparation and bounded ephemeral retention. Desktop/mobile tests traverse all 28 authorized course/sequence combinations per width to real zero-budget denial, plus ownership/replay/transport failures. A post-browser audit requires no sessions, holds or usage and budgets still zero. See docs/PROFESSOR_LOCAL_ROUTES_2026-09-15.md and matching CI. The rehearsal map is explicitly not a hosted durable store; no active API, connected write or provider call.
