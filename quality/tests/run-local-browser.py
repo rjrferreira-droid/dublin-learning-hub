@@ -10,5 +10,8 @@ assert not os.environ.get('SUPABASE_ACCESS_TOKEN')
 fixture=status_path.parent/'local-browser-fixture.json'
 assert fixture.is_file() and fixture.stat().st_mode&0o077==0
 env={**os.environ,'VITE_SUPABASE_URL':status['API_URL'],'VITE_SUPABASE_PUBLISHABLE_KEY':status['ANON_KEY'],'LH_BROWSER_FIXTURE':str(fixture)}
+subprocess.run(['node','--experimental-strip-types','quality/tests/prepare-local-recovery.mjs',str(status_path)],env=env,check=True)
+env['LH_RECOVERY_FIXTURE']=str(status_path.parent/'local-recovery-receipts.json')
 subprocess.run(['npm','run','build'],env=env,check=True)
+subprocess.run(['npx','--no-install','esbuild','quality/tests/local-recovery-client.ts','--bundle','--platform=browser','--format=iife','--global-name=LHRecoveryAcceptance','--outfile=dist/local-recovery-acceptance.js'],env=env,check=True)
 subprocess.run(['npx','--no-install','playwright','test','--config','playwright.local-platform.config.ts'],env=env,check=True)

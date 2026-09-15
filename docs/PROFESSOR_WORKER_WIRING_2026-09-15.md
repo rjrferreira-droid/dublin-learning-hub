@@ -15,3 +15,10 @@ The existing written-reference evaluator integration now receives the assembled 
 Disposable platform CI sends the same immutable job through real authenticated admission and the service-only durable claim, with one fake submission and real receipt/observation. It checks exact callback origin, session, budget and context, preserving concurrent dedup and lost-response recovery. Matching feature-head full/platform CI are authoritative remote results. All connected writes/provider calls remain zero; fictional budgets and rows are reset before browser checks.
 
 Remaining: reviewed hosted destination/backend and active endpoint mounting, complete live worker/provider acceptance, and real voice/listening quality. PR #3 stays DRAFT, P1 unpublished in connected Supabase, main/V2 excluded, LiveKit nb67ioJmoKBN unchanged.
+
+
+## Additional actual browser recovery acceptance
+
+The same disposable gate now builds a separate browser-only acceptance bundle after the normal application build. It is not imported by the product and is absent from normal Vercel builds. Server-side preparation writes only two public reference receipts to a private temporary file; service keys and callback closures never enter the browser bundle or receipts.
+
+New desktop/mobile browser cases use real disposable Auth and the read-only observation RPC for both accounts. They check owner observation, other-account rejection before data access, late response discard after an epoch change, and logout rejection. The browser blocks nonlocal traffic, provider routes and every Data API operation except the exact observation RPC. Existing authenticated product/catalog/draft-isolation browser cases remain separate and unchanged. This verifies real browser execution of recovery without claiming that recovery is mounted in the hosted product UI.

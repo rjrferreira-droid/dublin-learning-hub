@@ -8,6 +8,8 @@ on:
       - 'quality/tests/install-local-preview.py'
       - 'quality/tests/run-local-browser.py'
       - 'quality/tests/local-browser.spec.ts'
+      - 'quality/tests/local-recovery*'
+      - 'quality/tests/prepare-local-recovery.mjs'
       - 'quality/tests/written-binding-*'
       - 'playwright.local-platform.config.ts'
       - 'src/App.tsx'

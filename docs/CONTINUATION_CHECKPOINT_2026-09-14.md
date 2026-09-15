@@ -110,3 +110,6 @@ The durable dispatch checkpoint f21db30212aec259c0fb47129d552dffb0a932a1 passed 
 ## Subsequent continuation: immutable worker metadata through dispatch
 
 Recovery checkpoint 39672a9981f6cf869fe0e49eca979a127c430279 passed full CI 35028919463 and platform CI 35028919460. Added a strictly loopback-only worker-job assembler, binding complete authored context, actual reservation amount, session and callback destination into the exact durable dispatch payload. Tests use pure functions extracted from the published worker and feed the assembled metadata to the published evaluator; actual Auth/PostgREST admission/claim/observation still uses a fake submission. See docs/PROFESSOR_WORKER_WIRING_2026-09-15.md and matching CI. No worker deployment, connected write or active endpoint mounting.
+
+
+Extended the same local-platform gate with actual desktop/mobile browser recovery against disposable Auth/PostgREST. A CI-only browser bundle and server-minted public preflight fixtures verify owner reads, cross-account denial, late-response discard and logout, with all provider/data-write routes blocked. Normal application/Vercel builds do not include this harness. Use the final matching full/platform CI for the verdict.
