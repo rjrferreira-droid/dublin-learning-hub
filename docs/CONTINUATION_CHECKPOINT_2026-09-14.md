@@ -123,3 +123,8 @@ Worker/browser checkpoint 4fb7b5f230957b42f7eb5da5bdb163ed8227675a passed full C
 ## Subsequent continuation: encrypted preflight and process restart
 
 Local-route checkpoint d2d2100d26fd8dcb100cc5205529fbe575b59d43 passed full CI 35032957268 and platform CI 35032957244. Separated private admission snapshots from Auth clients, added authenticated encryption with owner/request/reference/expiry binding, and a local POSIX exclusive-consumption store. Separate-process acceptance uses fresh Auth and real zero-budget atomic start, proving one winner and blocked post-restart reuse without storing bearer tokens. See docs/PROFESSOR_ENCRYPTED_PREFLIGHT_2026-09-15.md and matching CI. The file store is NOT a distributed hosted backend, and the HTTP rehearsal has not been switched to it. No active route, SQL, connected backend or worker change.
+
+
+## Current authorization: adopt existing V2 — 15 September
+
+The owner now authorizes reuse of v2-development (aazfyosqqeujureksqjs), superseding the earlier new-isolated-target prerequisite. Do not ask for that decision again. Main, application promotion, P1 publication, paid tests, worker changes and historical SQL restrictions remain excluded. See docs/V2_ADOPTION_2026-09-15.md for the successful read-only inventory: existing learner/session data, one unresolved USD 4 reservation, nonzero budgets, legacy callable admission and missing Audio receipt columns. Preserve the data and hold. The empty foundation installer remains unsuitable for V2; next work is an incremental compatibility adaptation and target-specific recovery evidence, not another target-approval loop. No connected write occurred.
