@@ -8,7 +8,7 @@ The transaction locks Professor settings, global settings, reference, session an
 
 This is at-most-once submission by a cooperating caller, not exactly-once provider delivery. Losing a claim response can produce zero submissions and a retained reservation. Provider failure or a lost receipt also stays uncertain: no automatic retry, reclaim or invented zero-cost settlement. All current submission callbacks are fictional; there is no installed LiveKit SDK dispatch implementation.
 
-A service-only receipt records an observed provider ID, idempotently for the same ID and rejecting conflicts. This private receipt is authoritative for observation; a learner-editable public session dispatch ID cannot establish it. An observed ID is not completion, model usage, invoice or learning evidence. Late observation after reference expiry does not settle the reservation.
+A service-only receipt records an observed provider ID, idempotently for the same ID and rejecting conflicts. This private receipt is authoritative for observation; the public session dispatch ID alone cannot establish it. The new foundation denies direct learner session writes. An observed ID is not completion, model usage, invoice or learning evidence. Late observation after reference expiry does not settle the reservation.
 
 Authenticated read-only observation requires the reference owner and bound request. It exposes only state, session ID, providerAdmission:false and retryAllowed:false. Even no_admission_observed is a point-in-time observation, never retry authorization. Active browser/API paths do not use this candidate yet.
 

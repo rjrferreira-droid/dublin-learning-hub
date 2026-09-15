@@ -233,8 +233,11 @@ try:
     assert last_json(sql("select lh_internal.professor_reservation_exposure(now())"))['carriedReservedUsd'] > 0
     check('overlapping claims return one positive result; expired cross-month uncertainty retains budget and forbids retry')
 
-    # A learner-written public dispatch_id is never a verified private receipt.
-    assert last_json(sql(f"begin;" + auth(f"update ai_tutor_sessions set dispatch_id='fixture_forged' where id='{ack['sessionId']}';" + observe) + ';rollback'))['state'] == 'dispatch_unconfirmed'
+    # Foundation denies learner writes. Even an independently injected public
+    # dispatch_id is not a verified private receipt; inject only inside rollback.
+    public_write = f"update ai_tutor_sessions set dispatch_id='fixture_forged' where id='{ack['sessionId']}'"
+    sql('begin;' + auth(public_write) + ';rollback', error='permission denied')
+    assert last_json(sql('begin;' + public_write + ';' + auth(observe) + ';rollback'))['state'] == 'dispatch_unconfirmed'
     assert last_json(sql('begin;' + auth(observe) + ';rollback'))['state'] == 'dispatch_unconfirmed'
     record = f"select record_professor_dispatch_v1('{ticket}','{finance}','{claim_id}',repeat('b',64),'fixture_sql_ack')"
     assert sql('set role service_role;' + record) == 't'
