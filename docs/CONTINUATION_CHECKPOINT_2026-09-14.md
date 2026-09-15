@@ -100,3 +100,8 @@ P1 binding finished green at f61a93c07caf3b3c36182631883dae296683a5b9: full CI 3
 ## Subsequent continuation: durable dispatch fence and read-only observation
 
 Previous green head ddc84a34a28f3396e48029d22752de09ac64d831 passed full CI 35020832479 and disposable platform CI 35020832485. Added an unmounted, service-only durable one-shot dispatch candidate with immutable private envelopes, transactional unresolved holds, exact identity revalidation and owner-scoped observation. Lost acknowledgements cannot trigger another provider submission or release budget. Provider IDs are observations, never completion/cost/evidence. See docs/PROFESSOR_DISPATCH_FENCE_2026-09-15.md and matching feature-head CI. No active endpoint, connected installation, published lesson or worker was changed.
+
+
+## Subsequent continuation: scoped read-only Professor recovery
+
+The durable dispatch checkpoint f21db30212aec259c0fb47129d552dffb0a932a1 passed full CI 35028006986 and disposable platform CI 35028006918. Added an unmounted browser-safe recovery controller with exact captured receipt/epoch, Auth verification before/after observation, cancellation/disposal and stale-response suppression. Four strictly validated observation states never authorize another session or infer learning/cost completion. See docs/PROFESSOR_RECOVERY_2026-09-15.md and the matching feature-head CI for Node and actual Auth/PostgREST evidence. No SQL, active route, connected backend or worker change.

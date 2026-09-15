@@ -5,6 +5,7 @@ import {dirname,join} from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {createClient} from '@supabase/supabase-js';
 import {prepareBoundProfessorAdmission} from '../candidates/prepare-bound-professor-admission.ts';
+import {createProfessorRecoveryController,ProfessorObservationDiscarded} from '../candidates/professor-recovery-controller.ts';
 import {runProfessorDispatchCandidate,ProfessorDispatchUnconfirmed} from '../candidates/professor-dispatch-candidate.ts';
 const status=JSON.parse(readFileSync(process.argv[2],'utf8'));
 const fixture=JSON.parse(readFileSync(join(dirname(process.argv[2]),'local-browser-fixture.json'),'utf8'));
@@ -25,7 +26,11 @@ try{
  ok(await admin.from('professor_budget_settings').update({monthly_budget_usd:1}).eq('feature','professor_livekit'));
  ok(await admin.from('learning_hub_budget_settings').update({ai_hard_cap_usd:1,professor_cap_usd:1}).eq('id',1));
  const prepared=await prepareBoundProfessorAdmission(clients.finance,admin,{kind:'p1',lessonId:fixture.p1Lessons.finance.id,requestedTrack:tracks.finance,requestId:randomUUID(),mode:'chapter_conversation'},env);
+ let recoveryScope={receipt:structuredClone(prepared.receipt),epoch:1};
+ const recovery=createProfessorRecoveryController(clients.finance,recoveryScope,()=>recoveryScope);
+ assert.equal((await recovery.refresh()).state,'no_admission_observed');
  const admitted=await prepared.start();assert.equal(admitted.status,'admitted');
+ assert.equal((await recovery.refresh()).state,'admitted_not_claimed');
  const observeArgs={p_reference_id:admitted.acknowledgement.reference.id,p_request_id:admitted.acknowledgement.requestId};
  assert.equal(ok(await clients.finance.rpc('observe_professor_dispatch_v1',observeArgs)).state,'admitted_not_claimed');
  assert.ok((await clients.payroll.rpc('observe_professor_dispatch_v1',observeArgs)).error);
@@ -37,18 +42,29 @@ try{
  const observed=ok(await clients.finance.rpc('observe_professor_dispatch_v1',observeArgs));
  assert.deepEqual(observed,{state:'dispatch_acknowledged',sessionId:admitted.acknowledgement.sessionId,providerAdmission:false,retryAllowed:false});
  assert.doesNotMatch(JSON.stringify(observed),/callback|sha256|technicalBrief|fixture_http_dispatch/);
+ assert.deepEqual(await recovery.refresh(),observed);
+ // Actual owner-authenticated observation arrives after the UI changed scope.
+ const delayed={auth:clients.finance.auth,rpc:async(name,args)=>{const result=await clients.finance.rpc(name,args);ok(result);recoveryScope={...recoveryScope,epoch:2};return result;}};
+ const stale=createProfessorRecoveryController(delayed,recoveryScope,()=>recoveryScope);
+ await assert.rejects(()=>stale.refresh(),ProfessorObservationDiscarded);stale.dispose();recovery.dispose();
+ const other=createProfessorRecoveryController(clients.payroll,recoveryScope,()=>recoveryScope);
+ await assert.rejects(()=>other.refresh(),ProfessorObservationDiscarded);other.dispose();
  assert.equal(ok(await admin.from('professor_budget_reservations').select('status').eq('id',admitted.acknowledgement.reservationId).single()).status,'unresolved');
  // Simulate a lost claim response AFTER actual PostgreSQL commit. No provider is
  // submitted; a fresh invocation still cannot reuse the durable claim.
- const uncertain=await (await prepareBoundProfessorAdmission(clients.payroll,admin,{kind:'written',lessonId:fixture.lessons.english[8].id,requestedTrack:tracks.english,requestId:randomUUID(),mode:'general_conversation'},env)).start();
+ const uncertainPrepared=await prepareBoundProfessorAdmission(clients.payroll,admin,{kind:'written',lessonId:fixture.lessons.english[8].id,requestedTrack:tracks.english,requestId:randomUUID(),mode:'general_conversation'},env);
+ const uncertainScope={receipt:structuredClone(uncertainPrepared.receipt),epoch:1};
+ const uncertainRecovery=createProfessorRecoveryController(clients.payroll,uncertainScope,()=>uncertainScope);
+ const uncertain=await uncertainPrepared.start();
  assert.equal(uncertain.status,'admitted');
  const lost={rpc:async(name,args)=>{const response=await admin.rpc(name,args);assert.equal(response.data?.claimed,true);throw Error('fictional lost claim response');}};
  await assert.rejects(()=>runProfessorDispatchCandidate(lost,uncertain,env,submit),ProfessorDispatchUnconfirmed);
  assert.deepEqual(await runProfessorDispatchCandidate(admin,{...uncertain},env,submit),{state:'already_claimed',retryAllowed:false});assert.equal(fakeSubmissions,1);
  assert.equal(ok(await clients.payroll.rpc('observe_professor_dispatch_v1',{p_reference_id:uncertain.acknowledgement.reference.id,p_request_id:uncertain.acknowledgement.requestId})).state,'dispatch_unconfirmed');
  assert.equal(ok(await admin.from('professor_budget_reservations').select('status').eq('id',uncertain.acknowledgement.reservationId).single()).status,'unresolved');
+ assert.equal((await uncertainRecovery.refresh()).state,'dispatch_unconfirmed');uncertainRecovery.dispose();
  assert.deepEqual(ok(await admin.from('ai_usage_log').select('id')),[]);
- console.log(JSON.stringify({status:'passed',realAuthPostgrest:true,durableConcurrentClaim:true,lostCommittedClaimCannotRetry:true,isolatedOwnerObservation:true,fakeSubmissions,providerCalls:0,connectedWrites:0}));
+ console.log(JSON.stringify({status:'passed',realAuthPostgrest:true,durableConcurrentClaim:true,lostCommittedClaimCannotRetry:true,isolatedOwnerObservation:true,validatedRecoveryStates:4,lateObservationDiscarded:true,fakeSubmissions,providerCalls:0,connectedWrites:0}));
 }finally{
  ok(await admin.from('professor_budget_settings').update({monthly_budget_usd:0}).eq('feature','professor_livekit'));
  ok(await admin.from('learning_hub_budget_settings').update({ai_hard_cap_usd:0,professor_cap_usd:0}).eq('id',1));

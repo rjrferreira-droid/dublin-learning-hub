@@ -48,7 +48,7 @@ jobs:
           node-version: '24'
       - run: npm ci
       - name: Typecheck the unmounted reference admission and acknowledgement adapters
-        run: npx --no-install tsc --noEmit --allowImportingTsExtensions --module NodeNext --target ES2022 --resolveJsonModule --esModuleInterop --skipLibCheck --strict quality/candidates/prepare-bound-professor-admission.ts quality/candidates/professor-admission-contract.ts quality/candidates/professor-dispatch-candidate.ts
+        run: npx --no-install tsc --noEmit --allowImportingTsExtensions --module NodeNext --target ES2022 --resolveJsonModule --esModuleInterop --skipLibCheck --strict quality/candidates/prepare-bound-professor-admission.ts quality/candidates/professor-admission-contract.ts quality/candidates/professor-dispatch-candidate.ts quality/candidates/professor-recovery-controller.ts
       - uses: supabase/setup-cli@v3
         with:
           version: 2.117.0
