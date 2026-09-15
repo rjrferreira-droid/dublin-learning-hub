@@ -50,3 +50,53 @@ test('lost settlement acknowledgement never erases a committed receipt or starts
 test('malformed identity and reservation fail before any RPC',async()=>{
  for(const override of [{contentVersion:0},{estimatedCostUsd:0.11},{reservationUsd:NaN},{userId:'child'},{characters:0}]){const f=fixture();await assert.rejects(()=>runPremiumAudioAttempt(f.db,{...input,...override},f.dependencies));assert.equal(f.calls.length,0);}
 });
+
+for(const phase of ['admission','prepare','generate','store'])test(`${phase}: caller mutation cannot redirect identity or receipt`,async()=>{
+ const mutable={...input};const calls:{name:string;args:Record<string,unknown>}[]=[];
+ const mutate=()=>Object.assign(mutable,{attemptId:'44444444-4444-4444-8444-444444444444',
+  userId:'55555555-5555-4555-8555-555555555555',lessonId:'66666666-6666-4666-8666-666666666666',
+  contentVersion:99,reservationUsd:10,estimatedCostUsd:9,characters:19000});
+ const db={async rpc(name:string,args:Record<string,unknown>){
+  calls.push({name,args:{...args}});
+  if(name==='begin_premium_audio_attempt_v2'){
+   await Promise.resolve();if(phase==='admission')mutate();
+   return {data:{allowed:true,attemptId:input.attemptId,state:'reserved',reservationUsd:input.reservationUsd},error:null};
+  }
+  return {data:true,error:null};
+ }};
+ const result=await runPremiumAudioAttempt(db,mutable,{
+  async prepare(){if(phase==='prepare')mutate();},
+  async generate(){if(phase==='generate')mutate();return 'fictional';},
+  async store(_audio,identity){if(phase==='store')mutate();return identity;},
+ });
+ assert.deepEqual(calls.map(c=>c.args.p_attempt_id),[input.attemptId,input.attemptId,input.attemptId]);
+ assert.deepEqual(calls[2].args,{p_attempt_id:input.attemptId,p_estimated_cost_usd:0.04,p_characters:100});
+ assert.deepEqual(result,{attemptId:input.attemptId,storagePath:`lessons/${input.lessonId}/commentary-v2.mp3`});
+});
+
+test('failure after caller mutation closes only the original uncertain attempt',async()=>{
+ const mutable={...input},f=fixture('provider-timeout');const closeIds:unknown[]=[];
+ const db={async rpc(name:string,args:Record<string,unknown>){
+  if(name==='close_premium_audio_attempt_v2')closeIds.push(args.p_attempt_id);
+  return f.db.rpc(name);
+ }};
+ await assert.rejects(()=>runPremiumAudioAttempt(db,mutable,{
+  ...f.dependencies,async generate(){mutable.attemptId='44444444-4444-4444-8444-444444444444';return f.dependencies.generate();},
+ }));
+ assert.deepEqual(closeIds,[input.attemptId]);assert.equal(f.state,'uncertain');assert.equal(f.generated,1);
+});
+
+test('storage receipt cannot change or leak extra fields while settlement is pending',async()=>{
+ const f=fixture();let stored:any;
+ const db={async rpc(name:string){
+  if(name==='settle_premium_audio_attempt_v2'){
+   stored.attemptId='44444444-4444-4444-8444-444444444444';stored.storagePath='other-account.mp3';
+  }
+  return f.db.rpc(name);
+ }};
+ const result=await runPremiumAudioAttempt(db,input,{
+  ...f.dependencies,async store(_audio,identity){stored={...identity,privateProviderReceipt:'must-not-escape'};return stored;},
+ });
+ assert.deepEqual(result,{attemptId:input.attemptId,storagePath:`lessons/${input.lessonId}/commentary-v2.mp3`});
+ assert.ok(Object.isFrozen(result));assert.equal(f.receipts,1);
+});

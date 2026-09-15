@@ -31,3 +31,36 @@ for(const failure of ['none','provider','storage','mark_premium_audio_submitted_
  const count=await sql('select count(*) from ai_usage_log');assert.equal(count,state==='settled'?'1':'0');
  console.log(`PASS: real SQL + candidate orchestration: ${failure}, preserved ${state}, no paid retry`);
 }
+
+// Mutate the caller's request after real admission/submission. Ledger operations
+// must remain bound to the original attempt, including uncertain-failure cleanup.
+for(const failProvider of [false,true]){
+ await reset();
+ const original={attemptId:randomUUID(),userId,lessonId,contentVersion:1,reservationUsd:0.10,estimatedCostUsd:0.04,characters:100};
+ const mutable={...original},wrongAttempt=randomUUID();let providerCalls=0;
+ const dependencies={
+  async generate(){
+   providerCalls++;
+   Object.assign(mutable,{attemptId:wrongAttempt,lessonId:randomUUID(),contentVersion:99,estimatedCostUsd:9,characters:19000});
+   if(failProvider)throw new Error('Fictional provider timeout after caller mutation');
+   return 'FICTIONAL AUDIO';
+  },
+  async store(_audio,identity){
+   assert.deepEqual(identity,{attemptId:original.attemptId,storagePath:`lessons/${lessonId}/commentary-v1.mp3`});
+   return identity;
+  },
+ };
+ if(failProvider)await assert.rejects(()=>runPremiumAudioAttempt(client(),mutable,dependencies));
+ else await runPremiumAudioAttempt(client(),mutable,dependencies);
+ assert.equal(await sql(`select state from lh_internal.premium_audio_attempts where id='${original.attemptId}'`),failProvider?'uncertain':'settled');
+ assert.equal(await sql(`select count(*) from lh_internal.premium_audio_attempts where id='${wrongAttempt}'`),'0');
+ if(!failProvider){
+  assert.equal(await sql(`select estimated_cost_usd=0.04 and characters=100 from ai_usage_log where request_id='premium-audio-v2:${original.attemptId}'`),'t');
+ }else{
+  assert.equal(await sql('select lh_internal.premium_audio_pending_usd()=0.10'),'t');
+  assert.equal(await sql('select count(*) from ai_usage_log'),'0');
+ }
+ await assert.rejects(()=>runPremiumAudioAttempt(client(),original,dependencies),/replayed/);
+ assert.equal(providerCalls,1);
+ console.log(`PASS: real SQL ignores mutated caller, ${failProvider?'uncertain original hold':'exact original receipt'}, no paid retry`);
+}

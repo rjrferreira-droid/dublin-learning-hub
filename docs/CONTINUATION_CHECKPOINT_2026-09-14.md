@@ -133,3 +133,8 @@ The owner now authorizes reuse of v2-development (aazfyosqqeujureksqjs), superse
 ## Connected V2 continuation: contain direct legacy admission
 
 The tested access-only SQL at 9c447234fb589d9152ce46559b84b2b839edd0b5 was applied to authorized V2 as lh_v2_contain_legacy_direct_admission. Authenticated and service_role direct EXECUTE grants were revoked; owner/body, current atomic startup, every existing data count, budgets and the unresolved USD 4 hold were preserved in post-checks. PostgreSQL CI 35037095052 passed denial, populated-data preservation, rollback, inverse grants and ACL-drift rejection. See docs/V2_LEGACY_CONTAINMENT_2026-09-15.md. No need to repeat this write. The legacy routine still exists and the Audio installer still deliberately rejects it; do not bypass that guard. Full-database recovery is still unverified; the tested inverse applies only to these grants. P1/worker/providers/main remain unchanged.
+
+
+## Audio adaptation continuation: immutable request and durable result
+
+Fixed caller-owned input mutation across asynchronous Audio admission/generation/settlement by capturing a frozen scalar request and a frozen two-field storage receipt. Failure cleanup stays attached to the original attempt. Six added Node tests passed locally; two additional disposable PostgreSQL cases verify exact original cost and uncertain hold plus replay denial. See docs/PREMIUM_AUDIO_REQUEST_BINDING_2026-09-15.md and the matching CI runs for final SQL/full regression verdicts. No new connected write or deployment; the V2 legacy containment stays applied and Audio's installation guard stays unchanged.
