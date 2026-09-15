@@ -1,7 +1,8 @@
+import {isP1FeaturePreview} from '../../server/p1-preview-runtime.ts';
 import {createHash,randomBytes,randomUUID} from 'node:crypto';
 import {mintP1ProfessorPreview} from './p1-professor-binding.ts';
 import {mintWrittenProfessorPreview} from './mint-written-professor-preview.ts';
-import {assertProfessorAdmissionAcknowledgement,isUuid,professorModes,sameBoundIdentity,type AdmissionAcknowledgement,type ProfessorMode,type ReferenceReceipt} from './professor-admission-contract.ts';
+import {assertProfessorAdmissionAcknowledgement,assertProfessorReferenceReceipt,isUuid,professorModes,sameBoundIdentity,type AdmissionAcknowledgement,type ProfessorMode,type ReferenceReceipt} from './professor-admission-contract.ts';
 type Input={kind:'p1'|'written';lessonId:string;requestedTrack:'rafael_finance'|'viviane_payroll'|'english_academy';requestId:string;mode:ProfessorMode};
 export class ProfessorAdmissionUnconfirmed extends Error{
  readonly reservationMayExist=true;
@@ -26,15 +27,33 @@ export async function prepareBoundProfessorAdmission(db:any,serviceDb:any,input:
  const receipt:ReferenceReceipt={requestId,userId:minted.userId,mode,reference:{id:minted.ticket.reference_id,sha256:minted.reference.descriptor.sha256,
   version:minted.reference.descriptor.version,identity:{...minted.reference.identity}}};
  const callbackToken=randomBytes(32).toString('hex'),roomName='validation:lh-'+randomUUID();
+ return resumeBoundProfessorAdmission(db,{receipt,callbackToken,roomName,lessonContext:minted.reference.lessonContext},env,signal);
+}
+
+export type PrivateAdmissionSnapshot={receipt:ReferenceReceipt;callbackToken:string;roomName:string;lessonContext:Record<string,unknown>};
+/** Only a server-created snapshot recovered from authenticated encrypted storage.
+ * NEVER pass request JSON here. Uses the current request's Auth client, not a
+ * persisted bearer token. The caller must claim durable consumption first. */
+export function resumeBoundProfessorAdmission(db:any,snapshot:PrivateAdmissionSnapshot,env:Record<string,string|undefined>,signal?:AbortSignal){
+ if(!isP1FeaturePreview(env))throw Error('professor_admission_unavailable');
+ notAborted(signal);
+ const captured=structuredClone(snapshot),{receipt,callbackToken,roomName,lessonContext}=captured;
+ if(Object.keys(captured).length!==4||typeof callbackToken!=='string'||!/^[a-f0-9]{64}$/.test(callbackToken)
+  ||typeof roomName!=='string'||!roomName.startsWith('validation:lh-')||!isUuid(roomName.slice(14))
+  ||!lessonContext||typeof lessonContext!=='object'||Array.isArray(lessonContext)||typeof lessonContext.technicalBrief!=='string'
+  ||Buffer.byteLength(JSON.stringify(captured),'utf8')>64000)throw Error('professor_snapshot_invalid');
+ assertProfessorReferenceReceipt(receipt,{requestId:receipt.requestId,userId:receipt.userId,mode:receipt.mode,identity:receipt.reference.identity});
+ const {requestId,mode}=receipt;
  let attempted=false;
  return {
   // A detached receipt cannot mutate the server's captured reference/request.
   receipt:structuredClone(receipt),
+  getPrivateSnapshot:()=>structuredClone(captured),
   async start(){
    if(attempted)throw Error('professor_admission_attempt_already_used');
    attempted=true;notAborted(signal);
    const {data:auth,error:authError}=await db.auth.getUser();notAborted(signal);
-   if(authError||auth?.user?.id!==minted.userId)throw Error('professor_admission_account_changed');
+   if(authError||auth?.user?.id!==receipt.userId)throw Error('professor_admission_account_changed');
    let result:any;
    try{
     result=await db.rpc('start_written_professor_session_v1',{p_reference_id:receipt.reference.id,p_request_id:requestId,p_mode:mode,p_room_name:roomName,
@@ -54,10 +73,10 @@ export async function prepareBoundProfessorAdmission(db:any,serviceDb:any,input:
     roomName:r.room_name,validationMode:r.validation_mode,qualityTier:r.quality_tier,maxSessionSeconds:r.max_session_seconds,providerAdmission:false};
    try{assertProfessorAdmissionAcknowledgement(acknowledgement,receipt);}catch{throw new ProfessorAdmissionUnconfirmed();}
    // Capture immutable bytes before exposing any mutable acknowledgement/context.
-   const dispatchEnvelope=JSON.stringify({acknowledgement,lessonContext:minted.reference.lessonContext,callbackToken,reservationUsd:r.reservation_usd});
+   const dispatchEnvelope=JSON.stringify({acknowledgement,lessonContext,callbackToken,reservationUsd:r.reservation_usd});
    return {status:'admitted' as const,acknowledgement,
     getDispatchEnvelope:()=>dispatchEnvelope,
-    getServerContext:()=>({callbackToken,lessonContext:structuredClone(minted.reference.lessonContext),reservationUsd:r.reservation_usd as number})};
+    getServerContext:()=>({callbackToken,lessonContext:structuredClone(lessonContext),reservationUsd:r.reservation_usd as number})};
   },
  };
 }

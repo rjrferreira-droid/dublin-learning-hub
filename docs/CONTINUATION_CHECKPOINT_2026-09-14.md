@@ -118,3 +118,8 @@ Extended the same local-platform gate with actual desktop/mobile browser recover
 ## Subsequent continuation: browser-to-HTTP-to-atomic-start rehearsal
 
 Worker/browser checkpoint 4fb7b5f230957b42f7eb5da5bdb163ed8227675a passed full CI 35031765113 and platform CI 35031765098. Added a loopback-only HTTP rehearsal with actual bearer Auth, strict preflight/start bodies, server-owned reference minting, owner-bound single-use preparation and bounded ephemeral retention. Desktop/mobile tests traverse all 28 authorized course/sequence combinations per width to real zero-budget denial, plus ownership/replay/transport failures. A post-browser audit requires no sessions, holds or usage and budgets still zero. See docs/PROFESSOR_LOCAL_ROUTES_2026-09-15.md and matching CI. The rehearsal map is explicitly not a hosted durable store; no active API, connected write or provider call.
+
+
+## Subsequent continuation: encrypted preflight and process restart
+
+Local-route checkpoint d2d2100d26fd8dcb100cc5205529fbe575b59d43 passed full CI 35032957268 and platform CI 35032957244. Separated private admission snapshots from Auth clients, added authenticated encryption with owner/request/reference/expiry binding, and a local POSIX exclusive-consumption store. Separate-process acceptance uses fresh Auth and real zero-budget atomic start, proving one winner and blocked post-restart reuse without storing bearer tokens. See docs/PROFESSOR_ENCRYPTED_PREFLIGHT_2026-09-15.md and matching CI. The file store is NOT a distributed hosted backend, and the HTTP rehearsal has not been switched to it. No active route, SQL, connected backend or worker change.
