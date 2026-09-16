@@ -164,3 +164,7 @@ Added /api/professor-admission, closed by default and limited to feature Preview
 ## Closed V2 admission prerequisite package — 16 September
 
 Prepared an additive package for reference binding and encrypted shared preflights, with bound-start EXECUTE revoked for all API roles before commit. See docs/V2_ADMISSION_INSTALL_2026-09-16.md. Actual disposable CI verifies the closed installation, then grants only inside its fixture for prior concurrency/browser tests. Connected installation must follow the successful exact-package gate and be recorded explicitly; no automatic activation is implied.
+
+## V2 admission prerequisites INSTALLED, new starts CLOSED — 16 September
+
+Exact package source 531d7298f683663931f6e52afffe782b8a538d42 passed all four CIs and was applied as lh_v2_reference_preflights_closed on approved V2. Both private tables exist, RLS enabled, zero rows. New bound-start denied for anon/authenticated/service_role; existing atomic grant remains. Existing counts and reservation/budget-setting digests match exactly before/after. Do not repeat installation or enable the CI-only grant. See docs/V2_ADMISSION_INSTALL_2026-09-16.md. No lesson/session/hold/provider/worker/main change. Remaining actual configuration gap is private Vercel variables (connector lacks env mutation); publication, runtime activation and dispatch acceptance remain closed/separate.
