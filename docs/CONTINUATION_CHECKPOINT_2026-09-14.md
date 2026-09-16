@@ -160,3 +160,7 @@ The read-only readiness route is now called by an explicit button in P1 Professo
 ## Shared admission route — 16 September
 
 Added /api/professor-admission, closed by default and limited to feature Preview/approved V2. It connects fresh Auth, authored reference minting, shared AES-GCM preflights and bound atomic start with no provider/dispatch capability. Private SQL store consumes once across server instances; no replay/reclaim after lost response. See docs/SHARED_ADMISSION_ROUTE_2026-09-16.md. Connected SQL prerequisites and private configuration remain uninstalled/unset; readiness UI is not a session start button. No connected write/publication/provider/worker change. Actual SQL/process-race evidence must come from matching CI.
+
+## Closed V2 admission prerequisite package — 16 September
+
+Prepared an additive package for reference binding and encrypted shared preflights, with bound-start EXECUTE revoked for all API roles before commit. See docs/V2_ADMISSION_INSTALL_2026-09-16.md. Actual disposable CI verifies the closed installation, then grants only inside its fixture for prior concurrency/browser tests. Connected installation must follow the successful exact-package gate and be recorded explicitly; no automatic activation is implied.

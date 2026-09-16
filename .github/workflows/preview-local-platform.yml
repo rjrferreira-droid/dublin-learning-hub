@@ -13,6 +13,7 @@ on:
       - 'quality/tests/local-professor*'
       - 'quality/tests/assert-local-browser-clean.mjs'
       - 'quality/tests/written-binding-*'
+      - 'quality/tests/v2-admission-closed.sql'
       - 'playwright.local-platform.config.ts'
       - 'src/App.tsx'
       - 'src/components/LessonStudyPanel.tsx'
@@ -79,11 +80,12 @@ jobs:
           python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" "$RUNNER_TEMP/local-foundation/install.sql"
       - name: Actual local identity, P1 resolver, zero budget and private signed Storage
         run: node --experimental-strip-types quality/tests/preview-local-platform.mjs "$RUNNER_TEMP/local-platform-status.json"
-      - name: Install unmounted reference binding candidate only in this disposable stack
+      - name: Install closed V2 admission package and verify grants only in disposable stack
         run: |
-          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/candidates/written-professor-binding.sql
+          python3 quality/preview-backend/build-v2-admission-package.py "$RUNNER_TEMP/v2-admission-package"
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" "$RUNNER_TEMP/v2-admission-package/install.sql"
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/tests/v2-admission-closed.sql
           python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/candidates/professor-dispatch-fence.sql
-          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/candidates/professor-shared-preflights.sql
       - name: Actual Auth and PostgREST reference binding denials
         run: node --experimental-strip-types quality/tests/written-binding-platform.mjs "$RUNNER_TEMP/local-platform-status.json"
       - name: Reference admission, rollback and concurrent publication in local PostgreSQL
