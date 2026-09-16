@@ -5,6 +5,9 @@ on:
     paths:
       - 'quality/candidates/v2-legacy-admission-containment.sql'
       - 'quality/tests/v2-legacy-containment.py'
+      - 'quality/tests/v2-budget-package.py'
+      - 'quality/preview-backend/build-v2-package.py'
+      - 'quality/preview-backend/v2-shared-budget-patch.sql'
       - '.github/workflows/v2-adoption.yml'
 permissions:
   contents: read
@@ -42,4 +45,46 @@ jobs:
       - name: Verify containment, original state, unresolved hold and reversible grants
         run: python3 quality/tests/v2-legacy-containment.py
       - name: Verify no generated repository changes
+        run: git diff --exit-code
+  shared-budget-adaptation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ephemeral-test-only
+          POSTGRES_DB: learning_hub_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGDATABASE: learning_hub_test
+      PGUSER: postgres
+      PGPASSWORD: ephemeral-test-only
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Construct populated fictional V2 baseline
+        run: |
+          psql -X -v ON_ERROR_STOP=1 -f supabase/tests/fixture-budget.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20260913153700_lh_professor_completion_integrity.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20260913154315_lh_serialize_learning_updates.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20260913155850_lh_usage_settlement_integrity.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20260913161005_lh_atomic_professor_start.sql
+          psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20260913165704_lh_reservation_lifecycle.sql
+          psql -X -v ON_ERROR_STOP=1 -f quality/tests/audio-atomic-fixture.sql
+      - name: Verify paired patch, rollback, preserved holds and closed installation
+        run: python3 quality/tests/v2-budget-package.py
+      - name: Verify shared-cap concurrency and provider-free orchestration
+        run: |
+          python3 quality/tests/audio-atomic-concurrency.py
+          node --experimental-strip-types quality/tests/audio-attempt-postgres.mjs
+      - name: Verify repository unchanged
         run: git diff --exit-code
