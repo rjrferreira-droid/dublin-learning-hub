@@ -23,6 +23,12 @@ for(const sequence of [2,3,4,5,6,7,8])for(const track of ['finance','payroll','e
   else expect(url.searchParams.get('is_published')).toBe('eq.true');
   await route.fulfill({status:200,headers:{'access-control-allow-origin':'*'},contentType:'application/json',body:JSON.stringify(rows[table as keyof typeof rows])});
  });
+ let readinessCalls=0;
+ await page.route('**/api/professor-readiness',async route=>{
+  readinessCalls++;expect(route.request().method()).toBe('POST');
+  expect(route.request().postDataJSON()).toEqual({lessonId,requestedTrack:tracks[track]});
+  await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'reference_verified_activation_closed',providerAdmission:false,premiumAudioAdmission:false,validationOnly:true,identity:{lessonId,lessonSlug:rows.lessons[0].slug,requestedTrack:tracks[track],contentVersion:1}})});
+ });
  await signIn();await expect.poll(()=>catalogReads.includes('lessons')).toBe(true);
  await page.getByRole('button',{name:track==='english'?'Start English practice':track==='finance'?'Continue Finance':'Continue Payroll',exact:true}).click();
  await page.getByRole('tab',{name:'Learn',exact:true}).click();
@@ -51,9 +57,16 @@ for(const sequence of [2,3,4,5,6,7,8])for(const track of ['finance','payroll','e
  for(const name of ['Professor','Audio']){
   await page.getByRole('tab',{name,exact:true}).click();await expect(page.getByTestId('p1-interactive-gate')).toBeVisible();
   await expect(page.getByTestId('professor-session-panel')).toHaveCount(0);
+  if(sequence===2){
+   await page.getByRole('button',{name:'Check lesson availability',exact:true}).click();
+   await expect(page.getByTestId('lesson-readiness-check')).toContainText('Lesson reference verified. Professor and audio are still unavailable.');
+   await expect(page.getByTestId('professor-session-panel')).toHaveCount(0);
+  }else await expect(page.getByTestId('lesson-readiness-check')).toHaveCount(0);
+
  }
  await page.getByRole('tab',{name:'Practice',exact:true}).click();
  await expect(study.getByTestId('written-practice-0').getByRole('textbox')).toHaveValue('LOCAL P1 PRIVATE DRAFT');
+ expect(readinessCalls).toBe(sequence===2?2:0);
  expect(fixture.apiRequests).toHaveLength(0);expect(fixture.sensitive).toBe(0);
  await page.screenshot({path:info.outputPath(`p1-seq${sequence}-${track}-${width}.png`),fullPage:true});
 });

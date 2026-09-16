@@ -152,3 +152,7 @@ Source 426152ee5823dc619b4c0b5bdb2350d49613cf3d passed paired V2 CI 35122422374.
 ## Read-only Preview readiness route — 16 September
 
 Added /api/professor-readiness, exact feature Preview plus approved V2 only. Shared server identity resolver checks real Auth/profile/publication/ancestry; strict P1 sequence/version/slug checks follow before a public activation-closed response. No start/mint/budget/provider operation exists in this route. See docs/PREVIEW_READINESS_ROUTE_2026-09-16.md. Local regression/build passed; hosted authenticated acceptance and UI mounting are not claimed. Existing budget installation is complete; do not reinstall. P1 publication and paid activation remain closed.
+
+## P1 readiness interface — 16 September
+
+The read-only readiness route is now called by an explicit button in P1 Professor/Audio tabs for the matching account. Positive response retains both activation blocks; no provider component is mounted. The client checks account before/after, exact selected identity and closed flags, sends only lesson ID/track, and discards aborted/stale results. Local 569 contracts and build passed. See docs/PREVIEW_READINESS_UI_2026-09-16.md and final matching CI for desktop/mobile coverage. No connected writes/publication/paid calls; hosted authenticated acceptance remains unverified.
