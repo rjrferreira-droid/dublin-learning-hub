@@ -156,3 +156,7 @@ Added /api/professor-readiness, exact feature Preview plus approved V2 only. Sha
 ## P1 readiness interface — 16 September
 
 The read-only readiness route is now called by an explicit button in P1 Professor/Audio tabs for the matching account. Positive response retains both activation blocks; no provider component is mounted. The client checks account before/after, exact selected identity and closed flags, sends only lesson ID/track, and discards aborted/stale results. Local 569 contracts and build passed. See docs/PREVIEW_READINESS_UI_2026-09-16.md and final matching CI for desktop/mobile coverage. No connected writes/publication/paid calls; hosted authenticated acceptance remains unverified.
+
+## Shared admission route — 16 September
+
+Added /api/professor-admission, closed by default and limited to feature Preview/approved V2. It connects fresh Auth, authored reference minting, shared AES-GCM preflights and bound atomic start with no provider/dispatch capability. Private SQL store consumes once across server instances; no replay/reclaim after lost response. See docs/SHARED_ADMISSION_ROUTE_2026-09-16.md. Connected SQL prerequisites and private configuration remain uninstalled/unset; readiness UI is not a session start button. No connected write/publication/provider/worker change. Actual SQL/process-race evidence must come from matching CI.

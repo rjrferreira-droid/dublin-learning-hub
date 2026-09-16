@@ -21,6 +21,7 @@ on:
       - 'quality/candidates/premium-audio-atomic.sql'
       - 'quality/candidates/written-professor-binding.sql'
       - 'quality/candidates/professor-dispatch-fence.sql'
+      - 'quality/candidates/professor-shared-preflights.sql'
       - 'quality/candidates/*professor*.ts'
       - 'quality/candidates/written-audio-preview.ts'
       - 'supabase/functions/_shared/premium-audio-attempt-flow.ts'
@@ -52,7 +53,7 @@ jobs:
           node-version: '24'
       - run: npm ci
       - name: Typecheck the unmounted reference admission and acknowledgement adapters
-        run: npx --no-install tsc --noEmit --allowImportingTsExtensions --module NodeNext --target ES2022 --resolveJsonModule --esModuleInterop --skipLibCheck --strict quality/candidates/prepare-bound-professor-admission.ts quality/candidates/professor-admission-contract.ts quality/candidates/professor-dispatch-candidate.ts quality/candidates/professor-recovery-controller.ts quality/candidates/professor-worker-job.ts quality/candidates/professor-local-routes.ts quality/candidates/professor-file-preflights.ts quality/candidates/professor-admission-vault.ts
+        run: npx --no-install tsc --noEmit --allowImportingTsExtensions --module NodeNext --target ES2022 --resolveJsonModule --esModuleInterop --skipLibCheck --strict quality/candidates/prepare-bound-professor-admission.ts quality/candidates/professor-admission-contract.ts quality/candidates/professor-dispatch-candidate.ts quality/candidates/professor-recovery-controller.ts quality/candidates/professor-worker-job.ts quality/candidates/professor-local-routes.ts quality/candidates/professor-file-preflights.ts quality/candidates/professor-admission-vault.ts quality/candidates/professor-shared-preflights.ts quality/candidates/professor-shared-routes.ts
       - uses: supabase/setup-cli@v3
         with:
           version: 2.117.0
@@ -82,12 +83,15 @@ jobs:
         run: |
           python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/candidates/written-professor-binding.sql
           python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/candidates/professor-dispatch-fence.sql
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/candidates/professor-shared-preflights.sql
       - name: Actual Auth and PostgREST reference binding denials
         run: node --experimental-strip-types quality/tests/written-binding-platform.mjs "$RUNNER_TEMP/local-platform-status.json"
       - name: Reference admission, rollback and concurrent publication in local PostgreSQL
         run: python3 quality/tests/written-binding-concurrency.py "$RUNNER_TEMP/local-platform-status.json"
       - name: Encrypted preflight restart with fresh Auth and concurrent local processes
         run: node --experimental-strip-types quality/tests/written-binding-persistence.mjs "$RUNNER_TEMP/local-platform-status.json"
+      - name: Shared PostgreSQL preflights with fresh Auth and concurrent processes
+        run: node --experimental-strip-types quality/tests/written-binding-shared.mjs "$RUNNER_TEMP/local-platform-status.json"
       - name: Install local browser
         run: npx playwright install --with-deps chromium
       - name: Actual browser login, published catalog, written lessons and account isolation
