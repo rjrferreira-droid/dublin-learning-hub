@@ -138,3 +138,8 @@ The tested access-only SQL at 9c447234fb589d9152ce46559b84b2b839edd0b5 was appli
 ## Audio adaptation continuation: immutable request and durable result
 
 Fixed caller-owned input mutation across asynchronous Audio admission/generation/settlement by capturing a frozen scalar request and a frozen two-field storage receipt. Failure cleanup stays attached to the original attempt. Six added Node tests passed locally; two additional disposable PostgreSQL cases verify exact original cost and uncertain hold plus replay denial. See docs/PREMIUM_AUDIO_REQUEST_BINDING_2026-09-15.md and the matching CI runs for final SQL/full regression verdicts. No new connected write or deployment; the V2 legacy containment stays applied and Audio's installation guard stays unchanged.
+
+
+## V2 recovery evidence received — 16 September
+
+Owner screenshot confirms v2-development / aazfyosqqeujureksqjs has a PHYSICAL backup at 16 Sep 2026 01:00:00 UTC with Restore available. No restore was performed; Storage object bytes are excluded. The missing backup-list evidence is resolved: do not repeat the screenshot or target-authorization request. See docs/V2_RECOVERY_EVIDENCE_2026-09-16.md for the attachment digest and read-only compatibility checks. Live atomic startup passes the unique cap-anchor and lock-anchor checks and retains all-period Professor exposure; Audio hold accounting is not installed. Whole-function text differs from the repository reconstruction, so preserve the live body via a reviewed narrow patch, not wholesale replacement. Legacy disposition and incremental installation remain engineering work; no new connected mutation in this tranche.
