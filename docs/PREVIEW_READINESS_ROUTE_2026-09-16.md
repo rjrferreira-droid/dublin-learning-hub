@@ -6,6 +6,8 @@ Request accepts only lessonId and requestedTrack. Unknown fields (including draf
 
 Successful status is reference_verified_activation_closed: providerAdmission and premiumAudioAdmission are always false. This is NOT an admission ticket or a durable snapshot guarantee. No mint/start/dispatch RPC, budget reservation, provider SDK or database write occurs. No new backend key is needed. Existing token and Audio endpoints are unchanged. UI wiring and hosted authenticated acceptance remain pending; P1 is still absent/unpublished on connected V2 and cannot produce positive readiness there yet.
 
-Validation: 555 existing/new Node contracts passed before adding the Payroll positive case; final focused suite 17/17 passed. API typecheck and full app build passed. This is mocked handler coverage, not hosted Auth acceptance. No paid call, Supabase mutation, worker deployment or main promotion.
+Validation: 556 Node contracts passed, including 17 focused readiness cases. API typecheck and full app build passed. This is mocked handler coverage, not hosted Auth acceptance. No paid call, Supabase mutation, worker deployment or main promotion.
 
 Documentation checked: Supabase changelog and https://supabase.com/docs/reference/javascript/auth-getuser . Server validation uses getUser, not browser-supplied identity.
+
+First CI stopped at the frozen-runtime path gate. The scope list now explicitly permits only the three new read-only route/resolver files; remaining runtime, deployment and identity boundaries are retained. Use the follow-up commit CI for the final verdict.
