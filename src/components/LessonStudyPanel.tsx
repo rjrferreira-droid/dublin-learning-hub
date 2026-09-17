@@ -3,6 +3,7 @@ import {AppliedPracticePanel} from './AppliedPracticePanel';
 import { lessonModuleFor, type LessonModule } from '../learning/lessonModules';
 import {checkLocalChoice} from '../learning/checkLocalChoice';
 import {loadP1ModuleFor} from '../learning/p1RuntimeModules';
+import {loadReviewedLesson,type WrittenLoadResult} from '../learning/loadReviewedLesson';
 import { STUDY_PACKS, type StudyTrack } from '../learning/teachingPacks';
 import '../learning/lesson-study.css';
 
@@ -10,17 +11,22 @@ const studyTabs=new Set(['Learn','English','Practice','Visual','Case','Test','So
 type Props={track:StudyTrack;lessonId:string;lessonSlug?:string;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean};
 export function LessonStudyPanel({track,lessonId,lessonSlug,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled}:Props){
  const staticModule=lessonModuleFor(track,lessonId);
- const [deferredModule,setDeferredModule]=useState<LessonModule|null>(null);
- const [loadingDeferred,setLoadingDeferred]=useState(false);
+ const scope=JSON.stringify([track,lessonId,lessonSlug]);
+ const [attempt,setAttempt]=useState(0);
+ const [deferred,setDeferred]=useState<{scope:string;attempt:number;result:WrittenLoadResult}|null>(null);
  useEffect(()=>{
-  if(staticModule){setDeferredModule(null);setLoadingDeferred(false);return;}
-  if(!lessonSlug){setDeferredModule(null);setLoadingDeferred(false);return;}
-  let cancelled=false;setDeferredModule(null);setLoadingDeferred(true);
-  void loadP1ModuleFor(track,{id:lessonId,slug:lessonSlug}).then(module=>{if(!cancelled)setDeferredModule(module);}).catch(()=>{if(!cancelled)setDeferredModule(null);}).finally(()=>{if(!cancelled)setLoadingDeferred(false);});
-  return ()=>{cancelled=true;};
- },[track,lessonId,lessonSlug,staticModule]);
- const module=staticModule??deferredModule;
- if(!module)return studyTabs.has(activeTab)?<p role="status">{loadingDeferred?'Loading reviewed lesson…':'No reviewed written module is available for this lesson yet.'}</p>:null;
+  if(staticModule||!lessonSlug)return;
+  const controller=new AbortController();
+  void loadReviewedLesson({track,lessonId,lessonSlug},()=>loadP1ModuleFor(track,{id:lessonId,slug:lessonSlug}),controller.signal)
+   .then(result=>{if(!controller.signal.aborted)setDeferred({scope,attempt,result});});
+  return ()=>controller.abort();
+ },[track,lessonId,lessonSlug,staticModule,scope,attempt]);
+ const result=deferred?.scope===scope&&deferred.attempt===attempt?deferred.result:null;
+ const module=staticModule??(result?.status==='ready'?result.module:null);
+ if(!module)return studyTabs.has(activeTab)?<div data-testid="written-lesson-loading">
+  <p role="status">{!lessonSlug||result?.status==='missing'?'No reviewed written module is available for this lesson yet.':result?.status==='unavailable'?'The written lesson could not be loaded. Check your connection and try again.':'Loading reviewed lesson…'}</p>
+  {result?.status==='unavailable'?<button type="button" className="secondary-btn" onClick={()=>setAttempt(n=>n+1)}>Try loading again</button>:null}
+ </div>:null;
  return <StudyContent key={module.lessonId} module={module} activeTab={activeTab} onTabChange={onTabChange} onPrepareWorkshop={onPrepareWorkshop} handoffDisabled={handoffDisabled}/>;
 }
 function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled}:{module:LessonModule;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean}){

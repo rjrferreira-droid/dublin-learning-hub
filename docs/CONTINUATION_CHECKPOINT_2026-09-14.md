@@ -172,3 +172,7 @@ Exact package source 531d7298f683663931f6e52afffe782b8a538d42 passed all four CI
 ## Parallel UI resilience — 17 September
 
 Owner deferred private dashboard setup during a busy week. Continue safe work independently, without repeating that request. Readiness now has a 15-second deadline across Auth/network/decoding and immediate external cancellation, with no automatic retry or late-result continuation. Local 582 contracts/build passed; Finance mobile browser regression covers stalled request and explicit recovery. See docs/READINESS_RESILIENCE_2026-09-17.md and matching CI. Installed V2 state remains unchanged and new admission remains closed.
+
+## Written content loading recovery — 17 September
+
+Deferred written content now distinguishes missing material from loading failure, times out after 15 seconds and offers an explicit retry without reload/provider calls. Result scope/attempt checks prevent old lesson content appearing in a new selection. Local 587 contracts/build passed; new mobile browser case tests stalled import recovery and draft continuity. See docs/WRITTEN_LOADING_RECOVERY_2026-09-17.md and matching CI. No connected changes or owner action required.
