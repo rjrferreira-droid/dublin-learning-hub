@@ -24,9 +24,15 @@ for(const sequence of [2,3,4,5,6,7,8])for(const track of ['finance','payroll','e
   await route.fulfill({status:200,headers:{'access-control-allow-origin':'*'},contentType:'application/json',body:JSON.stringify(rows[table as keyof typeof rows])});
  });
  let readinessCalls=0;
+ const stalledReadinessCase=sequence===2&&track==='finance'&&width===390;
+ let releaseStalledReadiness=()=>{};
  await page.route('**/api/professor-readiness',async route=>{
   readinessCalls++;expect(route.request().method()).toBe('POST');
   expect(route.request().postDataJSON()).toEqual({lessonId,requestedTrack:tracks[track]});
+  if(stalledReadinessCase&&readinessCalls===1){
+   await new Promise<void>(resolve=>{releaseStalledReadiness=resolve;});
+   await route.abort().catch(()=>{});return;
+  }
   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'reference_verified_activation_closed',providerAdmission:false,premiumAudioAdmission:false,validationOnly:true,identity:{lessonId,lessonSlug:rows.lessons[0].slug,requestedTrack:tracks[track],contentVersion:1}})});
  });
  await signIn();await expect.poll(()=>catalogReads.includes('lessons')).toBe(true);
@@ -58,6 +64,16 @@ for(const sequence of [2,3,4,5,6,7,8])for(const track of ['finance','payroll','e
   await page.getByRole('tab',{name,exact:true}).click();await expect(page.getByTestId('p1-interactive-gate')).toBeVisible();
   await expect(page.getByTestId('professor-session-panel')).toHaveCount(0);
   if(sequence===2){
+   if(stalledReadinessCase&&name==='Professor'){
+    await page.clock.install();
+    await page.getByRole('button',{name:'Check lesson availability',exact:true}).click();
+    await expect.poll(()=>readinessCalls).toBe(1);
+    await expect(page.getByRole('button',{name:'Checking lesson…'})).toBeDisabled();
+    await page.clock.fastForward(15001);
+    await expect(page.getByTestId('lesson-readiness-check')).toContainText('Availability could not be confirmed. You can continue the written lesson.');
+    await expect(page.getByRole('button',{name:'Check lesson availability',exact:true})).toBeEnabled();
+    expect(readinessCalls).toBe(1);releaseStalledReadiness();
+   }
    await page.getByRole('button',{name:'Check lesson availability',exact:true}).click();
    await expect(page.getByTestId('lesson-readiness-check')).toContainText('Lesson reference verified. Professor and audio are still unavailable.');
    await expect(page.getByTestId('professor-session-panel')).toHaveCount(0);
@@ -66,7 +82,7 @@ for(const sequence of [2,3,4,5,6,7,8])for(const track of ['finance','payroll','e
  }
  await page.getByRole('tab',{name:'Practice',exact:true}).click();
  await expect(study.getByTestId('written-practice-0').getByRole('textbox')).toHaveValue('LOCAL P1 PRIVATE DRAFT');
- expect(readinessCalls).toBe(sequence===2?2:0);
+ expect(readinessCalls).toBe(sequence===2?(stalledReadinessCase?3:2):0);
  expect(fixture.apiRequests).toHaveLength(0);expect(fixture.sensitive).toBe(0);
  await page.screenshot({path:info.outputPath(`p1-seq${sequence}-${track}-${width}.png`),fullPage:true});
 });

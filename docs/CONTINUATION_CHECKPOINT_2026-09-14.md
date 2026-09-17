@@ -168,3 +168,7 @@ Prepared an additive package for reference binding and encrypted shared prefligh
 ## V2 admission prerequisites INSTALLED, new starts CLOSED — 16 September
 
 Exact package source 531d7298f683663931f6e52afffe782b8a538d42 passed all four CIs and was applied as lh_v2_reference_preflights_closed on approved V2. Both private tables exist, RLS enabled, zero rows. New bound-start denied for anon/authenticated/service_role; existing atomic grant remains. Existing counts and reservation/budget-setting digests match exactly before/after. Do not repeat installation or enable the CI-only grant. See docs/V2_ADMISSION_INSTALL_2026-09-16.md. No lesson/session/hold/provider/worker/main change. Remaining actual configuration gap is private Vercel variables (connector lacks env mutation); publication, runtime activation and dispatch acceptance remain closed/separate.
+
+## Parallel UI resilience — 17 September
+
+Owner deferred private dashboard setup during a busy week. Continue safe work independently, without repeating that request. Readiness now has a 15-second deadline across Auth/network/decoding and immediate external cancellation, with no automatic retry or late-result continuation. Local 582 contracts/build passed; Finance mobile browser regression covers stalled request and explicit recovery. See docs/READINESS_RESILIENCE_2026-09-17.md and matching CI. Installed V2 state remains unchanged and new admission remains closed.
