@@ -30,6 +30,23 @@ test('cleanup locks each parent before its child and never age-deletes a bound r
  assert.doesNotMatch(candidate,/(insert|update|delete)\s+(into\s+|from\s+)?public\.(ai_tutor_sessions|professor_budget_reservations|ai_usage_log)/i);
 });
 
+test('bound consumed cleanup requires an exact Professor reservation feature',()=>{
+ const integrity=candidate.slice(
+  candidate.indexOf('-- Old ciphertext'),
+  candidate.indexOf('-- Lock ONLY parents'),
+ );
+ const eligibility=candidate.slice(
+  candidate.indexOf('-- Lock ONLY parents'),
+  candidate.indexOf('-- Then lock children'),
+ );
+ assert.match(integrity,/r\.feature is distinct from 'professor_livekit'/i);
+ assert.match(eligibility,/and r\.feature='professor_livekit'/i);
+ assert.match(proof,/fixture-feature-drift[\s\S]*reservation_feature_drift_accepted/i);
+ assert.match(proof,/v_feature_reference_before is distinct from v_feature_reference_after/i);
+ assert.match(proof,/v_feature_session_before is distinct from v_feature_session_after/i);
+ assert.match(proof,/v_feature_reservation_before is distinct from v_feature_reservation_after/i);
+});
+
 test('proofs preserve the live consumed fence and exercise real lock contention',()=>{
  assert.match(proof,/valid-parent-fence[\s\S]*consumption fence[\s\S]*parent is still valid/i);
  assert.match(proof,/v_recovery_before is distinct from v_recovery_after/i);

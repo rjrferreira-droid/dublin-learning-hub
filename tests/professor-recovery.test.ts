@@ -11,11 +11,20 @@ function fixture(){
   controller:undefined as any};
  f.controller=createProfessorRecoveryController(f.db,initial,()=>current);return f;
 }
-for(const state of ['no_admission_observed','admitted_not_claimed','dispatch_unconfirmed','dispatch_acknowledged'] as const)test(`${state}: observation never authorizes retry or asserts learning`,async()=>{
+for(const state of ['no_admission_observed','admitted_not_claimed','dispatch_unconfirmed','dispatch_acknowledged','validation_abandoned','reconciliation_required'] as const)test(`${state}: observation never authorizes retry or asserts learning`,async()=>{
  const f=fixture();f.response.state=state;if(state==='no_admission_observed')f.response.sessionId=null;
  const result=await f.controller.refresh();assert.deepEqual(result,f.response);assert.equal(result.retryAllowed,false);assert.equal(result.providerAdmission,false);
  assert.ok(professorRecoveryMessage(result).length>30);assert.deepEqual(f.calls,['auth','observe_professor_dispatch_v1','auth']);
  assert.doesNotMatch(JSON.stringify(result),/callback|token|technicalBrief|mastery|pronunciation/);
+});
+test('terminal validation messages preserve exact closed and reconciliation semantics',async()=>{
+ const abandoned=fixture();abandoned.response.state='validation_abandoned';
+ const abandonedResult=await abandoned.controller.refresh(),abandonedMessage=professorRecoveryMessage(abandonedResult);
+ assert.ok(abandonedResult.sessionId);assert.match(abandonedMessage,/closed before dispatch/i);assert.match(abandonedMessage,/reservation was released/i);assert.match(abandonedMessage,/No learning result is claimed/i);
+ const reconciliation=fixture();reconciliation.response.state='reconciliation_required';
+ const reconciliationResult=await reconciliation.controller.refresh(),reconciliationMessage=professorRecoveryMessage(reconciliationResult);
+ assert.ok(reconciliationResult.sessionId);assert.match(reconciliationMessage,/manual reconciliation/i);assert.match(reconciliationMessage,/Do not start a new attempt/i);assert.match(reconciliationMessage,/No learning result is claimed/i);
+ for(const message of [abandonedMessage,reconciliationMessage])assert.doesNotMatch(message,/mastery|pronunciation|learning evidence|completed|successful/i);
 });
 for(const change of ['account','lesson','version','request','reference','hash','epoch','logout','auth','dispose','abort'])test(`${change} during RPC discards late observation`,async()=>{
  const f=fixture(),abort=new AbortController();f.reply=async()=>{
@@ -47,6 +56,12 @@ test('early invalidation, cancellation and account switch stop before any read R
 test('unknown, secret-bearing, capability-bearing and inconsistent observations fail closed without retry',async()=>{
  const mutations=[(x:any)=>{x.state='completed';},(x:any)=>{x.sessionId=null;},(x:any)=>{x.sessionId='bad';},(x:any)=>{x.state='no_admission_observed';},(x:any)=>{x.retryAllowed=true;},(x:any)=>{x.providerAdmission=true;},(x:any)=>{x.token='PRIVATE';},(x:any)=>{delete x.retryAllowed;}];
  for(const mutate of mutations){const f=fixture();mutate(f.response);await assert.rejects(()=>f.controller.refresh(),ProfessorObservationUnavailable);assert.equal(f.calls.filter(x=>x==='observe_professor_dispatch_v1').length,1);}
+});
+test('terminal validation states require a UUID session and the exact four-key schema',async()=>{
+ for(const state of ['validation_abandoned','reconciliation_required'])for(const mutate of [(x:any)=>{x.sessionId=null;},(x:any)=>{x.sessionId='bad';},(x:any)=>{x.providerAdmission=true;},(x:any)=>{x.retryAllowed=true;},(x:any)=>{x.evidence='PRIVATE';},(x:any)=>{delete x.sessionId;}]){
+  const f=fixture();f.response.state=state;mutate(f.response);
+  await assert.rejects(()=>f.controller.refresh(),ProfessorObservationUnavailable);
+ }
 });
 test('auth and RPC failures expose no raw secret and never trigger another operation',async()=>{
  for(const error of ['auth','rpc','rpc_result']){const f=fixture();if(error==='auth')f.db.auth.getUser=async()=>{throw Error('PRIVATE_AUTH');};else f.reply=async()=>{if(error==='rpc')throw Error('PRIVATE_RPC');return {data:f.response,error:{message:'PRIVATE_ERROR'}};};

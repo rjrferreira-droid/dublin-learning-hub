@@ -1,7 +1,7 @@
 import {assertProfessorReferenceReceipt,isUuid,type ReferenceReceipt} from './professor-admission-contract.ts';
 
 export type RecoveryScope={receipt:ReferenceReceipt;epoch:number};
-export type ProfessorObservation={state:'no_admission_observed'|'admitted_not_claimed'|'dispatch_unconfirmed'|'dispatch_acknowledged';sessionId:string|null;providerAdmission:false;retryAllowed:false};
+export type ProfessorObservation={state:'no_admission_observed'|'admitted_not_claimed'|'dispatch_unconfirmed'|'dispatch_acknowledged'|'validation_abandoned'|'reconciliation_required';sessionId:string|null;providerAdmission:false;retryAllowed:false};
 type Client={auth:{getUser():Promise<{data:{user:{id:string}|null};error:unknown}>};rpc(name:string,args:Record<string,string>):PromiseLike<{data:unknown;error:unknown}>};
 export class ProfessorObservationUnavailable extends Error{
  readonly retryAllowed=false;
@@ -28,7 +28,7 @@ function observation(value:unknown):ProfessorObservation{
  const v=value as ProfessorObservation;
  if(!v||typeof v!=='object'||Array.isArray(v)||Object.keys(v).length!==4
   ||!['state','sessionId','providerAdmission','retryAllowed'].every(k=>Object.hasOwn(v,k))
-  ||!['no_admission_observed','admitted_not_claimed','dispatch_unconfirmed','dispatch_acknowledged'].includes(v.state)
+  ||!['no_admission_observed','admitted_not_claimed','dispatch_unconfirmed','dispatch_acknowledged','validation_abandoned','reconciliation_required'].includes(v.state)
   ||v.providerAdmission!==false||v.retryAllowed!==false
   ||(v.state==='no_admission_observed'?v.sessionId!==null:!isUuid(v.sessionId)))throw new ProfessorObservationUnavailable();
  return {...v};
@@ -85,5 +85,7 @@ export function professorRecoveryMessage(result:ProfessorObservation){
   case 'admitted_not_claimed':return 'The session was reserved, but no dispatch was observed. Do not start another attempt.';
   case 'dispatch_unconfirmed':return 'The dispatch remains unconfirmed. The budget reservation remains protected; do not start another attempt.';
   case 'dispatch_acknowledged':return 'The dispatch was acknowledged. This does not confirm connection, completion or learning results.';
+  case 'validation_abandoned':return 'This validation-only session closed before dispatch and its budget reservation was released. No learning result is claimed.';
+  case 'reconciliation_required':return 'This session requires manual reconciliation. Do not start a new attempt. No learning result is claimed.';
  }
 }

@@ -39,6 +39,17 @@ declare
  v_settlement_before text;
  v_settlement_after text;
  v_definition text;
+ v_feature_drift_reference uuid:=gen_random_uuid();
+ v_feature_safe_reference uuid:=gen_random_uuid();
+ v_feature_drift_request uuid:=gen_random_uuid();
+ v_feature_drift_reservation uuid;
+ v_feature_drift_session uuid;
+ v_feature_reference_before text;
+ v_feature_reference_after text;
+ v_feature_session_before text;
+ v_feature_session_after text;
+ v_feature_reservation_before text;
+ v_feature_reservation_after text;
  v_drift_reference uuid:=gen_random_uuid();
  v_safe_reference uuid:=gen_random_uuid();
  v_batch_ids uuid[]:=array[]::uuid[];
@@ -227,6 +238,70 @@ begin
   if sqlerrm<>'professor_ephemera_cleanup_batch_invalid' then raise; end if;
  end;
 
+ -- A consumed binding with a reservation from another feature is not eligible
+ -- ciphertext. It blocks the whole run before an otherwise safe neighbour is
+ -- deleted, while the bound reference, session and reservation remain exact.
+ insert into public.professor_budget_reservations
+  (user_id,feature,month_start,reserved_usd,max_session_seconds,status,created_at)
+ values(v_user,'premium_audio',date_trunc('month',v_old8)::date,4,1200,'active',v_old8)
+ returning id into v_feature_drift_reservation;
+ insert into public.ai_tutor_sessions
+  (user_id,lesson_id,mode,status,started_at,room_name,quality_tier,budget_reservation_id,callback_token_hash,startup_request_id)
+ values(v_user,v_lesson,'chapter_conversation','active',v_old8,
+  'validation:lh-'||v_feature_drift_request,'premium',v_feature_drift_reservation,
+  repeat('5',64),v_feature_drift_request)
+ returning id into v_feature_drift_session;
+ insert into lh_internal.written_professor_references
+  (id,user_id,lesson_id,identity,source_sha256,descriptor_version,created_at,expires_at,
+   bound_session_id,bound_request_id,bound_at)
+ values
+  (v_feature_drift_reference,v_user,v_lesson,'{"fixture":"feature-drift"}',repeat('5',64),
+   'p1-reference-candidate-v1',v_old8-interval '5 minutes',v_old8,
+   v_feature_drift_session,v_feature_drift_request,v_old8-interval '1 minute'),
+  (v_feature_safe_reference,v_user,v_lesson,'{"fixture":"feature-safe-neighbour"}',repeat('6',64),
+   'p1-reference-candidate-v1',v_old8-interval '5 minutes',v_old8,
+   null,null,null);
+ insert into lh_internal.professor_preflights(reference_id,user_id,request_id,sealed,expires_at,consumed_at)
+ values
+  (v_feature_drift_reference,v_user,v_feature_drift_request,'fixture-feature-drift',v_old8,v_old8-interval '2 minutes'),
+  (v_feature_safe_reference,v_user,gen_random_uuid(),'fixture-feature-safe-neighbour',v_old8,null);
+ select md5(to_jsonb(t)::text) into v_feature_reference_before
+ from lh_internal.written_professor_references t where t.id=v_feature_drift_reference;
+ select md5(to_jsonb(s)::text) into v_feature_session_before
+ from public.ai_tutor_sessions s where s.id=v_feature_drift_session;
+ select md5(to_jsonb(r)::text) into v_feature_reservation_before
+ from public.professor_budget_reservations r where r.id=v_feature_drift_reservation;
+ begin
+  perform lh_internal.prune_professor_ephemera_v1(200);
+  raise exception 'reservation_feature_drift_accepted';
+ exception when raise_exception then
+  if sqlerrm<>'professor_ephemera_cleanup_integrity_drift' then raise; end if;
+ end;
+ select md5(to_jsonb(t)::text) into v_feature_reference_after
+ from lh_internal.written_professor_references t where t.id=v_feature_drift_reference;
+ select md5(to_jsonb(s)::text) into v_feature_session_after
+ from public.ai_tutor_sessions s where s.id=v_feature_drift_session;
+ select md5(to_jsonb(r)::text) into v_feature_reservation_after
+ from public.professor_budget_reservations r where r.id=v_feature_drift_reservation;
+ if (select count(*) from lh_internal.professor_preflights
+      where reference_id in(v_feature_drift_reference,v_feature_safe_reference))<>2
+  or (select count(*) from lh_internal.written_professor_references
+      where id in(v_feature_drift_reference,v_feature_safe_reference))<>2
+  or v_feature_reference_before is distinct from v_feature_reference_after
+  or v_feature_session_before is distinct from v_feature_session_after
+  or v_feature_reservation_before is distinct from v_feature_reservation_after then
+  raise exception 'reservation_feature_drift_failure_was_not_non_destructive';
+ end if;
+
+ -- Remove only this disposable feature-drift fixture before the independent
+ -- owner-drift proof below. The surrounding transaction still rolls back all.
+ delete from lh_internal.professor_preflights
+ where reference_id in(v_feature_drift_reference,v_feature_safe_reference);
+ delete from lh_internal.written_professor_references
+ where id in(v_feature_drift_reference,v_feature_safe_reference);
+ delete from public.ai_tutor_sessions where id=v_feature_drift_session;
+ delete from public.professor_budget_reservations where id=v_feature_drift_reservation;
+
  -- One mismatched owner blocks the whole run before a separate safe row can be
  -- deleted. Both remain available for investigation.
  insert into lh_internal.written_professor_references
@@ -251,6 +326,7 @@ begin
 
  raise notice 'PASS: bounded retention removes only expired ciphertext and never-bound references';
  raise notice 'PASS: valid consumed fence, bound recovery, reservations, usage and receipts are byte-stable';
+ raise notice 'PASS: reservation feature drift fails before mutation and bound rows stay byte-stable';
  raise notice 'PASS: owner drift fails before mutation; API roles cannot execute cleanup';
 end $test$;
 

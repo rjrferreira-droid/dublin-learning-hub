@@ -64,6 +64,9 @@ def acknowledge(ticket,request,result):
 def abandon(ticket,request,uid=finance):
  return f"select abandon_professor_validation_v1('{ticket}','{request}')"
 
+def observe(ticket,request):
+ return last_json(sql('begin;'+auth(finance,f"select observe_professor_dispatch_v1('{ticket}','{request}')")+';rollback'))
+
 def claim(ack,claim_id=None):
  encoded=json.dumps(ack,separators=(',',':')).replace("'","''")
  return f"select claim_professor_dispatch_v1('{encoded}'::jsonb,repeat('a',64),repeat('b',64),'{claim_id or uuid.uuid4()}')"
@@ -125,7 +128,7 @@ try:
  assert sql(f"select (select count(*) from ai_tutor_turns where session_id='{sid}')+(select count(*) from ai_usage_log where session_id='{sid}')+(select count(*) from lh_internal.professor_completion_receipts where session_id='{sid}')+(select count(*) from lh_internal.professor_settlement_receipts where session_id='{sid}')")=='0'
  assert sql(f"select count(*) from lh_internal.professor_preflights where reference_id='{ticket}'")=='0'
  duplicate=last_json(sql('begin;'+auth(finance,abandon(ticket,request))+';commit'));assert duplicate['duplicate'] is True
- observed=last_json(sql('begin;'+auth(finance,f"select observe_professor_dispatch_v1('{ticket}','{request}')")+';rollback'))
+ observed=observe(ticket,request)
  assert observed=={'state':'validation_abandoned','sessionId':sid,'providerAdmission':False,'retryAllowed':False}
  assert last_json(sql('select lh_internal.professor_reservation_exposure(now())'))==exposure
  assert sql(f"select md5(to_jsonb(x)::text) from professor_budget_reservations x where id='{sentinel}'")==sentinel_hash
@@ -138,6 +141,26 @@ try:
  assert sql(f"select status from professor_budget_reservations where id='{evidence['reservation_id']}'")=='active'
  sql(f"delete from ai_tutor_turns where session_id='{evidence['session_id']}'")
  last_json(sql('begin;'+auth(finance,abandon(evidence_ticket,evidence_request))+';commit'))
+
+ # Observation never describes a drifted active binding as safe to dispatch.
+ drift_ticket,drift_request=mint(),str(uuid.uuid4());drift=start(drift_ticket,drift_request)
+ assert observe(drift_ticket,drift_request)['state']=='admitted_not_claimed'
+ drift_sid,drift_rid=drift['session_id'],drift['reservation_id']
+ for dirty,restore in (
+  (f"update ai_tutor_sessions set callback_token_hash=null where id='{drift_sid}'",f"update ai_tutor_sessions set callback_token_hash=repeat('a',64) where id='{drift_sid}'"),
+  (f"update ai_tutor_sessions set room_name='fixture:not-validation' where id='{drift_sid}'",f"update ai_tutor_sessions set room_name='validation:lh-{drift_request}' where id='{drift_sid}'"),
+  (f"update ai_tutor_sessions set dispatch_id='fixture_unfenced_dispatch' where id='{drift_sid}'",f"update ai_tutor_sessions set dispatch_id=null where id='{drift_sid}'"),
+  (f"update ai_tutor_sessions set startup_request_id=gen_random_uuid() where id='{drift_sid}'",f"update ai_tutor_sessions set startup_request_id='{drift_request}' where id='{drift_sid}'"),
+  (f"update ai_tutor_sessions set model_usage='[{{\"fixture\":true}}]'::jsonb where id='{drift_sid}'",f"update ai_tutor_sessions set model_usage='[]'::jsonb where id='{drift_sid}'"),
+  (f"update professor_budget_reservations set actual_cost_usd=0.01 where id='{drift_rid}'",f"update professor_budget_reservations set actual_cost_usd=0 where id='{drift_rid}'"),
+  (f"update professor_budget_reservations set feature='fixture_other_feature' where id='{drift_rid}'",f"update professor_budget_reservations set feature='professor_livekit' where id='{drift_rid}'"),
+ ):
+  sql(dirty);assert observe(drift_ticket,drift_request)['state']=='reconciliation_required';sql(restore)
+ sql(f"insert into ai_tutor_turns(session_id,turn_number,speaker,transcript) values('{drift_sid}',1,'learner','fictional drift')")
+ assert observe(drift_ticket,drift_request)['state']=='reconciliation_required'
+ sql(f"delete from ai_tutor_turns where session_id='{drift_sid}'")
+ assert observe(drift_ticket,drift_request)['state']=='admitted_not_claimed'
+ last_json(sql('begin;'+auth(finance,abandon(drift_ticket,drift_request))+';commit'))
 
  # Abandon wins: the waiting claim cannot authorize a provider submission.
  win_ticket,win_request=mint(),str(uuid.uuid4());win=start(win_ticket,win_request);win_ack=acknowledge(win_ticket,win_request,win)
@@ -159,7 +182,12 @@ try:
  for role in ('anon','service_role'):
   assert sql(f"select has_function_privilege('{role}','public.abandon_professor_validation_v1(uuid,uuid)','execute')")=='f'
  assert sql("select has_function_privilege('authenticated','public.abandon_professor_validation_v1(uuid,uuid)','execute')")=='t'
- print(json.dumps({'status':'passed','idempotentTerminal':True,'evidenceBlocked':True,'dispatchRaceOrders':2,'existingHoldPreserved':True,'providerCalls':0,'connectedWrites':0}))
+ for signature in ('public.claim_professor_dispatch_v1(jsonb,text,text,uuid)','public.record_professor_dispatch_v1(uuid,uuid,uuid,text,text)'):
+  assert sql(f"select has_function_privilege('service_role','{signature}','execute')")=='t'
+  for role in ('anon','authenticated'):
+   assert sql(f"select has_function_privilege('{role}','{signature}','execute')")=='f'
+  assert sql(f"select not exists(select 1 from pg_proc p cross join lateral aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) x where p.oid=to_regprocedure('{signature}') and x.grantee=0 and x.privilege_type='EXECUTE')")=='t'
+ print(json.dumps({'status':'passed','idempotentTerminal':True,'evidenceBlocked':True,'dirtyActiveObservationsRejected':8,'dispatchRaceOrders':2,'dispatchFenceAclVerified':True,'existingHoldPreserved':True,'providerCalls':0,'connectedWrites':0}))
 finally:
  for ticket in reversed(created):
   try:clean(ticket)

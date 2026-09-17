@@ -25,13 +25,20 @@ validation admission that is still active, evidence-free and durably proven
 unclaimed. It serializes with dispatch, invalidates the callback, abandons only
 the matching reservation, deletes only its sealed preflight and has an exact
 idempotent terminal receipt. A claimed or ambiguous reservation remains
-unresolved.
+unresolved. Its installer also requires the dispatch claim/receipt functions
+to retain their service-only ACL. Observation labels an admission as safely
+unclaimed only when the complete binding, callback, evidence, cost and dispatch
+fence remain clean; any drift is reported as requiring reconciliation. The
+read-only recovery controller accepts both exact terminal states without
+authorizing a retry or claiming a learning result.
 
 `professor-preflight-retention.sql` defines private, bounded maintenance for
 encrypted admission ephemera. It locks references before preflights, skips
 concurrent work, retains consumed fences while their unbound reference is still
 valid, never age-deletes bound references and never mutates sessions,
-reservations, usage or receipts.
+reservations, usage or receipts. A bound preflight is eligible only when its
+reservation belongs to `professor_livekit`; feature or ownership drift stops
+the batch before mutation.
 
 Both SQL files remain candidates. CI installs them only into an unlinked local
 Supabase stack and exercises both lock orders. They are not migrations and were
@@ -40,7 +47,7 @@ not applied to project `aazfyosqqeujureksqjs`.
 ## Local evidence
 
 - Production build and API typecheck: passed.
-- Node contract/regression suite: 670/670 passed.
+- Node contract/regression suite: 675/675 passed.
 - Focused Audio, validation-close and retention contracts: passed.
 - Python concurrency harnesses compile; transactional execution is delegated to
   the disposable Supabase workflow because Docker is unavailable locally.

@@ -85,7 +85,8 @@ begin
     or t.bound_at is null or s.id is null or s.user_id is distinct from t.user_id
     or s.lesson_id is distinct from t.lesson_id
     or s.startup_request_id is distinct from t.bound_request_id
-    or r.id is null or r.user_id is distinct from t.user_id))
+    or r.id is null or r.user_id is distinct from t.user_id
+    or r.feature is distinct from 'professor_livekit'))
   )
  ) then
   raise exception 'professor_ephemera_cleanup_integrity_drift';
@@ -115,7 +116,8 @@ begin
      and t.bound_request_id=p.request_id and t.bound_at is not null
      and s.id=t.bound_session_id and s.user_id=t.user_id and s.lesson_id=t.lesson_id
      and s.startup_request_id=t.bound_request_id
-     and r.id=s.budget_reservation_id and r.user_id=t.user_id)
+     and r.id=s.budget_reservation_id and r.user_id=t.user_id
+     and r.feature='professor_livekit')
    )
   order by p.expires_at,p.reference_id
   limit p_batch_limit

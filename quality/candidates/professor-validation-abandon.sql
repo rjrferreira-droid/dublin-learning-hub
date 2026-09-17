@@ -11,6 +11,8 @@ begin
   or to_regclass('lh_internal.professor_settlement_receipts') is null
   or to_regprocedure('public.observe_professor_dispatch_v1(uuid,uuid)') is null
   or to_regprocedure('public.start_written_professor_session_v1(uuid,uuid,text,text,text,boolean)') is null
+  or to_regprocedure('public.claim_professor_dispatch_v1(jsonb,text,text,uuid)') is null
+  or to_regprocedure('public.record_professor_dispatch_v1(uuid,uuid,uuid,text,text)') is null
   then raise exception 'validation_abandon_prerequisites_missing'; end if;
  if to_regprocedure('public.abandon_professor_validation_v1(uuid,uuid)') is not null
   then raise exception 'validation_abandon_capability_already_present'; end if;
@@ -25,6 +27,20 @@ begin
     and c.column_name=required.column_name
   )
  ) then raise exception 'validation_abandon_dispatch_fence_missing'; end if;
+ if not has_function_privilege('service_role','public.claim_professor_dispatch_v1(jsonb,text,text,uuid)','execute')
+  or has_function_privilege('anon','public.claim_professor_dispatch_v1(jsonb,text,text,uuid)','execute')
+  or has_function_privilege('authenticated','public.claim_professor_dispatch_v1(jsonb,text,text,uuid)','execute')
+  or not has_function_privilege('service_role','public.record_professor_dispatch_v1(uuid,uuid,uuid,text,text)','execute')
+  or has_function_privilege('anon','public.record_professor_dispatch_v1(uuid,uuid,uuid,text,text)','execute')
+  or has_function_privilege('authenticated','public.record_professor_dispatch_v1(uuid,uuid,uuid,text,text)','execute')
+  or exists(
+   select 1 from pg_catalog.pg_proc p
+   cross join lateral pg_catalog.aclexplode(coalesce(p.proacl,pg_catalog.acldefault('f',p.proowner))) privilege
+   where p.oid in (
+    to_regprocedure('public.claim_professor_dispatch_v1(jsonb,text,text,uuid)'),
+    to_regprocedure('public.record_professor_dispatch_v1(uuid,uuid,uuid,text,text)')
+   ) and privilege.grantee=0 and privilege.privilege_type='EXECUTE'
+  ) then raise exception 'validation_abandon_dispatch_acl_invalid'; end if;
  if not exists(
   select 1 from information_schema.columns
   where table_schema='public' and table_name='ai_tutor_sessions'
@@ -160,6 +176,7 @@ declare
  reservation public.professor_budget_reservations%rowtype;
  state text;
  clean_terminal boolean:=false;
+ clean_active boolean:=false;
 begin
  if uid is null then raise exception 'authentication_required' using errcode='42501'; end if;
  select * into ticket from lh_internal.written_professor_references
@@ -201,9 +218,39 @@ begin
    and not exists(select 1 from public.ai_usage_log x where x.session_id=session_row.id)
    and not exists(select 1 from lh_internal.professor_completion_receipts x where x.session_id=session_row.id)
    and not exists(select 1 from lh_internal.professor_settlement_receipts x where x.session_id=session_row.id);
+  clean_active:=ticket.user_id=uid and ticket.bound_session_id=session_row.id
+   and ticket.bound_request_id=p_request_id
+   and session_row.user_id=ticket.user_id and reservation.user_id=ticket.user_id
+   and session_row.lesson_id=ticket.lesson_id
+   and session_row.startup_request_id=ticket.bound_request_id
+   and session_row.budget_reservation_id=reservation.id
+   and reservation.feature='professor_livekit'
+   and session_row.status='active' and session_row.completed_at is null
+   and session_row.close_reason is null
+   and session_row.callback_token_hash is not null
+   and session_row.callback_token_hash ~ '^[a-f0-9]{64}$'
+   and session_row.dispatch_id is null
+   and session_row.room_name ~ '^validation:lh-[a-f0-9-]{36}$'
+   and session_row.quality_tier='premium'
+   and session_row.duration_seconds=0 and session_row.transcript='[]'::jsonb
+   and session_row.model_usage='[]'::jsonb
+   and session_row.technical_score is null and session_row.english_score is null
+   and session_row.grammar_score is null and session_row.vocabulary_score is null
+   and session_row.fluency_score is null and session_row.pronunciation_score is null
+   and session_row.professional_communication_score is null
+   and session_row.final_feedback is null and session_row.evaluation_model is null
+   and session_row.evaluation_cost_usd=0
+   and reservation.status='active' and reservation.actual_cost_usd=0
+   and reservation.settled_at is null
+   and ticket.dispatch_claim_id is null and ticket.dispatch_payload_sha256 is null
+   and ticket.dispatch_claimed_at is null and ticket.observed_dispatch_id is null
+   and ticket.dispatch_acknowledged_at is null
+   and not exists(select 1 from public.ai_tutor_turns x where x.session_id=session_row.id)
+   and not exists(select 1 from public.ai_usage_log x where x.session_id=session_row.id)
+   and not exists(select 1 from lh_internal.professor_completion_receipts x where x.session_id=session_row.id)
+   and not exists(select 1 from lh_internal.professor_settlement_receipts x where x.session_id=session_row.id);
   state:=case when clean_terminal then 'validation_abandoned'
-   when ticket.dispatch_claim_id is null and session_row.status='active' and reservation.status='active'
-    then 'admitted_not_claimed'
+   when clean_active then 'admitted_not_claimed'
    when ticket.dispatch_claim_id is not null and ticket.observed_dispatch_id is null
     then 'dispatch_unconfirmed'
    when ticket.observed_dispatch_id is not null then 'dispatch_acknowledged'
