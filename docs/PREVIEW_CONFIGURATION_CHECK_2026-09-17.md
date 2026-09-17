@@ -1,0 +1,11 @@
+# Authenticated Preview configuration check
+
+Owner requested verification after saving two server secrets and redeploying. The previous TypeScript correction at b8022d41df68bec30e22caefc9590719bc139c32 passed full CI 35243253342; hosted function build is clean of TS5097/TS2550. A connector-created temporary Vercel share URL, followed with a cookie-aware HTTP client, successfully reached the application (200) and both existing API method gates (405). Vercel protection remains enabled. This verifies platform access, not learner Auth or secret validity.
+
+New POST /api/preview-configuration accepts only an empty JSON object and a learner bearer. Exact feature Preview and approved V2 URL are mandatory. Fresh getUser and own supported profile precede any service client. Only the caller's profile ID is read with the configured legacy service_role credential, after role/project claims match. Supabase verifies the actual credential on that request. The configured 32-byte preflight key performs an in-memory AES-GCM roundtrip. Any admission stage value causes refusal; no starts, RPCs, writes, budget reservations, provider requests or lesson publication are possible through this diagnostic.
+
+Response contains booleans only, with private/no-store caching. It does not prove shared preflight persistence, lesson publication, dispatch, audio, evaluator or full session acceptance. Secret rotation/randomness cannot be certified by the local crypto roundtrip. New secret-key formats are not accepted by this legacy-specific check.
+
+The owner opens /?previewCheck=1 after signing in normally and clicks Check configuration. It is absent from normal navigation. Browser request carries only an empty body and the current bearer; no drafts or local answers. Account changes/unmount cancel results, and the 15-second deadline permits manual retry. Upstream requests are bounded to 8 seconds. UI checks returned identity against the signed-in owner before and after the request.
+
+13 focused backend tests and application/API build pass locally. Browser regression is included for CI. The frozen-path CI gate permits only the two exact new diagnostic files; existing database, worker, Auth and production boundaries remain enforced. Live authenticated success requires owner sign-in; no personal credentials are requested or reused.
