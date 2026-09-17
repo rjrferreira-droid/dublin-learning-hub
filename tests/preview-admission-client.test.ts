@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPreviewAdmission} from '../src/professor/previewAdmission.ts';
 import {createSharedProfessorRoutes} from '../quality/candidates/professor-shared-routes.ts';
+import {createAdmissionRecoveryJournal} from '../src/professor/admissionRecoveryJournal.ts';
 const id=(n:number)=>`${String(n).repeat(8)}-${String(n).repeat(4)}-4${String(n).repeat(3)}-8${String(n).repeat(3)}-${String(n).repeat(12)}`;
 function fixture(){
  const selection={userId:id(1),requestId:id(2),mode:'chapter_conversation' as const,identity:{lessonId:id(3),moduleId:id(4),courseId:id(5),lessonSlug:'fixture-p1',contentVersion:1,requestedTrack:'rafael_finance',studyTrack:'finance',sequence:2}};
@@ -73,4 +74,32 @@ test('client interoperates with shared server route and bound admission contract
  assert.equal(result.status,'admitted');assert.equal(saved,null);
  assert.deepEqual(events,['auth','put','auth','consume','auth','start_written_professor_session_v1']);
  assert.doesNotMatch(JSON.stringify(result),/SERVER_ONLY|callbackToken/);
+});
+test('recovery receipt survives reload before a lost start response without secrets',async()=>{
+ const f=fixture(),values=new Map<string,string>();
+ const storage={getItem:(k:string)=>values.get(k)??null,setItem:(k:string,v:string)=>{values.set(k,v);}};
+ const journal=createAdmissionRecoveryJournal(storage,f.selection.userId);
+ f.reply=async b=>{if(b.action==='start'){assert.deepEqual(journal.read(),f.receipt);throw Error('lost response');}return {receipt:f.receipt} as any;};
+ assert.equal((await createPreviewAdmission(f.auth,f.selection,f.request as any,15000,journal.save).start()).status,'unconfirmed');
+ const reloaded=createAdmissionRecoveryJournal(storage,f.selection.userId);
+ assert.deepEqual(reloaded.read(),f.receipt);
+ assert.equal(createAdmissionRecoveryJournal(storage,id(9)).read(),null);
+ assert.doesNotMatch(JSON.stringify([...values]),/fixture-token|draft|answer|callbackToken/);
+ const other=structuredClone(f.receipt);other.requestId=id(9);
+ assert.throws(()=>reloaded.save(other),/recovery_required/);
+ assert.deepEqual(reloaded.read(),f.receipt);
+});
+test('unavailable or nonpersisting recovery storage prevents start',async()=>{
+ for(const silentlyIgnore of [false,true]){
+  const f=fixture(),journal=createAdmissionRecoveryJournal({getItem:()=>null,setItem:()=>{if(!silentlyIgnore)throw Error('quota');}},f.selection.userId);
+  assert.equal((await createPreviewAdmission(f.auth,f.selection,f.request as any,15000,journal.save).start()).status,'unavailable');
+  assert.equal(f.calls.length,1);
+ }
+});
+test('corrupted and overposted recovery records fail closed',()=>{
+ const f=fixture();
+ for(const receipt of [{...f.receipt,token:'SECRET'},{...f.receipt,userId:id(9)}]){
+  const j=createAdmissionRecoveryJournal({getItem:()=>JSON.stringify({version:1,receipt}),setItem:()=>{}},f.selection.userId);
+  assert.throws(()=>j.read());assert.throws(()=>j.save(receipt as any));
+ }
 });

@@ -1,4 +1,4 @@
-import {assertProfessorAdmissionAcknowledgement,assertProfessorReferenceReceipt,isUuid,type BoundIdentity,type ProfessorMode,type AdmissionAcknowledgement} from '../../quality/candidates/professor-admission-contract.ts';
+import {assertProfessorAdmissionAcknowledgement,assertProfessorReferenceReceipt,isUuid,type BoundIdentity,type ProfessorMode,type AdmissionAcknowledgement,type ReferenceReceipt} from '../../quality/candidates/professor-admission-contract.ts';
 
 type Selection={userId:string;requestId:string;mode:ProfessorMode;identity:BoundIdentity};
 type Auth={getSession():PromiseLike<{data:{session:{user:{id:string};access_token:string}|null};error:unknown}>};
@@ -11,7 +11,7 @@ const reasons=new Set(['professor_monthly_budget_reached','professor_session_alr
  * selection changes, including away-and-back changes. No automatic retries,
  * provider dispatch, persistence, or reservation release. Not yet mounted in UI.
  * A timeout after submission does not mean that the server cancelled the start. */
-export function createPreviewAdmission(auth:Auth,selection:Selection,request:typeof fetch=fetch,timeoutMs=15000){
+export function createPreviewAdmission(auth:Auth,selection:Selection,request:typeof fetch=fetch,timeoutMs=15000,checkpoint?:(receipt:ReferenceReceipt)=>void){
  const selected=structuredClone(selection);
  if(!isUuid(selected.userId)||!isUuid(selected.requestId)||!Number.isFinite(timeoutMs)||timeoutMs<=0)throw Error('invalid_admission_selection');
  let used=false,submitted=false;
@@ -44,6 +44,9 @@ export function createPreviewAdmission(auth:Auth,selection:Selection,request:typ
     const preflight=await post({action:'preflight',kind:selected.identity.sequence===2?'p1':'written',lessonId:selected.identity.lessonId,requestedTrack:selected.identity.requestedTrack,requestId:selected.requestId,mode:selected.mode},bearer);
     const receipt=preflight?.receipt;
     assertProfessorReferenceReceipt(receipt,selected);
+    // Save the public recovery pointer before a start can reach the server.
+    // Storage failure stops admission; a saved pointer never authorizes retry.
+    checkpoint?.(structuredClone(receipt));
     const currentBearer=await token();
     if(controller.signal.aborted)throw Error('cancelled');
     submitted=true;

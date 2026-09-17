@@ -35,13 +35,15 @@ function observation(value:unknown):ProfessorObservation{
 }
 
 /** UNMOUNTED browser-safe candidate: authenticated read-only RPC, no service
- * client, provider, storage, timers, automatic retries or reservation mutation.
+ * client, provider, storage, automatic retries or reservation mutation.
  * The owner must increment epoch on account/selection changes (including ABA),
  * and dispose on unmount. A scope is captured from a validated server preflight,
  * never reconstructed from arbitrary local drafts or learning evidence. */
-export function createProfessorRecoveryController(db:Client,initial:RecoveryScope,current:()=>RecoveryScope|null){
+export function createProfessorRecoveryController(db:Client,initial:RecoveryScope,current:()=>RecoveryScope|null,timeoutMs=15000){
  validScope(initial);
+ if(!Number.isFinite(timeoutMs)||timeoutMs<=0)throw new ProfessorObservationUnavailable();
  const captured=structuredClone(initial);let disposed=false,revision=0;
+ let cancelPending:(()=>void)|undefined;
  function active(version:number,signal?:AbortSignal){
   if(disposed||version!==revision||signal?.aborted||!matches(current(),captured))throw new ProfessorObservationDiscarded();
  }
@@ -52,15 +54,27 @@ export function createProfessorRecoveryController(db:Client,initial:RecoveryScop
   if(result.error||result.data?.user?.id!==captured.receipt.userId)throw new ProfessorObservationDiscarded();
  }
  return {
-  dispose(){disposed=true;revision++;},
+  dispose(){disposed=true;revision++;cancelPending?.();},
   async refresh(signal?:AbortSignal):Promise<ProfessorObservation>{
-   const version=++revision;active(version,signal);await owner(version,signal);
+   cancelPending?.();
+   const version=++revision;active(version,signal);
+   let cancel!:()=>void;
+   const stopped=new Promise<never>((_,reject)=>{cancel=()=>reject(new ProfessorObservationDiscarded());});
+   cancelPending=cancel;
+   signal?.addEventListener('abort',cancel,{once:true});
+   let timer:ReturnType<typeof setTimeout>;
+   const deadline=new Promise<never>((_,reject)=>{timer=setTimeout(()=>{if(version===revision)revision++;reject(new ProfessorObservationUnavailable());},timeoutMs);});
+   const run=async()=>{
+   await owner(version,signal);
    let response:{data:unknown;error:unknown};
    try{response=await db.rpc('observe_professor_dispatch_v1',{p_reference_id:captured.receipt.reference.id,p_request_id:captured.receipt.requestId});}
    catch{active(version,signal);throw new ProfessorObservationUnavailable();}
    active(version,signal);await owner(version,signal);
    if(response.error)throw new ProfessorObservationUnavailable();
    return observation(response.data);
+   };
+   try{return await Promise.race([run(),stopped,deadline]);}
+   finally{clearTimeout(timer!);signal?.removeEventListener('abort',cancel);if(cancelPending===cancel)cancelPending=undefined;}
   },
  };
 }

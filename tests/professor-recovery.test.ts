@@ -56,3 +56,17 @@ test('auth and RPC failures expose no raw secret and never trigger another opera
 test('captured scope cannot be changed by mutating the original object',async()=>{
  const f=fixture();f.initial.receipt.reference.sha256='b'.repeat(64);assert.equal((await f.controller.refresh()).state,'dispatch_unconfirmed');
 });
+test('stalled Auth times out and late completion cannot query recovery',async()=>{
+ const f=fixture();let resolve!:(v:any)=>void;
+ f.db.auth.getUser=()=>new Promise(r=>{resolve=r;});
+ const c=createProfessorRecoveryController(f.db,f.initial,()=>f.initial,20);
+ await assert.rejects(()=>c.refresh(),ProfessorObservationUnavailable);
+ resolve({data:{user:{id:f.initial.receipt.userId}},error:null});await new Promise(r=>setImmediate(r));
+ assert.deepEqual(f.calls,[]);
+});
+test('dispose promptly settles a stalled RPC without waiting for network',async()=>{
+ const f=fixture();let entered!:()=>void;const ready=new Promise<void>(r=>{entered=r;});
+ f.reply=()=>{entered();return new Promise(()=>{});};
+ const pending=f.controller.refresh();await ready;f.controller.dispose();
+ await assert.rejects(()=>pending,ProfessorObservationDiscarded);
+});

@@ -1,5 +1,6 @@
 import {LessonReadinessCheck} from './components/LessonReadinessCheck';
 import {PreviewConfigurationCheck} from './components/PreviewConfigurationCheck';
+import {PreviewSessionRecovery} from './components/PreviewSessionRecovery';
 import {isP1Slug} from './learning/p1RuntimeRegistry';
 import {isRemainingWrittenSlug} from './learning/remainingWrittenRegistry';
 import {isSequence4Slug} from './learning/sequence4Registry';
@@ -286,6 +287,7 @@ function App() {
 
       <main className="main-area">
         {new URLSearchParams(window.location.search).get('previewCheck')==='1' && <PreviewConfigurationCheck />}
+        {new URLSearchParams(window.location.search).get('previewCheck')==='1' && <PreviewSessionRecovery />}
         <header className="topbar">
           <div>
             <div className="eyebrow">{profile.displayName.toUpperCase()} • DUBLIN 2028/29</div>
