@@ -82,7 +82,8 @@ begin
   or strpos(v_definition,'for update of p skip locked')=0
   or strpos(replace(v_definition,' ',''),'forupdateoft,pskiplocked')>0
   or strpos(v_definition,'pg_try_advisory_xact_lock')=0
-  or strpos(v_definition,'security invoker')=0 then
+  or (select prosecdef from pg_proc
+      where oid='lh_internal.prune_professor_ephemera_v1(integer)'::regprocedure) then
   raise exception 'retention_concurrency_or_security_guard_missing';
  end if;
 
