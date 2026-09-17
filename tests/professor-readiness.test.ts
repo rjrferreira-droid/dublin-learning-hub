@@ -17,6 +17,8 @@ for(const track of ['rafael_finance','viviane_payroll','english_academy'])test(`
  assert.equal(f.res.code,200);assert.equal(f.res.body.providerAdmission,false);assert.equal(f.res.body.premiumAudioAdmission,false);
  assert.deepEqual(f.reads,['profiles','lessons','modules','courses']);assert.equal(f.res.headers['Cache-Control'],'private, no-store');
  assert.deepEqual(Object.keys(f.res.body).sort(),['identity','premiumAudioAdmission','providerAdmission','status','validationOnly']);
+ const studyTrack=track==='rafael_finance'?'finance':track==='viviane_payroll'?'payroll':'english';
+ assert.deepEqual(f.res.body.identity,{lessonId:id(2),moduleId:id(3),courseId:id(4),lessonSlug:f.rows.lessons.slug,contentVersion:1,requestedTrack:track,studyTrack,sequence:2});
 });
 for(const change of ['unpublished','missing','other-course','manuzinha','slug','version','golden'])test(`deny ${change}`,async()=>{
  const f=fixture();if(change==='unpublished')f.rows.lessons.is_published=false;if(change==='missing')f.rows.lessons=null;

@@ -33,7 +33,7 @@ for(const sequence of [2,3,4,5,6,7,8])for(const track of ['finance','payroll','e
    await new Promise<void>(resolve=>{releaseStalledReadiness=resolve;});
    await route.abort().catch(()=>{});return;
   }
-  await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'reference_verified_activation_closed',providerAdmission:false,premiumAudioAdmission:false,validationOnly:true,identity:{lessonId,lessonSlug:rows.lessons[0].slug,requestedTrack:tracks[track],contentVersion:1}})});
+  await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'reference_verified_activation_closed',providerAdmission:false,premiumAudioAdmission:false,validationOnly:true,identity:{lessonId,moduleId,courseId,lessonSlug:rows.lessons[0].slug,contentVersion:1,requestedTrack:tracks[track],studyTrack:track,sequence:2}})});
  });
  await signIn();await expect.poll(()=>catalogReads.includes('lessons')).toBe(true);
  await page.getByRole('button',{name:track==='english'?'Start English practice':track==='finance'?'Continue Finance':'Continue Payroll',exact:true}).click();
@@ -76,6 +76,7 @@ for(const sequence of [2,3,4,5,6,7,8])for(const track of ['finance','payroll','e
    }
    await page.getByRole('button',{name:'Check lesson availability',exact:true}).click();
    await expect(page.getByTestId('lesson-readiness-check')).toContainText('Lesson reference verified. Professor and audio are still unavailable.');
+   await expect(page.getByTestId('preview-admission-panel')).toHaveCount(0);
    await expect(page.getByTestId('professor-session-panel')).toHaveCount(0);
   }else await expect(page.getByTestId('lesson-readiness-check')).toHaveCount(0);
 

@@ -89,6 +89,14 @@ test('recovery receipt survives reload before a lost start response without secr
  assert.throws(()=>reloaded.save(other),/recovery_required/);
  assert.deepEqual(reloaded.read(),f.receipt);
 });
+test('only the exact definitely unreserved checkpoint can be cleared',()=>{
+ const f=fixture(),values=new Map<string,string>();
+ const storage={getItem:(k:string)=>values.get(k)??null,setItem:(k:string,v:string)=>{values.set(k,v);},removeItem:(k:string)=>{values.delete(k);}};
+ const journal=createAdmissionRecoveryJournal(storage,f.selection.userId);journal.save(f.receipt);
+ const other=structuredClone(f.receipt);other.requestId=id(9);
+ assert.throws(()=>journal.clear(other),/recovery_required/);assert.deepEqual(journal.read(),f.receipt);
+ journal.clear(f.receipt);assert.equal(journal.read(),null);assert.throws(()=>journal.clear(f.receipt),/recovery_required/);
+});
 test('unavailable or nonpersisting recovery storage prevents start',async()=>{
  for(const silentlyIgnore of [false,true]){
   const f=fixture(),journal=createAdmissionRecoveryJournal({getItem:()=>null,setItem:()=>{if(!silentlyIgnore)throw Error('quota');}},f.selection.userId);

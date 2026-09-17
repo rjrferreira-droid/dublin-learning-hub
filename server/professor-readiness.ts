@@ -24,8 +24,8 @@ export function createProfessorReadinessHandler(makeClient: (token:string)=>any,
    if(lesson.sequence!==2||!Number.isSafeInteger(lesson.contentVersion)||lesson.contentVersion<1)throw Error('unsupported_reference');
    const h=resolveP1ProfessorHandoff({profileTrack:r.profileTrack,requestedTrack:r.requestedTrack,requestedLessonId:r.requestedLessonId,
     resolvedLesson:{id:lesson.id,slug:lesson.slug,learnerTrack:course.learnerTrack,isPublished:lesson.isPublished}});
-   return send(200,{status:'reference_verified_activation_closed',identity:{lessonId:h.lessonId,lessonSlug:h.lessonSlug,
-    requestedTrack:h.requestedTrack,moduleId:module.id,courseId:course.id,contentVersion:lesson.contentVersion},
+   return send(200,{status:'reference_verified_activation_closed',identity:{lessonId:h.lessonId,moduleId:module.id,courseId:course.id,
+    lessonSlug:h.lessonSlug,contentVersion:lesson.contentVersion,requestedTrack:h.requestedTrack,studyTrack:h.studyTrack,sequence:lesson.sequence},
     providerAdmission:false,premiumAudioAdmission:false,validationOnly:true});
   } catch(error) {
    // Missing, unpublished, other-account and unsupported lessons are indistinguishable.
