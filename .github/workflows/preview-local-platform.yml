@@ -11,6 +11,8 @@ on:
       - 'quality/tests/local-recovery*'
       - 'quality/tests/prepare-local-recovery.mjs'
       - 'quality/tests/local-professor*'
+      - 'quality/tests/professor-preflight-retention*'
+      - 'quality/tests/professor-validation-abandon.py'
       - 'quality/tests/assert-local-browser-clean.mjs'
       - 'quality/tests/written-binding-*'
       - 'quality/tests/v2-admission-closed.sql'
@@ -23,6 +25,8 @@ on:
       - 'quality/candidates/written-professor-binding.sql'
       - 'quality/candidates/professor-dispatch-fence.sql'
       - 'quality/candidates/professor-shared-preflights.sql'
+      - 'quality/candidates/professor-preflight-retention.sql'
+      - 'quality/candidates/professor-validation-abandon.sql'
       - 'quality/candidates/*professor*.ts'
       - 'quality/candidates/written-audio-preview.ts'
       - 'supabase/functions/_shared/premium-audio-attempt-flow.ts'
@@ -87,6 +91,13 @@ jobs:
           python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/preview-backend/v2-recovery-discovery.sql
           python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/tests/v2-admission-closed.sql
           python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/candidates/professor-dispatch-fence.sql
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/candidates/professor-validation-abandon.sql
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/candidates/professor-preflight-retention.sql
+      - name: Validation release and encrypted preflight retention in disposable PostgreSQL
+        run: |
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/tests/professor-preflight-retention.sql
+          python3 quality/tests/professor-validation-abandon.py "$RUNNER_TEMP/local-platform-status.json"
+          python3 quality/tests/professor-preflight-retention-concurrency.py "$RUNNER_TEMP/local-platform-status.json"
       - name: Actual Auth and PostgREST reference binding denials
         run: node --experimental-strip-types quality/tests/written-binding-platform.mjs "$RUNNER_TEMP/local-platform-status.json"
       - name: Reference admission, rollback and concurrent publication in local PostgreSQL
