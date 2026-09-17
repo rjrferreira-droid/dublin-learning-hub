@@ -107,7 +107,7 @@ where c.learner_track='rafael_finance' and c.is_active and m.is_published and l.
 """))
 lesson_id = str(uuid.UUID(identity["lessonId"]))
 identity_sql = json.dumps(identity, separators=(",", ":")).replace("'", "''")
-old = "clock_timestamp()-interval '8 days'"
+old = "'" + sql("select clock_timestamp()-interval '8 days'") + "'::timestamptz"
 
 
 def insert_reference(reference_id: str, expires: str, *, bound: tuple[str, str] | None = None) -> None:
