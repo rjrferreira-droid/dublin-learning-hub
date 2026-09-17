@@ -28,3 +28,16 @@ test('another account record is not shown or queried',async({page})=>{
  await expect(page.getByRole('region',{name:'Preview configuration'})).toBeVisible();
  await expect(page.getByRole('region',{name:'Preview session recovery'})).toHaveCount(0);expect(fixture.sensitive).toBe(0);
 });
+test('server discovery works without browser storage and never starts a session',async({page})=>{
+ const {fixture,signIn}=await experienceFixture(page);let reads=0;
+ await page.route('**/rest/v1/rpc/list_professor_recovery_v1',async route=>{
+  const headers={'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'POST,OPTIONS'};
+  if(route.request().method()==='OPTIONS'){await route.fulfill({status:204,headers});return;}
+  reads++;expect(route.request().postDataJSON()).toEqual({});
+  await route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify({attempts:[{referenceId:other,requestId:other,sessionId:other,state:'dispatch_unconfirmed'}],truncated:false,providerAdmission:false,retryAllowed:false})});
+ });
+ await signIn();await page.evaluate(()=>sessionStorage.clear());await page.goto('/?previewCheck=1');
+ const panel=page.getByRole('region',{name:'Find previous attempts'});await expect(panel).toBeVisible();expect(reads).toBe(0);
+ await panel.getByRole('button',{name:'Find previous attempts'}).click();await expect(panel.getByRole('status')).toContainText('1 previous attempt(s)');
+ expect(reads).toBe(1);expect(fixture.sensitive).toBe(0);expect(fixture.apiRequests).toHaveLength(0);
+});

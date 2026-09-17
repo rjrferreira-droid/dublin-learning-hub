@@ -30,8 +30,14 @@ try{
  let recoveryScope={receipt:structuredClone(prepared.receipt),epoch:1};
  const recovery=createProfessorRecoveryController(clients.finance,recoveryScope,()=>recoveryScope);
  assert.equal((await recovery.refresh()).state,'no_admission_observed');
+ assert.deepEqual(ok(await clients.finance.rpc('list_professor_recovery_v1')), {attempts:[],truncated:false,providerAdmission:false,retryAllowed:false});
+ assert.ok((await make(status.ANON_KEY).rpc('list_professor_recovery_v1')).error);
+ assert.ok((await admin.rpc('list_professor_recovery_v1')).error);
  const admitted=await prepared.start();assert.equal(admitted.status,'admitted');
  assert.equal((await recovery.refresh()).state,'admitted_not_claimed');
+ const found=ok(await clients.finance.rpc('list_professor_recovery_v1'));
+ assert.deepEqual(found,{attempts:[{referenceId:prepared.receipt.reference.id,requestId:prepared.receipt.requestId,sessionId:admitted.acknowledgement.sessionId,state:'admitted_not_claimed'}],truncated:false,providerAdmission:false,retryAllowed:false});
+ assert.deepEqual(ok(await clients.payroll.rpc('list_professor_recovery_v1')).attempts,[]);
  const observeArgs={p_reference_id:admitted.acknowledgement.reference.id,p_request_id:admitted.acknowledgement.requestId};
  assert.equal(ok(await clients.finance.rpc('observe_professor_dispatch_v1',observeArgs)).state,'admitted_not_claimed');
  assert.ok((await clients.payroll.rpc('observe_professor_dispatch_v1',observeArgs)).error);
@@ -65,6 +71,12 @@ try{
  assert.equal(ok(await clients.payroll.rpc('observe_professor_dispatch_v1',{p_reference_id:uncertain.acknowledgement.reference.id,p_request_id:uncertain.acknowledgement.requestId})).state,'dispatch_unconfirmed');
  assert.equal(ok(await admin.from('professor_budget_reservations').select('status').eq('id',uncertain.acknowledgement.reservationId).single()).status,'unresolved');
  assert.equal((await uncertainRecovery.refresh()).state,'dispatch_unconfirmed');uncertainRecovery.dispose();
+ // A fresh authenticated client has no local receipt or sessionStorage pointer.
+ const reopened=make(status.ANON_KEY);ok(await reopened.auth.signInWithPassword(fixture.accounts.payroll));
+ const recovered=ok(await reopened.rpc('list_professor_recovery_v1'));ok(await reopened.auth.signOut());
+ assert.deepEqual(recovered.attempts,[{referenceId:uncertain.acknowledgement.reference.id,requestId:uncertain.acknowledgement.requestId,sessionId:uncertain.acknowledgement.sessionId,state:'dispatch_unconfirmed'}]);
+ assert.equal(recovered.retryAllowed,false);assert.equal(recovered.providerAdmission,false);
+ assert.doesNotMatch(JSON.stringify(recovered),/callback|sha256|technicalBrief|roomName|token/);
  assert.deepEqual(ok(await admin.from('ai_usage_log').select('id')),[]);
  console.log(JSON.stringify({status:'passed',realAuthPostgrest:true,durableConcurrentClaim:true,lostCommittedClaimCannotRetry:true,isolatedOwnerObservation:true,validatedRecoveryStates:4,lateObservationDiscarded:true,immutableWorkerJobBound:true,fakeSubmissions,providerCalls:0,connectedWrites:0}));
 }finally{
