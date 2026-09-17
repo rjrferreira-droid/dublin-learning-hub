@@ -30,9 +30,15 @@ def last_json(output):
 finance=sql("select id from profiles where display_name='Fictional Finance' and learner_track='rafael_finance'")
 payroll=sql("select id from profiles where display_name='Fictional Payroll' and learner_track='viviane_payroll'")
 uuid.UUID(finance);uuid.UUID(payroll)
-template=sql(f"select id from lh_internal.written_professor_references where user_id='{finance}' and identity->>'sequence'='3' and identity->>'studyTrack'='finance' limit 1")
-uuid.UUID(template)
-identity=json.loads(sql(f"select identity from lh_internal.written_professor_references where id='{template}'"))
+identity=json.loads(sql("""
+select jsonb_build_object('lessonId',l.id,'moduleId',m.id,'courseId',c.id,'lessonSlug',l.slug,
+ 'contentVersion',l.content_version,'requestedTrack',c.learner_track,'sequence',l.sequence,'studyTrack','finance')
+from lessons l join modules m on m.id=l.module_id join courses c on c.id=m.course_id
+where c.learner_track='rafael_finance' and c.is_active and m.is_published and l.is_published
+ and l.sequence=3 order by l.id limit 1
+"""))
+uuid.UUID(identity['lessonId']);uuid.UUID(identity['moduleId']);uuid.UUID(identity['courseId'])
+identity_sql=json.dumps(identity,separators=(',',':')).replace("'","''")
 original_budget=sql("select md5((select to_jsonb(x)::text from professor_budget_settings x where feature='professor_livekit')||(select to_jsonb(x)::text from learning_hub_budget_settings x where id=1))")
 created=[]
 
@@ -40,7 +46,7 @@ def auth(uid,query):
  return f"select set_config('request.jwt.claim.sub','{uid}',true);set local role authenticated;{query}"
 
 def mint():
- ticket=last_json(sql(f"set role service_role;select create_written_professor_reference_v1('{finance}',(select identity from lh_internal.written_professor_references where id='{template}'),(select source_sha256 from lh_internal.written_professor_references where id='{template}'),'written-reference-candidate-v3')"))['reference_id']
+ ticket=last_json(sql(f"set role service_role;select create_written_professor_reference_v1('{finance}','{identity_sql}'::jsonb,repeat('9',64),'written-reference-candidate-v3')"))['reference_id']
  created.append(ticket);return ticket
 
 def start(ticket,request):
