@@ -84,8 +84,8 @@ jobs:
         run: |
           python3 quality/preview-backend/build-v2-admission-package.py "$RUNNER_TEMP/v2-admission-package"
           python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" "$RUNNER_TEMP/v2-admission-package/install.sql"
-          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/tests/v2-admission-closed.sql
           python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/preview-backend/v2-recovery-discovery.sql
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/tests/v2-admission-closed.sql
           python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/candidates/professor-dispatch-fence.sql
       - name: Actual Auth and PostgREST reference binding denials
         run: node --experimental-strip-types quality/tests/written-binding-platform.mjs "$RUNNER_TEMP/local-platform-status.json"
