@@ -144,7 +144,7 @@ try:
  with Connection('validation_abandon_first') as first,Connection('validation_claim_second') as second:
   first.send(auth(finance,abandon(win_ticket,win_request))+";select 'abandon_ready'");first.until('abandon_ready')
   second.send('set local role service_role;'+claim(win_ack));waiting(second)
-  first.send('commit');first.close();second.until('dispatch_session_unavailable');second.close()
+  first.send('commit');first.close();second.until('dispatch_reference_forbidden');second.close()
  assert sql(f"select status from professor_budget_reservations where id='{win['reservation_id']}'")=='abandoned'
 
  # Claim wins: the hold becomes unresolved and abandon cannot release it.
