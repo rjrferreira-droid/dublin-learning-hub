@@ -13,7 +13,7 @@ test('explicit P1 Audio binding check sends exact identity and never mounts medi
  await page.route('**/api/premium-audio-readiness',async route=>{
   const body=route.request().postDataJSON();calls.push(body);expect(body).toEqual({lessonId,requestedTrack:'rafael_finance'});expect(JSON.stringify(body)).not.toContain('LOCAL PRIVATE AUDIO DRAFT');
   await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({status:'audio_reference_verified_activation_closed',identity,
-   source:{language:'pt-BR',purpose:'study-guide-overview',characters:900,scriptSha256:'a'.repeat(64),sourceFingerprint:'b'.repeat(64),referenceSha256:'c'.repeat(64),expectedStoragePath:`lessons/${lessonId}/commentary-v3.mp3`},
+   source:{language:'pt-BR',purpose:'study-guide-overview',characters:900,scriptSha256:'a'.repeat(64),sourceFingerprint:'b'.repeat(64),referenceSha256:'c'.repeat(64),expectedStoragePath:`lessons/${lessonId}/commentary-v3-${'b'.repeat(64)}-r1.mp3`},
    cacheLookupPerformed:false,runtimeSourceHandoff:false,generationAdmission:false,providerAdmission:false,validationOnly:true})});
  });
  await signIn();await page.goto('/?previewCheck=1');await page.locator('.nav-stack').getByRole('button',{name:/Learning/}).click();

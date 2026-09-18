@@ -1,4 +1,5 @@
 import {prepareWrittenAudioPreview} from '../quality/candidates/written-audio-preview.ts';
+import {createPremiumAudioSourceContract} from '../quality/candidates/premium-audio-source-contract.ts';
 import {isP1FeaturePreview} from './p1-preview-runtime.ts';
 
 const requestTracks=['rafael_finance','viviane_payroll','english_academy'] as const;
@@ -10,8 +11,9 @@ export async function resolveP1AudioBinding(db:any,input:{lessonId:string;reques
  const audio=await prepareWrittenAudioPreview(db,input,env);
  if(audio.identity.sequence!==2)throw Error('p1_audio_binding_unsupported');
  const {identity,language,purpose,characters,scriptSha256,sourceFingerprint,referenceSha256}=audio;
+ const contract=createPremiumAudioSourceContract({identity,sourceFingerprint});
  return {identity,source:{language,purpose,characters,scriptSha256,sourceFingerprint,referenceSha256,
-  expectedStoragePath:`lessons/${identity.lessonId}/commentary-v${identity.contentVersion}.mp3`}} as const;
+  expectedStoragePath:contract.storagePath}} as const;
 }
 
 /** Feature-Preview-only read diagnostic. It returns a candidate source digest

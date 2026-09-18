@@ -9,7 +9,7 @@ function fixture(){
  let currentOwner:string|null=owner;
  const auth={getSession:async()=>({data:{session:currentOwner?{user:{id:currentOwner},access_token:'fictional'}:null},error:null})};
  const response:any={status:'audio_reference_verified_activation_closed',identity:{...identity},source:{language:'pt-BR',purpose:'study-guide-overview',characters:900,
-  scriptSha256:'a'.repeat(64),sourceFingerprint:'b'.repeat(64),referenceSha256:'c'.repeat(64),expectedStoragePath:`lessons/${identity.lessonId}/commentary-v3.mp3`},
+  scriptSha256:'a'.repeat(64),sourceFingerprint:'b'.repeat(64),referenceSha256:'c'.repeat(64),expectedStoragePath:`lessons/${identity.lessonId}/commentary-v3-${'b'.repeat(64)}-r1.mp3`},
   cacheLookupPerformed:false,runtimeSourceHandoff:false,generationAdmission:false,providerAdmission:false,validationOnly:true};
  return {auth,response,setOwner:(value:string|null)=>{currentOwner=value;}};
 }
@@ -23,14 +23,15 @@ test('sends only exact identity and accepts a closed read-only binding',async()=
  assert.doesNotMatch(JSON.stringify(calls),/LOCAL_PRIVATE|draft|answer/);
 });
 
-for(const state of ['extra-response','extra-source','wrong-identity','wrong-path','wrong-language','cache-read','runtime-open','generation-open','provider-open','bad-hash','bad-characters','http-error'])test(`reject ${state}`,async()=>{
+for(const state of ['extra-response','extra-source','wrong-identity','wrong-path','mismatched-fingerprint','wrong-language','cache-read','runtime-open','generation-open','provider-open','bad-hash','bad-fingerprint','bad-characters','http-error'])test(`reject ${state}`,async()=>{
  const f=fixture();
  if(state==='extra-response')f.response.token='secret';if(state==='extra-source')f.response.source.script='secret';
- if(state==='wrong-identity')f.response.identity.contentVersion=4;if(state==='wrong-path')f.response.source.expectedStoragePath=f.response.source.expectedStoragePath.replace('v3','v2');
+ if(state==='wrong-identity')f.response.identity.contentVersion=4;if(state==='wrong-path')f.response.source.expectedStoragePath=f.response.source.expectedStoragePath.replace('-r1.mp3','-r2.mp3');
+ if(state==='mismatched-fingerprint')f.response.source.sourceFingerprint='d'.repeat(64);
  if(state==='wrong-language')f.response.source.language='en';if(state==='cache-read')f.response.cacheLookupPerformed=true;
  if(state==='runtime-open')f.response.runtimeSourceHandoff=true;
  if(state==='generation-open')f.response.generationAdmission=true;if(state==='provider-open')f.response.providerAdmission=true;
- if(state==='bad-hash')f.response.source.scriptSha256='bad';if(state==='bad-characters')f.response.source.characters=0;
+ if(state==='bad-hash')f.response.source.scriptSha256='bad';if(state==='bad-fingerprint')f.response.source.sourceFingerprint='B'.repeat(64);if(state==='bad-characters')f.response.source.characters=0;
  const request:any=async()=>new Response(JSON.stringify(f.response),{status:state==='http-error'?503:200});
  assert.equal(await checkPremiumAudioReadiness(f.auth,{userId:owner,identity},new AbortController().signal,request),null);
 });

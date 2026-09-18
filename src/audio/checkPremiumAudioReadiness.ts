@@ -37,7 +37,7 @@ export async function checkPremiumAudioReadiness(auth:Auth,selection:Selection,s
    ||!sameBoundIdentity(value.identity,selected.identity)||!exact(source,sourceKeys)||source.language!==expectedLanguage||source.purpose!=='study-guide-overview'
    ||!Number.isSafeInteger(source.characters)||source.characters<1||source.characters>4000
    ||![source.scriptSha256,source.sourceFingerprint,source.referenceSha256].every((x:unknown)=>typeof x==='string'&&sha256.test(x))
-   ||source.expectedStoragePath!==`lessons/${selected.identity.lessonId}/commentary-v${selected.identity.contentVersion}.mp3`)return null;
+   ||source.expectedStoragePath!==`lessons/${selected.identity.lessonId}/commentary-v${selected.identity.contentVersion}-${source.sourceFingerprint}-r1.mp3`)return null;
   return structuredClone({identity:value.identity,source}) as PremiumAudioBinding;
  }catch{return null;}};
  try{return await Promise.race([run(),stopped]);}

@@ -60,8 +60,6 @@ export function normalizePremiumAudioError(cause: unknown): PremiumAudioError {
 }
 
 export class SupabasePremiumAudioService implements PremiumAudioService {
-  private readonly resolved = new Map<string, PremiumAudioResult>();
-  private readonly inFlight = new Map<string, Promise<PremiumAudioResult>>();
   private readonly invoke: PremiumAudioInvoker;
 
   constructor(invoke: PremiumAudioInvoker = defaultInvoker, private readonly now: () => number = Date.now) {
@@ -69,29 +67,10 @@ export class SupabasePremiumAudioService implements PremiumAudioService {
   }
 
   async getOrCreateLessonAudio(lessonId: string): Promise<PremiumAudioResult> {
-    const cached = this.resolved.get(lessonId);
-    if (cached && (cached.expiresAt ?? 0) > this.now() + 30_000) return { ...cached, cached: true };
-    if (cached) this.resolved.delete(lessonId);
-    const pending = this.inFlight.get(lessonId);
-    if (pending) return pending;
-    const task = this.load(lessonId);
-    this.inFlight.set(lessonId, task);
-    try {
-      const result = await task;
-      this.resolved.set(lessonId, result);
-      if (this.resolved.size > 100) {
-        const oldest = this.resolved.keys().next().value;
-        if (typeof oldest === 'string') this.resolved.delete(oldest);
-      }
-      return result;
-    } finally {
-      this.inFlight.delete(lessonId);
-    }
-  }
-
-  clearMemoryCache(lessonId?: string) {
-    if (lessonId) this.resolved.delete(lessonId);
-    else this.resolved.clear();
+    // Never share an authenticated signed-URL request through a process-global
+    // promise: the active account may change while the request is in flight.
+    // Durable generation deduplication remains enforced atomically by the server.
+    return this.load(lessonId);
   }
 
   private async load(lessonId: string): Promise<PremiumAudioResult> {
