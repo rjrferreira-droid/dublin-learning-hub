@@ -528,9 +528,9 @@ assert "audio_reconciliation_required" in sql(
     settle_query(attempt, p1_lesson, cost=0.05), fail=True
 )
 assert sql(
-    "select estimated_cost_usd from ai_usage_log "
+    "select estimated_cost_usd=0.04 from ai_usage_log "
     f"where request_id='{receipt}'"
-) == "0.04"
+) == "t"
 new_identity = {**identities[p1_lesson], "contentVersion": 2}
 sql(f"update public.lessons set content_version=2 where id='{p1_lesson}'")
 assert json.loads(sql(observe_query(
