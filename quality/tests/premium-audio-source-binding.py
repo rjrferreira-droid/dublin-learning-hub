@@ -28,6 +28,8 @@ assert "lesson_identity jsonb" in SOURCE
 assert "p_estimated_cost_usd > b.reserved_usd" in SOURCE
 assert "p_estimated_cost_usd<>round(p_estimated_cost_usd,6)" in SOURCE
 assert "p_reservation_usd<>round(p_reservation_usd,6)" in SOURCE
+assert "premium_audio_attempt_bindings_v3 binding_row" in SOURCE
+assert "binding_row.attempt_id=attempt_row.id" in SOURCE
 assert "asset.voice is distinct from 'marin'" in SOURCE
 assert "char_length(asset.transcript_pt)" in SOURCE
 assert "set local lock_timeout = '5s'" in SOURCE

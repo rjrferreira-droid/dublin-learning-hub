@@ -2352,15 +2352,17 @@ begin
 
   -- Only work that never crossed the one-shot provider fence may expire. Keep
   -- its v3 binding and cancelled attempt as immutable audit evidence.
-  update lh_internal.premium_audio_attempts
+  update lh_internal.premium_audio_attempts as attempt_row
   set state='cancelled'
-  where state='reserved' and submitted_at is null
-    and settled_at is null and estimated_cost_usd is null and characters is null
-    and lease_until<=clock_timestamp()
+  where attempt_row.state='reserved' and attempt_row.submitted_at is null
+    and attempt_row.settled_at is null
+    and attempt_row.estimated_cost_usd is null
+    and attempt_row.characters is null
+    and attempt_row.lease_until<=clock_timestamp()
     and exists (
       select 1
-      from lh_internal.premium_audio_attempt_bindings_v3 binding
-      where binding.attempt_id=premium_audio_attempts.id
+      from lh_internal.premium_audio_attempt_bindings_v3 binding_row
+      where binding_row.attempt_id=attempt_row.id
     );
 
   select * into previous
