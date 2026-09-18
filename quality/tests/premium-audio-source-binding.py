@@ -572,7 +572,7 @@ sql(f"update public.audio_assets set storage_path='{path(p1_lesson)}' where id='
 sql(f"update public.ai_usage_log set estimated_cost_usd=0.06 where request_id='{receipt}'")
 assert json.loads(sql(observe_query(p1_lesson))) == {"status": "reconciliation_required"}
 assert "audio_reconciliation_required" in sql(settle_query(attempt, p1_lesson), fail=True)
-assert sql(f"select estimated_cost_usd from ai_usage_log where request_id='{receipt}'") == "0.06"
+assert sql(f"select estimated_cost_usd=0.06 from ai_usage_log where request_id='{receipt}'") == "t"
 check("divergent object or receipt is reconciliation-only and never repaired automatically")
 
 for label, mutation in [
