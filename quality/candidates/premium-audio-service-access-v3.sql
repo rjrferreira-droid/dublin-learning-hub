@@ -66,8 +66,8 @@ begin
     fn:=to_regprocedure(expected.signature);
     if has_function_privilege('anon',fn,'EXECUTE') or has_function_privilege('authenticated',fn,'EXECUTE')
       or has_function_privilege('service_role',fn,'EXECUTE') is distinct from (expected.signature like 'public.%')
-      or exists(select 1 from pg_proc p cross join lateral aclexplode(p.proacl) a where p.oid=fn
-        and (a.grantee=0 or (a.grantee<>p.proowner and
+      or exists(select 1 from pg_proc proc_row cross join lateral aclexplode(proc_row.proacl) a where proc_row.oid=fn
+        and (a.grantee=0 or (a.grantee<>proc_row.proowner and
           (a.grantee<>'service_role'::regrole or a.is_grantable or a.privilege_type<>'EXECUTE'))))
     then raise exception 'audio_v3_access_postcondition_failed'; end if;
   end loop;
