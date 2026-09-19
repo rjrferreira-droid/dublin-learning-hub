@@ -117,7 +117,7 @@ test.describe('simulated account-bound browser journeys',()=>{
    await expect(page.getByRole('heading',{name:'Irish Payroll',exact:true})).toHaveCount(0);
    await expect(page.getByRole('button',{name:'Open Manuzinha'})).toHaveCount(0);
    await expect(page.locator('.track-mini-list')).not.toContainText('Irish Payroll');
-   await page.getByRole('button',{name:'Learning',exact:true}).click();
+   await page.locator('.nav-stack').getByRole('button',{name:/Learning/}).click();
    await expect(page.getByTestId('learning-library')).toContainText('2 available now');
    await expect(page.getByTestId('learning-library')).not.toContainText('Gross-to-Net');
    expect(fixture.writes).toBe(0);
