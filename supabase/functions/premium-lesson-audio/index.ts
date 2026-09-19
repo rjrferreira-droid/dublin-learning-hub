@@ -11,6 +11,11 @@ import {resolveP1ProfessorHandoff} from '../../../server/p1-professor-handoff.ts
 import {buildWrittenAudioPreviewSource} from '../../../quality/candidates/written-audio-preview.ts';
 import {createPremiumAudioSourceContract,resolvePremiumAudioRenderRecipe} from '../../../quality/candidates/premium-audio-source-contract.ts';
 
+type AudioLessonRow={
+  id:string;module_id:string;slug:string;is_published:boolean;title:string;
+  content_version:number;sequence?:number;manager_commentary_pt?:string|null;technical_brief_pt?:string|null;
+};
+
 const cors={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
 const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...cors,"Content-Type":"application/json","Cache-Control":"no-store"}});
 // Match the reviewed lesson-audio bucket limit so paid output is rejected
@@ -87,6 +92,9 @@ Deno.serve(async(req:Request)=>{
   let body:any;try{body=await req.json();}catch{return json({error:"invalid_json"},400)}
   const lessonId=String(body.lesson_id??"");
   if(!lessonId)return json({error:"lesson_id_required"},400);
+  // Explicit deployment stop: authenticated requests cannot touch data, Storage,
+  // reservations or providers while the initial closed artifact is validated.
+  if(audioRuntimeStage==='closed')return json({error:'audio_runtime_closed'},503);
   const admin=createClient(supabaseUrl,serviceKey);
   // Authored v3 must never generate or sign while the bucket still has public
   // object delivery. This supported Admin API check is fresh on every request
@@ -125,7 +133,7 @@ Deno.serve(async(req:Request)=>{
   const lessonSelection:string=audioRuntimeStage==='isolated-preview-authored-v3'
     ?'id,module_id,slug,is_published,title,content_version,sequence'
     :'id,module_id,slug,is_published,title,manager_commentary_pt,technical_brief_pt,content_version';
-  const {data:lesson}=await admin.from("lessons").select(lessonSelection).eq("id",lessonId).eq("is_published",true).single();
+  const {data:lesson}=await admin.from("lessons").select(lessonSelection).eq("id",lessonId).eq("is_published",true).single<AudioLessonRow>();
   if(!profile||!lesson||lesson.id!==lessonId||lesson.is_published!==true)return json({error:"lesson_not_found"},404);
   const {data:mod}=await admin.from("modules").select("id,course_id,is_published").eq("id",lesson.module_id).eq("is_published",true).single();
   const {data:course}=mod?await admin.from("courses").select("id,learner_track,is_active").eq("id",mod.course_id).eq("is_active",true).single():{data:null};

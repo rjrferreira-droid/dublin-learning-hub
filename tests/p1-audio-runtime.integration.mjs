@@ -124,6 +124,14 @@ for(const track of Object.keys(slugs))test(`${track}: actual undeployed Edge han
  const at=name=>state.events.indexOf(name);assert.ok(at('courses')<at('professor_reservation_exposure_v2'));assert.ok(at('professor_reservation_exposure_v2')<at('begin_premium_audio_attempt_v2'));assert.ok(at('begin_premium_audio_attempt_v2')<at('recheck'));assert.ok(at('recheck')<at('tts'));assert.equal(state.events.at(-1),'sign');assert.ok(at('settle_premium_audio_attempt_v2')<at('sign'));assert.equal(state.attemptState,'settled');assert.ok(at('mark_premium_audio_submitted_v2')<at('tts'));
  assert.ok(!JSON.stringify(state.tts).includes('LOCAL_PRIVATE_DRAFT'));if(track==='english')assert.match(state.tts[0].instructions,/natural English/);
 });
+test('explicit closed deployment stops P1 and Golden before data, Storage, reservations and providers',async()=>{
+ for(const requested of [id,'b3639582-3c32-4147-a4b3-84237d11a66e']){
+  reset('finance',{stage:'closed',requestLessonId:requested});
+  const result=await invoke();assert.equal(result.status,503);
+  assert.equal(result.body.error,'audio_runtime_closed');
+  assert.deepEqual(state.events,[]);assert.deepEqual(state.writes,[]);assert.deepEqual(state.tts,[]);
+ }
+});
 test('real backend default is closed for P1 even when the row exists',async()=>{reset('finance',{enabled:false});assert.equal((await invoke()).status,403);assert.equal(state.tts.length,0);assert.equal(state.writes.length,0);assert.ok(!state.events.includes('audio_assets'));});
 test('malformed identity, publication, profile, course, or content version cannot reach cache, budget, claim or provider',async()=>{
  for(const mutate of [s=>s.lesson.id='wrong',s=>s.lesson.is_published=false,s=>s.lesson.content_version='2',s=>s.lesson.content_version=0,s=>s.lesson.slug=slugs.payroll,s=>s.lesson.slug='unknown',s=>s.profile='viviane_payroll',s=>s.profile='manuzinha',s=>s.module.is_published=false,s=>s.module.id='wrong',s=>s.course.id='wrong',s=>s.course.is_active=false]){
