@@ -297,6 +297,11 @@ alter table public.professor_budget_reservations
     foreign key (feature) references public.professor_budget_settings(feature);
 
 
+-- Restore fictional budgets left by prior boundary tests before adding real constraints.
+update public.learning_hub_budget_settings set absolute_total_budget_usd=200,
+  infrastructure_reserve_usd=70,ai_hard_cap_usd=130,
+  professor_cap_usd=110,premium_audio_cap_usd=20 where id=1;
+
 -- Mirror the complete connected V2 budget CHECK inventory.
 alter table public.professor_budget_settings add constraint audio_v3_fixture_budget_check_1 CHECK (max_session_seconds >= 60 AND max_session_seconds <= 1800);
 alter table public.professor_budget_settings add constraint audio_v3_fixture_budget_check_2 CHECK (monthly_budget_usd > 0::numeric);
