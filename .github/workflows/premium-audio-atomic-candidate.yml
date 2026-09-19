@@ -179,9 +179,14 @@ jobs:
           psql -v ON_ERROR_STOP=1 -c "create unique index audio_v3_extra_expression_mutant on public.audio_assets((coalesce(generation_request_id,'missing')))"
           expect_audio_v3_guard_failure /tmp/audio-v3-extra-index.log premium_audio_v3_prerequisites_missing
           psql -v ON_ERROR_STOP=1 -c "drop index public.audio_v3_extra_expression_mutant"
-          psql -v ON_ERROR_STOP=1 -c "update public.learning_hub_budget_settings set ai_hard_cap_usd='Infinity'::numeric where id=1"
+          psql -v ON_ERROR_STOP=1 -c "update public.learning_hub_budget_settings set ai_hard_cap_usd='Infinity'::numeric,absolute_total_budget_usd='Infinity'::numeric where id=1"
           expect_audio_v3_guard_failure /tmp/audio-v3-infinite-cap.log premium_audio_v3_prerequisites_missing
-          psql -v ON_ERROR_STOP=1 -c "update public.learning_hub_budget_settings set ai_hard_cap_usd=130 where id=1"
+          psql -v ON_ERROR_STOP=1 -c "update public.learning_hub_budget_settings set ai_hard_cap_usd=130,absolute_total_budget_usd=200 where id=1"
+          psql -v ON_ERROR_STOP=1 -c "alter table public.professor_budget_settings drop constraint audio_v3_fixture_budget_check_1"
+          expect_audio_v3_guard_failure /tmp/audio-v3-missing-budget-check.log premium_audio_v3_prerequisites_missing
+          psql -v ON_ERROR_STOP=1 -c "alter table public.professor_budget_settings add constraint audio_v3_fixture_budget_check_1 check(max_session_seconds >= 1 AND max_session_seconds <= 1800)"
+          expect_audio_v3_guard_failure /tmp/audio-v3-weakened-budget-check.log premium_audio_v3_prerequisites_missing
+          psql -v ON_ERROR_STOP=1 -c "alter table public.professor_budget_settings drop constraint audio_v3_fixture_budget_check_1;alter table public.professor_budget_settings add constraint audio_v3_fixture_budget_check_1 check(max_session_seconds >= 60 AND max_session_seconds <= 1800)"
           psql -v ON_ERROR_STOP=1 -c "alter table public.audio_assets add constraint audio_v3_reject_request_mutant check(generation_request_id is null or generation_request_id not like 'premium-audio-v3:%')"
           expect_audio_v3_guard_failure /tmp/audio-v3-extra-check.log premium_audio_v3_prerequisites_missing
           psql -v ON_ERROR_STOP=1 -c "alter table public.audio_assets drop constraint audio_v3_reject_request_mutant"

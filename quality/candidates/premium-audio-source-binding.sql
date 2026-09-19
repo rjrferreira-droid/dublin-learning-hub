@@ -1488,46 +1488,48 @@ begin
   end if;
 
   -- Require the complete reviewed CHECK set, not just compatible column types.
-  if (select count(*) from pg_catalog.pg_constraint
-      where conrelid=to_regclass('public.professor_budget_settings')
-        and contype='c' and convalidated)<>1
-     or not exists (
-       select 1 from pg_catalog.pg_constraint
-       where conrelid=to_regclass('public.professor_budget_settings')
-         and contype='c' and convalidated
-         and regexp_replace(
-           pg_catalog.pg_get_expr(conbin,conrelid),E'[\\s()]','','g'
-         )='feature=''professor_livekit''::text'
+  if exists (
+       select 1
+       from (values
+         ('public.professor_budget_settings',5),
+         ('public.learning_hub_budget_settings',9),
+         ('public.professor_budget_reservations',3)
+       ) expected(relation_name,check_count)
+       where (select count(*) from pg_catalog.pg_constraint
+              where conrelid=to_regclass(expected.relation_name)
+                and contype='c')<>expected.check_count
      )
-     or (select count(*) from pg_catalog.pg_constraint
-         where conrelid=to_regclass('public.learning_hub_budget_settings')
-           and contype='c' and convalidated)<>1
-     or not exists (
-       select 1 from pg_catalog.pg_constraint
-       where conrelid=to_regclass('public.learning_hub_budget_settings')
-         and contype='c' and convalidated
-         and regexp_replace(
-           pg_catalog.pg_get_expr(conbin,conrelid),E'[\\s()]','','g'
-         )='id=1'
-     )
-     or (select count(*) from pg_catalog.pg_constraint
-         where conrelid=to_regclass('public.professor_budget_reservations')
-           and contype='c' and convalidated)<>2
-     or not exists (
-       select 1 from pg_catalog.pg_constraint
-       where conrelid=to_regclass('public.professor_budget_reservations')
-         and contype='c' and convalidated
-         and regexp_replace(
-           pg_catalog.pg_get_expr(conbin,conrelid),E'[\\s()]','','g'
-         )='reserved_usd>0::numeric'
-     )
-     or not exists (
-       select 1 from pg_catalog.pg_constraint
-       where conrelid=to_regclass('public.professor_budget_reservations')
-         and contype='c' and convalidated
-         and regexp_replace(
-           pg_catalog.pg_get_expr(conbin,conrelid),E'[\\s()]','','g'
-         )='status=ANYARRAY[''active''::text,''settled''::text,''unresolved''::text,''abandoned''::text]'
+     or exists (
+       select 1
+       from (values
+         ('public.professor_budget_settings','CHECK (feature = ''professor_livekit''::text)'),
+         ('public.professor_budget_settings','CHECK (max_session_seconds >= 60 AND max_session_seconds <= 1800)'),
+         ('public.professor_budget_settings','CHECK (monthly_budget_usd > 0::numeric)'),
+         ('public.professor_budget_settings','CHECK (premium_reservation_usd > 0::numeric)'),
+         ('public.professor_budget_settings','CHECK (reservation_usd > 0::numeric)'),
+         ('public.learning_hub_budget_settings','CHECK (absolute_total_budget_usd > 0::numeric)'),
+         ('public.learning_hub_budget_settings','CHECK (ai_hard_cap_usd > 0::numeric)'),
+         ('public.learning_hub_budget_settings','CHECK ((infrastructure_reserve_usd + ai_hard_cap_usd) <= absolute_total_budget_usd)'),
+         ('public.learning_hub_budget_settings','CHECK (professor_cap_usd <= ai_hard_cap_usd)'),
+         ('public.learning_hub_budget_settings','CHECK (premium_audio_cap_usd <= ai_hard_cap_usd)'),
+         ('public.learning_hub_budget_settings','CHECK (id = 1)'),
+         ('public.learning_hub_budget_settings','CHECK (infrastructure_reserve_usd >= 0::numeric)'),
+         ('public.learning_hub_budget_settings','CHECK (premium_audio_cap_usd > 0::numeric)'),
+         ('public.learning_hub_budget_settings','CHECK (professor_cap_usd > 0::numeric)'),
+         ('public.professor_budget_reservations','CHECK (max_session_seconds >= 60 AND max_session_seconds <= 1800)'),
+         ('public.professor_budget_reservations','CHECK (reserved_usd > 0::numeric)'),
+         ('public.professor_budget_reservations','CHECK (status = ANY (ARRAY[''active''::text, ''settled''::text, ''unresolved''::text, ''abandoned''::text]))')
+       ) expected(relation_name,definition)
+       where not exists (
+         select 1 from pg_catalog.pg_constraint constraint_row
+         where constraint_row.conrelid=to_regclass(expected.relation_name)
+           and constraint_row.contype='c'
+           and constraint_row.convalidated
+           and not constraint_row.condeferrable
+           and not constraint_row.condeferred
+           and pg_catalog.pg_get_constraintdef(constraint_row.oid,true)=
+                 expected.definition
+       )
      )
      or (select count(*) from pg_catalog.pg_constraint
          where conrelid=to_regclass('lh_internal.professor_settlement_receipts')

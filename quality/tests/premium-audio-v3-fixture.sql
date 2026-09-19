@@ -296,6 +296,22 @@ alter table public.professor_budget_reservations
   add constraint audio_v3_fixture_reservation_feature_fk
     foreign key (feature) references public.professor_budget_settings(feature);
 
+
+-- Mirror the complete connected V2 budget CHECK inventory.
+alter table public.professor_budget_settings add constraint audio_v3_fixture_budget_check_1 CHECK (max_session_seconds >= 60 AND max_session_seconds <= 1800);
+alter table public.professor_budget_settings add constraint audio_v3_fixture_budget_check_2 CHECK (monthly_budget_usd > 0::numeric);
+alter table public.professor_budget_settings add constraint audio_v3_fixture_budget_check_3 CHECK (premium_reservation_usd > 0::numeric);
+alter table public.professor_budget_settings add constraint audio_v3_fixture_budget_check_4 CHECK (reservation_usd > 0::numeric);
+alter table public.learning_hub_budget_settings add constraint audio_v3_fixture_budget_check_5 CHECK (absolute_total_budget_usd > 0::numeric);
+alter table public.learning_hub_budget_settings add constraint audio_v3_fixture_budget_check_6 CHECK (ai_hard_cap_usd > 0::numeric);
+alter table public.learning_hub_budget_settings add constraint audio_v3_fixture_budget_check_7 CHECK ((infrastructure_reserve_usd + ai_hard_cap_usd) <= absolute_total_budget_usd);
+alter table public.learning_hub_budget_settings add constraint audio_v3_fixture_budget_check_8 CHECK (professor_cap_usd <= ai_hard_cap_usd);
+alter table public.learning_hub_budget_settings add constraint audio_v3_fixture_budget_check_9 CHECK (premium_audio_cap_usd <= ai_hard_cap_usd);
+alter table public.learning_hub_budget_settings add constraint audio_v3_fixture_budget_check_10 CHECK (infrastructure_reserve_usd >= 0::numeric);
+alter table public.learning_hub_budget_settings add constraint audio_v3_fixture_budget_check_11 CHECK (premium_audio_cap_usd > 0::numeric);
+alter table public.learning_hub_budget_settings add constraint audio_v3_fixture_budget_check_12 CHECK (professor_cap_usd > 0::numeric);
+alter table public.professor_budget_reservations add constraint audio_v3_fixture_budget_check_13 CHECK (max_session_seconds >= 60 AND max_session_seconds <= 1800);
+
 drop policy own_sessions on public.ai_tutor_sessions;
 create policy ai_tutor_sessions_own_all
   on public.ai_tutor_sessions
