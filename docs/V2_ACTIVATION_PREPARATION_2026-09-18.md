@@ -86,3 +86,15 @@ The advisor returned no ERROR-level findings, but it is not an end-to-end securi
 - 1 WARN finding: leaked-password protection disabled. No Auth setting was changed. [Supabase remediation](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
 
 Next unresolved activation prerequisite remains the supported Storage Admin API path and a separately scoped private-bucket change. Audio and Professor voice activation remain closed; the completed profile protection is not evidence of live audio/voice success.
+
+## Private Storage completed — 19 September 2026
+
+After owner-assisted sign-in, the authenticated Supabase Dashboard identified Dublin Learning Hub / v2-development Preview, project aazfyosqqeujureksqjs. This resolved the supported execution-path blocker above.
+
+Fresh read-only SQL confirmed exactly one bucket, lesson-audio, public=true, no objects, no Storage policies, 15,728,640-byte limit and MPEG/WAV MIME list. Both Storage tables retained RLS=true, FORCE RLS=false and supabase_storage_admin ownership. Dashboard independently showed the same settings and empty bucket contents.
+
+Used the official Dashboard's Edit bucket > Bucket settings form; submitted Save once with Public bucket disabled, allowed MIME types audio/mpeg, and the existing 15 MB limit. No direct SQL Storage writes, credential extraction, custom admin endpoint or retry was used. This is a Dashboard execution of the reviewed target settings, not execution of the candidate TypeScript operator.
+
+Post-save Dashboard removed the Public badge. Independent SQL confirmed public=false, allowed_mime_types=[audio/mpeg], file_size_limit=15728640, objects=0 and policies=0. Storage RLS and owners were independently rechecked and unchanged. No file was uploaded or generated.
+
+No Audio v3 SQL/grants, Edge deployment, provider call, voice admission, lesson publication or production promotion was performed. Next prerequisite: review/install authored Audio v3 binding with API access closed, then separately review minimal service access and pinned Edge artifact before paid acceptance. The legacy deployed audio function must not be treated as compatible or activated merely because Storage is private.
