@@ -41,6 +41,24 @@ for(const sequence of [2,3,4,5,6,7,8])for(const track of ['finance','payroll','e
  const study=page.getByTestId('lesson-study-panel');await expect(study).toHaveAttribute('data-track',track);
  await expect(page.locator('.lesson-progress')).toContainText('Reviewed written lesson');
  await expect(study.locator('.lesson-teaching-block').first()).toBeVisible();
+ if(sequence===2&&(track==='finance'||track==='english')){
+  await page.getByRole('tab',{name:'Case',exact:true}).click();
+  const casePanel=study.getByTestId('lesson-case');
+  if(track==='finance'){
+   await expect(casePanel).toContainText('contract price 108');
+   await expect(casePanel).toContainText('100 for hardware and 20 for support');
+   await page.getByRole('tab',{name:'Test',exact:true}).click();
+   const allocation=study.getByTestId('checkpoint-question-3');
+   await allocation.getByRole('radio').nth(0).check();
+   await allocation.getByRole('button',{name:'Check answer',exact:true}).click();
+   await allocation.getByRole('button',{name:'Review the related concept'}).click();
+   await expect(study.locator('#lesson-section-fin-rev-price')).toBeVisible();
+  }else{
+   await casePanel.getByText('Worked case and review checklist',{exact:true}).click();
+   await expect(casePanel.locator('.lesson-case-worked-answer')).toHaveCSS('white-space','pre-line');
+   await expect(casePanel.locator('.lesson-case-worked-answer')).toContainText('Professor:');
+  }
+ }
  if(sequence>=4){
   const authored=sequence===4?{finance:finance4,payroll:payroll4,english:english4}[track].module:JSON.parse(readFileSync(new URL(`../quality/drafts/sequence${sequence}-${track}.json`,import.meta.url),'utf8')).module;
   await expect(study.getByTestId('lesson-reading').getByRole('heading',{level:2})).toHaveText(authored.title);

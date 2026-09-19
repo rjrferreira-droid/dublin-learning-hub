@@ -12,13 +12,21 @@ const pair=(values:readonly string[]):readonly [string,string]=>[values[0]??'Sta
 
 function financeModule(lessonId:string):LessonModule{
  const sectionIds=finance.sections.map(s=>s.id);
+ const amounts=finance.workedCase.numericExtension;
+ const review:Record<string,string>={
+  'fin-rev-q1':'fin-rev-contract',
+  'fin-rev-q2':'fin-rev-price',
+  'fin-rev-q3':'fin-rev-cutoff',
+  'fin-rev-q4':'fin-rev-price',
+  'fin-rev-q5':'fin-rev-ireland',
+ };
  return {
   track:'finance',lessonId,title:finance.workingTitle,goal:finance.goal,scope:finance.scope,
   sections:finance.sections.map(s=>({id:s.id,title:s.title,paragraphs:s.paragraphs,supportPt:s.supportPt,sourceIds:s.sourceRefs})),
   terms:finance.vocabulary,
   visual:{title:finance.visual.title,note:'Authored finance foundation using fictional facts and amounts; this visual is not a live calculation or external evidence.',headers:finance.visual.headers as [string,string,string],rows:finance.visual.rows as [string,string,string][],question:finance.visual.question,answer:finance.visual.answer},
-  caseStudy:{title:finance.workedCase.title,scenario:finance.workedCase.stage1Facts,task:finance.workedCase.stage1Task,hints:pair(finance.workedCase.hints),modelAnswer:finance.workedCase.modelAnswer,reviewChecks:finance.workedCase.reviewChecks,transfer:finance.workedCase.transfer},
-  checkpoint:checkpoints(finance.checkpoint,sectionIds),
+  caseStudy:{title:finance.workedCase.title,scenario:[...finance.workedCase.stage1Facts,`Numeric extension (${amounts.units}): contract price ${amounts.contractPrice}; stand-alone selling prices ${amounts.hardwareStandaloneSellingPrice} for hardware and ${amounts.supportStandaloneSellingPrice} for support.`],task:'First identify the facts that determine recognition at 31 December, without doing a calculation. Then use the numeric extension to allocate the contract price and explain which amount is recognised at year-end.',hints:pair(finance.workedCase.hints),modelAnswer:finance.workedCase.modelAnswer,reviewChecks:finance.workedCase.reviewChecks,transfer:finance.workedCase.transfer},
+  checkpoint:checkpoints(finance.checkpoint,sectionIds,review),
   sources:sources(finance.officialSources,finance.reviewedOn),
   practiceExercises:practice(finance.workshops),
  };
@@ -59,7 +67,7 @@ function englishModule(lessonId:string):LessonModule{
   sections:english.sections.map(s=>({id:s.id,title:s.title,paragraphs:s.paragraphs,supportPt:s.supportPt,sourceIds:s.sourceRefs})),
   terms:english.vocabulary,
   visual:{title:'A natural meeting contribution',note:english.usefulLanguage.note,headers:['Move','Example','Purpose'],rows:visualRows,question:'What should usually come before challenging an ambiguous statement?',answer:'Clarify or check understanding first. Then state the view that the evidence supports and identify any remaining uncertainty.'},
-  caseStudy:{title:english.workedCase.title,scenario:[english.workedCase.meetingContext,`After your clarification, the Professor replies: ${english.workedCase.professorReplyAfterClarification}`],task:english.workedCase.task.join(' '),hints:['Clarify what is confirmed before giving your view.','Preserve the uncertainty and finish with one concrete next check.'],modelAnswer:english.workedCase.modelInteraction.join(' '),reviewChecks:english.workedCase.reviewChecks,transfer:english.workedCase.alternateValidForms},
+  caseStudy:{title:english.workedCase.title,scenario:[english.workedCase.meetingContext,`After your clarification, the Professor replies: ${english.workedCase.professorReplyAfterClarification}`],task:english.workedCase.task.join(' '),hints:['Clarify what is confirmed before giving your view.','Preserve the uncertainty and finish with one concrete next check.'],modelAnswer:english.workedCase.modelInteraction.join('\n\n'),reviewChecks:english.workedCase.reviewChecks,transfer:english.workedCase.alternateValidForms},
   checkpoint:checkpoints(english.checkpoint,sectionIds,review),
   sources:sources(english.officialSources,english.reviewedOn),
   practiceExercises:practice(english.workshops),
