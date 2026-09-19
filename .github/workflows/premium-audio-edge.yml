@@ -1,0 +1,28 @@
+name: Premium Audio Edge dependency preparation
+on:
+  push:
+    branches: [feat/professor-experience-2026-09-13]
+    paths:
+      - 'supabase/functions/premium-lesson-audio/**'
+      - '.github/workflows/premium-audio-edge.yml'
+permissions:
+  contents: read
+jobs:
+  dependencies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.9.6
+      - name: Resolve exact candidate graph without executing the handler
+        run: |
+          deno cache --frozen=false --config supabase/functions/premium-lesson-audio/deno.json supabase/functions/premium-lesson-audio/index.ts
+          echo AUDIO_LOCK_BEGIN
+          cat supabase/functions/premium-lesson-audio/deno.lock
+          echo AUDIO_LOCK_END
+      - name: Check complete Edge graph against the generated lock
+        run: deno check --frozen --config supabase/functions/premium-lesson-audio/deno.json supabase/functions/premium-lesson-audio/index.ts

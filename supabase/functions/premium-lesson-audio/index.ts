@@ -1,6 +1,6 @@
 import {runPremiumAudioAttempt,runPremiumAudioAttemptV3} from '../_shared/premium-audio-attempt-flow.ts';
-import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "jsr:@supabase/supabase-js@2";
+import "jsr:@supabase/functions-js@2.116.0/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2.116.0";
 import {parseReservationExposure} from '../_shared/reservation-exposure.ts';
 import {premiumAudioBudgetDecision} from '../_shared/premium-audio-budget.ts';
 
