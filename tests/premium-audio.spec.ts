@@ -2,15 +2,16 @@ import { expect, test } from '@playwright/test';
 import { EdgeFunctionError } from '../src/services/edge';
 import { PremiumAudioError, SupabasePremiumAudioService } from '../src/services/premiumAudio';
 
-test('Premium Audio deduplicates concurrent generation and reuses memory cache', async () => {
+test('Premium Audio keeps concurrent authenticated requests independent and revalidates every later request', async () => {
   let calls = 0;
   const service = new SupabasePremiumAudioService(async () => {
-    calls += 1;
+    const current = ++calls;
     await new Promise((resolve) => setTimeout(resolve, 20));
     return {
-      audio_url: 'https://example.test/audio.mp3',
-      cached: false,
+      audio_url: `https://example.test/audio-${current}.mp3`,
+      cached: current > 1,
       estimated_cost_usd: 0.021,
+      expires_at: Date.now() + 60_000,
     };
   });
 
@@ -19,14 +20,16 @@ test('Premium Audio deduplicates concurrent generation and reuses memory cache',
     service.getOrCreateLessonAudio('lesson-1'),
   ]);
 
-  expect(calls).toBe(1);
-  expect(first.audioUrl).toBe('https://example.test/audio.mp3');
-  expect(concurrent.audioUrl).toBe(first.audioUrl);
+  expect(calls).toBe(2);
+  expect(first.audioUrl).toBe('https://example.test/audio-1.mp3');
+  expect(concurrent.audioUrl).toBe('https://example.test/audio-2.mp3');
   expect(first.cached).toBe(false);
+  expect(concurrent.cached).toBe(true);
 
   const replay = await service.getOrCreateLessonAudio('lesson-1');
-  expect(calls).toBe(1);
-  expect(replay).toEqual({ audioUrl: 'https://example.test/audio.mp3', cached: true });
+  expect(calls).toBe(3);
+  expect(replay).toMatchObject({ audioUrl: 'https://example.test/audio-3.mp3', cached: true });
+  expect(replay.expiresAt).toBeGreaterThan(Date.now());
 });
 
 test('Premium Audio turns budget hard-stop into a non-retryable product state', async () => {
@@ -58,6 +61,17 @@ test('Premium Audio marks provider and storage failures with correct retry polic
     throw new EdgeFunctionError('audio_upload_failed', 500, { error: 'audio_upload_failed' });
   });
 
-  await expect(provider.getOrCreateLessonAudio('lesson-3')).rejects.toMatchObject({ code: 'generation-failed', retryable: true });
-  await expect(storage.getOrCreateLessonAudio('lesson-4')).rejects.toMatchObject({ code: 'upload-failed', retryable: true });
+  await expect(provider.getOrCreateLessonAudio('lesson-3')).rejects.toMatchObject({ code: 'generation-failed', retryable: false });
+  await expect(storage.getOrCreateLessonAudio('lesson-4')).rejects.toMatchObject({ code: 'upload-failed', retryable: false });
+});
+
+test('signed-link expiry is validated on each backend response without retaining a resolved URL',async()=>{
+ let now=100_000,calls=0;
+ const service=new SupabasePremiumAudioService(async()=>({audio_url:'https://fictional.invalid/signed-'+(++calls),cached:true,
+  expires_at:calls===1?now+30_000:now+60_000}),()=>now);
+ await expect(service.getOrCreateLessonAudio('private-lesson')).rejects.toMatchObject({code:'invalid-response',retryable:true});
+ const refreshed=await service.getOrCreateLessonAudio('private-lesson');
+ expect(refreshed.audioUrl).toBe('https://fictional.invalid/signed-2');
+ expect(refreshed.expiresAt).toBe(now+60_000);
+ expect(calls).toBe(2);
 });

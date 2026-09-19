@@ -1,0 +1,117 @@
+name: Disposable Supabase platform acceptance
+on:
+  push:
+    branches: [feat/professor-experience-2026-09-13]
+    paths:
+      - '.github/workflows/preview-local-platform.yml'
+      - 'quality/tests/preview-local-platform.mjs'
+      - 'quality/tests/install-local-preview.py'
+      - 'quality/tests/run-local-browser.py'
+      - 'quality/tests/local-browser.spec.ts'
+      - 'quality/tests/local-recovery*'
+      - 'quality/tests/prepare-local-recovery.mjs'
+      - 'quality/tests/local-professor*'
+      - 'quality/tests/professor-preflight-retention*'
+      - 'quality/tests/professor-validation-abandon.py'
+      - 'quality/tests/assert-local-browser-clean.mjs'
+      - 'quality/tests/written-binding-*'
+      - 'quality/tests/v2-admission-closed.sql'
+      - 'playwright.local-platform.config.ts'
+      - 'src/App.tsx'
+      - 'src/components/LessonStudyPanel.tsx'
+      - 'src/services/curriculumCatalog.ts'
+      - 'quality/preview-backend/**'
+      - 'quality/candidates/premium-audio-atomic.sql'
+      - 'quality/candidates/written-professor-binding.sql'
+      - 'quality/candidates/professor-dispatch-fence.sql'
+      - 'quality/candidates/professor-shared-preflights.sql'
+      - 'quality/candidates/professor-preflight-retention.sql'
+      - 'quality/candidates/professor-validation-abandon.sql'
+      - 'quality/candidates/*professor*.ts'
+      - 'quality/candidates/written-audio-preview.ts'
+      - 'supabase/functions/_shared/premium-audio-attempt-flow.ts'
+      - 'quality/drafts/**'
+      - 'src/learning/sequence*.ts'
+      - 'src/learning/remaining*.ts'
+      - 'supabase/migrations/20260913*.sql'
+      - 'server/p1-*.ts'
+      - 'src/learning/p1RuntimeRegistry.ts'
+      - 'package-lock.json'
+permissions:
+  contents: read
+concurrency:
+  group: local-supabase-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  local-platform:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_TELEMETRY_DISABLED: '1'
+      DO_NOT_TRACK: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - name: Typecheck the unmounted reference admission and acknowledgement adapters
+        run: npx --no-install tsc --noEmit --allowImportingTsExtensions --module NodeNext --target ES2022 --resolveJsonModule --esModuleInterop --skipLibCheck --strict quality/candidates/prepare-bound-professor-admission.ts quality/candidates/professor-admission-contract.ts quality/candidates/professor-dispatch-candidate.ts quality/candidates/professor-recovery-controller.ts quality/candidates/professor-worker-job.ts quality/candidates/professor-local-routes.ts quality/candidates/professor-file-preflights.ts quality/candidates/professor-admission-vault.ts quality/candidates/professor-shared-preflights.ts quality/candidates/professor-shared-routes.ts
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.117.0
+      - name: Discover pinned CLI and create empty unlinked local workspace
+        run: |
+          supabase --version
+          supabase --help
+          supabase init --help
+          supabase start --help
+          supabase status --help
+          supabase stop --help
+          mkdir "$RUNNER_TEMP/lh-platform"
+          supabase init --workdir "$RUNNER_TEMP/lh-platform"
+          test ! -e "$RUNNER_TEMP/lh-platform/supabase/.temp/project-ref"
+      - name: Start disposable local Auth, PostgREST and Storage
+        run: |
+          umask 077
+          supabase start --workdir "$RUNNER_TEMP/lh-platform" -x studio,imgproxy,realtime,edge-runtime,logflare,vector,supavisor,postgres-meta,mailpit > "$RUNNER_TEMP/local-platform-start.log" 2>&1
+          supabase status --workdir "$RUNNER_TEMP/lh-platform" -o json > "$RUNNER_TEMP/local-platform-status.json"
+      - name: Install only the reviewed new foundation, no historical snapshot
+        run: |
+          python3 quality/preview-backend/build-foundation-package.py "$RUNNER_TEMP/local-foundation"
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" "$RUNNER_TEMP/local-foundation/install.sql"
+      - name: Actual local identity, P1 resolver, zero budget and private signed Storage
+        run: node --experimental-strip-types quality/tests/preview-local-platform.mjs "$RUNNER_TEMP/local-platform-status.json"
+      - name: Install closed V2 admission package and verify grants only in disposable stack
+        run: |
+          python3 quality/preview-backend/build-v2-admission-package.py "$RUNNER_TEMP/v2-admission-package"
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" "$RUNNER_TEMP/v2-admission-package/install.sql"
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/preview-backend/v2-recovery-discovery.sql
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/tests/v2-admission-closed.sql
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/candidates/professor-dispatch-fence.sql
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/candidates/professor-validation-abandon.sql
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/candidates/professor-preflight-retention.sql
+      - name: Validation release and encrypted preflight retention in disposable PostgreSQL
+        run: |
+          python3 quality/tests/install-local-preview.py "$RUNNER_TEMP/local-platform-status.json" quality/tests/professor-preflight-retention.sql
+          python3 quality/tests/professor-validation-abandon.py "$RUNNER_TEMP/local-platform-status.json"
+          python3 quality/tests/professor-preflight-retention-concurrency.py "$RUNNER_TEMP/local-platform-status.json"
+      - name: Actual Auth and PostgREST reference binding denials
+        run: node --experimental-strip-types quality/tests/written-binding-platform.mjs "$RUNNER_TEMP/local-platform-status.json"
+      - name: Reference admission, rollback and concurrent publication in local PostgreSQL
+        run: python3 quality/tests/written-binding-concurrency.py "$RUNNER_TEMP/local-platform-status.json"
+      - name: Encrypted preflight restart with fresh Auth and concurrent local processes
+        run: node --experimental-strip-types quality/tests/written-binding-persistence.mjs "$RUNNER_TEMP/local-platform-status.json"
+      - name: Shared PostgreSQL preflights with fresh Auth and concurrent processes
+        run: node --experimental-strip-types quality/tests/written-binding-shared.mjs "$RUNNER_TEMP/local-platform-status.json"
+      - name: Install local browser
+        run: npx playwright install --with-deps chromium
+      - name: Actual browser login, published catalog, written lessons and account isolation
+        run: python3 quality/tests/run-local-browser.py "$RUNNER_TEMP/local-platform-status.json"
+      - name: Require unchanged repository
+        run: git diff --exit-code
+      - name: Stop only this disposable local stack
+        if: always()
+        run: supabase stop --workdir "$RUNNER_TEMP/lh-platform" --no-backup

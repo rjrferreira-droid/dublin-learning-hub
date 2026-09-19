@@ -6,10 +6,27 @@ const learners = {
   rafael:{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',email:'finance-fixture@example.invalid',track:'rafael_finance',name:'Rafael'},
   viviane:{id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',email:'payroll-fixture@example.invalid',track:'viviane_payroll',name:'Viviane'},
 } as const;
+const curriculum={
+  courses:[
+    {id:'11111111-1111-4111-8111-111111111111',slug:'finance-ireland-v2',learner_track:'rafael_finance'},
+    {id:'22222222-2222-4222-8222-222222222222',slug:'irish-payroll-v2',learner_track:'viviane_payroll'},
+    {id:'33333333-3333-4333-8333-333333333333',slug:'english-academy',learner_track:'english_academy'},
+  ],
+  modules:[
+    {id:'44444444-4444-4444-8444-444444444444',course_id:'11111111-1111-4111-8111-111111111111',slug:'ifrs-reporting',sequence:1},
+    {id:'55555555-5555-4555-8555-555555555555',course_id:'22222222-2222-4222-8222-222222222222',slug:'gross-to-net',sequence:1},
+    {id:'66666666-6666-4666-8666-666666666666',course_id:'33333333-3333-4333-8333-333333333333',slug:'spoken-fluency',sequence:1},
+  ],
+  lessons:[
+    {id:'b3639582-3c32-4147-a4b3-84237d11a66e',module_id:'44444444-4444-4444-8444-444444444444',slug:'ifrs-18-group-reporting-irish-statutory',title:'IFRS 18, Group Reporting & Irish Statutory Accounts',subtitle:null,sequence:1,estimated_minutes:15},
+    {id:'6ffda415-3b18-46ab-afaa-414f81a7eb31',module_id:'55555555-5555-4555-8555-555555555555',slug:'gross-to-net-rpn-paye-usc-prsi',title:'Gross-to-Net: RPN, PAYE, USC & PRSI',subtitle:null,sequence:1,estimated_minutes:15},
+    {id:'f455a740-f50f-4eb7-95a7-9e4129ca4a68',module_id:'66666666-6666-4666-8666-666666666666',slug:'story-past-forms-rhythm-follow-up',title:'Tell a story naturally: past forms, rhythm & follow-up questions',subtitle:null,sequence:1,estimated_minutes:15},
+  ],
+} as const;
 type Key=keyof typeof learners;
-type Fixture={profileFail:boolean;memoryFail:boolean;profileDelayMs:number;pendingToken:boolean;apiCalls:number;writes:number;reads:string[];releaseToken:()=>void};
+type Fixture={profileFail:boolean;profileMissing:boolean;memoryFail:boolean;profileDelayMs:number;pendingToken:boolean;apiCalls:number;writes:number;reads:string[];releaseToken:()=>void};
 async function setup(page:Page):Promise<Fixture>{
- const fixture:Fixture={profileFail:false,memoryFail:false,profileDelayMs:0,pendingToken:false,apiCalls:0,writes:0,reads:[],releaseToken:()=>{}};
+ const fixture:Fixture={profileFail:false,profileMissing:false,memoryFail:false,profileDelayMs:0,pendingToken:false,apiCalls:0,writes:0,reads:[],releaseToken:()=>{}};
  const users=new Map<string,Key>();
  let current:Key='rafael';
  const user=(key:Key)=>({id:learners[key].id,email:learners[key].email,aud:'authenticated',role:'authenticated',created_at:'2026-01-01T00:00:00Z',app_metadata:{provider:'email'},user_metadata:{learner_track:learners[key].track,display_name:learners[key].name}});
@@ -43,11 +60,20 @@ async function setup(page:Page):Promise<Fixture>{
      if(req.method()!=='GET'){fixture.writes++;await fulfill(route,{error:'profile_write_not_allowed_in_fixture'},403);return;}
      expect(url.searchParams.get('id')).toBe('eq.'+learners[key].id);
      if(fixture.profileDelayMs)await new Promise(r=>setTimeout(r,fixture.profileDelayMs));
-     await fulfill(route,fixture.profileFail?{code:'XX000',message:'fictional profile outage'}:{display_name:learners[key].name,learner_track:learners[key].track},fixture.profileFail?503:200);return;
+     await fulfill(route,fixture.profileFail?{code:'XX000',message:'fictional profile outage'}:fixture.profileMissing?null:{display_name:learners[key].name,learner_track:learners[key].track},fixture.profileFail?503:200);return;
    }
    if(url.pathname.startsWith('/rest/v1/')){
      fixture.reads.push(url.pathname+url.search);
      if(req.method()!=='GET'){fixture.writes++;await fulfill(route,{error:'write_forbidden'},403);return;}
+     if(url.pathname.endsWith('/courses')){
+       expect(url.searchParams.get('user_id')).toBeNull();expect(url.searchParams.get('is_active')).toBe('eq.true');await fulfill(route,curriculum.courses);return;
+     }
+     if(url.pathname.endsWith('/modules')){
+       expect(url.searchParams.get('user_id')).toBeNull();expect(url.searchParams.get('is_published')).toBe('eq.true');await fulfill(route,curriculum.modules);return;
+     }
+     if(url.pathname.endsWith('/lessons')){
+       expect(url.searchParams.get('user_id')).toBeNull();expect(url.searchParams.get('is_published')).toBe('eq.true');await fulfill(route,curriculum.lessons);return;
+     }
      expect(url.searchParams.get('user_id')).toBe('eq.'+learners[key].id);
      if(fixture.memoryFail){await fulfill(route,{code:'XX000',message:'fictional history outage'},503);return;}
      if(url.pathname.endsWith('/user_error_bank')){
@@ -84,6 +110,13 @@ async function triggerLegacyHiddenSelector(page:Page,key:Key){
 }
 
 test.describe('simulated account-bound browser journeys',()=>{
+ test('registration remains closed until server-owned assignment is installed',async({page})=>{
+   const fixture=await setup(page);await page.goto('/');
+   await expect(page.getByTestId('registration-closed')).toBeVisible();
+   await expect(page.getByRole('button',{name:'Criar conta',exact:true})).toHaveCount(0);
+   await expect(page.getByText('Primeiro acesso? Criar conta',{exact:true})).toHaveCount(0);
+   expect(fixture.writes).toBe(0);
+ });
  test('delayed Viviane profile does not flash Rafael private workspace',async({page})=>{
    const fixture=await setup(page);fixture.profileDelayMs=700;
    await page.goto('/');await signIn(page,'viviane');
@@ -102,6 +135,18 @@ test.describe('simulated account-bound browser journeys',()=>{
    expect(fixture.writes).toBe(0);fixture.profileFail=false;
    await page.getByRole('button',{name:'Retry profile'}).click();
    await expect(page.getByTestId('active-learner-card')).toContainText('Rafael');
+ });
+ test('an authenticated account without an assignment remains pending and can recheck read-only',async({page})=>{
+   const fixture=await setup(page);fixture.profileMissing=true;
+   await page.goto('/');await signIn(page);
+   await expect(page.getByTestId('profile-assignment-pending')).toBeVisible();
+   await expect(page.getByRole('heading',{name:'Who is using this account?'})).toHaveCount(0);
+   await expect(page.getByRole('button',{name:'Criar conta',exact:true})).toHaveCount(0);
+   expect(fixture.writes).toBe(0);
+   fixture.profileMissing=false;
+   await page.getByRole('button',{name:'Check access again',exact:true}).click();
+   await expect(page.getByTestId('active-learner-card')).toContainText('Rafael');
+   expect(fixture.writes).toBe(0);
  });
  test('programmatic legacy hidden selector cannot expose another learner history or start personalised actions',async({page})=>{
    const fixture=await setup(page);await page.goto('/');await signIn(page);

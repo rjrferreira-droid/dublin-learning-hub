@@ -1,0 +1,291 @@
+{
+  "version": "core-written-foundation-1",
+  "status": "full_draft_not_published_to_database",
+  "track": "payroll",
+  "roadmapSequence": 6,
+  "slug": "starters-leavers-post-cessation-identity",
+  "reviewedOn": "2026-09-14",
+  "module": {
+    "track": "payroll",
+    "title": "Starters and leavers: preserve the employment identity",
+    "goal": "Build a dated payroll handoff and distinguish same-year from later-year post-cessation reporting.",
+    "scope": "Irish employment-lifecycle reporting foundation. No live RPN request, personal identifiers, termination entitlement or tax-rate calculation. Exceptional cases and actual software workflows need review.",
+    "sections": [
+      {
+        "id": "payroll6-s1",
+        "title": "1. Build the starter record",
+        "paragraphs": [
+          "Original starter checklist: approved commencement date, correct employee and employment identity, pay terms, payroll period and current RPN process. Use fictional identifiers during training. Resolve a missing or conflicting record through the authorised onboarding process rather than borrowing another employee’s settings.",
+          "Revenue publishes current RPN request guidance. Treat the RPN and approved employee inputs as records to verify, not values to invent from a prior payslip. This exercise does not determine a new employee’s credits, cut-offs or tax treatment."
+        ],
+        "supportPt": "Confirme identidade, início e RPN. Nunca copie parâmetros de outro funcionário.",
+        "sourceIds": [
+          "rpn"
+        ]
+      },
+      {
+        "id": "payroll6-s2",
+        "title": "2. Record the actual leaving date",
+        "paragraphs": [
+          "Revenue requires the leaving date on the final payroll submission to notify cessation. The leaving date and payment date are separate facts; they can differ.",
+          "Original case: employment ends on 31 August 2026 and a final approved payment is made on 4 September. Keep both dates. Do not change the leaving date to 4 September merely to make the fields look consistent. Verify the final inputs and submission details before approval."
+        ],
+        "supportPt": "Data de saída e data de pagamento são fatos distintos. Não altere uma para coincidir com a outra.",
+        "sourceIds": [
+          "leaving"
+        ]
+      },
+      {
+        "id": "payroll6-s3",
+        "title": "3. Handle a later payment",
+        "paragraphs": [
+          "Revenue’s post-cessation guidance distinguishes a payment in the cessation year from one in a later year. Both retain the original employment ID and cessation date and use the actual later payment date. For a later-year payment, the guidance calls for a new RPN request without a commencement date.",
+          "Original decision exercise: a bonus relating to the ceased employment is paid in January 2027 after an August 2026 departure. Do not create a fictional rehire to process it. Record the actual facts and use the applicable out-of-year route. The bonus amount and tax calculation are deliberately not supplied."
+        ],
+        "supportPt": "Pagamento posterior não cria recontratação. Preserve o vínculo original e use o procedimento do ano correto.",
+        "sourceIds": [
+          "after"
+        ]
+      },
+      {
+        "id": "payroll6-s4",
+        "title": "4. Review the handoff",
+        "paragraphs": [
+          "Original handoff note: record who confirmed cessation, who approved the later payment, which RPN route applies, the original identity and dates, and how submission acceptance will be checked. Keep unresolved entitlement or rate questions open for the responsible reviewer.",
+          "Before closing the case, compare payroll and submission records. Do not promise a refund or net amount from dates alone. The lifecycle checklist controls identity and timing; it is not a termination-pay calculator."
+        ],
+        "supportPt": "Confira vínculo, datas, aprovação e aceite. As datas não permitem calcular o líquido.",
+        "sourceIds": [
+          "after",
+          "leaving"
+        ]
+      }
+    ],
+    "terms": [
+      {
+        "term": "Commencement",
+        "meaning": "Start of an employment.",
+        "pt": "início do vínculo",
+        "example": "Confirm the actual commencement."
+      },
+      {
+        "term": "Cessation",
+        "meaning": "End of an employment.",
+        "pt": "encerramento do vínculo",
+        "example": "The cessation date is 31 August."
+      },
+      {
+        "term": "Post-cessation",
+        "meaning": "Occurring after employment ended.",
+        "pt": "após desligamento",
+        "example": "The bonus is a post-cessation payment."
+      },
+      {
+        "term": "Employment ID",
+        "meaning": "Identifier of the employment record.",
+        "pt": "identificador do vínculo",
+        "example": "Retain the original employment ID."
+      },
+      {
+        "term": "Payment date",
+        "meaning": "Actual date a payment is made.",
+        "pt": "data do pagamento",
+        "example": "The later payment has its own date."
+      },
+      {
+        "term": "Handoff",
+        "meaning": "Transfer of reviewed facts and responsibilities.",
+        "pt": "passagem de informações",
+        "example": "The handoff records the open questions."
+      }
+    ],
+    "visual": {
+      "title": "Starters and leavers: preserve the employment identity — decision map",
+      "note": "Original fictional exercise; not a live calculation or measured learner result.",
+      "headers": [
+        "Item",
+        "Supplied detail",
+        "Interpretation"
+      ],
+      "rows": [
+        [
+          "Cessation",
+          "31 August 2026",
+          "Original date"
+        ],
+        [
+          "Final payment",
+          "4 September 2026",
+          "Separate payment fact"
+        ],
+        [
+          "Later bonus",
+          "15 January 2027",
+          "Out-of-year route"
+        ],
+        [
+          "Rehire",
+          "Not supplied",
+          "Do not invent one"
+        ]
+      ],
+      "question": "Does the later bonus change the original cessation date?",
+      "answer": "No. Preserve the original identity and cessation facts."
+    },
+    "caseStudy": {
+      "title": "Starters and leavers: preserve the employment identity — applied case",
+      "scenario": [
+        "Fictional employment ID TRAIN-6 ceased on 31 August 2026.",
+        "Final approved payment made 4 September 2026. A later approved bonus will be paid 15 January 2027 for that ceased employment.",
+        "No rehire occurred. Tax calculation and bonus amount are outside the case."
+      ],
+      "task": "Prepare the identity/date handoff for the later bonus and identify the applicable RPN route.",
+      "hints": [
+        "Compare payment year with cessation year.",
+        "Do not create a new commencement."
+      ],
+      "modelAnswer": "Use the out-of-year post-cessation route: request a new RPN without a commencement date, retain original employment ID TRAIN-6 and cessation 31 August 2026, and report actual payment date 15 January 2027. Keep approval and submission acceptance evidence. Do not invent a rehire or a net bonus amount.",
+      "reviewChecks": [
+        "Out-of-year route identified.",
+        "Original employment and cessation preserved.",
+        "Actual January payment date.",
+        "No invented commencement or tax amount."
+      ],
+      "transfer": "For a bonus paid in September 2026 instead, identify the same-year route from the source rather than carrying over every out-of-year step."
+    },
+    "checkpoint": [
+      {
+        "id": "payroll6-q1",
+        "prompt": "Main case later bonus uses which route?",
+        "options": [
+          "Same-year",
+          "Out-of-year",
+          "Fictional rehire"
+        ],
+        "correctIndex": 1,
+        "explanation": "Payment is in 2027 after 2026 cessation.",
+        "reviewSection": "payroll6-s3"
+      },
+      {
+        "id": "payroll6-q2",
+        "prompt": "Original cessation is:",
+        "options": [
+          "15 January 2027",
+          "4 September 2026",
+          "31 August 2026"
+        ],
+        "correctIndex": 2,
+        "explanation": "Payment dates do not replace the leaving fact.",
+        "reviewSection": "payroll6-s2"
+      },
+      {
+        "id": "payroll6-q3",
+        "prompt": "The later-year RPN request includes a new commencement in this case:",
+        "options": [
+          "Yes",
+          "No",
+          "Only if convenient"
+        ],
+        "correctIndex": 1,
+        "explanation": "The referenced process excludes it.",
+        "reviewSection": "payroll6-s3"
+      },
+      {
+        "id": "payroll6-q4",
+        "prompt": "Can the dates alone determine net bonus?",
+        "options": [
+          "Yes",
+          "No",
+          "Only after year end"
+        ],
+        "correctIndex": 1,
+        "explanation": "Rate and entitlement facts are absent.",
+        "reviewSection": "payroll6-s4"
+      },
+      {
+        "id": "payroll6-q5",
+        "prompt": "A missing starter identity should lead to:",
+        "options": [
+          "Borrowed settings",
+          "Invented RPN",
+          "Authorised verification"
+        ],
+        "correctIndex": 2,
+        "explanation": "Identity must be resolved for the actual employee.",
+        "reviewSection": "payroll6-s1"
+      }
+    ],
+    "practiceExercises": [
+      {
+        "id": "payroll6-p1",
+        "question": "An employee leaves 30 June and is paid 7 July. Which date describes leaving?",
+        "hints": [
+          "Use the employment event.",
+          "Payment is a separate field."
+        ],
+        "answer": "30 June.",
+        "explanation": "Dates can differ without either being wrong."
+      },
+      {
+        "id": "payroll6-p2",
+        "question": "A same-year post-cessation payment is due. What identity facts should remain?",
+        "hints": [
+          "Review the original employment.",
+          "Separate payment date."
+        ],
+        "answer": "Original employment ID and cessation date; use the actual payment date and the same-year RPN process.",
+        "explanation": "A later payment does not itself reopen employment."
+      },
+      {
+        "id": "payroll6-p3",
+        "question": "A starter lacks verified identity data. Should you copy a similar employee’s tax settings?",
+        "hints": [
+          "Identity is person-specific.",
+          "Escalate missing inputs."
+        ],
+        "answer": "No. Resolve the identity and applicable RPN workflow through authorised onboarding.",
+        "explanation": "Another employee’s record is not evidence for this person."
+      }
+    ],
+    "sources": [
+      {
+        "id": "rpn",
+        "label": "Revenue — Requesting an RPN for 2026",
+        "url": "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/transitional-arrangements/requesting-rpn.aspx",
+        "supports": "Current RPN request guidance. Does not establish any fictional employee tax rate.",
+        "reviewedOn": "2026-09-14"
+      },
+      {
+        "id": "leaving",
+        "label": "Revenue — When an employee leaves",
+        "url": "https://www.revenue.ie/en/employing-people/when-an-employment-ends/when-employee-leaves-their-employment.aspx",
+        "supports": "Leaving date on the final submission.",
+        "reviewedOn": "2026-09-14"
+      },
+      {
+        "id": "after",
+        "label": "Revenue — Post-cessation payments",
+        "url": "https://www.revenue.ie/en/employing-people/when-an-employment-ends/payments-made-after-employee-leaves.aspx",
+        "supports": "In-year versus out-of-year RPN process, original employment identity/cessation date and actual payment date.",
+        "reviewedOn": "2026-09-14"
+      }
+    ]
+  },
+  "professorGuide": {
+    "status": "offline_authored_guide_not_live",
+    "opening": "Ask the learner to put cessation and payment dates on a timeline.",
+    "whenCorrect": "Move the bonus payment to the cessation year and ask what changes and what remains fixed.",
+    "whenUncertain": "Ask which supplied fact is missing or unclear. Offer the first case hint, then invite another attempt.",
+    "whenMisconception": "If they create a rehire, ask which supplied event establishes a new employment; there is none.",
+    "whenSelfCorrected": "Use the corrected answer, not the abandoned phrase, as the current response. Ask one transfer question.",
+    "whenAskedForAnswer": "Provide a concise explanation and one worked step; invite an optional fresh attempt without claiming independent mastery.",
+    "evidenceBoundary": "Use only actual session evidence if this guide is separately integrated. Never consume local drafts or checkpoint results. Do not infer pronunciation/acoustic fluency from text, technical mastery from a phrase, or a CEFR level from one task."
+  },
+  "assessmentBoundaries": [
+    "Authored answer keys and guide branches are expectations, not model results or learner evidence.",
+    "Accept supported alternatives and self-correction.",
+    "No local drafts or answers may enter Professor/evaluator payloads.",
+    "No paid provider or database publication is authorized by this draft."
+  ],
+  "publicationGate": "Content QA, server-owned reference integration, exact identity acceptance and separate publication decision remain required."
+}

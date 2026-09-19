@@ -1,0 +1,287 @@
+{
+  "version": "core-written-foundation-1",
+  "status": "full_draft_not_published_to_database",
+  "track": "finance",
+  "roadmapSequence": 5,
+  "slug": "receivables-classification-ecl-evidence",
+  "reviewedOn": "2026-09-14",
+  "module": {
+    "track": "finance",
+    "title": "Receivables: classification, loss estimates and evidence",
+    "goal": "Challenge a receivables allowance using a supplied loss matrix and a documented evidence boundary.",
+    "scope": "IFRS 9 foundation. Matrix rates are fictional assumptions, not prescribed loss rates. Full staging, discounting, hedge accounting and detailed asset classification are outside this case; local FRS 102 policies require their own assessment.",
+    "sections": [
+      {
+        "id": "finance5-s1",
+        "title": "1. Classify before calculating",
+        "paragraphs": [
+          "IFRS 9 classification considers how financial assets are managed and their contractual cash-flow features. An account name alone cannot settle the measurement category. The standard also includes expected-credit-loss impairment requirements.",
+          "Original review task: ask for the receivable contract, how balances are managed and the approved accounting policy. A balance labelled “customer” may still have unusual settlement terms. This case assumes the classification and applicable impairment approach have already been reviewed so you can focus on the estimate."
+        ],
+        "supportPt": "O nome da conta não define a classificação. Confira contrato, gestão e política antes do cálculo.",
+        "sourceIds": [
+          "ifrs9"
+        ]
+      },
+      {
+        "id": "finance5-s2",
+        "title": "2. Read the supplied estimate",
+        "paragraphs": [
+          "Original fictional matrix: current balances 800 at an assumed 1% loss rate give 8; overdue balances 200 at an assumed 10% give 20. Total gross receivables are 1,000, allowance 28 and net carrying amount 972. These supplied rates are teaching inputs.",
+          "A neat calculation does not validate the rates. Ask what information supports the grouping and rates, what changed since the last review, and whether customer-specific information contradicts the pooled estimate. Do not treat every current invoice as risk-free or every overdue invoice as wholly lost."
+        ],
+        "supportPt": "A conta fecha em 28, mas a taxa ainda precisa de evidência. Vencimento e perda não são a mesma coisa.",
+        "sourceIds": [
+          "ifrs9"
+        ]
+      },
+      {
+        "id": "finance5-s3",
+        "title": "3. Explain an allowance movement",
+        "paragraphs": [
+          "Original bridge: opening allowance 25 plus expense 8 less an approved write-off of 5 gives closing allowance 28. The movement in the allowance balance is only 3, while the expense is 8. There are no recoveries, exchange movements or other entries in this exercise.",
+          "Request the write-off authorisation and underlying invoice list. A write-off is not a bank receipt, and a lower gross balance does not by itself prove collection. Keep the matrix total and the movement schedule as two independent checks."
+        ],
+        "supportPt": "Saldo e despesa diferem quando há baixa. Concilie a matriz e o roll-forward separadamente.",
+        "sourceIds": [
+          "ifrs9"
+        ]
+      },
+      {
+        "id": "finance5-s4",
+        "title": "4. Give a review conclusion",
+        "paragraphs": [
+          "Original controller response: the arithmetic supports an allowance of 28 under the supplied assumptions, but the reasonableness of the rates still needs documented support. The allowance expense is 8 after allowing for the write-off of 5. Assign the credit owner to supply the loss-history and current-customer review.",
+          "For an Irish statutory output under a different framework, confirm its applicable requirements and policy choices. A correct IFRS group calculation is not automatic permission to copy that entry into every local ledger."
+        ],
+        "supportPt": "Separe cálculo correto de estimativa validada e confirme a base da entrega local.",
+        "sourceIds": [
+          "ifrs9"
+        ]
+      }
+    ],
+    "terms": [
+      {
+        "term": "Allowance",
+        "meaning": "Amount reducing a receivable carrying value for estimated losses.",
+        "pt": "provisão para perdas",
+        "example": "The assumed allowance is 28."
+      },
+      {
+        "term": "Gross balance",
+        "meaning": "Balance before the loss allowance.",
+        "pt": "saldo bruto",
+        "example": "Gross receivables are 1,000."
+      },
+      {
+        "term": "Write-off",
+        "meaning": "Removal of an approved uncollectible balance in this case.",
+        "pt": "baixa",
+        "example": "The bridge includes a write-off of 5."
+      },
+      {
+        "term": "Loss rate",
+        "meaning": "Assumed loss proportion for a defined group.",
+        "pt": "taxa de perda",
+        "example": "The 10% rate needs support."
+      },
+      {
+        "term": "Grouping",
+        "meaning": "Combining balances with relevant shared characteristics.",
+        "pt": "agrupamento",
+        "example": "Challenge whether one group hides a specific issue."
+      },
+      {
+        "term": "Roll-forward",
+        "meaning": "Opening-to-closing movement reconciliation.",
+        "pt": "conciliação de movimentos",
+        "example": "The roll-forward explains expense versus balance change."
+      }
+    ],
+    "visual": {
+      "title": "Receivables: classification, loss estimates and evidence — decision map",
+      "note": "Original fictional exercise; not a live calculation or measured learner result.",
+      "headers": [
+        "Item",
+        "Supplied detail",
+        "Interpretation"
+      ],
+      "rows": [
+        [
+          "Current",
+          "800 × 1% = 8",
+          "Fictional assumptions"
+        ],
+        [
+          "Overdue",
+          "200 × 10% = 20",
+          "Fictional assumptions"
+        ],
+        [
+          "Allowance",
+          "28",
+          "8 + 20"
+        ],
+        [
+          "Net balance",
+          "972",
+          "1,000 - 28"
+        ]
+      ],
+      "question": "Is an allowance increase of 3 necessarily the expense?",
+      "answer": "No. The approved write-off means expense is 8 in the supplied bridge."
+    },
+    "caseStudy": {
+      "title": "Receivables: classification, loss estimates and evidence — applied case",
+      "scenario": [
+        "Fictional matrix: 800 at 1%; 200 at 10%. Rates and classification are supplied assumptions.",
+        "Opening allowance 25, approved write-off 5, closing allowance per matrix 28. No other movements.",
+        "A manager says the expense must be 3 because the balance increased by 3."
+      ],
+      "task": "Calculate the matrix, reconcile the expense and state one unresolved estimation question.",
+      "hints": [
+        "Compute each group separately.",
+        "Rearrange opening + expense - write-off = closing."
+      ],
+      "modelAnswer": "Allowance is 8 + 20 = 28; net receivables are 972. Expense is 8 because 25 + 8 - 5 = 28. The balance increase of 3 is not the expense. Ask for support for the assumed loss rates and review any customer-specific contrary evidence.",
+      "reviewChecks": [
+        "28 allowance and 972 net balance.",
+        "Expense 8 distinguished from movement 3.",
+        "No claim that rates are mandated or validated.",
+        "Specific evidence request."
+      ],
+      "transfer": "Change one group rate and explain whether arithmetic or estimation judgement changed."
+    },
+    "checkpoint": [
+      {
+        "id": "finance5-q1",
+        "prompt": "What is the matrix total?",
+        "options": [
+          "28",
+          "3",
+          "20"
+        ],
+        "correctIndex": 0,
+        "explanation": "8 plus 20 equals 28.",
+        "reviewSection": "finance5-s2"
+      },
+      {
+        "id": "finance5-q2",
+        "prompt": "What is the expense in the case?",
+        "options": [
+          "3",
+          "8",
+          "5"
+        ],
+        "correctIndex": 1,
+        "explanation": "25 + 8 - 5 = 28.",
+        "reviewSection": "finance5-s3"
+      },
+      {
+        "id": "finance5-q3",
+        "prompt": "Are the rates prescribed by this lesson?",
+        "options": [
+          "Yes",
+          "Only for Ireland",
+          "No, they are fictional inputs"
+        ],
+        "correctIndex": 2,
+        "explanation": "Rates require their own support.",
+        "reviewSection": "finance5-s2"
+      },
+      {
+        "id": "finance5-q4",
+        "prompt": "Can the account name alone decide classification?",
+        "options": [
+          "Yes",
+          "No",
+          "Only if overdue"
+        ],
+        "correctIndex": 1,
+        "explanation": "Contract and management facts matter.",
+        "reviewSection": "finance5-s1"
+      },
+      {
+        "id": "finance5-q5",
+        "prompt": "A write-off proves:",
+        "options": [
+          "Cash was collected",
+          "A balance was removed under the case approval",
+          "The loss rate is correct"
+        ],
+        "correctIndex": 1,
+        "explanation": "It is not evidence of a cash receipt.",
+        "reviewSection": "finance5-s3"
+      }
+    ],
+    "practiceExercises": [
+      {
+        "id": "finance5-p1",
+        "question": "Overdue balances 150 use a supplied 8% rate. Calculate the assumed loss.",
+        "hints": [
+          "Convert percent to decimal.",
+          "150 × 0.08."
+        ],
+        "answer": "12.",
+        "explanation": "Arithmetic does not validate the 8% assumption."
+      },
+      {
+        "id": "finance5-p2",
+        "question": "Opening allowance 40; expense 9; approved write-off 6. Find closing allowance.",
+        "hints": [
+          "Use the roll-forward.",
+          "Subtract the write-off once."
+        ],
+        "answer": "43 = 40 + 9 - 6.",
+        "explanation": "A write-off and an expense play different roles."
+      },
+      {
+        "id": "finance5-p3",
+        "question": "A manager sets every current receivable to zero expected loss because nothing is overdue. Challenge the reasoning.",
+        "hints": [
+          "Current describes timing.",
+          "Ask for evidence of expected losses."
+        ],
+        "answer": "Current status alone does not establish zero loss; review the appropriate method and supporting information.",
+        "explanation": "Do not replace judgement with one ageing label."
+      }
+    ],
+    "sources": [
+      {
+        "id": "ifrs9",
+        "label": "IFRS Foundation — IFRS 9",
+        "url": "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-9-financial-instruments/",
+        "supports": "Classification by business model and contractual cash flows; expected-credit-loss impairment. Cases are simplified original illustrations, not a complete valuation model.",
+        "reviewedOn": "2026-09-14"
+      }
+    ]
+  },
+  "professorGuide": {
+    "status": "offline_authored_guide_not_live",
+    "opening": "Ask why an allowance balance change may differ from expense.",
+    "whenCorrect": "Ask what would change if a new customer-specific fact contradicts the pooled rate.",
+    "whenUncertain": "Ask which supplied fact is missing or unclear. Offer the first case hint, then invite another attempt.",
+    "whenMisconception": "If the learner answers 3 as expense, walk through the approved write-off, then let them rebuild the bridge.",
+    "whenSelfCorrected": "Use the corrected answer, not the abandoned phrase, as the current response. Ask one transfer question.",
+    "whenAskedForAnswer": "Provide a concise explanation and one worked step; invite an optional fresh attempt without claiming independent mastery.",
+    "evidenceBoundary": "Use only actual session evidence if this guide is separately integrated. Never consume local drafts or checkpoint results. Do not infer pronunciation/acoustic fluency from text, technical mastery from a phrase, or a CEFR level from one task."
+  },
+  "assessmentBoundaries": [
+    "Authored answer keys and guide branches are expectations, not model results or learner evidence.",
+    "Accept supported alternatives and self-correction.",
+    "No local drafts or answers may enter Professor/evaluator payloads.",
+    "No paid provider or database publication is authorized by this draft."
+  ],
+  "publicationGate": "Content QA, server-owned reference integration, exact identity acceptance and separate publication decision remain required.",
+  "fictionalCalculation": {
+    "current": 800,
+    "currentRate": 0.01,
+    "overdue": 200,
+    "overdueRate": 0.1,
+    "allowance": 28,
+    "net": 972,
+    "opening": 25,
+    "expense": 8,
+    "writeOff": 5
+  }
+}

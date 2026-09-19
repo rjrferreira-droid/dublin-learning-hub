@@ -1,0 +1,287 @@
+{
+  "version": "core-written-foundation-1",
+  "status": "full_draft_not_published_to_database",
+  "track": "payroll",
+  "roadmapSequence": 8,
+  "slug": "payroll-controls-month-end-finance-handoff",
+  "reviewedOn": "2026-09-14",
+  "module": {
+    "track": "payroll",
+    "title": "Payroll controls: the month-end handoff to Finance",
+    "goal": "Reconcile payroll cost, liabilities and the payment file while keeping an unresolved payment visible.",
+    "scope": "Original fictional payroll-to-GL control exercise. Supplied deductions and employer charges are not current statutory rates. No bank transmission, submission, actual ledger posting or system-specific ADP procedure.",
+    "sections": [
+      {
+        "id": "payroll8-s1",
+        "title": "1. Define the records",
+        "paragraphs": [
+          "Original handoff set: approved payroll register, employee payment file, Revenue submission, liability schedules and general-ledger journal. Give each record a run identifier, period, owner and approval status. A matching grand total is useful but does not confirm every employee, bank detail or field.",
+          "Revenue’s correction guidance distinguishes reporting errors from pay errors. Use that distinction when one handoff record differs from the others; do not repair an unknown discrepancy by moving money before tracing the records."
+        ],
+        "supportPt": "Defina versão, período e status de cada arquivo. Total igual não valida todos os detalhes.",
+        "sourceIds": [
+          "corrections"
+        ]
+      },
+      {
+        "id": "payroll8-s2",
+        "title": "2. Separate employee and employer amounts",
+        "paragraphs": [
+          "Original case: cash gross 10,000; employee statutory deductions 2,500; employee pension deduction 500; employer statutory charges 1,000. There are no employer pension costs or other items. Employee net payable is 7,000. Payroll expense is 11,000, including employer charges.",
+          "The employee pension deduction is withheld from gross, not a second employer expense in this case. The supplied statutory liability is 3,500, combining employee deductions and employer charges. Keep those components visible in the supporting schedule."
+        ],
+        "supportPt": "O desconto do funcionário não é despesa extra do empregador. Separe componentes da obrigação.",
+        "sourceIds": [
+          "corrections"
+        ]
+      },
+      {
+        "id": "payroll8-s3",
+        "title": "3. Prove the journal and payment file",
+        "paragraphs": [
+          "Original journal: debit payroll expense 10,000 and employer-charge expense 1,000; credit employee net payable 7,000, statutory payable 3,500 and pension payable 500. Debits and credits both total 11,000.",
+          "The payment file totals only 6,800. A documented 200 employee payment is held pending bank-detail verification, so the 200 remains payable. Do not reduce payroll expense or mark all staff paid to force agreement. A balanced journal can coexist with an incomplete payment run."
+        ],
+        "supportPt": "O lançamento fecha, mas há 200 ainda a pagar. Não reduza a despesa para fechar o arquivo bancário.",
+        "sourceIds": [
+          "corrections"
+        ]
+      },
+      {
+        "id": "payroll8-s4",
+        "title": "4. Hand over unresolved exceptions",
+        "paragraphs": [
+          "Original sign-off: approved payroll and journal reconcile; payment-file difference 200 is linked to the documented hold, with an owner and resolution check. “Ready for reviewed partial payment” and “all employees paid” are different statuses. Use the actual authorised status rather than inventing completion.",
+          "Finish with a small exception register: item, amount, record affected, confirmed reason, owner and next check. When the held payment is later released under approval, reconcile the remaining liability and actual bank acknowledgement. This lesson describes the review, not an instruction to transmit funds."
+        ],
+        "supportPt": "O handoff deve mostrar o que está conciliado e o que continua aberto, com responsável.",
+        "sourceIds": [
+          "corrections"
+        ]
+      }
+    ],
+    "terms": [
+      {
+        "term": "Payroll register",
+        "meaning": "Detailed approved payroll result for a run.",
+        "pt": "registro da folha",
+        "example": "Tie the journal to the register."
+      },
+      {
+        "term": "Employer charge",
+        "meaning": "Employer cost additional to gross pay in this case.",
+        "pt": "encargo patronal",
+        "example": "Employer charges add 1,000."
+      },
+      {
+        "term": "Liability",
+        "meaning": "Amount owed at the reporting point.",
+        "pt": "obrigação",
+        "example": "The held 200 remains payable."
+      },
+      {
+        "term": "Payment file",
+        "meaning": "Instructions prepared for payment processing.",
+        "pt": "arquivo de pagamento",
+        "example": "The file totals 6,800."
+      },
+      {
+        "term": "Exception register",
+        "meaning": "Record of items needing resolution.",
+        "pt": "registro de exceções",
+        "example": "Assign an owner to the held payment."
+      },
+      {
+        "term": "Sign-off",
+        "meaning": "Documented approval for a defined scope.",
+        "pt": "aprovação formal",
+        "example": "Sign-off must identify what remains open."
+      }
+    ],
+    "visual": {
+      "title": "Payroll controls: the month-end handoff to Finance — decision map",
+      "note": "Original fictional exercise; not a live calculation or measured learner result.",
+      "headers": [
+        "Item",
+        "Supplied detail",
+        "Interpretation"
+      ],
+      "rows": [
+        [
+          "Total expense",
+          "11,000",
+          "10,000 + 1,000"
+        ],
+        [
+          "Net payable",
+          "7,000",
+          "10,000 - 2,500 - 500"
+        ],
+        [
+          "Other liabilities",
+          "4,000",
+          "3,500 statutory + 500 pension"
+        ],
+        [
+          "Payment file",
+          "6,800",
+          "200 held; liability remains"
+        ]
+      ],
+      "question": "Does a balanced journal prove everyone was paid?",
+      "answer": "No. The payment file and acknowledgement are separate evidence."
+    },
+    "caseStudy": {
+      "title": "Payroll controls: the month-end handoff to Finance — applied case",
+      "scenario": [
+        "Gross 10,000; employee statutory deductions 2,500; employee pension deduction 500; employer statutory charges 1,000.",
+        "No other costs, deductions or balances. Payment file 6,800; a documented employee payment of 200 is held for bank-detail verification.",
+        "No bank execution has occurred in this exercise."
+      ],
+      "task": "Reconcile expenses and liabilities, explain the payment-file difference and draft the handoff status.",
+      "hints": [
+        "Net pay uses employee deductions only.",
+        "Employer charges increase expense and statutory liability."
+      ],
+      "modelAnswer": "Expense totals 11,000. Liabilities are 7,000 net pay, 3,500 statutory and 500 pension, also 11,000. The payment file is 200 below net payable because of the documented hold; retain that 200 liability and assign verification/resolution. The journal reconciles, but the exercise does not show that employees were paid.",
+      "reviewChecks": [
+        "Expense and liabilities each 11,000.",
+        "Net pay 7,000 and statutory liability 3,500.",
+        "Held 200 retained as payable.",
+        "No invented bank execution or completion."
+      ],
+      "transfer": "If the 200 difference has no documented reason, report an unexplained exception and investigate before choosing a hold explanation."
+    },
+    "checkpoint": [
+      {
+        "id": "payroll8-q1",
+        "prompt": "Employee net payable is:",
+        "options": [
+          "6,000",
+          "7,000",
+          "11,000"
+        ],
+        "correctIndex": 1,
+        "explanation": "10,000 - 2,500 - 500 = 7,000.",
+        "reviewSection": "payroll8-s2"
+      },
+      {
+        "id": "payroll8-q2",
+        "prompt": "Total payroll expense is:",
+        "options": [
+          "10,000",
+          "7,000",
+          "11,000"
+        ],
+        "correctIndex": 2,
+        "explanation": "Employer charges add 1,000.",
+        "reviewSection": "payroll8-s2"
+      },
+      {
+        "id": "payroll8-q3",
+        "prompt": "The held 200 should be:",
+        "options": [
+          "Removed from expense",
+          "Kept as a payable pending resolution",
+          "Called paid"
+        ],
+        "correctIndex": 1,
+        "explanation": "The payment hold does not extinguish the liability.",
+        "reviewSection": "payroll8-s3"
+      },
+      {
+        "id": "payroll8-q4",
+        "prompt": "Statutory payable in the case is:",
+        "options": [
+          "2,500",
+          "3,500",
+          "500"
+        ],
+        "correctIndex": 1,
+        "explanation": "Employee 2,500 plus employer 1,000.",
+        "reviewSection": "payroll8-s2"
+      },
+      {
+        "id": "payroll8-q5",
+        "prompt": "A balanced journal proves bank execution:",
+        "options": [
+          "True",
+          "False",
+          "Only at month end"
+        ],
+        "correctIndex": 1,
+        "explanation": "Execution needs its own evidence.",
+        "reviewSection": "payroll8-s4"
+      }
+    ],
+    "practiceExercises": [
+      {
+        "id": "payroll8-p1",
+        "question": "Gross 6,000; employee deductions 1,400 total; employer charges 600. Calculate net and total expense.",
+        "hints": [
+          "Employee deductions reduce net.",
+          "Employer charges add to expense."
+        ],
+        "answer": "Net 4,600; total expense 6,600.",
+        "explanation": "Do not subtract employer charges from employee cash."
+      },
+      {
+        "id": "payroll8-p2",
+        "question": "A balanced journal is attached but no bank acknowledgement exists. Can you mark employees paid?",
+        "hints": [
+          "Journal and payment are different records.",
+          "Require execution evidence."
+        ],
+        "answer": "No. Record journal readiness separately from actual payment status.",
+        "explanation": "Accounting balance does not prove cash execution."
+      },
+      {
+        "id": "payroll8-p3",
+        "question": "A payment difference has no supporting hold record. Should you reuse the case explanation?",
+        "hints": [
+          "A plausible story is not evidence.",
+          "Record the open discrepancy."
+        ],
+        "answer": "No. Investigate the difference and keep it unresolved with an owner.",
+        "explanation": "Do not copy a fictional cause into a real exception."
+      }
+    ],
+    "sources": [
+      {
+        "id": "corrections",
+        "label": "Revenue — Payroll corrections",
+        "url": "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/corrections.aspx",
+        "supports": "Distinguishes over/underpayment adjustments from incorrect submitted details. No source example or tax amount is reused.",
+        "reviewedOn": "2026-09-14"
+      }
+    ]
+  },
+  "professorGuide": {
+    "status": "offline_authored_guide_not_live",
+    "opening": "Ask what a balanced journal proves and what it does not prove.",
+    "whenCorrect": "Remove the hold evidence from the case and ask how the handoff wording must change.",
+    "whenUncertain": "Ask which supplied fact is missing or unclear. Offer the first case hint, then invite another attempt.",
+    "whenMisconception": "If they subtract employer charges from net pay, ask who bears each supplied amount.",
+    "whenSelfCorrected": "Use the corrected answer, not the abandoned phrase, as the current response. Ask one transfer question.",
+    "whenAskedForAnswer": "Provide a concise explanation and one worked step; invite an optional fresh attempt without claiming independent mastery.",
+    "evidenceBoundary": "Use only actual session evidence if this guide is separately integrated. Never consume local drafts or checkpoint results. Do not infer pronunciation/acoustic fluency from text, technical mastery from a phrase, or a CEFR level from one task."
+  },
+  "assessmentBoundaries": [
+    "Authored answer keys and guide branches are expectations, not model results or learner evidence.",
+    "Accept supported alternatives and self-correction.",
+    "No local drafts or answers may enter Professor/evaluator payloads.",
+    "No paid provider or database publication is authorized by this draft."
+  ],
+  "publicationGate": "Content QA, server-owned reference integration, exact identity acceptance and separate publication decision remain required.",
+  "fictionalCalculation": {
+    "gross": 10000,
+    "employeeStatutory": 2500,
+    "employeePension": 500,
+    "employerCharges": 1000,
+    "net": 7000,
+    "statutoryPayable": 3500,
+    "totalExpense": 11000,
+    "paymentFile": 6800,
+    "held": 200
+  }
+}

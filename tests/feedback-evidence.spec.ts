@@ -1,0 +1,13 @@
+import {test,expect} from '@playwright/test';
+import {experienceFixture,SYNTHETIC_SESSION_ID} from './helpers/experienceFixture';
+for(const track of ['finance','payroll','english'] as const)for(const width of [390,1440])test(`${track} ${width}px: recorded feedback explains confidence and shows plain-text examples without new evaluation`,async({page},info)=>{
+ await page.setViewportSize({width,height:1000});const f=await experienceFixture(page,{track,fakeVoice:true,validation:true});let reads=0;
+ await page.route('**/rest/v1/ai_tutor_sessions?**',async route=>{const r=route.request(),u=new URL(r.url());if(r.method()!=='GET'||!u.searchParams.has('id')){await route.fallback();return;}
+  reads++;expect(u.searchParams.get('user_id')).toBe('eq.aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
+  await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({id:SYNTHETIC_SESSION_ID,user_id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',room_name:'validation:fictional',status:'completed',completed_at:'2026-09-13T20:00:00Z',final_feedback:{summary:'FICTIONAL session feedback for this layout test.',assessmentConfidence:70,strengths:['FICTIONAL stated assumption.'],nextSessionFocus:['FICTIONAL next practice.'],errors:[{domain:track==='english'?'grammar':'technical',pattern:'FICTIONAL review example',example:track==='english'?'I goed to the cafe.':'The employee pays employer PRSI too.',correction:track==='english'?'I went to the cafe.':'Separate the supplied employee deductions from employer cost.'},{domain:'grammar',pattern:'Literal display test',example:'<img src=x onerror=alert(1)>',correction:'No markup executes in this text.'},{domain:'pronunciation',pattern:'SHOULD NOT SHOW ACOUSTIC CLAIM',example:'text',correction:'accent'}]}})});
+ });
+ await f.signIn();await f.openProfessor();await f.start();await page.getByRole('button',{name:'End session',exact:true}).click();
+ const evidence=page.getByTestId('feedback-evidence');await expect(evidence).toBeVisible();await evidence.locator('summary').focus();await page.keyboard.press('Enter');await expect(evidence).toContainText('70/100');await expect(evidence).toContainText('not your score or level of mastery');await expect(evidence.locator('.feedback-correction')).toHaveCount(2);await expect(evidence.locator('img')).toHaveCount(0);await expect(evidence).not.toContainText('SHOULD NOT SHOW');await expect(evidence).toContainText('not independently rechecked');
+ expect(await evidence.evaluate(e=>e.scrollWidth<=e.clientWidth+1)).toBe(true);await evidence.screenshot({path:info.outputPath(`evidence-${track}-${width}.png`)});
+ expect(reads).toBe(1);expect(f.fixture.sensitive).toBe(0);expect(f.fixture.apiRequests).toHaveLength(0);
+});

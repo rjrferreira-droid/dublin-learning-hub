@@ -1,0 +1,65 @@
+{
+  "version":"p1-sequence3-source-recheck-1",
+  "checkedOn":"2026-09-14",
+  "status":"official_sources_rechecked_no_publication",
+  "scope":"Editorial source verification only. No Supabase write, lesson publication, learner update, model call, provider call or audio generation.",
+  "tracks":{
+    "finance":{
+      "draft":"quality/drafts/p1-finance-leases.json",
+      "result":"core IFRS 16 and revised FRS 102 lease claims supported by current official material",
+      "verifiedClaims":[
+        "IFRS 16 uses a single lessee model requiring recognition of a right-of-use asset and lease liability for ordinary leases with stated recognition exemptions.",
+        "IFRS 16 subsequent measurement includes liability interest/payment mechanics and specified remeasurement or modification requirements.",
+        "The FRC's Periodic Review 2024 has a principal effective date of 1 January 2026 for FRS 102 and substantially revised Section 20 Leases.",
+        "The FRC's June 2026 explainer says most lessee leases are recognised as right-of-use assets and lease liabilities, with short-term and low-value recognition exemptions and a wider low-value accommodation than IFRS 16 subject to FRS 102 conditions.",
+        "FRS 102 transition material provides a modified-retrospective route and, in specified circumstances, an option to use IFRS 16 carrying amounts prepared for inclusion in IFRS consolidated financial statements."
+      ],
+      "officialSources":[
+        "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-16-leases/",
+        "https://www.ifrs.org/content/dam/ifrs/publications/pdf-standards/english/2022/issued/part-a/ifrs-16-leases.pdf?bypass=on",
+        "https://www.frc.org.uk/library/standards-codes-policy/accounting-and-reporting/uk-accounting-standards/frs-102/",
+        "https://www.frc.org.uk/docs/9461/html/",
+        "https://www.frc.org.uk/library/standards-codes-policy/accounting-and-reporting/uk-accounting-standards/frs-factsheets/"
+      ],
+      "publicationNote":"Keep discount rates and contract facts as explicit fictional inputs; recheck the current FRS 102 edition and implementation material immediately before publication."
+    },
+    "payroll":{
+      "draft":"quality/drafts/p1-payroll-pay-bases.json",
+      "result":"pay-base and pension distinctions supported by current Revenue guidance without embedding statutory rates",
+      "verifiedClaims":[
+        "Revenue's current payroll-submission guidance distinguishes gross pay, pay for Income Tax, pay for USC and pay for employee PRSI.",
+        "Qualifying regular employee pension contributions may reduce pay for Income Tax under the applicable conditions, while Revenue states they are not deducted from gross pay for USC or PRSI calculations.",
+        "Revenue states USC is operated on gross pay before employee pension contributions are deducted.",
+        "Revenue's employee-PRSI pay guidance includes applicable gross/notional pay and keeps specified employee pension contributions chargeable for PRSI.",
+        "Employee pension deductions, employer pension contributions and employer PRSI are distinct payroll layers; scheme-specific conditions must still be checked."
+      ],
+      "officialSources":[
+        "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/what-employee-pay-details-do-you-include.aspx",
+        "https://www.revenue.ie/en/employing-people/what-constitutes-pay/employees-pension-payments/index.aspx",
+        "https://www.revenue.ie/en/employing-people/what-constitutes-pay/what-pay-includes/index.aspx",
+        "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/what-benefit-information-do-you-provide.aspx",
+        "https://www.revenue.ie/en/employing-people/benefit-in-kind-for-employers/other-benefits/pension-contributions.aspx"
+      ],
+      "publicationNote":"Recheck Revenue immediately before publication because pension and payroll rules are date-sensitive. The lesson must continue to omit current PAYE, USC and PRSI rates."
+    },
+    "english":{
+      "draft":"quality/drafts/p1-english-variances.json",
+      "result":"data-summary, evidence and presentation-structure objectives supported by British Council material",
+      "verifiedClaims":[
+        "British Council data-description guidance emphasises selecting key features, stating specific figures and units, and giving an overview rather than narrating every data point.",
+        "British Council trend materials distinguish the size/direction of changes and encourage precise comparison language.",
+        "British Council advanced report guidance links findings and statistics to evidence-based recommendations.",
+        "British Council presentation practice uses structure, signposting, summary and opening the discussion for questions."
+      ],
+      "officialSources":[
+        "https://learnenglish.britishcouncil.org/free-resources/writing/b1/describing-bar-chart",
+        "https://learnenglish.britishcouncil.org/comment/155597",
+        "https://learnenglish.britishcouncil.org/comment/155666",
+        "https://learnenglish.britishcouncil.org/comment/221388",
+        "https://learnenglish.britishcouncil.org/sites/podcasts/files/LearnEnglish-Listening-B2-A-design-presentation.pdf"
+      ],
+      "publicationNote":"Treat the numerical cases as fictional communication exercises. Do not turn Finance knowledge, accent or a valid regional English variant into a language deficit."
+    }
+  },
+  "authorization":"Source verification is not authorization to publish these lessons or write to Supabase."
+}

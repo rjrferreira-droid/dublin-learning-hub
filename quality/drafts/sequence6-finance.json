@@ -1,0 +1,280 @@
+{
+  "version": "core-written-foundation-1",
+  "status": "full_draft_not_published_to_database",
+  "track": "finance",
+  "roadmapSequence": 6,
+  "slug": "consolidation-control-eliminations-package",
+  "reviewedOn": "2026-09-14",
+  "module": {
+    "track": "finance",
+    "title": "Consolidation: control and a clean reporting package",
+    "goal": "Resolve an intercompany mismatch without inventing an elimination or cash movement.",
+    "scope": "IFRS 10 foundation. The numerical case assumes a wholly controlled subsidiary and an approved perimeter; acquisition accounting, non-controlling interests, tax and currency translation are omitted.",
+    "sections": [
+      {
+        "id": "finance6-s1",
+        "title": "1. Confirm the perimeter",
+        "paragraphs": [
+          "IFRS 10 uses control as the basis for consolidation and presents the parent and subsidiaries as one economic entity, subject to applicable exceptions. The legal ownership chart is an input to the review, not a substitute for the control assessment.",
+          "Original scoping exercise: collect agreements, decision rights and facts about how returns are affected. Escalate unclear arrangements to the technical reviewer. Do not infer a complete control conclusion from a logo, a shared director or a single percentage without the surrounding rights."
+        ],
+        "supportPt": "Confirme o perímetro com fatos e direitos, sem decidir apenas pelo organograma.",
+        "sourceIds": [
+          "ifrs10"
+        ]
+      },
+      {
+        "id": "finance6-s2",
+        "title": "2. Match before eliminating",
+        "paragraphs": [
+          "Original package exercise: entity A reports a receivable of 120 from B; B reports a payable of 110 to A. An invoice of 10 was received before close but omitted by B, and the reviewer has confirmed it belongs in the same period. Correct B to 120 before eliminating the matched balance.",
+          "Eliminating 110 and leaving 10 unexplained hides the package error. Posting a plug at group level might also conceal a recurring source failure. Keep the correction reference, counterparty agreement and approval with the package."
+        ],
+        "supportPt": "Primeiro explique os 10 e corrija o pacote. Não esconda diferença com plug.",
+        "sourceIds": [
+          "ifrs10"
+        ]
+      },
+      {
+        "id": "finance6-s3",
+        "title": "3. Remove internal profit once",
+        "paragraphs": [
+          "Original inventory example: A sells goods to B for 150 at a group cost of 100. B still holds 40% at close. The internal profit is 50; 40% of it, or 20, remains in closing inventory. Under the supplied simplified assumptions, remove that 20 from group inventory and profit.",
+          "Do not subtract the full selling price from inventory or apply a 40% rate to group cost as if that were the profit. Separate the internal revenue/cost elimination from the unrealised profit adjustment; neither is an external cash transaction."
+        ],
+        "supportPt": "O lucro interno é 50; 40% dele, 20, continua no estoque. Não confunda preço, custo e lucro.",
+        "sourceIds": [
+          "ifrs10"
+        ]
+      },
+      {
+        "id": "finance6-s4",
+        "title": "4. Sign off the evidence",
+        "paragraphs": [
+          "Original close checklist: reconcile counterparty balances, reference each approved package correction and verify that eliminations do not change the combined external cash total. Reopen unresolved differences instead of relabelling them as immaterial without an authorised assessment.",
+          "A group package and a local statutory ledger serve distinct reporting outputs. Preserve the audit trail of group-only adjustments and confirm whether a source correction is also required locally. Do not indiscriminately push every consolidation entry to the subsidiary ledger."
+        ],
+        "supportPt": "Documente o ajuste de origem e o de consolidação. Eles podem ter destinos diferentes.",
+        "sourceIds": [
+          "ifrs10"
+        ]
+      }
+    ],
+    "terms": [
+      {
+        "term": "Perimeter",
+        "meaning": "Entities included in a reporting group after review.",
+        "pt": "perímetro",
+        "example": "Confirm the perimeter before combining packages."
+      },
+      {
+        "term": "Counterparty",
+        "meaning": "Other entity on an intercompany transaction.",
+        "pt": "contraparte",
+        "example": "B confirms the invoice."
+      },
+      {
+        "term": "Elimination",
+        "meaning": "Group adjustment removing an internal item.",
+        "pt": "eliminação",
+        "example": "Eliminate the matched 120."
+      },
+      {
+        "term": "Unrealised profit",
+        "meaning": "Internal profit still held in an unsold group asset in this case.",
+        "pt": "lucro não realizado",
+        "example": "Inventory includes 20 of internal profit."
+      },
+      {
+        "term": "Package correction",
+        "meaning": "Correction to an entity reporting submission.",
+        "pt": "correção do pacote",
+        "example": "B records the omitted 10."
+      },
+      {
+        "term": "Plug",
+        "meaning": "Unexplained balancing entry.",
+        "pt": "ajuste sem explicação",
+        "example": "Do not use a plug to hide the mismatch."
+      }
+    ],
+    "visual": {
+      "title": "Consolidation: control and a clean reporting package — decision map",
+      "note": "Original fictional exercise; not a live calculation or measured learner result.",
+      "headers": [
+        "Item",
+        "Supplied detail",
+        "Interpretation"
+      ],
+      "rows": [
+        [
+          "Receivable A",
+          "120",
+          "Confirmed"
+        ],
+        [
+          "Payable B",
+          "110 + 10 = 120",
+          "Correct source package"
+        ],
+        [
+          "Internal profit held",
+          "(150 - 100) × 40% = 20",
+          "Remove from group inventory/profit"
+        ]
+      ],
+      "question": "Does eliminating an internal receivable create cash?",
+      "answer": "No. It is a group reporting adjustment."
+    },
+    "caseStudy": {
+      "title": "Consolidation: control and a clean reporting package — applied case",
+      "scenario": [
+        "A receivable 120; B payable 110; omitted invoice 10 is confirmed as belonging to this close.",
+        "Separate inventory transaction: internal price 150, group cost 100, 40% still held by B.",
+        "Approved wholly controlled perimeter; no currency, tax or other adjustments."
+      ],
+      "task": "Explain the correction and the two distinct elimination questions.",
+      "hints": [
+        "Match the receivable/payable after correction.",
+        "Calculate profit before applying the unsold proportion."
+      ],
+      "modelAnswer": "Correct B payable by 10 to 120 and eliminate the matched intercompany balance. The separate inventory transaction contains internal profit of 50, of which 20 remains in inventory; remove that 20 from group inventory/profit under the case assumptions. Keep both adjustments documented; neither creates external cash.",
+      "reviewChecks": [
+        "Source correction 10 precedes matching.",
+        "Matched balance 120.",
+        "Unrealised profit 20.",
+        "No plug or invented cash."
+      ],
+      "transfer": "If the invoice period is disputed, retain an explicit exception and investigate before assuming the same correction."
+    },
+    "checkpoint": [
+      {
+        "id": "finance6-q1",
+        "prompt": "What payable is matched after the confirmed correction?",
+        "options": [
+          "110",
+          "120",
+          "10"
+        ],
+        "correctIndex": 1,
+        "explanation": "110 plus 10 equals 120.",
+        "reviewSection": "finance6-s2"
+      },
+      {
+        "id": "finance6-q2",
+        "prompt": "What profit remains in closing inventory?",
+        "options": [
+          "20",
+          "60",
+          "50"
+        ],
+        "correctIndex": 0,
+        "explanation": "50 internal profit × 40% equals 20.",
+        "reviewSection": "finance6-s3"
+      },
+      {
+        "id": "finance6-q3",
+        "prompt": "The IFRS 10 overview uses which basis for consolidation?",
+        "options": [
+          "Brand name",
+          "Control",
+          "Invoice volume"
+        ],
+        "correctIndex": 1,
+        "explanation": "Control determines the consolidation question.",
+        "reviewSection": "finance6-s1"
+      },
+      {
+        "id": "finance6-q4",
+        "prompt": "An unexplained difference should be:",
+        "options": [
+          "Plugged away",
+          "Ignored",
+          "Investigated and tracked"
+        ],
+        "correctIndex": 2,
+        "explanation": "Preserve evidence and accountability.",
+        "reviewSection": "finance6-s4"
+      },
+      {
+        "id": "finance6-q5",
+        "prompt": "Elimination creates external cash:",
+        "options": [
+          "Always",
+          "Never merely because it is an elimination",
+          "When receivables are large"
+        ],
+        "correctIndex": 1,
+        "explanation": "Reporting elimination is not a bank transaction.",
+        "reviewSection": "finance6-s3"
+      }
+    ],
+    "practiceExercises": [
+      {
+        "id": "finance6-p1",
+        "question": "Internal sale 240, group cost 180, half unsold. Find remaining internal profit.",
+        "hints": [
+          "Profit is price less cost.",
+          "Apply the unsold share to profit."
+        ],
+        "answer": "30 = (240 - 180) × 50%.",
+        "explanation": "Do not multiply the sale price by the unsold share and call it profit."
+      },
+      {
+        "id": "finance6-p2",
+        "question": "A balance mismatch has no invoice evidence. What is the next step?",
+        "hints": [
+          "The case does not identify a cause.",
+          "Assign counterparties to investigate."
+        ],
+        "answer": "Request matched invoice details and period/currency checks; keep an unresolved exception.",
+        "explanation": "A plug is not a diagnosis."
+      },
+      {
+        "id": "finance6-p3",
+        "question": "Can every group-only elimination be posted to the local ledger?",
+        "hints": [
+          "Identify the reporting output.",
+          "Separate source error from consolidation adjustment."
+        ],
+        "answer": "No. Assess the source correction separately; retain group-only eliminations at the appropriate reporting layer.",
+        "explanation": "The group and legal entity views differ."
+      }
+    ],
+    "sources": [
+      {
+        "id": "ifrs10",
+        "label": "IFRS Foundation — IFRS 10",
+        "url": "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-10-consolidated-financial-statements/",
+        "supports": "Control as the basis of consolidation and presentation as one economic entity. Original close-control exercises assume the stated consolidation perimeter.",
+        "reviewedOn": "2026-09-14"
+      }
+    ]
+  },
+  "professorGuide": {
+    "status": "offline_authored_guide_not_live",
+    "opening": "Ask the learner to diagnose the 120/110 mismatch before discussing elimination.",
+    "whenCorrect": "Ask how their plan changes if the invoice date or control perimeter becomes uncertain.",
+    "whenUncertain": "Ask which supplied fact is missing or unclear. Offer the first case hint, then invite another attempt.",
+    "whenMisconception": "If they eliminate 110 and ignore 10, ask where the confirmed omitted invoice belongs.",
+    "whenSelfCorrected": "Use the corrected answer, not the abandoned phrase, as the current response. Ask one transfer question.",
+    "whenAskedForAnswer": "Provide a concise explanation and one worked step; invite an optional fresh attempt without claiming independent mastery.",
+    "evidenceBoundary": "Use only actual session evidence if this guide is separately integrated. Never consume local drafts or checkpoint results. Do not infer pronunciation/acoustic fluency from text, technical mastery from a phrase, or a CEFR level from one task."
+  },
+  "assessmentBoundaries": [
+    "Authored answer keys and guide branches are expectations, not model results or learner evidence.",
+    "Accept supported alternatives and self-correction.",
+    "No local drafts or answers may enter Professor/evaluator payloads.",
+    "No paid provider or database publication is authorized by this draft."
+  ],
+  "publicationGate": "Content QA, server-owned reference integration, exact identity acceptance and separate publication decision remain required.",
+  "fictionalCalculation": {
+    "receivable": 120,
+    "payable": 110,
+    "correction": 10,
+    "price": 150,
+    "cost": 100,
+    "unsold": 0.4,
+    "unrealised": 20
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "version":"p1-publication-dry-run-1",
+  "status":"read_only_schema_and_slot_check_passed",
+  "checkedOn":"2026-09-14",
+  "project":"aazfyosqqeujureksqjs",
+  "scope":"Read-only validation only. No curriculum, learner, progress, audio or budget row was inserted, updated or deleted.",
+  "schemaCheck":{
+    "tablesChecked":["courses","modules","lessons","lesson_terms","lesson_sources","questions","cases","lesson_competencies"],
+    "result":"required publication columns confirmed in the current V2 schema"
+  },
+  "targets":[
+    {"track":"finance","courseSlug":"finance-ireland-v2","moduleSlug":"ifrs-reporting","matchingModules":1,"currentMaxLessonSequence":1,"targetSequence":2,"targetSequenceRows":0,"targetSlug":"revenue-judgement-contracts-performance-obligations-cutoff","targetSlugRows":0,"slot":"free"},
+    {"track":"payroll","courseSlug":"irish-payroll-v2","moduleSlug":"gross-to-net","matchingModules":1,"currentMaxLessonSequence":1,"targetSequence":2,"targetSequenceRows":0,"targetSlug":"rpn-pay-date-employment-id-payroll-submission","targetSlugRows":0,"slot":"free"},
+    {"track":"english","courseSlug":"english-academy","moduleSlug":"spoken-fluency","matchingModules":1,"currentMaxLessonSequence":1,"targetSequence":2,"targetSequenceRows":0,"targetSlug":"clarify-check-understanding-handle-meetings","targetSlugRows":0,"slot":"free"}
+  ],
+  "nextPublicationGate":[
+    "Recheck current-sensitive sources immediately before publication, especially Irish payroll guidance.",
+    "Resolve module IDs by course/module slugs at execution time; never hardcode generated module UUIDs in the publication plan.",
+    "Insert future lesson rows as is_published=false first.",
+    "Attach reviewed sources/terms/cases/questions before any separate publish=true decision.",
+    "Do not create learner progress, mastery, Error Bank, spaced-review or audio rows during curriculum publication.",
+    "Publication remains an explicit separate Supabase write/deployment decision."
+  ],
+  "authorization":"This file records a dry-run only and is not authorization to publish or write to Supabase."
+}

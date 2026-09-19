@@ -1,0 +1,8 @@
+import fs from 'node:fs';
+if(process.env.GITHUB_REF_NAME!=='feat/professor-experience-2026-09-13')throw new Error('wrong_branch');
+const path='professor-agent/src/index.ts';let source=fs.readFileSync(path,'utf8');
+function edit(before,after){if(source.includes(after))return;if(source.split(before).length!==2)throw new Error('turn_taking_anchor_not_unique');source=source.replace(before,after);}
+edit("    const intensity = coachingIntensity(profile, metadata);\n    const startedAt = Date.now();","    const intensity = coachingIntensity(profile, metadata);\n    // Deterministic word-count cut-ins are an oral-mock pressure tool only. Normal, coaching,\n    // validation, case and English-conversation sessions rely on semantic turn detection and\n    // the learner explicitly yielding the floor; this avoids robotic mid-answer interruptions.\n    const automaticMidTurnCoaching = metadata.mode === 'oral_mock';\n    const startedAt = Date.now();");
+edit("      const spoken = typeof event?.transcript === 'string' ? event.transcript.trim() : '';\n      if (!spoken) return;\n\n      partialUserTranscript = mergeStreamingTranscript(partialUserTranscript, spoken);","      const spoken = typeof event?.transcript === 'string' ? event.transcript.trim() : '';\n      if (!spoken) return;\n      if (!automaticMidTurnCoaching) return;\n\n      partialUserTranscript = mergeStreamingTranscript(partialUserTranscript, spoken);");
+fs.writeFileSync(path,source);
+console.log('Natural turn-taking candidate materialized: deterministic mid-turn cut-ins only in oral_mock. No deployment or provider call.');

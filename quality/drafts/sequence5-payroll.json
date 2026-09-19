@@ -1,0 +1,283 @@
+{
+  "version": "core-written-foundation-1",
+  "status": "full_draft_not_published_to_database",
+  "track": "payroll",
+  "roadmapSequence": 5,
+  "slug": "payroll-corrections-overpayments-reconciliation",
+  "reviewedOn": "2026-09-14",
+  "module": {
+    "track": "payroll",
+    "title": "Payroll corrections: distinguish the error before fixing it",
+    "goal": "Separate a reporting error from a pay error and prepare an auditable correction plan.",
+    "scope": "Irish payroll workflow foundation. No live payroll, tax calculation, legal recovery advice or automatic employee deduction. Cross-year, disputed and exceptional recoveries require the applicable current guidance and authorised review.",
+    "sections": [
+      {
+        "id": "payroll5-s1",
+        "title": "1. Identify which record is wrong",
+        "paragraphs": [
+          "Revenue distinguishes over/underpayments from incorrect details in a payroll submission. Its guidance provides next-payroll correction examples for pay errors and allows an amended submission for incorrect reported details. Do not treat these as the same event.",
+          "Original case: approved gross pay and actual paid payroll both show 2,800, but the submission shows 2,880. The supplied evidence identifies an 80 reporting overstatement, not an 80 cash overpayment. Reducing the next bank payment would create a new error."
+        ],
+        "supportPt": "Primeiro identifique o registro errado. Erro de declaração não comprova pagamento a maior.",
+        "sourceIds": [
+          "corrections"
+        ]
+      },
+      {
+        "id": "payroll5-s2",
+        "title": "2. Trace a real pay error",
+        "paragraphs": [
+          "Original alternative: approved gross 2,800 but processed gross 2,950; the case reviewer confirms an actual gross overpayment of 150. The gross difference is known, but net recovery and revised charges have not been calculated. Do not assume the employee owes 150 net.",
+          "Prepare the review: pay period, approved input, processed result, actual transfer, submission reference and reason. Confirm the authorised recovery workflow and employee communication before action. A valid arithmetic difference is not permission to debit an employee."
+        ],
+        "supportPt": "Diferença bruta de 150 não define recuperação líquida. Reúna evidência e aprovação.",
+        "sourceIds": [
+          "corrections"
+        ]
+      },
+      {
+        "id": "payroll5-s3",
+        "title": "3. Keep the correction traceable",
+        "paragraphs": [
+          "Original control design: preserve the original record, correction reason, linked replacement or adjustment, reviewer and confirmation that the destination accepted it. Reconcile the payroll result, payment file and submission after the correction.",
+          "Do not submit repeatedly because the screen is slow. First inspect the acknowledgement and current record state using the authorised system process. A missing acknowledgement means the outcome is uncertain; it does not prove that nothing happened."
+        ],
+        "supportPt": "Mantenha o vínculo entre original e correção. Resposta ausente não confirma falha.",
+        "sourceIds": [
+          "corrections"
+        ]
+      },
+      {
+        "id": "payroll5-s4",
+        "title": "4. Explain what is established",
+        "paragraphs": [
+          "Original manager note: the submission is overstated by 80 against confirmed processed pay of 2,800; payroll cash is correct in this case. Correct the reporting record through the reviewed process and verify acceptance. No employee cash recovery follows from these facts.",
+          "When the cause is unconfirmed, use a precise open question. “We are comparing approved input with the submitted record” is better than accusing the operator or promising an exact net adjustment before it has been reviewed."
+        ],
+        "supportPt": "Comunique o fato confirmado, a ação e a verificação. Não invente causa ou efeito líquido.",
+        "sourceIds": [
+          "corrections"
+        ]
+      }
+    ],
+    "terms": [
+      {
+        "term": "Reporting error",
+        "meaning": "Incorrect submitted data despite possibly correct pay.",
+        "pt": "erro de declaração",
+        "example": "The submission overstates pay by 80."
+      },
+      {
+        "term": "Overpayment",
+        "meaning": "Amount paid above the approved entitlement.",
+        "pt": "pagamento a maior",
+        "example": "The alternative case has a gross overpayment."
+      },
+      {
+        "term": "Recovery",
+        "meaning": "Reviewed process for recouping a confirmed overpayment.",
+        "pt": "recuperação",
+        "example": "Net recovery is not supplied."
+      },
+      {
+        "term": "Acknowledgement",
+        "meaning": "Confirmation of processing or receipt.",
+        "pt": "confirmação",
+        "example": "Check acknowledgement before resubmitting."
+      },
+      {
+        "term": "Audit trail",
+        "meaning": "Linked evidence of original and corrected records.",
+        "pt": "trilha de auditoria",
+        "example": "Preserve the original reference."
+      },
+      {
+        "term": "Variance",
+        "meaning": "Difference between defined records.",
+        "pt": "diferença",
+        "example": "Name both sides of the variance."
+      }
+    ],
+    "visual": {
+      "title": "Payroll corrections: distinguish the error before fixing it — decision map",
+      "note": "Original fictional exercise; not a live calculation or measured learner result.",
+      "headers": [
+        "Item",
+        "Supplied detail",
+        "Interpretation"
+      ],
+      "rows": [
+        [
+          "Approved gross",
+          "2,800",
+          "Confirmed"
+        ],
+        [
+          "Processed gross",
+          "2,800",
+          "Confirmed correct"
+        ],
+        [
+          "Submitted gross",
+          "2,880",
+          "Overstated by 80"
+        ],
+        [
+          "Cash recovery",
+          "Not justified",
+          "Reporting-only error"
+        ]
+      ],
+      "question": "Should the next bank payment be reduced by 80?",
+      "answer": "No. The case confirms a reporting error, not a cash overpayment."
+    },
+    "caseStudy": {
+      "title": "Payroll corrections: distinguish the error before fixing it — applied case",
+      "scenario": [
+        "Approved and processed gross pay both 2,800; actual transfer agrees with the approved payroll result.",
+        "Submission gross 2,880; reviewer confirms the submitted amount is the error.",
+        "No other pay or tax differences supplied."
+      ],
+      "task": "Classify the error, calculate its amount and outline the correction and verification.",
+      "hints": [
+        "Compare like-for-like gross records.",
+        "Do not infer a cash debt from a reporting difference."
+      ],
+      "modelAnswer": "The reporting overstatement is 80. Use the reviewed submission-correction process and retain its link to the original record. Confirm acceptance and reconcile the corrected submission to processed pay of 2,800. Do not recover 80 from the employee because actual pay is correct in the supplied facts.",
+      "reviewChecks": [
+        "Reporting-only difference 80.",
+        "No unjustified employee deduction.",
+        "Original/correction link and reviewer.",
+        "Acceptance and reconciliation checks."
+      ],
+      "transfer": "For the alternative true overpayment case, obtain the reviewed recovery calculation; do not reuse the reporting-only solution."
+    },
+    "checkpoint": [
+      {
+        "id": "payroll5-q1",
+        "prompt": "The main case difference is:",
+        "options": [
+          "80 reporting overstatement",
+          "80 proven net debt",
+          "No difference"
+        ],
+        "correctIndex": 0,
+        "explanation": "2,880 - 2,800 = 80 in the submitted record.",
+        "reviewSection": "payroll5-s1"
+      },
+      {
+        "id": "payroll5-q2",
+        "prompt": "Gross overpayment equals net recovery automatically:",
+        "options": [
+          "True",
+          "False",
+          "Only for small amounts"
+        ],
+        "correctIndex": 1,
+        "explanation": "Charges and recovery process need review.",
+        "reviewSection": "payroll5-s2"
+      },
+      {
+        "id": "payroll5-q3",
+        "prompt": "The original record should be:",
+        "options": [
+          "Deleted",
+          "Hidden",
+          "Retained with a correction link"
+        ],
+        "correctIndex": 2,
+        "explanation": "The audit trail explains the change.",
+        "reviewSection": "payroll5-s3"
+      },
+      {
+        "id": "payroll5-q4",
+        "prompt": "Missing acknowledgement proves no action occurred:",
+        "options": [
+          "True",
+          "False",
+          "Always for ROS"
+        ],
+        "correctIndex": 1,
+        "explanation": "The outcome may be uncertain.",
+        "reviewSection": "payroll5-s3"
+      },
+      {
+        "id": "payroll5-q5",
+        "prompt": "A reporting-only error justifies employee cash recovery:",
+        "options": [
+          "Yes",
+          "No, not from these facts",
+          "If close is busy"
+        ],
+        "correctIndex": 1,
+        "explanation": "Correct pay should not be reduced to repair a report.",
+        "reviewSection": "payroll5-s4"
+      }
+    ],
+    "practiceExercises": [
+      {
+        "id": "payroll5-p1",
+        "question": "Approved gross 1,900; processed 1,900; submitted 1,990. Identify the error.",
+        "hints": [
+          "Compare the three records.",
+          "Cash error is not supplied."
+        ],
+        "answer": "A reporting overstatement of 90; no cash recovery follows from these facts.",
+        "explanation": "A submission correction and a pay recovery solve different problems."
+      },
+      {
+        "id": "payroll5-p2",
+        "question": "Approved gross 2,200; confirmed processed overpayment produces gross 2,350. What can you state?",
+        "hints": [
+          "Compute gross difference.",
+          "Do not compute missing net taxes."
+        ],
+        "answer": "Gross overpayment is 150; net recovery and applicable process still require review.",
+        "explanation": "Gross and net are distinct."
+      },
+      {
+        "id": "payroll5-p3",
+        "question": "A correction acknowledgement is missing. Should you send the same correction immediately again?",
+        "hints": [
+          "Outcome is uncertain.",
+          "Check current processing state."
+        ],
+        "answer": "Verify the current record and acknowledgement through the authorised workflow before any repeat.",
+        "explanation": "Repeated submission can duplicate a correction."
+      }
+    ],
+    "sources": [
+      {
+        "id": "corrections",
+        "label": "Revenue — Payroll corrections",
+        "url": "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/corrections.aspx",
+        "supports": "Distinguishes over/underpayment adjustments from incorrect submitted details. No source example or tax amount is reused.",
+        "reviewedOn": "2026-09-14"
+      }
+    ]
+  },
+  "professorGuide": {
+    "status": "offline_authored_guide_not_live",
+    "opening": "Ask which of approved, processed, paid and submitted records is wrong.",
+    "whenCorrect": "Give the alternative real gross overpayment and ask which extra evidence is now needed.",
+    "whenUncertain": "Ask which supplied fact is missing or unclear. Offer the first case hint, then invite another attempt.",
+    "whenMisconception": "If they propose taking 80 from the employee, ask what evidence establishes a cash overpayment.",
+    "whenSelfCorrected": "Use the corrected answer, not the abandoned phrase, as the current response. Ask one transfer question.",
+    "whenAskedForAnswer": "Provide a concise explanation and one worked step; invite an optional fresh attempt without claiming independent mastery.",
+    "evidenceBoundary": "Use only actual session evidence if this guide is separately integrated. Never consume local drafts or checkpoint results. Do not infer pronunciation/acoustic fluency from text, technical mastery from a phrase, or a CEFR level from one task."
+  },
+  "assessmentBoundaries": [
+    "Authored answer keys and guide branches are expectations, not model results or learner evidence.",
+    "Accept supported alternatives and self-correction.",
+    "No local drafts or answers may enter Professor/evaluator payloads.",
+    "No paid provider or database publication is authorized by this draft."
+  ],
+  "publicationGate": "Content QA, server-owned reference integration, exact identity acceptance and separate publication decision remain required.",
+  "fictionalCalculation": {
+    "approved": 2800,
+    "processed": 2800,
+    "submitted": 2880,
+    "reportingDifference": 80,
+    "cashRecovery": null
+  }
+}
