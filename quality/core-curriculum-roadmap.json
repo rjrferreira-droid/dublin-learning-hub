@@ -1,9 +1,18 @@
 {
-  "version":"core-curriculum-roadmap-1",
+  "version":"core-curriculum-roadmap-2",
   "status":"draft_not_published_to_database",
+  "deliveryFocus":{
+    "activeTracks":["finance","english"],
+    "standbyTracks":["payroll"],
+    "targetLessonsPerActiveTrack":8,
+    "targetActiveLessons":16,
+    "includesExistingReferenceLessons":true,
+    "standbyPolicy":"Preserve existing Payroll lessons, drafts, access and learner history. Defer new Payroll content and track-specific features; retain shared infrastructure compatibility.",
+    "acceptancePlan":"docs/FINANCE_ENGLISH_RELEASE_SCOPE_2026-09-19.md"
+  },
   "verifiedCurrentBaseline":"Exactly one published lesson currently exists in each of the three active core tracks; this roadmap does not imply those future lessons exist in the app yet.",
   "principles":[
-    "Keep the current three-track scope: Accounting/IFRS with a light Irish statutory layer, Irish Payroll, and professional English.",
+    "Prioritise Accounting/IFRS with a light Irish statutory layer and professional English for delivery. Preserve Irish Payroll in standby without deleting content or restricting existing access.",
     "Build usable professional judgement and communication, not a catalogue of standards or tax rates.",
     "Each future Golden Lesson should reuse the same architecture: written core, examples, local practice, case, fixed checkpoint, Professor reference, evaluator criteria, revision hooks and source scope.",
     "Current-rate or date-sensitive payroll content must identify its source/review date and must not be inferred from fictional examples.",
@@ -74,9 +83,9 @@
     }
   },
   "buildOrder":[
-    "Finish real acceptance of the three current reference Golden Lessons before calling them end-to-end accepted.",
-    "In parallel, author P1 lesson specifications and source maps without publishing them to the DB.",
-    "Build the next P1 written foundation in each track, then attach local practice/evaluator references using the existing shared architecture.",
+    "Finish real acceptance of the Finance and English reference Golden Lessons before calling them end-to-end accepted; retain Payroll regression coverage.",
+    "In parallel, review Finance and English P1 lesson specifications and source maps without publishing them to the DB; preserve existing Payroll drafts.",
+    "Build the next Finance and English P1 written foundations, then attach local practice/evaluator references using the existing shared architecture.",
     "Publish new lessons to the database only after content/source QA and a separate deployment decision."
   ]
 }

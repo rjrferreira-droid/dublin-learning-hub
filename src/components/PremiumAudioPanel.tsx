@@ -16,9 +16,10 @@ export function PremiumAudioPanel({ lessonId, lessonTitle }: PremiumAudioPanelPr
 
   const enabled = isFeatureEnabled('premiumAudio');
   const available = enabled && Boolean(lessonId);
+  const runtimeClosed = error?.code === 'runtime-closed';
 
   async function loadAudio() {
-    if (!lessonId || loading) return;
+    if (!lessonId || loading || runtimeClosed) return;
     setLoading(true);
     setError(null);
     try {
@@ -55,7 +56,7 @@ export function PremiumAudioPanel({ lessonId, lessonTitle }: PremiumAudioPanelPr
             type="button"
             aria-label={audio ? 'Reload Premium Audio' : 'Load Premium Audio'}
             onClick={loadAudio}
-            disabled={loading}
+            disabled={loading || runtimeClosed}
           >
             {loading ? '…' : audio ? '↻' : '▶'}
           </button>
@@ -65,6 +66,8 @@ export function PremiumAudioPanel({ lessonId, lessonTitle }: PremiumAudioPanelPr
             <span>
               {loading
                 ? 'Preparing premium narration…'
+                : runtimeClosed
+                  ? 'Awaiting audio activation'
                 : audio
                   ? audio.cached
                     ? 'Loaded from secure lesson cache'
@@ -76,8 +79,8 @@ export function PremiumAudioPanel({ lessonId, lessonTitle }: PremiumAudioPanelPr
           <div className="audio-wave" aria-hidden="true">▁▃▅▂▆▃▇▅▂▆▃▅▁</div>
 
           {!audio && (
-            <button className="secondary-dark-btn" type="button" onClick={loadAudio} disabled={!available || loading}>
-              {loading ? 'Loading…' : 'Load audio'}
+            <button className="secondary-dark-btn" type="button" onClick={loadAudio} disabled={!available || loading || runtimeClosed}>
+              {loading ? 'Loading…' : runtimeClosed ? 'Not activated yet' : 'Load audio'}
             </button>
           )}
         </div>
@@ -99,7 +102,7 @@ export function PremiumAudioPanel({ lessonId, lessonTitle }: PremiumAudioPanelPr
 
       {error && (
         <div className={`audio-error ${error.retryable ? 'retryable' : 'blocked'}`} role="alert" aria-live="polite">
-          <strong>{error.code === 'budget-reached' ? 'Generation budget reached' : error.retryable ? 'Audio temporarily unavailable' : 'Audio unavailable'}</strong>
+          <strong>{runtimeClosed ? 'Audio awaiting activation' : error.code === 'budget-reached' ? 'Generation budget reached' : error.retryable ? 'Audio temporarily unavailable' : 'Audio unavailable'}</strong>
           <span>{error.message}</span>
           {error.retryable && <button className="secondary-btn" type="button" onClick={loadAudio}>Try again</button>}
         </div>

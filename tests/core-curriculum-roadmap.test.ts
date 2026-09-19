@@ -2,6 +2,15 @@ import test from 'node:test';import assert from 'node:assert/strict';import fs f
 const roadmap=JSON.parse(fs.readFileSync('quality/core-curriculum-roadmap.json','utf8'));
 const specs=JSON.parse(fs.readFileSync('quality/next-p1-lesson-specs.json','utf8'));
 const tracks=['finance','payroll','english'] as const;
+test('Finance and English delivery focus preserves Payroll and counts reference lessons within sixteen',()=>{
+ const focus=roadmap.deliveryFocus;
+ assert.deepEqual(focus.activeTracks,['finance','english']);assert.deepEqual(focus.standbyTracks,['payroll']);
+ assert.equal(focus.includesExistingReferenceLessons,true);
+ const count=focus.activeTracks.reduce((sum:number,key:string)=>sum+1+roadmap.tracks[key].next.length,0);
+ assert.equal(count,16);assert.equal(focus.targetActiveLessons,count);assert.equal(focus.targetLessonsPerActiveTrack,8);
+ assert.match(focus.standbyPolicy,/Preserve existing Payroll lessons, drafts, access and learner history/);
+ assert.ok(fs.existsSync(focus.acceptancePlan));assert.equal(roadmap.tracks.payroll.next.length,7);
+});
 const allowedHosts=new Set(['www.ifrs.org','www.frc.org.uk','www.revenue.ie','learnenglish.britishcouncil.org']);
 test('roadmap expands only the three current core tracks and remains a non-database draft',()=>{assert.equal(roadmap.status,'draft_not_published_to_database');assert.deepEqual(Object.keys(roadmap.tracks).sort(),[...tracks].sort());assert.match(roadmap.verifiedCurrentBaseline,/one published lesson/i);});
 for(const track of tracks)test(`${track}: roadmap keeps the current reference lesson and seven ordered next lessons`,()=>{const plan=roadmap.tracks[track];assert.equal(plan.currentReference.sequence,1);assert.equal(plan.currentReference.status,'published_reference_lesson');assert.equal(plan.next.length,7);assert.deepEqual(plan.next.map((x:any)=>x.sequence),[2,3,4,5,6,7,8]);assert.ok(plan.next.filter((x:any)=>x.priority==='P1').length>=3);});

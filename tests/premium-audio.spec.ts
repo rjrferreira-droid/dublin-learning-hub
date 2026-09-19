@@ -2,6 +2,23 @@ import { expect, test } from '@playwright/test';
 import { EdgeFunctionError } from '../src/services/edge';
 import { PremiumAudioError, SupabasePremiumAudioService } from '../src/services/premiumAudio';
 
+test('closed runtime has friendly non-retryable copy through the real service', async () => {
+  const service = new SupabasePremiumAudioService(async () => {
+    throw new EdgeFunctionError('audio_runtime_closed', 503, { error: 'audio_runtime_closed' });
+  });
+  await expect(service.getOrCreateLessonAudio('fixture')).rejects.toMatchObject({
+    code: 'runtime-closed', retryable: false,
+    message: 'Premium Audio has not been activated yet. Trying again will not enable it. You can continue with the written lesson and practice activities.',
+  });
+});
+
+test('unknown backend and internal errors never expose their raw messages', async () => {
+  for (const cause of [new EdgeFunctionError('internal_private_detail', 503, {error:'internal_private_detail'}), new Error('internal_private_detail')]) {
+    const service = new SupabasePremiumAudioService(async () => { throw cause; });
+    await expect(service.getOrCreateLessonAudio('fixture')).rejects.toMatchObject({code:'unknown',message:'Premium Audio could not be loaded.'});
+  }
+});
+
 test('Premium Audio keeps concurrent authenticated requests independent and revalidates every later request', async () => {
   let calls = 0;
   const service = new SupabasePremiumAudioService(async () => {

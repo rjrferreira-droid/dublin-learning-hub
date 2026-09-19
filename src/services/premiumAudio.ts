@@ -50,13 +50,12 @@ export function normalizePremiumAudioError(cause: unknown): PremiumAudioError {
   if (cause instanceof PremiumAudioError) return cause;
   if (cause instanceof EdgeFunctionError) {
     const policy=premiumAudioBackendErrorPolicy(edgeCode(cause),cause.status);
-    const message=policy.code==='unknown'&&cause.message?cause.message:policy.message;
-    return new PremiumAudioError(policy.code,message,policy.retryable,cause.status);
+    return new PremiumAudioError(policy.code,policy.message,policy.retryable,cause.status);
   }
   if (cause instanceof TypeError) {
     return new PremiumAudioError('network-failed', 'Premium Audio could not reach the backend. Check the connection and try again.', true);
   }
-  return new PremiumAudioError('unknown', cause instanceof Error ? cause.message : 'Premium Audio could not be loaded.', true);
+  return new PremiumAudioError('unknown', 'Premium Audio could not be loaded.', true);
 }
 
 export class SupabasePremiumAudioService implements PremiumAudioService {

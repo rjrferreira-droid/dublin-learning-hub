@@ -1,6 +1,16 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';
 import {premiumAudioBudgetDecision} from '../supabase/functions/_shared/premium-audio-budget.ts';
 import {premiumAudioBackendErrorPolicy} from '../src/services/premiumAudioPolicy.ts';
+test('closed runtime explains activation and never encourages another request',()=>{
+ const policy=premiumAudioBackendErrorPolicy('audio_runtime_closed',503);
+ assert.equal(policy.code,'runtime-closed');assert.equal(policy.retryable,false);
+ assert.match(policy.message,/not been activated/);assert.match(policy.message,/written lesson/);
+ assert.ok(!policy.message.includes('audio_runtime_closed'));
+ const panel=fs.readFileSync('src/components/PremiumAudioPanel.tsx','utf8');
+ assert.match(panel,/disabled=\{loading \|\| runtimeClosed\}/);
+ assert.match(panel,/disabled=\{!available \|\| loading \|\| runtimeClosed\}/);
+ assert.match(panel,/if \(!lessonId \|\| loading \|\| runtimeClosed\) return/);
+});
 const exposure={contractVersion:1 as const,periodMonth:'2026-09-01',protectedReservationUsd:4,rawReservationUsd:4,knownCostUpliftUsd:0,activeReservedUsd:4,unresolvedReservedUsd:0,carriedReservedUsd:0,currentPeriodReservedUsd:4,futurePeriodReservedUsd:0,activeCount:1,unresolvedCount:0,staleCount:0,needsReconciliationCount:0,oldestPendingAt:'2026-09-14T10:00:00Z'};
 test('global budget includes all logged AI plus protected Professor holds from the reservation aggregate',()=>{const d=premiumAudioBudgetDecision({usageRows:[{feature:'professor_evaluation',estimated_cost_usd:3},{feature:'lesson_audio',estimated_cost_usd:2},{feature:'other_ai',estimated_cost_usd:70}],exposure,aiHardCapUsd:80,premiumAudioCapUsd:20,reservationUsd:2});assert.equal(d.loggedAiUsd,75);assert.equal(d.professorProtectedUsd,4);assert.equal(d.globalCommittedUsd,79);assert.equal(d.allowed,false);assert.equal(d.reason,'global_ai_budget_reached');});
 test('premium subcap includes evaluator plus lesson audio/tts, matching Cost Center semantics',()=>{const d=premiumAudioBudgetDecision({usageRows:[{feature:'professor_evaluation',estimated_cost_usd:8},{feature:'lesson_audio',estimated_cost_usd:5},{feature:'lesson_tts',estimated_cost_usd:1},{feature:'professor_livekit',estimated_cost_usd:20}],exposure:{...exposure,protectedReservationUsd:0,rawReservationUsd:0,activeReservedUsd:0,activeCount:0,oldestPendingAt:null},aiHardCapUsd:80,premiumAudioCapUsd:15,reservationUsd:1.5});assert.equal(d.premiumBucketSpentUsd,14);assert.equal(d.reason,'premium_audio_budget_reached');});
