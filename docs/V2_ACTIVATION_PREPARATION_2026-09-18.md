@@ -98,3 +98,27 @@ Used the official Dashboard's Edit bucket > Bucket settings form; submitted Save
 Post-save Dashboard removed the Public badge. Independent SQL confirmed public=false, allowed_mime_types=[audio/mpeg], file_size_limit=15728640, objects=0 and policies=0. Storage RLS and owners were independently rechecked and unchanged. No file was uploaded or generated.
 
 No Audio v3 SQL/grants, Edge deployment, provider call, voice admission, lesson publication or production promotion was performed. Next prerequisite: review/install authored Audio v3 binding with API access closed, then separately review minimal service access and pinned Edge artifact before paid acceptance. The legacy deployed audio function must not be treated as compatible or activated merely because Storage is private.
+
+## Authored Audio v3 binding installed closed — 19 September 2026
+
+The first read-only preflight rejected the candidate before any connected DDL: its budget CHECK inventory matched the simplified fixture (1/1/2 checks), not the existing V2 database (5/9/3). No real protection was removed. Commit 44f73105087535abebe33dde68b7c0b9612759a6 corrects the exact inventory, requires all 17 actual definitions and validated constraints, and mirrors these in disposable tests. Added missing/weakened-budget-check rejection cases. The first CI run exposed budgets left inconsistent by earlier fictional boundary tests; e115cc44a2ce16022a23990cda8520ba35c5bf29 resets only that disposable fixture before adding the real constraints.
+
+Corrected source: quality/candidates/premium-audio-source-binding.sql.
+SHA-256: 14767218aa5e766aa80aaf569046ba39bf540d9e81d16d9e22ca587e16e79159.
+Git blob: 64aa32590a3cfa745147f18c06d6a4f88e44c56c.
+The older source hash above is superseded.
+
+[Isolated PostgreSQL run 35451019332](https://github.com/rjrferreira-droid/dublin-learning-hub/actions/runs/35451019332) passed at e115cc44a2ce16022a23990cda8520ba35c5bf29: concurrency, admission/provider fences, receipts, closed v3 cache lifecycle, negative prerequisites including the new budget cases, and nondestructive stop. Full application regression run 35451019394 was still in progress when checked; no completed full-regression claim is made for this change.
+
+All three corrected prerequisite blocks passed on the approved V2 in a read-only transaction. Fresh Storage reads confirmed private MPEG-only, 15,728,640 bytes and zero objects. Applied the exact corrected source once with apply_migration:
+- 20260919151239 / lh_v2_premium_audio_source_binding_v3_closed
+- Target aazfyosqqeujureksqjs only; success=true.
+- Nine new functions exactly match source bodies, security modes and postgres ownership; owner-only ACLs and denied EXECUTE for anon/authenticated/service_role independently verified.
+- Binding table: zero rows, RLS enabled, postgres owner, owner-only ACL, zero policies.
+- Nine named v3 indexes valid/ready; seven added v3 constraints validated.
+- Before/after row counts and full-row SHA-256 digests match for all 12 preserved collections: profile, courses, modules, lessons, assets, usage, sessions, reservations, both budget-settings tables, Professor settlement receipts and Audio attempts.
+- Unresolved USD 4 hold unchanged. No lesson publication, provider call, audio object, service grant, stage activation, Edge/LiveKit deployment or Production promotion.
+
+Post-DDL security advisor: 12 INFO no-policy RLS notices (one new expected closed internal binding table), the same four authenticated SECURITY DEFINER RPC WARNs and disabled leaked-password protection WARN. No new warning category. [RLS notice reference](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy). Existing warning remediation links remain above.
+
+Next: review minimal service-only v3 access and pin/lock the independently deployed Edge dependency graph. Do not enable generation or infer live audio success from this closed schema installation. The source file's historical CANDIDATE header does not override this installation record; do not reapply.
