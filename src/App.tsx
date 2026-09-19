@@ -27,6 +27,7 @@ import {
   type LearningMemorySnapshot,
 } from './services/learningMemory';
 import { supabase } from './services/supabase';
+import { isTrackVisible, primaryVisibleTrack } from './config/presentation';
 
 type TrackKey = 'finance' | 'payroll' | 'english';
 type ViewKey = 'dashboard' | 'learn' | 'revision' | 'performance' | 'professor' | 'error-bank' | 'english-academy';
@@ -80,6 +81,7 @@ const tracks: Track[] = [
 ];
 
 const lessonTabs = ['Learn', 'Audio', 'English', 'Practice', 'Visual', 'Case', 'Test', 'Sources', 'Professor'];
+const visibleTracks = tracks.filter(track => isTrackVisible(track.key));
 const reviewIntervals = new Set(['D+1', 'D+7', 'D+30', 'D+90']);
 const errorDomains = new Set(['technical', 'grammar', 'vocabulary', 'pronunciation', 'fluency', 'register']);
 
@@ -157,7 +159,7 @@ function App() {
   const account = useLearnerSession();
   const memoryRequest = useRef(0);
   const [view, setView] = useState<ViewKey>('dashboard');
-  const [trackKey, setTrackKey] = useState<TrackKey>(account.learnerKey === 'viviane' ? 'payroll' : 'finance');
+  const [trackKey, setTrackKey] = useState<TrackKey>(primaryVisibleTrack(account.learnerKey));
   const [lessonOpen, setLessonOpen] = useState(false);
   const [lessonTab, setLessonTab] = useState('Learn');
   const [learnerKey, setLearnerKey] = useState<LearnerKey>(account.learnerKey);
@@ -228,7 +230,7 @@ function App() {
     setLearnerKey(key);
     setLessonOpen(false);
     setView('dashboard');
-    setTrackKey(key === 'viviane' ? 'payroll' : 'finance');
+    setTrackKey(primaryVisibleTrack(key));
     setSelectedCatalogLesson(null);
   };
 
@@ -247,7 +249,7 @@ function App() {
           <div className="avatar">{profile.initials}</div>
           <div className="profile-card-copy">
             <strong>{profile.displayName}</strong>
-            <span>{profile.primaryTrack === 'rafael_finance' ? 'Finance Ireland' : 'Irish Payroll'} • Dublin 2028/29</span>
+            <span>{tracks.find(track => track.key === primaryVisibleTrack(learnerKey))?.name} • Dublin 2028/29</span>
           </div>
           <div className="status-dot" title="Profile active" />
         </div>
@@ -272,7 +274,7 @@ function App() {
         <div className="side-divider" />
         <div className="side-caption">LEARNING TRACKS</div>
         <div className="track-mini-list">
-          {tracks.map((track) => (
+          {visibleTracks.map((track) => (
             <button key={track.key} className={`track-mini ${trackKey === track.key ? 'selected' : ''}`} onClick={() => setTrackKey(track.key)}>
               <span className={`track-dot ${track.key}`} />
               <span>{track.name}</span>
@@ -365,8 +367,8 @@ function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, open
 }) {
   const intelligence = useMemo(() => realIntelligence(memory, learnerKey), [memory, learnerKey]);
   const priorities = useMemo(() => rankAdaptivePriorities({ ...intelligence, now: new Date(), limit: 4 }), [intelligence]);
-  const primaryTrack: TrackKey = learnerKey === 'viviane' ? 'payroll' : 'finance';
-  const primaryLabel = learnerKey === 'viviane' ? 'Continue Payroll' : 'Continue Finance';
+  const primaryTrack = primaryVisibleTrack(learnerKey);
+  const primaryLabel = primaryTrack === 'english' ? 'Continue English' : primaryTrack === 'payroll' ? 'Continue Payroll' : 'Continue Finance';
   const dueReviews = memory?.reviews.filter((item) => item.status === 'due').length ?? 0;
   const measuredCompetencies = memory?.competencies.length ?? 0;
   const evaluatedSessions = memory?.history.length ?? 0;
@@ -417,12 +419,12 @@ function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, open
       <div className="section-heading full-span">
         <div>
           <div className="eyebrow">YOUR PROGRAMMES</div>
-          <h2>Three connected learning tracks</h2>
+          <h2>Your active learning tracks</h2>
         </div>
         <span>Measured sessions • Error Bank • spaced review</span>
       </div>
 
-      {tracks.map((track) => {
+      {visibleTracks.map((track) => {
         const trackSessions = memory?.history.filter((session) => session.lessonId === track.lessonId) ?? [];
         const latestTrackSession = trackSessions[0] ?? null;
         const measuredAverage = sessionAverage(latestTrackSession);
@@ -474,15 +476,15 @@ function PriorityCard({ priority, rank }: { priority: AdaptivePriority; rank: nu
 }
 
 function LearningLibrary({ learnerKey, catalog, catalogUnavailable, openLesson }: { learnerKey: LearnerKey; catalog: CatalogLesson[]; catalogUnavailable:boolean; openLesson: (key: TrackKey,lesson?:CatalogLesson) => void }) {
-  const primaryTrack=learnerKey==='viviane'?'payroll':'finance';
-  const available=catalog.length?catalog:[];
+  const primaryTrack=primaryVisibleTrack(learnerKey);
+  const available=catalog.filter(lesson=>isTrackVisible(lesson.track));
   return <section className="page-stack" data-testid="learning-library">
-    <div className="section-heading"><div><div className="eyebrow">LEARNING LIBRARY</div><h2>Published lessons with reviewed runtime content</h2></div><span>{available.length||3} available now</span></div>
-    {catalogUnavailable&&<p role="status" className="priority-note"><strong>Catalog temporarily unavailable</strong><span>The three verified Golden Lessons remain available as a safe fallback.</span></p>}
+    <div className="section-heading"><div><div className="eyebrow">LEARNING LIBRARY</div><h2>Published lessons with reviewed runtime content</h2></div><span>{available.length||visibleTracks.length} available now</span></div>
+    {catalogUnavailable&&<p role="status" className="priority-note"><strong>Catalog temporarily unavailable</strong><span>Verified Golden Lessons from your visible tracks remain available as a safe fallback.</span></p>}
     <div className="library-grid">
       {available.length?available.map((lesson,index)=>{const base=tracks.find(t=>t.key===lesson.track)!;return <article className={`lesson-library-card ${lesson.track===primaryTrack?'primary-track-card':''}`} key={lesson.id} data-testid={`catalog-lesson-${lesson.slug}`}>
         <div className="lesson-index">{String(index+1).padStart(2,'0')}</div><span className={`track-badge ${lesson.track}`}>{base.accent}</span><h3>{lesson.title}</h3><p>{lesson.subtitle??base.focus}</p><div className="lesson-meta"><span>{lesson.estimatedMinutes} min</span><span>{base.name}</span><span>{lesson.id===base.lessonId?'Professor':'Written ready'}</span></div><button className="primary-btn" onClick={()=>openLesson(lesson.track,lesson)}>Open lesson</button>
-      </article>}):tracks.map((track,index)=><article className={`lesson-library-card ${track.key===primaryTrack?'primary-track-card':''}`} key={track.key}><div className="lesson-index">0{index+1}</div><span className={`track-badge ${track.key}`}>{track.accent}</span><h3>{track.lesson}</h3><p>{track.focus}</p><div className="lesson-meta"><span>10–15 min</span><span>Verified fallback</span><span>Professor</span></div><button className="primary-btn" onClick={()=>openLesson(track.key)}>Open Golden Lesson</button></article>)}
+      </article>}):visibleTracks.map((track,index)=><article className={`lesson-library-card ${track.key===primaryTrack?'primary-track-card':''}`} key={track.key}><div className="lesson-index">0{index+1}</div><span className={`track-badge ${track.key}`}>{track.accent}</span><h3>{track.lesson}</h3><p>{track.focus}</p><div className="lesson-meta"><span>10–15 min</span><span>Verified fallback</span><span>Professor</span></div><button className="primary-btn" onClick={()=>openLesson(track.key)}>Open Golden Lesson</button></article>)}
     </div>
   </section>;
 }
@@ -668,7 +670,7 @@ function PerformanceView({ memory, memoryStatus }: { memory: LearningMemorySnaps
 }
 
 function ProfessorView({ learnerKey, profile, openLesson }: { learnerKey: LearnerKey; profile: LearningProfile; openLesson: (key: TrackKey) => void }) {
-  const primaryTrack: TrackKey = learnerKey === 'viviane' ? 'payroll' : 'finance';
+  const primaryTrack = primaryVisibleTrack(learnerKey);
   const track = tracks.find((item) => item.key === primaryTrack) ?? tracks[0];
   return (
     <section className="page-stack">
@@ -702,7 +704,7 @@ function titleForView(view: ViewKey) {
 
 function subtitleForView(view: ViewKey, profile: LearningProfile) {
   if (view === 'dashboard') return `One adaptive system tuned for ${profile.displayName}, with measured learning evidence kept private to the signed-in account.`;
-  if (view === 'learn') return 'Start with three Golden Lessons before scaling the curriculum.';
+  if (view === 'learn') return 'Explore Finance and English at your own pace.';
   if (view === 'english-academy') return 'General English, professional communication and real-world Dublin exposure in one adaptive programme.';
   if (view === 'revision') return 'Only scheduled reviews from real evaluated sessions appear here.';
   if (view === 'error-bank') return 'Only recurring technical and language mistakes recorded from learner evidence appear here.';

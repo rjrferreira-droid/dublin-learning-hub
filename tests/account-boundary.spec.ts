@@ -110,6 +110,18 @@ async function triggerLegacyHiddenSelector(page:Page,key:Key){
 }
 
 test.describe('simulated account-bound browser journeys',()=>{
+ for(const width of [390,1440]) test(`standby presentation hides Payroll and Manu at ${width}px`,async({page})=>{
+   await page.setViewportSize({width,height:900});
+   const fixture=await setup(page);await page.goto('/');await signIn(page);
+   await expect(page.getByTestId('active-learner-card')).toContainText('Rafael');
+   await expect(page.getByRole('heading',{name:'Irish Payroll',exact:true})).toHaveCount(0);
+   await expect(page.getByRole('button',{name:'Open Manuzinha'})).toHaveCount(0);
+   await expect(page.locator('.track-mini-list')).not.toContainText('Irish Payroll');
+   await page.getByRole('button',{name:'Learning',exact:true}).click();
+   await expect(page.getByTestId('learning-library')).toContainText('2 available now');
+   await expect(page.getByTestId('learning-library')).not.toContainText('Gross-to-Net');
+   expect(fixture.writes).toBe(0);
+ });
  test('registration remains closed until server-owned assignment is installed',async({page})=>{
    const fixture=await setup(page);await page.goto('/');
    await expect(page.getByTestId('registration-closed')).toBeVisible();

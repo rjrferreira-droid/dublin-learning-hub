@@ -60,7 +60,8 @@ jobs:
           P1_EVALUATOR_BUNDLE=published node --experimental-test-module-mocks --test tests/p1-preview-runtime.integration.mjs tests/written-reference-evaluator.integration.mjs
       - run: npx playwright install --with-deps chromium
       - name: Full UI regression including stored examples, confidence distinction and escaped markup
-        run: npx playwright test --grep-invert 'authenticated Learning Hub shell' --retries=0
+        # Preserve full Payroll regression coverage while it is visually hidden by default.
+        run: VITE_SHOW_PAYROLL=true npx playwright test --grep-invert 'authenticated Learning Hub shell|standby presentation' --retries=0
       - name: Production-build lazy loading and recovery
         run: npx playwright test --config playwright.production.config.ts
       - name: Require feedback captures and aggregate metrics
@@ -76,6 +77,8 @@ jobs:
             quality-results/bundle-metrics.json
           retention-days: 7
           if-no-files-found: error
+      - name: Default standby presentation on desktop and mobile
+        run: VITE_SHOW_PAYROLL=false npx playwright test tests/account-boundary.spec.ts --grep 'standby presentation' --retries=0
       - name: Unchanged source and acceptance boundary
         run: |
           git diff --exit-code

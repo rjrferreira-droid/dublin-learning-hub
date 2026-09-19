@@ -6,6 +6,7 @@ import { AuthGate } from './components/AuthGate';
 import { CostCenterPanel } from './components/CostCenterPanel';
 import { LearningMemoryPanel } from './components/LearningMemoryPanel';
 import { LittleEnglish } from './components/LittleEnglish';
+import { presentation } from './config/presentation';
 import { WorkspaceLoadBoundary } from './components/WorkspaceLoadBoundary';
 import './styles.css';
 import './british-premium.css';
@@ -30,7 +31,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <WorkspaceLoadBoundary>
             <Suspense fallback={<p role="status" className="workspace-loading">Preparing your learning workspace…</p>}><App /></Suspense>
           </WorkspaceLoadBoundary>
-          <LittleEnglish />
+          {presentation.showManuLauncher && <LittleEnglish />}
           <LearningMemoryPanel />
           <CostCenterPanel />
         </AuthGate>
