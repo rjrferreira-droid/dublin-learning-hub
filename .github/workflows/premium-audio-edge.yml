@@ -18,11 +18,7 @@ jobs:
       - uses: denoland/setup-deno@v2
         with:
           deno-version: v2.9.6
-      - name: Resolve exact candidate graph without executing the handler
-        run: |
-          deno cache --frozen=false --config supabase/functions/premium-lesson-audio/deno.json supabase/functions/premium-lesson-audio/index.ts
-          echo AUDIO_LOCK_BEGIN
-          cat supabase/functions/premium-lesson-audio/deno.lock
-          echo AUDIO_LOCK_END
       - name: Check complete Edge graph against the generated lock
         run: deno check --frozen --config supabase/functions/premium-lesson-audio/deno.json supabase/functions/premium-lesson-audio/index.ts
+      - name: Preserve committed dependency lock
+        run: git diff --exit-code

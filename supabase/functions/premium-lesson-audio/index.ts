@@ -121,7 +121,8 @@ Deno.serve(async(req:Request)=>{
   };
 
   const {data:profile}=await admin.from("profiles").select("learner_track").eq("id",user.id).single();
-  const lessonSelection=audioRuntimeStage==='isolated-preview-authored-v3'
+  // A dynamic projection is validated below before any admission or provider work.
+  const lessonSelection:string=audioRuntimeStage==='isolated-preview-authored-v3'
     ?'id,module_id,slug,is_published,title,content_version,sequence'
     :'id,module_id,slug,is_published,title,manager_commentary_pt,technical_brief_pt,content_version';
   const {data:lesson}=await admin.from("lessons").select(lessonSelection).eq("id",lessonId).eq("is_published",true).single();
