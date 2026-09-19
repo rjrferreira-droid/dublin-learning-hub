@@ -29,7 +29,8 @@ async function login(page: Page) {
 }
 for(const width of [320,390,760])test(`adult utilities at ${width}px do not float over reading or each other`,async({page},info)=>{
  await page.setViewportSize({width,height:844});const sensitive=await login(page);
- const selectors=['.learning-memory-shell','.cost-center-shell','.little-english-launcher','.auth-signout'];
+ await expect(page.locator('.auth-app > .little-english-launcher')).toHaveCount(0);
+ const selectors=['.learning-memory-shell','.cost-center-shell','.auth-signout'];
  const rects=[];
  for(const selector of selectors){const locator=page.locator('.auth-app > '+selector);expect(await locator.evaluate(e=>getComputedStyle(e).position)).toBe('static');const box=await locator.boundingBox();expect(box).not.toBeNull();expect(box!.height).toBeGreaterThanOrEqual(44);expect(box!.x).toBeGreaterThanOrEqual(0);expect(box!.x+box!.width).toBeLessThanOrEqual(width+1);rects.push(box!);}
  for(let i=0;i<rects.length;i++)for(let j=i+1;j<rects.length;j++){const a=rects[i],b=rects[j];expect(Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x)>1&&Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y)>1).toBe(false);}
