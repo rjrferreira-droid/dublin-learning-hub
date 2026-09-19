@@ -63,3 +63,26 @@ The current Edge source imports jsr:@supabase/supabase-js@2 and an unversioned f
 The installed connector has no dedicated Storage bucket mutation action. Do not use direct storage-schema writes as a substitute or export a server credential into chat. Resolve the supported API execution path before requesting/attempting that stage.
 
 Only the first profile-containment installation is ready for a concrete scoped decision. P1 remains unpublished, the unresolved USD 4 remains preserved, and main/Production/LiveKit remain unchanged.
+
+## Installation completed — 19 September 2026
+
+This section supersedes the pending profile-installation status above. The owner explicitly approved profile-assignment containment only on the approved V2 test backend.
+
+- Target branch rechecked: v2-development, aazfyosqqeujureksqjs, ACTIVE_HEALTHY, not the default branch.
+- Applied migration: 20260919085643 / lh_v2_profile_assignment_containment.
+- Applied source SHA-256: d340c3dfa8e752ee6a92d64b78795a723eed02a22adbc970e1cce672c80df479; Git blob 7c7019e82471fdc6c68e566115a4af52097add64, fetched at 6b5d77853e2967399cd5ebd4c0d8bc3e4f80c152.
+- apply_migration returned success=true. The installer ran transactional prerequisites and postconditions. An independent rerun of the exact profile_assignment_postcondition block in a read-only transaction returned profile_containment_postcheck_passed=true.
+- Before/after preservation comparison: all 15 snapshot fields match exactly. Counts: 1 profile, 3 lessons, 6 sessions, 7 reservations, 8 usage rows, 0 audio attempts, 0 audio objects. Content digests match for profiles, lessons, sessions, reservations, usage and both budget-settings collections.
+- The unresolved USD 4 reservation remains unchanged. No reservation was released and no paid provider call was made.
+- Browser profile insertion and identity/track reassignment are closed. Own-profile reads and the three permitted preference updates remain allowed. The legacy automatic Auth profile trigger was removed; its dormant function was retained with API execution revoked. No account or learning data was deleted.
+- No Storage mutation, Audio v3 migration/grant, Edge/worker deployment, admission-stage activation, lesson publication, main merge or Production promotion was performed.
+
+### Post-DDL security advisor findings
+
+The advisor returned no ERROR-level findings, but it is not an end-to-end security certification:
+
+- 11 INFO findings for RLS-enabled tables without policies. No policies were added in this scoped change.
+- 4 WARN findings for authenticated-callable SECURITY DEFINER Professor RPCs: flag_professor_dispatch_uncertain, list_professor_recovery_v1, observe_professor_dispatch_v1 and start_professor_session_atomic. These require contextual review of their existing authorization checks; the profile migration does not authorize altering their grants. [Supabase remediation](https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable).
+- 1 WARN finding: leaked-password protection disabled. No Auth setting was changed. [Supabase remediation](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+
+Next unresolved activation prerequisite remains the supported Storage Admin API path and a separately scoped private-bucket change. Audio and Professor voice activation remain closed; the completed profile protection is not evidence of live audio/voice success.
