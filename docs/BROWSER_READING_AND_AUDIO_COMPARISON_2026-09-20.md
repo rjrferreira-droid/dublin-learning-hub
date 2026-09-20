@@ -112,6 +112,51 @@ reservation change, attempt release, key modification or original-backend change
 was made in this verification. Admission remains closed. A valid full credential
 must be entered by the user before paid-runtime acceptance can continue.
 
+## Successful credential and English audio acceptance — 20 September 16:12 UTC
+
+The user completed credential transfer through Safari. The Supabase secret
+metadata changed at 16:07:31 UTC and the authenticated model lookup succeeded.
+The prior repeated digest established that the saved value was unchanged; it
+did not establish whether the clipboard, selection, or another step caused that.
+No complete credential was read or exposed by the agent.
+
+The runtime artifact remains the credential-normalization implementation from
+commit `0bcca29d45dcab6e0347c18babb175d831385622`, deployed artifact
+`eb584e38f0b8dbcc97d26f229f96656cab934db024e8e6318f085deea28fbd9b`.
+The retrieved deployment is version 30 with JWT verification enabled. Its Deno,
+application/UI, and real PostgreSQL CI checks passed. The runtime stage was
+activated as `isolated-preview-authored-v3` only in the isolated V2 Preview.
+
+One actual generation of the original English lesson succeeded:
+
+- Lesson: `f455a740-f50f-4eb7-95a7-9e4129ca4a68`,
+  `story-past-forms-rhythm-follow-up`, content version 1.
+- Attempt: `7cf7b1de-974c-4828-b5fb-68712085454d`, state `settled`.
+- Submitted: 16:11:45.40824 UTC; settled: 16:12:00.505216 UTC.
+- Asset: `fae7d8aa-5863-4401-ac27-0dc9f9d98bb8`, voice `marin`.
+- MP3: 1,456,512 bytes, `audio/mpeg`, 91.032 seconds, 1,436 script characters.
+- Application cost estimate: USD 0.032410, not a provider invoice.
+- Receipt: `premium-audio-v3:7cf7b1de-974c-4828-b5fb-68712085454d`.
+- Browser player loaded with readyState 4 and no media error. Playback advanced
+  from 0 to 16.225178 seconds while unpaused.
+- After a full page reload and reopening the same lesson, the UI reported
+  `Loaded from secure lesson cache` and `Cached asset · no new generation`.
+  The cached player loaded the same 91.032-second media and playback advanced
+  to 65.993006 seconds without a media error before being paused.
+- Replay left totals unchanged at one asset, one object, four attempts, nine
+  usage rows and USD 1.052008 in cumulative application cost estimates.
+
+The three earlier uncertain attempts are byte-for-byte unchanged in the queried
+row evidence, retaining USD 0.30. The Professor reservation hash remains
+`a599715eafcb65ecb853bd02fa9a35c6`. No budget limit, original backend, Production
+deployment, or source/version fence was changed to achieve this acceptance.
+Finance and the earlier P1 lesson attempts still need evidence-based
+reconciliation before retry; the existing support thread still has no specialist
+response at this verification. English Premium generation and cached playback are
+now demonstrated in Cloud Browser; iPhone playback and subjective narration
+quality remain separate user checks. No additional paid request is needed to
+listen to this stored English asset.
+
 ## Independent delivery
 
 Read-aloud is available in Learn and Audio for loaded reviewed written modules.
@@ -143,4 +188,5 @@ Production compilation passed. Browser tests cover no paid requests, navigation
 cancellation, Portuguese/speed selection, provider-independent failure and missing
 browser support using a fictional speech engine. They do not establish audible
 quality on an actual iPhone; that remains device-dependent acceptance.
-Premium and Professor paid-runtime acceptance remain separate and open.
+The original English Premium generation and cached-playback acceptance is now
+recorded above. Remaining Premium lessons and Professor acceptance stay open.
