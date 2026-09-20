@@ -16,7 +16,16 @@ import {lessonModuleFor} from '../../../src/learning/lessonModules.ts';
 
 type AudioFailurePhase='transport'|'http'|'media_type'|'media_validation';
 /** Metadata only. Never retain provider bodies, credentials or narrated text. */
-const providerErrorCodes=new Set(['credit_balance_exhausted','organization_spend_limit_exceeded','project_spend_limit_exceeded','organization_usage_limit_exceeded','insufficient_quota','rate_limit_exceeded','slow_down']);
+const providerErrorCodes=new Set(['credit_balance_exhausted','organization_spend_limit_exceeded','project_spend_limit_exceeded','organization_usage_limit_exceeded','insufficient_quota','rate_limit_exceeded','slow_down','invalid_api_key']);
+/** Copy/paste hints only: no credential characters, prefix/suffix or digest. */
+function credentialFormatHint(value:string){
+ if(value.includes('...')||value.includes('…')||/\*{3,}/.test(value))return 'masked_value';
+ if(/^\s*OPENAI_API_KEY\s*=/i.test(value))return 'assignment_included';
+ if(/^\s*Bearer\s/i.test(value))return 'bearer_included';
+ if(/^[\s]*["']|["'][\s]*$/.test(value))return 'quotes_included';
+ if(/\s/.test(value))return 'whitespace_present';
+ return /^sk-[A-Za-z0-9_-]{30,}$/.test(value)?'key_like_value':'unexpected_format';
+}
 async function readProviderErrorCode(response:Response):Promise<string|null>{
  if((response.headers.get('content-type')??'').split(';',1)[0].trim().toLowerCase()!=='application/json'){
   await response.body?.cancel().catch(()=>undefined);return null;
@@ -134,12 +143,13 @@ Deno.serve(async(req:Request)=>{
     const assigned=await diagnosticAdmin.from('profiles').select('learner_track').eq('id',user.id).single();
     if(assigned.error||assigned.data?.learner_track!=='rafael_finance')return json({error:'forbidden'},403);
     if(!openaiKey)return json({configured:false,modelAccess:false,generationEnabled:false,providerStatus:null});
+    const credentialFormat=credentialFormatHint(openaiKey);
     const safeHeader=(value:string|null,pattern:RegExp)=>value&&pattern.test(value)?value:null;
     try{
       const response=await fetch('https://api.openai.com/v1/models/gpt-4o-mini-tts',{
         method:'GET',headers:{Authorization:`Bearer ${openaiKey}`},signal:AbortSignal.timeout(10000),redirect:'error',
       });
-      const result={configured:true,modelAccess:response.ok,providerStatus:response.status,
+      const result={configured:true,modelAccess:response.ok,providerStatus:response.status,credentialFormat,
         generationEnabled:audioRuntimeStage==='isolated-preview-authored-v3',
         organization:safeHeader(response.headers.get('openai-organization'),/^[a-zA-Z0-9_-]{1,100}$/),
         project:safeHeader(response.headers.get('openai-project'),/^proj_[a-zA-Z0-9_-]{1,100}$/),
@@ -147,7 +157,7 @@ Deno.serve(async(req:Request)=>{
         providerErrorCode:response.ok?null:await readProviderErrorCode(response)};
       await response.body?.cancel().catch(()=>undefined);
       return json(result);
-    }catch{return json({configured:true,modelAccess:false,generationEnabled:false,providerStatus:null,error:'provider_connection_unavailable'});}
+    }catch{return json({configured:true,modelAccess:false,generationEnabled:false,providerStatus:null,credentialFormat,error:'provider_connection_unavailable'});}
   }
   const lessonId=String(body.lesson_id??"");
   if(!lessonId)return json({error:"lesson_id_required"},400);

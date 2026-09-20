@@ -101,7 +101,7 @@ const db={auth:{getUser:async()=>({data:{user:{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaa
  throw new Error('Unexpected RPC');
 },storage:{getBucket:async bucketId=>{state.events.push('storage_bucket');assert.equal(bucketId,'lesson-audio');return {data:state.bucket,error:state.bucketError?{message:'fictional'}:null};},from:()=>({createSignedUrl:async(path,ttl)=>{state.events.push('sign');assert.equal(ttl,3600);return {data:state.signError?null:{signedUrl:'https://fictional.invalid/signed/'+path},error:state.signError?{message:'fictional'}:null};},getPublicUrl:path=>({data:{publicUrl:'https://fictional.invalid/'+path}}),list:async(_folder,options)=>({data:Object.hasOwn(state,'storageListData')?state.storageListData:state.orphan?[{name:options?.search??'commentary-v2.mp3'}]:[],error:state.storageListError?{message:'fictional'}:null}),upload:async(path,_bytes,options)=>{state.events.push('upload');state.uploadPath=path;state.uploadOptions=options;const exact={id:'77777777-7777-4777-8777-777777777777',path,fullPath:`lesson-audio/${path}`};return {data:state.uploadAckPartial?{path}:state.uploadAckMismatch?{...exact,fullPath:'lesson-audio/divergent.mp3'}:state.uploadAckExtra?{...exact,unexpected:true}:exact,error:state.uploadError?{message:'fictional'}:null};}})}};
 mock.module('@supabase/supabase-js',{namedExports:{createClient:()=>db}});
-globalThis.Deno={env:{get:key=>key==='P1_AUDIO_RUNTIME_STAGE'?(state.stage??(state.enabled?'isolated-preview-atomic-v2':undefined)):key==='SUPABASE_URL'?(state.supabaseUrl??'fictional'):'fictional'},serve:fn=>handler=fn};
+globalThis.Deno={env:{get:key=>key==='P1_AUDIO_RUNTIME_STAGE'?(state.stage??(state.enabled?'isolated-preview-atomic-v2':undefined)):key==='SUPABASE_URL'?(state.supabaseUrl??'fictional'):key==='OPENAI_API_KEY'?(state.keyValue??'fictional'):'fictional'},serve:fn=>handler=fn};
 const originalFetch=globalThis.fetch;
 globalThis.fetch=async(url,opts)=>{
  if(url==='https://api.openai.com/v1/models/gpt-4o-mini-tts'){
@@ -141,6 +141,16 @@ test('connection diagnosis rejects wrong runtime, other assigned tracks and extr
  }
  reset('finance',{stage:'closed',supabaseUrl:'https://aazfyosqqeujureksqjs.supabase.co'});
  const result=await invoke({action:'check_provider'});assert.equal(result.status,400);assert.equal(state.events.length,0);
+});
+test('connection diagnosis classifies copy errors without returning any credential fragments',async()=>{
+ const fake='sk-proj-FICTIONAL_VALUE_FOR_TESTS_ONLY_1234567890';
+ for(const [keyValue,expected] of [[fake,'key_like_value'],['sk-...XXXX','masked_value'],['sk-…XXXX','masked_value'],['sk-***XXXX','masked_value'],['OPENAI_API_KEY='+fake,'assignment_included'],['Bearer '+fake,'bearer_included'],['"'+fake+'"','quotes_included'],[fake+'\n','whitespace_present'],['copied field name','whitespace_present'],['unexpected_value','unexpected_format']]){
+  reset('finance',{stage:'closed',supabaseUrl:'https://aazfyosqqeujureksqjs.supabase.co',keyValue});
+  const response=await handler(new Request('https://fictional.invalid/audio',{method:'POST',body:JSON.stringify({action:'check_provider'})}));
+  const body=await response.json();assert.equal(body.credentialFormat,expected);
+  assert.equal(JSON.stringify(body).includes(keyValue),false);assert.equal(JSON.stringify(body).includes('1234567890'),false);
+  assert.deepEqual(state.events,['profiles','model_lookup']);assert.equal(state.tts.length,0);assert.equal(state.writes.length,0);
+ }
 });
 test('authored v3 logs only safe provider failure metadata and retains the uncertain hold',async()=>{
  const records=[];const logger=mock.method(console,'error',message=>records.push(message));

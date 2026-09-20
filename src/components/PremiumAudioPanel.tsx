@@ -21,9 +21,10 @@ export function PremiumAudioPanel({ lessonId, lessonTitle }: PremiumAudioPanelPr
     if(checking)return;
     setChecking(true);setConnection(null);
     try{
-      const result=await invokeEdge<{configured:boolean;modelAccess:boolean;generationEnabled:boolean;providerStatus:number|null;organization?:string|null;project?:string|null;providerErrorCode?:string|null},{action:string}>('premium-lesson-audio',{action:'check_provider'});
+      const result=await invokeEdge<{configured:boolean;modelAccess:boolean;generationEnabled:boolean;providerStatus:number|null;organization?:string|null;project?:string|null;providerErrorCode?:string|null;credentialFormat?:string},{action:string}>('premium-lesson-audio',{action:'check_provider'});
       const status=!result.configured?'The audio provider key is missing.':result.modelAccess?'The configured key can access the speech model. This does not verify generation quota or playback.':`The audio provider did not confirm model access (HTTP ${result.providerStatus??'unavailable'}).`;
-      setConnection([status,result.providerErrorCode?`Provider code: ${result.providerErrorCode}.`:'',result.organization?`Organization: ${result.organization}.`:'',result.project?`Project: ${result.project}.`:'',result.generationEnabled?'':'Premium generation remains paused.','No audio was generated.'].filter(Boolean).join(' '));
+      const formatHints:Record<string,string>={masked_value:'The saved value contains masking characters. Paste the complete secret key.',assignment_included:'The saved value includes the variable name. Paste only the secret key.',bearer_included:'The saved value includes Bearer. Paste only the secret key.',quotes_included:'The saved value includes quotation marks. Paste only the secret key.',whitespace_present:'The saved value includes whitespace. Check the copied key.',unexpected_format:'The saved value does not have the expected secret-key format.'};
+      setConnection([status,formatHints[result.credentialFormat??'']??'',result.providerErrorCode?`Provider code: ${result.providerErrorCode}.`:'',result.organization?`Organization: ${result.organization}.`:'',result.project?`Project: ${result.project}.`:'',result.generationEnabled?'':'Premium generation remains paused.','No audio was generated.'].filter(Boolean).join(' '));
     }catch{setConnection('The connection check could not complete. No audio was requested.');}
     finally{setChecking(false);}
   }
