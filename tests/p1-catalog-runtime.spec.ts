@@ -24,6 +24,12 @@ for(const sequence of [2,3,4,5,6,7,8])for(const track of ['finance','payroll','e
   await route.fulfill({status:200,headers:{'access-control-allow-origin':'*'},contentType:'application/json',body:JSON.stringify(rows[table as keyof typeof rows])});
  });
  let readinessCalls=0;
+ let audioCalls=0;
+ await page.route('**/functions/v1/premium-lesson-audio',async route=>{
+  audioCalls++;
+  expect(route.request().postDataJSON()).toEqual({lesson_id:lessonId});
+  await route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'audio_runtime_closed'})});
+ });
  const stalledReadinessCase=sequence===2&&track==='finance'&&width===390;
  let releaseStalledReadiness=()=>{};
  await page.route('**/api/professor-readiness',async route=>{
@@ -93,7 +99,18 @@ for(const sequence of [2,3,4,5,6,7,8])for(const track of ['finance','payroll','e
     expect(readinessCalls).toBe(1);releaseStalledReadiness();
    }
    await page.getByRole('button',{name:'Check lesson availability',exact:true}).click();
-   await expect(page.getByTestId('lesson-readiness-check')).toContainText('Lesson reference verified. Professor and audio are still unavailable.');
+   if(name==='Audio'&&track!=='payroll'){
+    await expect(page.getByTestId('lesson-readiness-check')).toContainText('Lesson verified. Load audio when ready');
+    await expect(page.getByTestId('premium-audio-panel')).toBeVisible();
+    expect(audioCalls).toBe(0);
+    await page.getByRole('button',{name:'Load audio',exact:true}).click();
+    await expect(page.getByRole('button',{name:'Not activated yet',exact:true})).toBeDisabled();
+    await expect(page.getByTestId('premium-audio-panel')).toContainText('Audio awaiting activation');
+    expect(audioCalls).toBe(1);
+   }else{
+    await expect(page.getByTestId('lesson-readiness-check')).toContainText('Lesson reference verified. Professor and audio are still unavailable.');
+    await expect(page.getByTestId('premium-audio-panel')).toHaveCount(0);
+   }
    await expect(page.getByTestId('preview-admission-panel')).toHaveCount(0);
    await expect(page.getByTestId('professor-session-panel')).toHaveCount(0);
   }else await expect(page.getByTestId('lesson-readiness-check')).toHaveCount(0);

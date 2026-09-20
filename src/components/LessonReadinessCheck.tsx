@@ -4,8 +4,9 @@ import {supabase} from '../services/supabase';
 import {checkLessonReadiness} from '../professor/checkLessonReadiness';
 import {PreviewAudioReadinessPanel} from './PreviewAudioReadinessPanel';
 import {PreviewAdmissionPanel} from './PreviewAdmissionPanel';
+import {PremiumAudioPanel} from './PremiumAudioPanel';
 
-type Props={userId:string;lessonId:string;lessonSlug:string;track:'finance'|'payroll'|'english';activeTab:string};
+type Props={userId:string;lessonId:string;lessonSlug:string;lessonTitle?:string;track:'finance'|'payroll'|'english';activeTab:string};
 export function LessonReadinessCheck(props:Props){
  const [state,setState]=useState<'idle'|'checking'|'verified'|'unavailable'>('idle');
  const [identity,setIdentity]=useState<BoundIdentity|null>(null);
@@ -24,9 +25,11 @@ export function LessonReadinessCheck(props:Props){
  const diagnostic=new URLSearchParams(window.location.search).get('previewCheck')==='1';
  const admissionVisible=state==='verified'&&identity&&props.activeTab==='Professor'&&diagnostic;
  const audioVisible=state==='verified'&&identity&&props.activeTab==='Audio'&&diagnostic;
+ const playerVisible=state==='verified'&&identity&&props.activeTab==='Audio'&&!diagnostic&&props.track!=='payroll';
  return <div className="priority-note" data-testid="lesson-readiness-check">
   <button type="button" className="secondary-btn" disabled={state==='checking'} onClick={()=>void check()}>{state==='checking'?'Checking lesson…':'Check lesson availability'}</button>
-  <p role="status">{state==='verified'?'Lesson reference verified. Professor and audio are still unavailable.':state==='unavailable'?'Availability could not be confirmed. You can continue the written lesson.':'This check does not start a session or generate audio.'}</p>
+  <p role="status">{state==='verified'?(playerVisible?'Lesson verified. Load audio when ready; the server checks access and budget before generation.':'Lesson reference verified. Professor and audio are still unavailable.'):state==='unavailable'?'Availability could not be confirmed. You can continue the written lesson.':'This check does not start a session or generate audio.'}</p>
+  {playerVisible?<PremiumAudioPanel key={[props.userId,identity.lessonId,identity.contentVersion].join(':')} lessonId={identity.lessonId} lessonTitle={props.lessonTitle??props.lessonSlug}/>:null}
   {admissionVisible?<PreviewAdmissionPanel key={[identity.lessonId,identity.moduleId,identity.courseId,identity.contentVersion,identity.lessonSlug,identity.requestedTrack,identity.studyTrack,identity.sequence].join(':')} userId={props.userId} identity={identity}/>:null}
   {audioVisible?<PreviewAudioReadinessPanel key={[identity.lessonId,identity.moduleId,identity.courseId,identity.contentVersion,identity.lessonSlug,identity.requestedTrack,identity.studyTrack,identity.sequence].join(':')} userId={props.userId} identity={identity}/>:null}
  </div>;
