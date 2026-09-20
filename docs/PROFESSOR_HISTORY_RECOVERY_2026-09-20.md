@@ -38,6 +38,15 @@ the actual UI and readers with fictional backend data and blocked providers. The
 feature CI runs them with the full regression suite; its matching source/result
 and authenticated Preview verification are recorded in PR #3 after completion.
 
+The first browser run caught a cancelled automatic check remaining in its loading
+state during React StrictMode's mount-effect replay. Cleanup now resets that
+automatic-check guard, allowing the replayed setup to complete its read. The
+lost-response browser case checks for a visible pending result and exactly one
+history query, with no repeated start request.
+
+Authenticated Preview inspection found the five existing Finance sessions, opened
+the latest saved feedback and found the same history after reloading the page.
+
 Read-only V2 inspection confirmed existing SELECT access and the policy predicate
 auth.uid() = user_id. No new schema, grant or policy is needed or applied.
 

@@ -17,7 +17,12 @@ export function RecentProfessorSessions({userId,lessonId,autoCheck=false}:{userI
   }catch{if(!controller.signal.aborted)setFailed(true);}
   finally{if(!controller.signal.aborted)setChecking(false);}
  },[userId,lessonId]);
- useEffect(()=>()=>active.current?.abort(),[]);
+ useEffect(()=>()=>{
+  active.current?.abort();
+  // StrictMode replays mount effects. Its cancelled automatic read must be
+  // eligible for the next setup, or the checking state would never complete.
+  automatic.current=false;
+ },[]);
  useEffect(()=>{if(autoCheck&&!automatic.current){automatic.current=true;void check();}},[autoCheck,check]);
  return <section className="recent-professor-sessions" aria-label="Recent Professor sessions" data-testid="recent-professor-sessions">
   <h4>Previous conversations</h4>
