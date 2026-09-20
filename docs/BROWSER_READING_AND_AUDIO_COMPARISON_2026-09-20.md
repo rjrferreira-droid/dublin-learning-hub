@@ -87,6 +87,31 @@ After credential correction, reconcile the exact failed attempts using provider
 evidence before allowing their generation again; do not change source/version to
 evade a fence. Real generation, playback and cached replay remain to be accepted.
 
+## Credential replacement verification
+
+After the user's replacement, the V2 OPENAI_API_KEY metadata changed at
+2026-09-20 14:15:31 UTC. The OpenAI dashboard lists the new recovery key as
+active in Dublin Learning Hub V2, with expiry 2026-10-20 and masked ending FH8A.
+No complete credential was read. The authenticated server-side model lookup
+now receives HTTP 401, `invalid_api_key`, instead of model access. The stored
+value's association with the new dashboard key is therefore not established.
+
+Commit a6ad677df3bd4657ae8ff1fc1a9e09130f23753d adds bounded copy-format hints
+to the same read-only diagnostic and allowlists `invalid_api_key`. It never
+returns credential characters, prefixes/suffixes or digests. The hints identify
+masked values, assignments, Bearer prefixes, quotations, whitespace and unexpected
+formats; a key-like string does not establish completeness or validity. The
+diagnostic UI did not show one of these copy-format warnings, but the provider
+still explicitly rejected the value. Do not attribute the 401 to credit balance.
+
+Edge v22 artifact:
+`a1d6f3c28b0784913e9d9b61484963b290e4477adbe90fdd9a81db5c4d56a9d6`.
+All retrieved sources match the uploaded package. 34 handler tests and the build
+passed locally; the Deno, atomic-database and application/UI CI checks passed. No paid request,
+reservation change, attempt release, key modification or original-backend change
+was made in this verification. Admission remains closed. A valid full credential
+must be entered by the user before paid-runtime acceptance can continue.
+
 ## Independent delivery
 
 Read-aloud is available in Learn and Audio for loaded reviewed written modules.
