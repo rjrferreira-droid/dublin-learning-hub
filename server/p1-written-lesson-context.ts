@@ -48,7 +48,7 @@ export function buildP1WrittenLessonContext(input:P1WrittenContextInput){
  const references=module.sources.map(source=>`${source.id}: ${source.label}; reviewed ${source.reviewedOn}; ${source.url}; supports: ${source.supports}`).join('\n');
  const technicalBrief=[scope,input.approachBrief??'',sections,caseReference,`OFFICIAL SOURCE REFERENCES\n${references}`].filter(Boolean).join('\n\n');
  const context={title:module.title,objectives:[module.goal,...module.sections.map(section=>`Explain: ${section.title.replace(/^\d+\.\s*/,'')}`).slice(0,6)],technicalBrief,workedExample:caseReference,practiceScenario:[module.caseStudy.title,...module.caseStudy.scenario,`Task: ${module.caseStudy.task}`].join('\n'),interviewAngle:module.caseStudy.transfer,vocabulary:module.terms.map(term=>`${term.term}: ${term.meaning}`)};
- const encoded=JSON.stringify(context),contextBytes=Buffer.byteLength(encoded,'utf8');
+ const encoded=JSON.stringify(context),contextBytes=new TextEncoder().encode(encoded).byteLength;
  if(technicalBrief.length>MAX_P1_SHARED_BRIEF_CHARACTERS||contextBytes>MAX_P1_WRITTEN_CONTEXT_BYTES)throw new Error('p1_written_context_exceeds_budget');
  return {context,descriptor:{version:P1_WRITTEN_CONTEXT_VERSION,lessonId:module.lessonId,lessonSlug:input.resolvedLessonSlug,track,source:'server-authored-reviewed-p1',sha256:createHash('sha256').update(encoded).digest('hex'),contextBytes,includesLearnerDrafts:false,includesLocalCheckpointResults:false} as const};
 }

@@ -4,6 +4,8 @@ on:
     branches: [feat/professor-experience-2026-09-13]
     paths:
       - 'supabase/functions/premium-lesson-audio/**'
+      - 'server/p1-written-lesson-context.ts'
+      - 'tests/p1-edge-context-smoke.ts'
       - '.github/workflows/premium-audio-edge.yml'
 permissions:
   contents: read
@@ -22,3 +24,5 @@ jobs:
         run: deno check --frozen --config supabase/functions/premium-lesson-audio/deno.json supabase/functions/premium-lesson-audio/index.ts
       - name: Preserve committed dependency lock
         run: git diff --exit-code
+      - name: Execute authored context in the real Edge JavaScript runtime
+        run: deno run --frozen --config supabase/functions/premium-lesson-audio/deno.json tests/p1-edge-context-smoke.ts
