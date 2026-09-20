@@ -70,3 +70,17 @@ The diagnostic implementation is kept inside the existing approved Audio
 entrypoint. The frozen runtime boundary check remains unchanged. Integration
 coverage exercises the actual handler with provider failures, untrusted request
 metadata and a 429 response, preserving the uncertain reservation with one call.
+
+Source 3b83e6a1d0fa2116303723d794eaf233930e9a50 passed all 29 local handler
+integration tests, Edge dependency/runtime CI 35508394396 and atomic budget CI
+35508394385. The unchanged frozen runtime boundary check passed. Vercel reports
+the Preview deployment completed.
+Full application and UI regression CI 35508394378 also completed successfully.
+
+The 27-file package was deployed to the isolated development project as Audio
+function version 15, JWT verification enabled, artifact SHA256
+2c3feb9702cfb6ef0402d32adc60ffb8808251ae163ff79eadc042895f5ff57d.
+Independent retrieval matched all 22 returned runtime files byte-for-byte.
+The saved runtime-stage digest still matches closed. A subsequent read-only
+database check confirmed both uncertain USD0.10 holds, no estimated costs,
+zero audio objects and zero audio assets. No new provider request was made.
