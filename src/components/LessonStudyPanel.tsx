@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {AppliedPracticePanel} from './AppliedPracticePanel';
+import {BrowserLessonReader} from './BrowserLessonReader';
 import { lessonModuleFor, type LessonModule } from '../learning/lessonModules';
 import {checkLocalChoice} from '../learning/checkLocalChoice';
 import {loadP1ModuleFor} from '../learning/p1RuntimeModules';
@@ -8,8 +9,8 @@ import { STUDY_PACKS, type StudyTrack } from '../learning/teachingPacks';
 import '../learning/lesson-study.css';
 
 const studyTabs=new Set(['Learn','English','Practice','Visual','Case','Test','Sources']);
-type Props={track:StudyTrack;lessonId:string;lessonSlug?:string;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean};
-export function LessonStudyPanel({track,lessonId,lessonSlug,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled}:Props){
+type Props={track:StudyTrack;lessonId:string;lessonSlug?:string;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean;readerDisabled?:boolean};
+export function LessonStudyPanel({track,lessonId,lessonSlug,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled,readerDisabled}:Props){
  const staticModule=lessonModuleFor(track,lessonId);
  const scope=JSON.stringify([track,lessonId,lessonSlug]);
  const [attempt,setAttempt]=useState(0);
@@ -27,7 +28,7 @@ export function LessonStudyPanel({track,lessonId,lessonSlug,activeTab,onTabChang
   <p role="status">{!lessonSlug||result?.status==='missing'?'No reviewed written module is available for this lesson yet.':result?.status==='unavailable'?'The written lesson could not be loaded. Check your connection and try again.':'Loading reviewed lesson…'}</p>
   {result?.status==='unavailable'?<button type="button" className="secondary-btn" onClick={()=>setAttempt(n=>n+1)}>Try loading again</button>:null}
  </div>:null;
- return <StudyContent key={module.lessonId} module={module} activeTab={activeTab} onTabChange={onTabChange} onPrepareWorkshop={onPrepareWorkshop} handoffDisabled={handoffDisabled}/>;
+ return <>{(activeTab==='Learn'||activeTab==='Audio')&&<BrowserLessonReader key={module.lessonId+activeTab} module={module} disabled={readerDisabled}/>}<StudyContent key={module.lessonId} module={module} activeTab={activeTab} onTabChange={onTabChange} onPrepareWorkshop={onPrepareWorkshop} handoffDisabled={handoffDisabled}/></>;
 }
 function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled}:{module:LessonModule;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean}){
  const pack=STUDY_PACKS[module.track];

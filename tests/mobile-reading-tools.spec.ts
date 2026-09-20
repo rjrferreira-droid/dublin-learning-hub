@@ -1,4 +1,15 @@
 import { test, expect, type Page } from '@playwright/test';
+async function mockBrowserVoice(page:Page){
+ await page.addInitScript(()=>{
+  const state={spoken:[] as {text:string;lang:string;rate:number}[],cancelled:0,current:null as any};
+  (window as any).__reader=state;
+  Object.defineProperty(window,'SpeechSynthesisUtterance',{configurable:true,value:class {text:string;constructor(text:string){this.text=text;}}});
+  Object.defineProperty(window,'speechSynthesis',{configurable:true,value:{
+   getVoices:()=>[],cancel:()=>{state.cancelled++;state.current=null;},
+   speak:(u:any)=>{state.spoken.push({text:u.text,lang:u.lang,rate:u.rate});state.current=u;u.onstart?.();},
+  }});
+ });
+}
 async function login(page: Page) {
  const id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';let sensitive=0;
  const user={id,email:'mobile-fixture@example.invalid',aud:'authenticated',role:'authenticated',created_at:'2026-01-01T00:00:00Z',app_metadata:{provider:'email'},user_metadata:{learner_track:'rafael_finance',display_name:'Rafael'}};
@@ -60,4 +71,44 @@ test('standalone Manuzinha does not acquire adult utilities or adult layout',asy
  await page.setViewportSize({width:390,height:844});await page.goto('/?manuzinha=1');
  await expect(page.getByRole('dialog',{name:'Manuzinha'})).toBeVisible();await expect(page.locator('.auth-app')).toHaveCount(0);
  await expect(page.locator('.learning-memory-shell,.cost-center-shell,.auth-signout')).toHaveCount(0);
+});
+
+test('browser reader speaks reviewed text without paid requests and stops on tab changes',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await mockBrowserVoice(page);const sensitive=await login(page);
+ await page.getByRole('button',{name:'Continue Finance',exact:true}).click();
+ const reader=page.getByTestId('browser-lesson-reader');await expect(reader).toBeVisible();
+ expect(await page.evaluate(()=>(window as any).__reader.spoken.length)).toBe(0);
+ await reader.getByRole('button',{name:'Listen to section',exact:true}).click();
+ await expect(reader.getByRole('status')).toContainText('Reading section 1');
+ expect(await page.evaluate(()=>(window as any).__reader.spoken[0].text)).toContain('reporting question');
+ await page.getByRole('tab',{name:'Practice',exact:true}).click();
+ expect(await page.evaluate(()=>(window as any).__reader.current)).toBeNull();
+ await page.getByRole('tab',{name:'Audio',exact:true}).click();
+ await reader.getByLabel('Read aloud',{exact:true}).selectOption('pt-BR');
+ await reader.getByLabel('Speed',{exact:true}).selectOption('0.85');
+ await reader.getByRole('button',{name:'Listen to section',exact:true}).click();
+ expect(await page.evaluate(()=>(window as any).__reader.spoken.at(-1))).toMatchObject({lang:'pt-BR',rate:0.85});
+ const box=await reader.boundingBox();expect(box!.x+box!.width).toBeLessThanOrEqual(391);
+ await reader.getByRole('button',{name:'Stop reading',exact:true}).click();
+ await expect(reader.getByRole('status')).toContainText('Stopped');
+ expect(sensitive()).toBe(0);
+});
+
+test('browser voice failure remains local and does not retry or fall back to paid audio',async({page})=>{
+ await mockBrowserVoice(page);const sensitive=await login(page);
+ await page.getByRole('button',{name:'Continue Finance',exact:true}).click();
+ const reader=page.getByTestId('browser-lesson-reader');
+ await reader.getByRole('button',{name:'Listen to section',exact:true}).click();
+ await page.evaluate(()=>(window as any).__reader.current.onerror({error:'synthesis-failed'}));
+ await expect(reader.getByRole('status')).toContainText('could not read');
+ expect(await page.evaluate(()=>(window as any).__reader.spoken.length)).toBe(1);
+ expect(sensitive()).toBe(0);
+ await expect(page.getByTestId('lesson-reading')).toBeVisible();
+});
+
+test('unsupported browser keeps written lessons available',async({page})=>{
+ await page.addInitScript(()=>{delete (window as any).speechSynthesis;delete (window as any).SpeechSynthesisUtterance;});
+ await login(page);await page.getByRole('button',{name:'Continue Finance',exact:true}).click();
+ await expect(page.getByTestId('browser-lesson-reader')).toContainText('Read-aloud is unavailable');
+ await expect(page.getByTestId('lesson-reading')).toBeVisible();
 });
