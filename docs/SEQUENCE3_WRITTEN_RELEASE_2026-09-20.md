@@ -40,3 +40,29 @@ that missing verification with a claim of completed source review.
 English written publication is separate from Professor and Premium Audio
 acceptance. Sequence 3 remains outside provider admission. Local exercise
 answers are not persisted as assessed mastery.
+
+## Published English result
+
+Source commit: 2cad30f7b723997bb1366197e4777a4107273138. Sixteen targeted
+contracts passed locally. Full application/UI CI 35509287385 and disposable
+platform CI 35509287395 passed. Vercel reported successful Preview deployment.
+
+The insert was first executed in a rolled-back transaction. A subsequent
+transaction created only the English lesson, initially unpublished, with its
+five sources and six terms. Actual database identity resolved to the reviewed
+module. After CI passed, a separate transaction checked the complete lesson,
+sources and terms and published exactly one row:
+84075bf8-be15-4642-8196-26c2a524d8da, sequence 3, content version 1.
+
+Authenticated browser acceptance in Rafael's account showed five active
+Finance/English lessons. The new English card opened the correct lesson and
+the Practice tab displayed all three exercises, including the clarified 0.8m
+prompt. This is live written-study acceptance; no assessed answer was submitted.
+
+The five pre-existing lessons retained digest db099ae77bf22d45ee35327457897a46.
+Six tutor sessions retained digest ab635bc9a2cb46df57cf526e3600a543; eight usage
+rows retained digest 35f649020d91ee8c816ded7a76ca7942. Both uncertain audio
+reservations remain USD0.10 each. No Finance sequence-3 row was created.
+
+Reversible catalogue rollback: unpublish only lesson
+84075bf8-be15-4642-8196-26c2a524d8da; do not delete material or learner history.
