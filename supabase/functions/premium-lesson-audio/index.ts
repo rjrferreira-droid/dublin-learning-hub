@@ -3,6 +3,7 @@ import "jsr:@supabase/functions-js@2.116.0/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2.116.0";
 import {parseReservationExposure} from '../_shared/reservation-exposure.ts';
 import {premiumAudioBudgetDecision} from '../_shared/premium-audio-budget.ts';
+import {premiumAudioFailureDiagnostic,type AudioFailurePhase} from '../_shared/premium-audio-diagnostic.ts';
 
 import {p1AudioIdentity,p1PremiumAudioGate} from '../_shared/p1-premium-audio-gate.ts';
 import {p1SlugFor} from '../../../src/learning/p1RuntimeRegistry.ts';
@@ -272,17 +273,26 @@ Deno.serve(async(req:Request)=>{
           if(identity.attemptId!==attemptId||identity.sourceFingerprint!==contract.sourceFingerprint
             ||identity.renderRevision!==contract.renderRevision||identity.storagePath!==contract.storagePath)
             throw new Error('audio_reconciliation_required');
+          let failurePhase:AudioFailurePhase='transport';
+          let providerStatus:number|null=null,providerRequestId:string|null=null;
           try{
             const response=await fetch(recipe.endpoint,{method:'POST',signal:AbortSignal.timeout(90000),
               headers:{Authorization:`Bearer ${openaiKey}`,'Content-Type':'application/json'},
               body:JSON.stringify({...recipe.request,input:source.script})});
+            providerStatus=response.status;providerRequestId=response.headers.get('x-request-id');
+            failurePhase='http';
             if(!response.ok){await response.body?.cancel().catch(()=>undefined);throw new Error('tts_failed');}
+            failurePhase='media_type';
             const contentType=(response.headers.get('content-type')??'').split(';',1)[0].trim().toLowerCase();
             if(contentType!=='audio/mpeg'&&contentType!=='audio/mp3'){
               await response.body?.cancel().catch(()=>undefined);throw new Error('tts_failed');
             }
+            failurePhase='media_validation';
             return await readBoundedPremiumMp3(response);
-          }catch(cause){if(cause instanceof Error&&cause.message==='tts_failed')throw cause;throw new Error('tts_failed');}
+          }catch{
+            console.error(JSON.stringify(premiumAudioFailureDiagnostic(attemptId,failurePhase,providerStatus,providerRequestId)));
+            throw new Error('tts_failed');
+          }
         },
         store:async(bytes,identity)=>{
           const upload=await admin.storage.from('lesson-audio').upload(identity.storagePath,bytes,{contentType:'audio/mpeg',upsert:false,cacheControl:'31536000'});

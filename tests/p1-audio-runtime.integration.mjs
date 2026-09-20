@@ -107,6 +107,7 @@ globalThis.fetch=async(url,opts)=>{
  assert.equal(url,'https://api.openai.com/v1/audio/speech');state.events.push('tts');state.tts.push(JSON.parse(opts.body));
  if(state.driftDuringProvider){state.postProviderIdentityDrift=true;state.latest={...state.latest,slug:slugs.payroll};}
  if(state.providerError)throw new Error('fictional timeout');
+ if(state.providerHttpError)return new Response('PRIVATE_PROVIDER_BODY_SENTINEL',{status:401,headers:{'x-request-id':'req_fictional123'}});
  if(state.providerWrongType)return new Response(JSON.stringify({error:'fictional non-audio'}),{headers:{'Content-Type':'application/json'}});
  if(state.providerEmpty)return new Response(new Uint8Array(),{headers:{'Content-Type':'audio/mpeg'}});
  if(state.providerCorrupt)return new Response(new Uint8Array([1,2,3,4]),{headers:{'Content-Type':'audio/mpeg'}});
@@ -119,6 +120,18 @@ globalThis.fetch=async(url,opts)=>{
 await import('../.test-runtime/p1-audio-handler.mjs');
 async function invoke(extra={}){const response=await handler(new Request('https://fictional.invalid/audio',{method:'POST',headers:{Authorization:'Bearer fictional','Content-Type':'application/json'},body:JSON.stringify({lesson_id:state.requestLessonId??id,drafts:'LOCAL_PRIVATE_DRAFT',...extra})}));return {status:response.status,body:await response.json()};}
 const resetV3=(track='finance',extra={})=>reset(track,{stage:'isolated-preview-authored-v3',...extra});
+test('authored v3 logs only safe provider failure metadata and retains the uncertain hold',async()=>{
+ const records=[];const logger=mock.method(console,'error',message=>records.push(message));
+ try{
+  resetV3('finance',{providerHttpError:true});const result=await invoke();
+  assert.equal(result.body.error,'tts_failed');assert.equal(state.attemptState,'uncertain');
+  assert.equal(state.tts.length,1);assert.equal(records.length,1);
+  const record=JSON.parse(records[0]);assert.equal(record.phase,'http');assert.equal(record.httpStatus,401);
+  assert.equal(record.providerRequestId,'req_fictional123');
+  assert.ok(!records[0].includes('PRIVATE_PROVIDER_BODY_SENTINEL'));
+  assert.ok(!records[0].includes('Bearer'));assert.ok(!records[0].includes(state.tts[0].input));
+ }finally{logger.mock.restore();}
+});
 for(const track of Object.keys(slugs))test(`${track}: actual undeployed Edge handler reaches fictional TTS only after exact identity, budget, claim and version recheck`,async()=>{
  reset(track);const r=await invoke();assert.equal(r.status,200);assert.equal(state.tts.length,1);assert.equal(state.uploadPath,`lessons/${id}/commentary-v2.mp3`);
  const at=name=>state.events.indexOf(name);assert.ok(at('courses')<at('professor_reservation_exposure_v2'));assert.ok(at('professor_reservation_exposure_v2')<at('begin_premium_audio_attempt_v2'));assert.ok(at('begin_premium_audio_attempt_v2')<at('recheck'));assert.ok(at('recheck')<at('tts'));assert.equal(state.events.at(-1),'sign');assert.ok(at('settle_premium_audio_attempt_v2')<at('sign'));assert.equal(state.attemptState,'settled');assert.ok(at('mark_premium_audio_submitted_v2')<at('tts'));
