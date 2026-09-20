@@ -11,13 +11,15 @@ type ProfessorTokenResponse = {
  sessionId:string;maxSessionSeconds:number;lessonId:string|null;mode:TutorSessionRequest['mode'];
  professorProfile:'finance'|'payroll'|'english';validationMode:boolean;dispatchId?:string|null;
 };
+export type ProfessorSessionConfirmation=Pick<ProfessorTokenResponse,'sessionId'|'maxSessionSeconds'|'validationMode'>;
 export type ProfessorConnection = {
  room:Room;roomName:string;participantIdentity:string;sessionId:string;maxSessionSeconds:number;
  professorProfile:ProfessorTokenResponse['professorProfile'];validationMode:boolean;disconnect:()=>Promise<void>;setMicrophoneEnabled:(enabled:boolean)=>Promise<void>;
 };
 function errorMessage(code:string):string {
  if(code==='professor_not_configured')return 'Professor voice infrastructure is not configured yet.';
- if(code==='professor_agent_dispatch_failed')return 'The Professor agent could not be started. Please try again.';
+ if(code==='professor_agent_dispatch_failed')return 'The session was created, but the Professor connection could not be confirmed. Check the saved session status before starting another session.';
+ if(code==='professor_session_already_active')return 'A previous Professor session is still active or awaiting confirmation. Check its status before starting another session.';
  if(code==='professor_learner_mismatch')return 'The displayed learner does not match your signed-in account. Return to your own profile before starting.';
  if(code==='professor_track_forbidden')return 'This Professor track is not available for the authenticated learner profile.';
  if(code==='professor_lesson_forbidden')return 'This lesson is not available to the authenticated learner profile.';
@@ -26,16 +28,18 @@ function errorMessage(code:string):string {
  return code||'Professor connection failed.';
 }
 function requireNotAborted(signal?:AbortSignal){if(signal?.aborted)throw new DOMException('Professor connection cancelled.','AbortError');}
-async function requestProfessorToken(request:TutorSessionRequest,signal?:AbortSignal,expectedUserId?:string):Promise<ProfessorTokenResponse>{
+async function requestProfessorToken(request:TutorSessionRequest,signal?:AbortSignal,expectedUserId?:string,onSessionConfirmed?:(details:ProfessorSessionConfirmation)=>void):Promise<ProfessorTokenResponse>{
  requireNotAborted(signal);
  const {data,error}=await supabase.auth.getSession();requireNotAborted(signal);
  if(error)throw error;
  if(!data.session?.access_token)throw new Error('Sign in before starting the Professor.');
  if(expectedUserId&&data.session.user.id!==expectedUserId)throw new Error('The signed-in account changed. Start again from the correct account.');
  const response=await fetch('/api/livekit-token',{method:'POST',signal,headers:{'content-type':'application/json',authorization:`Bearer ${data.session.access_token}`},body:JSON.stringify({lessonId:request.lessonId,learnerId:request.learnerId,track:request.track,mode:request.mode,languageProfile:request.languageProfile,validationMode:request.validationMode===true,sessionPreparation:request.sessionPreparation,workshopSelection:request.workshopSelection})});
- const body=await response.json().catch(()=>({}));requireNotAborted(signal);
- if(!response.ok)throw new Error(errorMessage(typeof body?.error==='string'?body.error:'professor_connection_failed'));
- if(typeof body.sessionId!=='string'||!Number.isInteger(body.maxSessionSeconds)||body.maxSessionSeconds<60||body.maxSessionSeconds>1200||typeof body.roomName!=='string'||typeof body.validationMode!=='boolean')throw new Error('Professor session confirmation is incomplete. No microphone was opened.');
+ const payload=await response.json().catch(()=>({}));requireNotAborted(signal);
+ const failedDispatch=!response.ok&&payload?.error==='professor_agent_dispatch_failed'&&payload?.retryAllowed===false;
+ if(!response.ok&&!failedDispatch)throw new Error(errorMessage(typeof payload?.error==='string'?payload.error:'professor_connection_failed'));
+ const body=failedDispatch?payload.recovery:payload;
+ if(!body||typeof body.sessionId!=='string'||! /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.sessionId)||!Number.isInteger(body.maxSessionSeconds)||body.maxSessionSeconds<60||body.maxSessionSeconds>1200||typeof body.roomName!=='string'||typeof body.validationMode!=='boolean')throw new Error('Professor session confirmation is incomplete. No microphone was opened.');
  if(body.roomName.startsWith('validation:')!==body.validationMode||(request.validationMode===true&&!body.validationMode))throw new Error('Validation protection could not be confirmed. No microphone was opened.');
  if(request.sessionPreparation && (!body.sessionPreparation || !sameSessionPreparation(request.sessionPreparation,body.sessionPreparation)))throw new Error('Session preferences could not be confirmed. No microphone was opened.');
  const expectedProfile=request.track==='rafael_finance'?'finance':request.track==='viviane_payroll'?'payroll':'english';
@@ -45,12 +49,19 @@ async function requestProfessorToken(request:TutorSessionRequest,signal?:AbortSi
  if(expectedLessonId!==goldenIds[expectedProfile] && (body.teachingContent?.source!=='server-authored-reviewed-p1'||body.teachingContent?.lessonSlug!==p1SlugFor(expectedProfile)||typeof body.teachingContent?.sha256!=='string'||! /^[0-9a-f]{64}$/.test(body.teachingContent.sha256)))throw new Error('P1 lesson reference could not be confirmed. No microphone was opened.');
  if(body.teachingContent && (body.teachingContent.lessonId!==expectedLessonId||body.teachingContent.track!==expectedProfile))throw new Error('Lesson reference could not be confirmed. No microphone was opened.');
  if(!sameWorkshopSelection(request.workshopSelection,body.workshopSelection))throw new Error('Workshop reference could not be confirmed. No microphone was opened.');
+ // Retain only a checked public receipt, before connecting the room or opening capture.
+ // Recheck Auth after the request so an account switch cannot publish a stale receipt.
+ const confirmedAccount=await supabase.auth.getSession();requireNotAborted(signal);
+ if(confirmedAccount.error||confirmedAccount.data.session?.user.id!==data.session.user.id)throw new Error('The signed-in account changed. Check session history from the original account.');
+ onSessionConfirmed?.({sessionId:body.sessionId,maxSessionSeconds:body.maxSessionSeconds,validationMode:body.validationMode});
+ if(failedDispatch)throw new Error(errorMessage('professor_agent_dispatch_failed'));
  return body as ProfessorTokenResponse;
 }
 export async function connectProfessor(request:TutorSessionRequest,options?:{
  signal?:AbortSignal;expectedUserId?:string;onRemoteAudio?:(track:RemoteAudioTrack)=>void;
  onDisconnected?:()=>void;onAudioPlaybackStatusChanged?:(canPlaybackAudio:boolean)=>void;
  onProfessorState?:(state:ProfessorVoiceState)=>void;
+ onSessionConfirmed?:(details:ProfessorSessionConfirmation)=>void;
 }):Promise<ProfessorConnection>{
  const signal=options?.signal;requireNotAborted(signal);
  const room=new Room({adaptiveStream:true,dynacast:true});
@@ -78,8 +89,9 @@ export async function connectProfessor(request:TutorSessionRequest,options?:{
  }
  function onAbort(){void disconnect().catch(()=>undefined);}
  signal?.addEventListener('abort',onAbort,{once:true});
+ let admitted=false;
  try{
-  const credentials=await requestProfessorToken(request,signal,options?.expectedUserId);requireNotAborted(signal);
+  const credentials=await requestProfessorToken(request,signal,options?.expectedUserId,details=>{admitted=true;if(active())options?.onSessionConfirmed?.(details);});requireNotAborted(signal);
   await room.connect(credentials.serverUrl,credentials.token);requireNotAborted(signal);
   await initialAudioUnlock;requireNotAborted(signal);
   options?.onAudioPlaybackStatusChanged?.(room.canPlaybackAudio);
@@ -91,5 +103,9 @@ export async function connectProfessor(request:TutorSessionRequest,options?:{
    if(!active()){await room.localParticipant.setMicrophoneEnabled(false).catch(()=>undefined);throw new Error('Professor connection changed.');}
   }
   return {room,roomName:credentials.roomName,participantIdentity:credentials.participantIdentity,sessionId:credentials.sessionId,maxSessionSeconds:credentials.maxSessionSeconds,professorProfile:credentials.professorProfile,validationMode:credentials.validationMode,disconnect,setMicrophoneEnabled};
- }catch(cause){await disconnect().catch(()=>undefined);throw cause;}
+ }catch(cause){
+  await disconnect().catch(()=>undefined);
+  if(admitted&&!signal?.aborted)throw new Error('The session was created, but voice could not connect. The local connection has been closed. Check the saved session status before starting another session.');
+  throw cause;
+ }
 }

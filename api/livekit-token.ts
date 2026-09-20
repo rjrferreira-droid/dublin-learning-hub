@@ -404,6 +404,21 @@ export default async function handler(req: any, res: any) {
     },
   });
 
+  // Public, owner-scoped confirmation survives a transport failure after admission.
+  // It carries no participant token, callback credential or provider metadata.
+  const sessionConfirmation = {
+    sessionId: persistence.sessionId,
+    roomName,
+    lessonId: persistenceLessonId,
+    mode,
+    professorProfile,
+    validationMode: voicePlan.validationMode,
+    maxSessionSeconds: voicePlan.maxSessionSeconds,
+    teachingContent: writtenLesson?.descriptor ?? null,
+    sessionPreparation: writtenLesson ? sessionPreparation : null,
+    workshopSelection,
+  };
+
   try {
     const api = new LiveKitAPI({
       host: liveKitHttpUrl(livekitUrl),
@@ -439,29 +454,22 @@ export default async function handler(req: any, res: any) {
     return send(res, 200, {
       serverUrl: livekitUrl,
       token: jwtToken,
-      roomName,
       participantIdentity,
-      lessonId: persistenceLessonId,
-      mode,
-      professorProfile,
-      validationMode: voicePlan.validationMode,
       qualityTier: budget.qualityTier,
-      maxSessionSeconds: voicePlan.maxSessionSeconds,
       monthlyBudgetUsd: budget.monthlyBudgetUsd,
       globalAiCapUsd: budget.globalAiCapUsd,
       reservedAfterUsd: budget.reservedAfterUsd,
       dispatchId,
-      sessionId: persistence.sessionId,
-      teachingContent: writtenLesson?.descriptor ?? null,
-      sessionPreparation: writtenLesson ? sessionPreparation : null,
-      workshopSelection,
+      ...sessionConfirmation,
     });
-  } catch (cause) {
+  } catch {
     // An HTTP failure is not proof that no agent was dispatched: preserve its reserve.
-    await db.rpc('flag_professor_dispatch_uncertain', {
-      p_session_id: persistence.sessionId, p_callback_token: persistence.callbackToken,
-    });
-    console.error('Professor LiveKit dispatch failed', cause instanceof Error ? cause.message : 'unknown_error');
-    return send(res, 503, { error: 'professor_agent_dispatch_failed' });
+    try {
+      await db.rpc('flag_professor_dispatch_uncertain', {
+        p_session_id: persistence.sessionId, p_callback_token: persistence.callbackToken,
+      });
+    } catch { /* The admitted session still exists; do not lose its recovery reference. */ }
+    console.error('Professor LiveKit dispatch unconfirmed', { sessionId: persistence.sessionId });
+    return send(res, 503, { error: 'professor_agent_dispatch_failed', retryAllowed: false, recovery: sessionConfirmation });
   }
 }

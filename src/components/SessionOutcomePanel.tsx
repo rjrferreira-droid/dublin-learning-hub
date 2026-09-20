@@ -4,7 +4,7 @@ import {useLearnerSession} from '../auth/LearnerSession';
 import {emptySessionOutcome,pollSessionOutcome,type SessionOutcome} from '../professor/sessionOutcome';
 import {loadSessionOutcome} from '../services/sessionOutcome';
 import '../professor/session-experience.css';
-export function SessionOutcomePanel({sessionId,validation}:{sessionId:string;validation:boolean}){
+export function SessionOutcomePanel({sessionId,validation,connectionFailed=false,onSavedCompletion}:{sessionId:string;validation:boolean;connectionFailed?:boolean;onSavedCompletion?:(completed:boolean)=>void}){
  const account=useLearnerSession();
  const [attempt,setAttempt]=useState(0);const [checking,setChecking]=useState(true);
  const [outcome,setOutcome]=useState<SessionOutcome>(()=>emptySessionOutcome({sessionId,userId:account.userId,validation}));
@@ -16,6 +16,7 @@ export function SessionOutcomePanel({sessionId,validation}:{sessionId:string;val
    .finally(()=>{if(!controller.signal.aborted)setChecking(false);});
   return ()=>controller.abort();
  },[sessionId,account.userId,validation,attempt]);
+ useEffect(()=>{onSavedCompletion?.(outcome.kind==='ready'||outcome.kind==='saved_without_feedback');},[outcome.kind,onSavedCompletion]);
  const title=outcome.kind==='ready'?'Your session feedback':outcome.kind==='saved_without_feedback'?'Session saved · feedback not available':outcome.kind==='stopped'?'Session marked as not completed':outcome.kind==='unavailable'?'Session status could not be checked':checking?'Checking saved feedback…':'Feedback is still pending';
  return <section className="session-outcome" data-testid="session-outcome" aria-label="Saved session feedback">
   <h3 aria-live="polite">{title}</h3>
@@ -23,7 +24,7 @@ export function SessionOutcomePanel({sessionId,validation}:{sessionId:string;val
    {outcome.summary&&<p>{outcome.summary}</p>}
    {outcome.strengths.length>0&&<div><h4>What went well</h4><ul>{outcome.strengths.map((s,i)=><li key={i}>{s}</li>)}</ul></div>}
    {outcome.nextFocus.length>0&&<div><h4>One useful next step</h4><p>{outcome.nextFocus[0]}</p></div>}
-  </>:<p>{outcome.kind==='saved_without_feedback'?'A completed record exists, but it does not contain usable feedback. No score or learning gain is inferred here.':outcome.kind==='stopped'?'This record is not marked completed. Do not repeat the conversation solely to force an evaluation or release a reservation.':outcome.kind==='unavailable'?'Your history has not been reset. This check could not establish the current result.':'The voice connection has ended. The server may still be processing the transcript and feedback; this page does not manufacture a result while waiting.'}</p>}
+  </>:<p>{outcome.kind==='saved_without_feedback'?'A completed record exists, but it does not contain usable feedback. No score or learning gain is inferred here.':outcome.kind==='stopped'?'This record is not marked completed. Do not repeat the conversation solely to force an evaluation or release a reservation.':outcome.kind==='unavailable'?'Your history has not been reset. This check could not establish the current result.':connectionFailed?'The connection failed after the session was created. Its saved status is still pending. Checking here does not start another conversation.':'The voice connection has ended. The server may still be processing the transcript and feedback; this page does not manufacture a result while waiting.'}</p>}
   {outcome.kind==='ready'&&<FeedbackEvidencePanel details={outcome.details}/>}
   <p className="outcome-scope">{validation?'Validation session: this feedback does not confirm any update to mastery, Error Bank or reviews.':'This is the feedback recorded for this session, not a guarantee of mastery.'} Cost settlement is separate and is not verified by this panel.</p>
   <small>Session {sessionId.slice(0,8)} · up to six read-only checks · no new AI call</small>

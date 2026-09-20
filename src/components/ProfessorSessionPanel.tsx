@@ -38,6 +38,7 @@ export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payrol
  const [voiceState,setVoiceState]=useState<ProfessorVoiceState>('awaiting_professor');
  const [validationConsent,setValidationConsent]=useState(false);
  const [details,setDetails]=useState<{sessionId:string;validationMode:boolean;maxSessionSeconds:number}|null>(null);
+ const [savedCompletion,setSavedCompletion]=useState(false);
  const [error,setError]=useState<string|null>(null);const [audioBlocked,setAudioBlocked]=useState(false);
  const mounted=useRef(false);const startLock=useRef(false);const microphoneLock=useRef(false);
  const stopPromise=useRef<Promise<void>|null>(null);
@@ -63,16 +64,17 @@ export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payrol
   void element.play().catch(()=>{if(current(controller))setAudioBlocked(true);});
  }
  async function start(){
-  if(!mounted.current||!enabled||!accountMatches||busy||startLock.current||stopPromise.current||(requestedValidation&&!validationConsent))return;
+  if(!mounted.current||!enabled||!accountMatches||busy||(state==='error'&&details&&!savedCompletion)||startLock.current||stopPromise.current||(requestedValidation&&!validationConsent))return;
   // A synchronous lock prevents duplicate requests before React has rendered the disabled button.
   startLock.current=true;const controller=new AbortController();connectionAbortRef.current=controller;
   const workshopChoice:WorkshopSelection|undefined=pickedWorkshop?{version:1,id:pickedWorkshop.id}:undefined;
   setSessionWorkshop(workshopChoice??null);
-  clearAudio();setState('connecting');setVoiceState('awaiting_professor');setDetails(null);setError(null);setAudioBlocked(false);
+  clearAudio();setState('connecting');setVoiceState('awaiting_professor');setDetails(null);setSavedCompletion(false);setError(null);setAudioBlocked(false);
   try{
    const contract=contractFor(track);
    const connection=await connectProfessor({lessonId:resolvedLessonId(track,lessonId),learnerId:learnerKey,track:contract.learnerTrack,mode:contract.mode,validationMode:requestedValidation,sessionPreparation,workshopSelection:workshopChoice,languageProfile:{preferredMix:'uk-us-mix',includeIrishExposure:true,correctionMode:learner.english.preferredCorrectionMode,professorEnglishSharePct:learner.english.professorEnglishSharePct,supportLanguage:learner.professor.defaultLanguage}},{
     signal:controller.signal,expectedUserId:account.userId,
+    onSessionConfirmed:confirmed=>{if(current(controller))setDetails(confirmed);},
     onRemoteAudio:remote=>attachAudio(remote,controller),
     onAudioPlaybackStatusChanged:allowed=>{if(current(controller))setAudioBlocked(!allowed);},
     onProfessorState:next=>{if(current(controller))setVoiceState(next);},
@@ -88,7 +90,7 @@ export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payrol
    connectionRef.current=connection;
    setDetails({sessionId:connection.sessionId,validationMode:connection.validationMode,maxSessionSeconds:connection.maxSessionSeconds});
    setAudioBlocked(!connection.room.canPlaybackAudio);setMicrophoneEnabled(true);setMicrophoneBusy(false);microphoneLock.current=false;setState('connected');
-  }catch(cause){if(current(controller)){setError(cause instanceof Error?cause.message:'Professor connection failed.');setState('error');}}
+  }catch(cause){if(current(controller)){clearAudio();setAudioBlocked(false);setError(cause instanceof Error?cause.message:'Professor connection failed.');setState('error');}}
   finally{if(connectionAbortRef.current===controller)startLock.current=false;}
  }
  function stop():Promise<void>{
@@ -140,7 +142,7 @@ export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payrol
     {audioBlocked&&<button className="primary-btn professor-enable-audio" type="button" onClick={()=>void enableAudio()}>🔊 Enable sound</button>}
     <button className="secondary-btn professor-mute" type="button" disabled={microphoneBusy} aria-pressed={!microphoneEnabled} onClick={()=>void toggleMicrophone()}>{microphoneEnabled?'Mute microphone':'Unmute microphone'}</button>
     <button className="primary-btn professor-stop" type="button" onClick={()=>void stop()}>End session</button>
-   </>:!compact&&<button className="primary-btn" type="button" onClick={()=>void start()} disabled={!enabled||!accountMatches||busy||(requestedValidation&&!validationConsent)}>{!enabled?'LiveKit setup required':state==='connecting'?'Connecting…':state==='ending'?'Ending…':requestedValidation?'Start validation session':'Start voice session'}</button>}
+   </>:!compact&&!(state==='error'&&details&&!savedCompletion)&&<button className="primary-btn" type="button" onClick={()=>void start()} disabled={!enabled||!accountMatches||busy||(requestedValidation&&!validationConsent)}>{!enabled?'LiveKit setup required':state==='connecting'?'Connecting…':state==='ending'?'Ending…':requestedValidation?'Start validation session':'Start voice session'}</button>}
   </div>
   {active&&!microphoneEnabled&&<p className="professor-mic-state" role="status">Microphone muted. The session timer and usage charges continue; use End session to leave.</p>}
   {audioBlocked&&active&&<div className="professor-audio-warning" role="status">Your browser blocked voice playback. Tap <strong>Enable sound</strong> once.</div>}
@@ -149,7 +151,7 @@ export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payrol
   {error&&<div className="professor-live-error" role="alert">{error}</div>}
   {state==='ended'&&details&&!compact&&<p className="professor-privacy-note">Connection ended. Evaluation and cost settlement may still be processing; this screen does not confirm they were saved.</p>}
   {/* Keep the same bounded outcome reader mounted across tab changes after ending. */}
-  {state==='ended'&&details&&<div hidden={compact} className="professor-outcome-holder"><SessionOutcomePanel key={details.sessionId} sessionId={details.sessionId} validation={details.validationMode}/></div>}
+  {(state==='ended'||state==='error')&&details&&<div hidden={compact} className="professor-outcome-holder"><SessionOutcomePanel key={details.sessionId} sessionId={details.sessionId} validation={details.validationMode} connectionFailed={state==='error'} onSavedCompletion={setSavedCompletion}/></div>}
   <div ref={audioHostRef} className="professor-audio-host" aria-hidden="true"/>
   <div className="professor-privacy-note">AI voice tutor · Raw learner voice is not stored by the Learning Hub by default.</div>
   {accountMatches&&!busy&&!compact&&<ProfessorLearningGuide track={track} lessonId={lessonId} phase={state==='ended'?'ended':'ready'}/>}

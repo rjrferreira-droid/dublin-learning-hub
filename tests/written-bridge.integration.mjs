@@ -25,12 +25,16 @@ function query(table){
 }
 const db={auth:{async getUser(){return {data:{user:{id:current.uid}},error:null};}},from:query,async rpc(name,args){
  current.rpcCalls.push({name,args});
+ if(name==='flag_professor_dispatch_uncertain'){
+  if(current.failFlag)throw Error('synthetic private database details');
+  return {data:null,error:null};
+ }
  assert.equal(name,'start_professor_session_atomic');
  return {error:null,data:{allowed:true,session_id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',reservation_id:'cccccccc-cccc-4ccc-8ccc-cccccccccccc',room_name:args.p_validation_mode?'validation:'+args.p_room_name.replace(/^validation:/,''):args.p_room_name,quality_tier:'premium',validation_mode:args.p_validation_mode,max_session_seconds:1200,monthly_budget_usd:110,global_ai_cap_usd:130,reservation_usd:4,reserved_before_usd:0,reserved_after_usd:4,global_committed_before_usd:0}};
 }};
 mock.module('@supabase/supabase-js',{namedExports:{createClient:()=>db}});
 mock.module('livekit-server-sdk',{namedExports:{
- LiveKitAPI:class{agentDispatch={createDispatch:async(room,agent,{metadata})=>{current.dispatches.push({room,agent,metadata:JSON.parse(metadata)});return {id:'synthetic-dispatch'};}};},
+ LiveKitAPI:class{agentDispatch={createDispatch:async(room,agent,{metadata})=>{current.dispatches.push({room,agent,metadata:JSON.parse(metadata)});if(current.failDispatch)throw Error('synthetic private provider details');return {id:'synthetic-dispatch'};}};},
  AccessToken:class{addGrant(){}async toJwt(){return 'synthetic-token-not-valid';}},
 }});
 const oldEnv={...process.env};
@@ -71,6 +75,22 @@ for(const track of ['finance','payroll','english'])test(`${track}: actual handle
   assert.equal(context.lesson.technicalBrief,metadata.lessonContext.technicalBrief);
   assert.ok(text.endsWith('#1 LEARNER: "Fictional learner response, not the case answer."'));
  }finally{globalThis.fetch=async()=>{throw new Error('network_forbidden');};delete process.env.OPENAI_API_KEY;}
+});
+test('dispatch failure returns the exact admitted public receipt even when uncertainty marking throws',async()=>{
+ const savedError=console.error;const logs=[];console.error=(...args)=>logs.push(args);
+ try{
+  for(const failFlag of [false,true]){
+   current=fixture();current.failDispatch=true;current.failFlag=failFlag;
+   const r=await invoke('finance');assert.equal(r.status,503);assert.equal(r.body.retryAllowed,false);
+   assert.equal(r.body.error,'professor_agent_dispatch_failed');assert.equal(r.body.recovery.sessionId,'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb');
+   assert.equal(r.body.recovery.lessonId,IDs.finance);assert.equal(r.body.recovery.validationMode,true);assert.equal(r.body.recovery.maxSessionSeconds,300);
+   assert.deepEqual(current.rpcCalls.map(x=>x.name),['start_professor_session_atomic','flag_professor_dispatch_uncertain']);
+   assert.equal(current.dispatches.length,1);assert.equal(current.writes.length,0);
+   for(const forbidden of ['token','callbackToken','publishableKey','persistence','metadata'])assert.ok(!Object.hasOwn(r.body.recovery,forbidden));
+   assert.ok(!JSON.stringify(r.body).includes('synthetic private'));
+  }
+  assert.ok(!JSON.stringify(logs).includes('synthetic private'));
+ }finally{console.error=savedError;}
 });
 test('actual handler refuses a cross-account course before reserving or dispatching',async()=>{
  current=fixture('payroll','rafael_finance');const r=await invoke('payroll');assert.equal(r.status,403);assert.equal(current.rpcCalls.length,0);assert.equal(current.dispatches.length,0);
