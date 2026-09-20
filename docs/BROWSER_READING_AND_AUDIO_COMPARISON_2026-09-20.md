@@ -26,7 +26,66 @@ version 2 (artifact 2852c95a540027ebbfd36e4f56537a6baf138cbebc7b6505d3d5b07d8001
 not the version-3 V2 baseline previously compared. No original data was changed.
 The original public-cache implementation must not be copied wholesale into the
 new private-storage and protected-budget runtime.
-No runtime rollback, secret/limit modification or new premium request was made.
+That comparison itself made no runtime rollback, secret/limit modification or
+new premium request. Subsequent recovery work is recorded below.
+
+## Protected original-lesson restoration and decisive live diagnosis
+
+The two saved OPENAI_API_KEY digests differ between the original and V2
+backends. Values were never retrieved or exposed. A new authenticated diagnostic
+uses GET /v1/models/gpt-4o-mini-tts with the installed V2 server credential. It
+returned model access successfully while generation was closed. This proves
+model access, not speech-generation quota, billing identity or playback.
+
+Commit b0e615124db487e1e35d1f7f5f44f874d8f69d42 restores the exact original
+Finance and English lesson IDs/slugs/sequence in the protected authored-v3 path.
+Previously only the three sequence-2 P1 lessons could generate; the original
+IFRS 18 page could not generate on a cache miss. Original Payroll remains on
+standby. Authored content, gpt-4o-mini-tts/marin/MP3, private storage, fingerprint
+binding, serialized budget admission and submission/receipt fences remain in use.
+
+The separately reviewed `premium-audio-golden-v3.sql` was applied only to
+aazfyosqqeujureksqjs with admission closed. It verifies the exact nine existing
+function bodies and ACLs plus the old constraint before replacing only the scope
+predicates. Pre/post hashes of attempts, bindings, assets, usage, Professor
+reservations and budget settings were identical. No original-backend write,
+Production promotion, PR merge, key change or spending-limit change occurred.
+
+Edge v18 artifact:
+`4509dfb8312d3b93fd3c9a643b7de1458118477f42089840f8b353da17978cab`.
+All 24 retrieved runtime sources matched the uploaded package; JWT remains on.
+33 mocked-handler tests, 19 contract tests and build passed locally. GitHub runs
+35514377313 (Deno), 35514377305 (real disposable PostgreSQL), 35514377310
+(application/UI) and 35514377312 (disposable platform) all passed. The SQL proof
+includes six concurrent original-lesson requests producing one admission,
+immutable settled-cache reuse, exact receipts, denied forged identities and
+preservation of unresolved P1 attempts across installation and later calls.
+
+One real authenticated Finance-original request was made after activation:
+
+- Attempt: `83e7f78d-34f4-4293-a809-30bcf7da2030`.
+- Submitted: 2026-09-20 13:47:53.609068 UTC.
+- Provider failure: 13:47:55 UTC, HTTP 429, `credit_balance_exhausted`.
+- Provider request ID: `req_a932374f6bec4838ac8907855956e772`.
+- No MP3 object or audio asset; usage rows remain eight.
+- USD 0.10 reservation retained as uncertain; no retry or invented zero-cost
+  receipt. Together with the two earlier P1 attempts, unresolved Audio is USD
+  0.30. The separate Professor reservation hash is unchanged.
+
+Admission was returned to `closed` at 13:49:03 UTC. The account dashboard still
+showed USD 8.59 API credit in Personal Organization. Therefore the exact cause
+returned by the installed credential is known, but its association with the
+displayed account/credit remains unverified. This is not a successful generation
+or playback acceptance. The support conversation was updated with the new request
+ID and error code, requesting account/project and charge confirmation.
+
+Next credential entry must be done by the user through secure manual handoff,
+in the verified Personal Organization / Dublin Learning Hub V2 project and then
+the V2 Supabase OPENAI_API_KEY field. Do not revoke the old keys, change budgets,
+buy credits, expose the key in chat, or retry/release the uncertain attempts.
+After credential correction, reconcile the exact failed attempts using provider
+evidence before allowing their generation again; do not change source/version to
+evade a fence. Real generation, playback and cached replay remain to be accepted.
 
 ## Independent delivery
 
