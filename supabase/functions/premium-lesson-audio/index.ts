@@ -13,13 +13,33 @@ import {createPremiumAudioSourceContract,resolvePremiumAudioRenderRecipe} from '
 
 type AudioFailurePhase='transport'|'http'|'media_type'|'media_validation';
 /** Metadata only. Never retain provider bodies, credentials or narrated text. */
-function premiumAudioFailureDiagnostic(attemptId:string,phase:AudioFailurePhase,status:unknown,requestId:unknown){
+const providerErrorCodes=new Set(['credit_balance_exhausted','organization_spend_limit_exceeded','project_spend_limit_exceeded','organization_usage_limit_exceeded','insufficient_quota','rate_limit_exceeded','slow_down']);
+async function readProviderErrorCode(response:Response):Promise<string|null>{
+ if((response.headers.get('content-type')??'').split(';',1)[0].trim().toLowerCase()!=='application/json'){
+  await response.body?.cancel().catch(()=>undefined);return null;
+ }
+ if(!response.body)return null;
+ const reader=response.body.getReader(),chunks:Uint8Array[]=[];let total=0;
+ try{
+  while(true){
+   const {done,value}=await reader.read();if(done)break;
+   total+=value.byteLength;if(total>8192)return null;
+   chunks.push(value);
+  }
+  const bytes=new Uint8Array(total);let offset=0;
+  for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
+  const code=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes))?.error?.code;
+  return typeof code==='string'&&providerErrorCodes.has(code)?code:null;
+ }catch{return null;}finally{await reader.cancel().catch(()=>undefined);reader.releaseLock();}
+}
+function premiumAudioFailureDiagnostic(attemptId:string,phase:AudioFailurePhase,status:unknown,requestId:unknown,errorCode:unknown){
  return {
   event:'premium_audio_provider_failure',
   attemptId:/^[a-f0-9-]{36}$/.test(attemptId)?attemptId:null,
   phase:['transport','http','media_type','media_validation'].includes(phase)?phase:'transport',
   httpStatus:Number.isInteger(status)&&Number(status)>=100&&Number(status)<=599?Number(status):null,
   providerRequestId:typeof requestId==='string'&&/^req_[A-Za-z0-9_-]{1,120}$/.test(requestId)?requestId:null,
+  providerErrorCode:typeof errorCode==='string'&&providerErrorCodes.has(errorCode)?errorCode:null,
  };
 }
 
@@ -285,14 +305,14 @@ Deno.serve(async(req:Request)=>{
             ||identity.renderRevision!==contract.renderRevision||identity.storagePath!==contract.storagePath)
             throw new Error('audio_reconciliation_required');
           let failurePhase:AudioFailurePhase='transport';
-          let providerStatus:number|null=null,providerRequestId:string|null=null;
+          let providerStatus:number|null=null,providerRequestId:string|null=null,providerErrorCode:string|null=null;
           try{
             const response=await fetch(recipe.endpoint,{method:'POST',signal:AbortSignal.timeout(90000),
               headers:{Authorization:`Bearer ${openaiKey}`,'Content-Type':'application/json'},
               body:JSON.stringify({...recipe.request,input:source.script})});
             providerStatus=response.status;providerRequestId=response.headers.get('x-request-id');
             failurePhase='http';
-            if(!response.ok){await response.body?.cancel().catch(()=>undefined);throw new Error('tts_failed');}
+            if(!response.ok){providerErrorCode=await readProviderErrorCode(response);throw new Error('tts_failed');}
             failurePhase='media_type';
             const contentType=(response.headers.get('content-type')??'').split(';',1)[0].trim().toLowerCase();
             if(contentType!=='audio/mpeg'&&contentType!=='audio/mp3'){
@@ -301,7 +321,7 @@ Deno.serve(async(req:Request)=>{
             failurePhase='media_validation';
             return await readBoundedPremiumMp3(response);
           }catch{
-            console.error(JSON.stringify(premiumAudioFailureDiagnostic(attemptId,failurePhase,providerStatus,providerRequestId)));
+            console.error(JSON.stringify(premiumAudioFailureDiagnostic(attemptId,failurePhase,providerStatus,providerRequestId,providerErrorCode)));
             throw new Error('tts_failed');
           }
         },
