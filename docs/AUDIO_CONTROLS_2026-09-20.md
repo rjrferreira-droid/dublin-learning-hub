@@ -47,3 +47,26 @@ logging secrets, headers, scripts or unrestricted provider response bodies.
 The disposable platform suite also exposed its old assumption that Payroll is
 visible. Its full three-track isolation build now explicitly opts into Payroll;
 the main experience suite continues testing default hidden Payroll/Manu.
+
+## Provider diagnosis and protected state
+
+Safe diagnostics deployed in version 12 record only the attempt identifier,
+failure phase, HTTP status and a bounded provider request identifier. Provider
+bodies, credentials and narration scripts are not logged.
+
+One controlled English request on 20 September at 11:32:34 UTC returned HTTP
+429 at the provider HTTP phase. Correlation identifier:
+req_ec254bda96e34a309bc2501121997cc8. English attempt
+0a15cecb-3bb1-48eb-8707-2e73086ab815 remains uncertain with USD0.10 protected.
+Together with Finance this is USD0.20 of protected reservations, not a confirmed
+provider charge. No audio object or cost receipt was created. The runtime was
+restored to closed; no automatic retry or release is authorized by this finding.
+
+HTTP 429 alone cannot distinguish exhausted quota from a rate limit. Provider
+reconciliation is still needed before retrying either lesson. Successful audio
+playback and cache reuse remain unverified.
+
+The diagnostic implementation is kept inside the existing approved Audio
+entrypoint. The frozen runtime boundary check remains unchanged. Integration
+coverage exercises the actual handler with provider failures, untrusted request
+metadata and a 429 response, preserving the uncertain reservation with one call.

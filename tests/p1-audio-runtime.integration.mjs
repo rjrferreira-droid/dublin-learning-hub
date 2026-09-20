@@ -107,7 +107,7 @@ globalThis.fetch=async(url,opts)=>{
  assert.equal(url,'https://api.openai.com/v1/audio/speech');state.events.push('tts');state.tts.push(JSON.parse(opts.body));
  if(state.driftDuringProvider){state.postProviderIdentityDrift=true;state.latest={...state.latest,slug:slugs.payroll};}
  if(state.providerError)throw new Error('fictional timeout');
- if(state.providerHttpError)return new Response('PRIVATE_PROVIDER_BODY_SENTINEL',{status:401,headers:{'x-request-id':'req_fictional123'}});
+ if(state.providerHttpError)return new Response('PRIVATE_PROVIDER_BODY_SENTINEL',{status:state.providerStatus??401,headers:state.providerRequestId===null?{}:{'x-request-id':state.providerRequestId??'req_fictional123'}});
  if(state.providerWrongType)return new Response(JSON.stringify({error:'fictional non-audio'}),{headers:{'Content-Type':'application/json'}});
  if(state.providerEmpty)return new Response(new Uint8Array(),{headers:{'Content-Type':'audio/mpeg'}});
  if(state.providerCorrupt)return new Response(new Uint8Array([1,2,3,4]),{headers:{'Content-Type':'audio/mpeg'}});
@@ -126,10 +126,21 @@ test('authored v3 logs only safe provider failure metadata and retains the uncer
   resetV3('finance',{providerHttpError:true});const result=await invoke();
   assert.equal(result.body.error,'tts_failed');assert.equal(state.attemptState,'uncertain');
   assert.equal(state.tts.length,1);assert.equal(records.length,1);
-  const record=JSON.parse(records[0]);assert.equal(record.phase,'http');assert.equal(record.httpStatus,401);
-  assert.equal(record.providerRequestId,'req_fictional123');
+  const record=JSON.parse(records[0]);assert.deepEqual(record,{event:'premium_audio_provider_failure',attemptId:state.v3AttemptId,phase:'http',httpStatus:401,providerRequestId:'req_fictional123'});
   assert.ok(!records[0].includes('PRIVATE_PROVIDER_BODY_SENTINEL'));
   assert.ok(!records[0].includes('Bearer'));assert.ok(!records[0].includes(state.tts[0].input));
+ }finally{logger.mock.restore();}
+});
+test('authored v3 rejects untrusted request metadata and preserves a 429 hold without retry',async()=>{
+ const records=[];const logger=mock.method(console,'error',message=>records.push(message));
+ try{
+  for(const providerRequestId of ['Bearer PRIVATE_SENTINEL','req_'+'x'.repeat(121),null]){
+   records.length=0;resetV3('english',{providerHttpError:true,providerStatus:429,providerRequestId});
+   const result=await invoke();assert.equal(result.body.error,'tts_failed');
+   assert.equal(state.attemptState,'uncertain');assert.equal(state.tts.length,1);
+   assert.equal(records.length,1);assert.deepEqual(JSON.parse(records[0]),{event:'premium_audio_provider_failure',attemptId:state.v3AttemptId,phase:'http',httpStatus:429,providerRequestId:null});
+   assert.ok(!records[0].includes('PRIVATE_SENTINEL'));assert.ok(!records[0].includes('PRIVATE_PROVIDER_BODY_SENTINEL'));
+  }
  }finally{logger.mock.restore();}
 });
 for(const track of Object.keys(slugs))test(`${track}: actual undeployed Edge handler reaches fictional TTS only after exact identity, budget, claim and version recheck`,async()=>{

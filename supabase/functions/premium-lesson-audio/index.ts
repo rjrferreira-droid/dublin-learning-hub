@@ -3,7 +3,6 @@ import "jsr:@supabase/functions-js@2.116.0/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2.116.0";
 import {parseReservationExposure} from '../_shared/reservation-exposure.ts';
 import {premiumAudioBudgetDecision} from '../_shared/premium-audio-budget.ts';
-import {premiumAudioFailureDiagnostic,type AudioFailurePhase} from '../_shared/premium-audio-diagnostic.ts';
 
 import {p1AudioIdentity,p1PremiumAudioGate} from '../_shared/p1-premium-audio-gate.ts';
 import {p1SlugFor} from '../../../src/learning/p1RuntimeRegistry.ts';
@@ -11,6 +10,18 @@ import {p1ModuleFor} from '../../../src/learning/p1RuntimeModulesData.ts';
 import {resolveP1ProfessorHandoff} from '../../../server/p1-professor-handoff.ts';
 import {buildWrittenAudioPreviewSource} from '../../../quality/candidates/written-audio-preview.ts';
 import {createPremiumAudioSourceContract,resolvePremiumAudioRenderRecipe} from '../../../quality/candidates/premium-audio-source-contract.ts';
+
+type AudioFailurePhase='transport'|'http'|'media_type'|'media_validation';
+/** Metadata only. Never retain provider bodies, credentials or narrated text. */
+function premiumAudioFailureDiagnostic(attemptId:string,phase:AudioFailurePhase,status:unknown,requestId:unknown){
+ return {
+  event:'premium_audio_provider_failure',
+  attemptId:/^[a-f0-9-]{36}$/.test(attemptId)?attemptId:null,
+  phase:['transport','http','media_type','media_validation'].includes(phase)?phase:'transport',
+  httpStatus:Number.isInteger(status)&&Number(status)>=100&&Number(status)<=599?Number(status):null,
+  providerRequestId:typeof requestId==='string'&&/^req_[A-Za-z0-9_-]{1,120}$/.test(requestId)?requestId:null,
+ };
+}
 
 type AudioLessonRow={
   id:string;module_id:string;slug:string;is_published:boolean;title:string;
