@@ -71,9 +71,9 @@ export function BrowserLessonReader({module,disabled=false}:{module:LessonModule
   <p>Read the written lesson aloud, or listen to its Portuguese summaries. No OpenAI generation or Learning Hub AI charge. Voice quality and internet requirements depend on your browser and device.</p>
   {!supported?<p role="status">Read-aloud is unavailable in this browser. The written lesson remains available.</p>:<>
    <div className="browser-reader-options">
-    <label>Section<select value={section} disabled={disabled} onChange={e=>{stop();setSection(Number(e.target.value));}}>{module.sections.map((s,i)=><option key={s.id} value={i}>{i+1}. {s.title}</option>)}</select></label>
-    <label>Read aloud<select value={language} disabled={disabled} onChange={e=>{stop();setLanguage(e.target.value);}}><option value="en-GB">English lesson</option><option value="pt-BR">Resumo em português</option></select></label>
-    <label>Speed<select value={rate} disabled={disabled} onChange={e=>{stop();setRate(e.target.value);}}><option value="0.85">Slower</option><option value="1">Normal</option><option value="1.15">Faster</option></select></label>
+    <label>Section<select aria-label="Section" value={section} disabled={disabled} onChange={e=>{stop();setSection(Number(e.target.value));}}>{module.sections.map((s,i)=><option key={s.id} value={i}>{s.title}</option>)}</select></label>
+    <label>Read aloud<select aria-label="Read aloud" value={language} disabled={disabled} onChange={e=>{stop();setLanguage(e.target.value);}}><option value="en-GB">English lesson</option><option value="pt-BR">Resumo em português</option></select></label>
+    <label>Speed<select aria-label="Speed" value={rate} disabled={disabled} onChange={e=>{stop();setRate(e.target.value);}}><option value="0.85">Slower</option><option value="1">Normal</option><option value="1.15">Faster</option></select></label>
    </div>
    <div className="browser-reader-actions"><button type="button" className="secondary-btn" disabled={disabled||playing} onClick={start}>Listen to section</button><button type="button" className="secondary-btn" disabled={!playing} onClick={stop}>Stop reading</button></div>
    <p role="status" aria-live="polite">{disabled?'End the Professor session and use the matching learner account to listen.':status}</p>
