@@ -10,6 +10,9 @@ import {p1ModuleFor} from '../../../src/learning/p1RuntimeModulesData.ts';
 import {resolveP1ProfessorHandoff} from '../../../server/p1-professor-handoff.ts';
 import {buildWrittenAudioPreviewSource} from '../../../quality/candidates/written-audio-preview.ts';
 import {createPremiumAudioSourceContract,resolvePremiumAudioRenderRecipe} from '../../../quality/candidates/premium-audio-source-contract.ts';
+import {createHash} from 'node:crypto';
+import {goldenAudioTrack} from '../../../src/learning/goldenAudioRegistry.ts';
+import {lessonModuleFor} from '../../../src/learning/lessonModules.ts';
 
 type AudioFailurePhase='transport'|'http'|'media_type'|'media_validation';
 /** Metadata only. Never retain provider bodies, credentials or narrated text. */
@@ -195,17 +198,22 @@ Deno.serve(async(req:Request)=>{
   const {data:course}=mod?await admin.from("courses").select("id,learner_track,is_active").eq("id",mod.course_id).eq("is_active",true).single():{data:null};
   if(!course||mod?.id!==lesson.module_id||mod?.is_published!==true||course.id!==mod.course_id||course.is_active!==true)return json({error:"forbidden"},403);
   const isP1=[p1SlugFor('finance'),p1SlugFor('payroll'),p1SlugFor('english')].includes(lesson.slug);
+  const originalTrack=goldenAudioTrack({lessonId:lesson.id,lessonSlug:lesson.slug,
+    requestedTrack:course.learner_track,sequence:lesson.sequence});
   const p1Input={profileTrack:profile.learner_track,requestedTrack:course.learner_track,requestedLessonId:lessonId,resolvedLesson:{id:lesson.id,slug:lesson.slug,learnerTrack:course.learner_track,isPublished:lesson.is_published,contentVersion:lesson.content_version}};
   if(isP1){
     // Deliberately unset in the real backend. Requires a separately reviewed isolated backend deployment.
     if(audioRuntimeStage!=='isolated-preview-atomic-v2'&&audioRuntimeStage!=='isolated-preview-authored-v3')return json({error:'p1_audio_runtime_unavailable'},403);
     try{p1AudioIdentity(p1Input);}catch{return json({error:'forbidden'},403);}
+  }else if(audioRuntimeStage==='isolated-preview-authored-v3'){
+    if(!originalTrack||!['rafael_finance','viviane_payroll'].includes(profile.learner_track)
+      ||(originalTrack!=='english'&&course.learner_track!==profile.learner_track))return json({error:'forbidden'},403);
   }else{
     const goldenIds:Record<string,string>={rafael_finance:'b3639582-3c32-4147-a4b3-84237d11a66e',viviane_payroll:'6ffda415-3b18-46ab-afaa-414f81a7eb31'};
     if(course.learner_track!==profile.learner_track||goldenIds[course.learner_track]!==lessonId)return json({error:"forbidden"},403);
   }
 
-  if(isP1&&audioRuntimeStage==='isolated-preview-authored-v3'){
+  if(audioRuntimeStage==='isolated-preview-authored-v3'){
     const exactKeys=(value:unknown,keys:readonly string[])=>value!==null&&typeof value==='object'&&!Array.isArray(value)
       &&Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
     const exactCacheHit=(value:unknown,path:string,expectedAttemptId?:string)=>{
@@ -219,17 +227,30 @@ Deno.serve(async(req:Request)=>{
       &&Object.hasOwn(value,'message')&&(value as {message?:unknown}).message==='audio_source_changed';
     const sameIdentity=(left:unknown,right:unknown)=>JSON.stringify(left)===JSON.stringify(right);
     const deriveAuthoredSource=(resolvedProfile:any,resolvedLesson:any,resolvedModule:any,resolvedCourse:any)=>{
-      if(resolvedLesson?.sequence!==2||resolvedLesson?.module_id!==resolvedModule?.id||resolvedModule?.is_published!==true
+      if(resolvedLesson?.id!==lessonId||resolvedLesson?.is_published!==true||resolvedLesson?.module_id!==resolvedModule?.id||resolvedModule?.is_published!==true
         ||resolvedModule?.course_id!==resolvedCourse?.id||resolvedCourse?.is_active!==true)throw new Error('audio_source_changed');
-      const handoff=resolveP1ProfessorHandoff({profileTrack:resolvedProfile?.learner_track,requestedTrack:resolvedCourse?.learner_track,
-        requestedLessonId:lessonId,resolvedLesson:{id:resolvedLesson?.id,slug:resolvedLesson?.slug,
-          learnerTrack:resolvedCourse?.learner_track,isPublished:resolvedLesson?.is_published}});
-      const authored=p1ModuleFor(handoff.studyTrack,{id:resolvedLesson.id,slug:resolvedLesson.slug});
+      let studyTrack,authored,referenceSha256;
+      if(resolvedLesson.sequence===1){
+        studyTrack=goldenAudioTrack({lessonId:resolvedLesson.id,lessonSlug:resolvedLesson.slug,
+          requestedTrack:resolvedCourse.learner_track,sequence:resolvedLesson.sequence});
+        if(!studyTrack||!['rafael_finance','viviane_payroll'].includes(resolvedProfile?.learner_track)
+          ||(studyTrack!=='english'&&resolvedCourse.learner_track!==resolvedProfile.learner_track))throw new Error('audio_source_changed');
+        authored=lessonModuleFor(studyTrack,resolvedLesson.id);
+        referenceSha256=createHash('sha256').update(JSON.stringify(authored)).digest('hex');
+      }else{
+        if(resolvedLesson.sequence!==2)throw new Error('audio_source_changed');
+        const handoff=resolveP1ProfessorHandoff({profileTrack:resolvedProfile?.learner_track,requestedTrack:resolvedCourse?.learner_track,
+          requestedLessonId:lessonId,resolvedLesson:{id:resolvedLesson?.id,slug:resolvedLesson?.slug,
+            learnerTrack:resolvedCourse?.learner_track,isPublished:resolvedLesson?.is_published}});
+        studyTrack=handoff.studyTrack;
+        authored=p1ModuleFor(studyTrack,{id:resolvedLesson.id,slug:resolvedLesson.slug});
+        referenceSha256=handoff.teachingContent.sha256;
+      }
       if(!authored)throw new Error('audio_source_changed');
       const identity={lessonId:resolvedLesson.id,moduleId:resolvedModule?.id,courseId:resolvedCourse?.id,
         lessonSlug:resolvedLesson.slug,contentVersion:resolvedLesson.content_version,requestedTrack:resolvedCourse.learner_track,
-        studyTrack:handoff.studyTrack,sequence:resolvedLesson.sequence};
-      const source=buildWrittenAudioPreviewSource({identity,referenceSha256:handoff.teachingContent.sha256,
+        studyTrack,sequence:resolvedLesson.sequence};
+      const source=buildWrittenAudioPreviewSource({identity,referenceSha256,
         title:authored.title,authoredSections:authored.sections});
       const contract=createPremiumAudioSourceContract({identity:source.identity,sourceFingerprint:source.sourceFingerprint});
       const recipe=resolvePremiumAudioRenderRecipe(source.language);

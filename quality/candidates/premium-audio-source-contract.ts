@@ -1,4 +1,5 @@
 import type {BoundIdentity} from './professor-admission-contract.ts';
+import {goldenAudioTrack} from '../../src/learning/goldenAudioRegistry.ts';
 
 export const PREMIUM_AUDIO_RENDER_PROFILE='written-study-guide-v1' as const;
 export const PREMIUM_AUDIO_RENDER_REVISION=1 as const;
@@ -55,7 +56,8 @@ export function canonicalPremiumAudioIdentity(value:unknown):Readonly<BoundIdent
  if(![identity.lessonId,identity.moduleId,identity.courseId].every(part=>typeof part==='string'&&uuid.test(part))
   ||typeof identity.lessonSlug!=='string'||!identity.lessonSlug.trim()
   ||!Number.isSafeInteger(identity.contentVersion)||Number(identity.contentVersion)<1||Number(identity.contentVersion)>100000
-  ||!Number.isSafeInteger(identity.sequence)||Number(identity.sequence)<2||Number(identity.sequence)>8
+  ||!Number.isSafeInteger(identity.sequence)||Number(identity.sequence)<1||Number(identity.sequence)>8
+  ||(identity.sequence===1&&goldenAudioTrack(identity)===null)
   ||typeof identity.requestedTrack!=='string'||!Object.hasOwn(requestTracks,identity.requestedTrack)
   ||typeof identity.studyTrack!=='string'||requestTracks[identity.requestedTrack as keyof typeof requestTracks]!==identity.studyTrack)
   throw Error('premium_audio_source_identity_invalid');

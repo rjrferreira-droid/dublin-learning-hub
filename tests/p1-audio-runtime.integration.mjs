@@ -301,21 +301,37 @@ test('authored v3 RPC/grant absence fails closed without falling back to v2 or r
  resetV3('finance',{markError:true});r=await invoke();assert.equal(r.status,503);assert.equal(r.body.error,'audio_submission_unconfirmed');assert.equal(state.tts.length,0);assert.equal(state.attemptState,'uncertain');
 });
 
-test('authored v3 serves an exact non-P1 Golden cache but keeps every new Golden admission closed',async()=>{
- const goldenId='b3639582-3c32-4147-a4b3-84237d11a66e';
- const golden={id:goldenId,module_id:moduleId,slug:'fictional-golden-finance',
-  is_published:true,title:'Fictional Golden',content_version:2,sequence:1,manager_commentary_pt:'SAFE LEGACY GOLDEN SCRIPT',technical_brief_pt:'SAFE LEGACY BRIEF'};
- reset('finance',{stage:'isolated-preview-authored-v3',requestLessonId:goldenId,lesson:golden});
- let r=await invoke();assert.equal(r.status,503);assert.equal(r.body.error,'audio_v3_admission_closed');assert.equal(state.tts.length,0);
- assert.ok(!state.events.includes('learning_hub_budget_settings'));assert.ok(!state.events.includes('begin_premium_audio_attempt_v2'));
- assert.ok(!state.events.includes('begin_premium_audio_attempt_v3'));assert.ok(!state.events.includes('claim_premium_audio_generation_v1'));
- assert.ok(state.lessonSelections[0].includes('sequence')&&!state.lessonSelections[0].includes('manager_commentary_pt'));
-
- reset('finance',{stage:'isolated-preview-authored-v3',requestLessonId:goldenId,lesson:golden,
-  cache:{id:'golden-asset',storage_path:`lessons/${goldenId}/commentary-v2.mp3`,transcript_pt:'SAFE LEGACY GOLDEN SCRIPT',voice:'marin'}});
- r=await invoke();assert.equal(r.status,200);assert.equal(r.body.cached,true);assert.match(r.body.audio_url,/signed/);assert.equal(state.tts.length,0);
- assert.ok(!state.events.includes('learning_hub_budget_settings'));assert.ok(!state.events.includes('begin_premium_audio_attempt_v2'));
- assert.ok(!state.events.includes('begin_premium_audio_attempt_v3'));assert.ok(!state.events.includes('claim_premium_audio_generation_v1'));
+const originals={finance:{id:'b3639582-3c32-4147-a4b3-84237d11a66e',slug:'ifrs-18-group-reporting-irish-statutory'},
+ english:{id:'f455a740-f50f-4eb7-95a7-9e4129ca4a68',slug:'story-past-forms-rhythm-follow-up'}};
+function resetOriginal(track='finance',extra={}){
+ resetV3(track);const original=originals[track];
+ state={...state,requestLessonId:original.id,lesson:{...state.lesson,...original,sequence:1},...extra};
+}
+test('original Finance and English use protected authored generation, settlement and cache replay',async()=>{
+ for(const track of ['finance','english']){
+  resetOriginal(track);let r=await invoke();assert.equal(r.status,200,JSON.stringify(r.body));
+  assert.equal(state.tts.length,1);assert.equal(state.tts[0].model,'gpt-4o-mini-tts');assert.equal(state.tts[0].voice,'marin');
+  assert.doesNotMatch(state.tts[0].input,/PRIVATE_|LOCAL_PRIVATE_DRAFT|Fictional P1/);
+  assert.match(state.tts[0].input,track==='finance'?/IFRS 18/:/Tell a story/);
+  assert.equal(state.v3BeginIdentity.sequence,1);assert.equal(state.v3BeginIdentity.lessonId,originals[track].id);
+  assert.equal(state.attemptState,'settled');assert.match(r.body.audio_url,/signed/);
+  assert.ok(!state.events.includes('begin_premium_audio_attempt_v2'));
+  assert.ok(!state.events.includes('claim_premium_audio_generation_v1'));
+  const path=state.uploadPath;state.events=[];r=await invoke();
+  assert.equal(r.status,200);assert.equal(r.body.cached,true);assert.equal(state.tts.length,1);
+  assert.ok(r.body.audio_url.endsWith(path));assert.ok(!state.events.includes('learning_hub_budget_settings'));
+ }
+});
+test('original admission rejects identity spoofing, wrong learner, drift, unreviewed payroll and unresolved evidence',async()=>{
+ for(const mutation of [{slug:'forged'},{id},{sequence:2}]){
+  resetOriginal();state.lesson={...state.lesson,...mutation};const r=await invoke();assert.notEqual(r.status,200);assert.equal(state.tts.length,0);
+ }
+ resetOriginal('finance',{profile:'viviane_payroll'});assert.equal((await invoke()).status,403);assert.equal(state.tts.length,0);
+ resetOriginal('finance',{latestProfile:'viviane_payroll'});assert.notEqual((await invoke()).status,200);assert.equal(state.tts.length,0);
+ resetOriginal('finance',{latest:{content_version:3}});assert.notEqual((await invoke()).status,200);assert.equal(state.tts.length,0);
+ resetOriginal('finance',{observe:'reconciliation_required'});assert.equal((await invoke()).body.error,'audio_reconciliation_required');assert.equal(state.tts.length,0);
+ resetOriginal();state.lesson={...state.lesson,id:'6ffda415-3b18-46ab-afaa-414f81a7eb31',slug:'gross-to-net-rpn-paye-usc-prsi'};
+ state.requestLessonId=state.lesson.id;assert.equal((await invoke()).status,403);assert.equal(state.tts.length,0);
 });
 
 test('authored v3 source and full lesson identity mutation, stale asset or orphaned object closes before the paid provider',async()=>{

@@ -2,6 +2,7 @@
  * The supplied RPC client must implement the reviewed atomic SQL contract.
  * Providers/storage are injected; tests supply fictional dependencies exclusively.
  */
+import {goldenAudioTrack} from '../../../src/learning/goldenAudioRegistry.ts';
 type RpcClient={rpc:(name:string,args:Record<string,unknown>)=>PromiseLike<{data:unknown;error:unknown}>};
 export type AudioAttemptInput={attemptId:string;userId:string;lessonId:string;contentVersion:number;reservationUsd:number;estimatedCostUsd:number;characters:number};
 type DurableAsset={attemptId:string;storagePath:string};
@@ -90,7 +91,8 @@ function captureLessonIdentity(value:unknown){
  if(![identity.lessonId,identity.moduleId,identity.courseId].every(part=>typeof part==='string'&&uuidLowercase.test(part))
   ||typeof identity.lessonSlug!=='string'||!identity.lessonSlug.trim()
   ||!Number.isSafeInteger(identity.contentVersion)||Number(identity.contentVersion)<1||Number(identity.contentVersion)>100000
-  ||!Number.isSafeInteger(identity.sequence)||Number(identity.sequence)<2||Number(identity.sequence)>8
+  ||!Number.isSafeInteger(identity.sequence)||Number(identity.sequence)<1||Number(identity.sequence)>8
+  ||(identity.sequence===1&&goldenAudioTrack(identity)===null)
   ||typeof identity.requestedTrack!=='string'||!Object.hasOwn(lessonTracks,identity.requestedTrack)
   ||typeof identity.studyTrack!=='string'||lessonTracks[identity.requestedTrack]!==identity.studyTrack)return null;
  return Object.freeze({lessonId:identity.lessonId as string,moduleId:identity.moduleId as string,

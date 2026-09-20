@@ -16,6 +16,9 @@ on:
       - 'supabase/migrations/20260913161005_lh_atomic_professor_start.sql'
       - 'supabase/migrations/20260913165704_lh_reservation_lifecycle.sql'
       - 'quality/candidates/premium-audio-source-binding.sql'
+      - 'quality/candidates/premium-audio-golden-v3.sql'
+      - 'quality/tests/premium-audio-golden-v3.py'
+      - 'src/learning/goldenAudioRegistry.ts'
       - 'quality/candidates/premium-audio-service-access-v3.sql'
       - 'quality/tests/premium-audio-service-access-v3.py'
       - 'quality/candidates/profile-assignment-containment.sql'
@@ -367,7 +370,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -c "delete from lh_internal.premium_audio_attempts where id='55555555-5555-4555-8555-555555555555'"
           psql -v ON_ERROR_STOP=1 -f "$audio_v3_candidate"
           python3 quality/tests/premium-audio-service-access-v3.py
-          python3 quality/tests/premium-audio-source-binding.py
+          python3 quality/tests/premium-audio-golden-v3.py
           # The following legacy stop rehearsal predates closed v2 admission
           # and invokes both RPCs as service_role. Restore them only inside this
           # disposable CI database after the closed-v3 proof has completed.
