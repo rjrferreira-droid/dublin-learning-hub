@@ -20,6 +20,7 @@ function errorMessage(code:string):string {
  if(code==='professor_not_configured')return 'Professor voice infrastructure is not configured yet.';
  if(code==='professor_agent_dispatch_failed')return 'The session was created, but the Professor connection could not be confirmed. Check the saved session status before starting another session.';
  if(code==='professor_session_already_active')return 'A previous Professor session is still active or awaiting confirmation. Check its status before starting another session.';
+ if(['professor_connection_failed','professor_budget_guard_unavailable','professor_session_persistence_unavailable'].includes(code))return 'The start could not be confirmed. Check previous sessions below before starting another conversation.';
  if(code==='professor_learner_mismatch')return 'The displayed learner does not match your signed-in account. Return to your own profile before starting.';
  if(code==='professor_track_forbidden')return 'This Professor track is not available for the authenticated learner profile.';
  if(code==='professor_lesson_forbidden')return 'This lesson is not available to the authenticated learner profile.';
@@ -34,7 +35,10 @@ async function requestProfessorToken(request:TutorSessionRequest,signal?:AbortSi
  if(error)throw error;
  if(!data.session?.access_token)throw new Error('Sign in before starting the Professor.');
  if(expectedUserId&&data.session.user.id!==expectedUserId)throw new Error('The signed-in account changed. Start again from the correct account.');
- const response=await fetch('/api/livekit-token',{method:'POST',signal,headers:{'content-type':'application/json',authorization:`Bearer ${data.session.access_token}`},body:JSON.stringify({lessonId:request.lessonId,learnerId:request.learnerId,track:request.track,mode:request.mode,languageProfile:request.languageProfile,validationMode:request.validationMode===true,sessionPreparation:request.sessionPreparation,workshopSelection:request.workshopSelection})});
+ let response:Response;
+ try{
+  response=await fetch('/api/livekit-token',{method:'POST',signal,headers:{'content-type':'application/json',authorization:`Bearer ${data.session.access_token}`},body:JSON.stringify({lessonId:request.lessonId,learnerId:request.learnerId,track:request.track,mode:request.mode,languageProfile:request.languageProfile,validationMode:request.validationMode===true,sessionPreparation:request.sessionPreparation,workshopSelection:request.workshopSelection})});
+ }catch{requireNotAborted(signal);throw new Error(errorMessage('professor_connection_failed'));}
  const payload=await response.json().catch(()=>({}));requireNotAborted(signal);
  const failedDispatch=!response.ok&&payload?.error==='professor_agent_dispatch_failed'&&payload?.retryAllowed===false;
  if(!response.ok&&!failedDispatch)throw new Error(errorMessage(typeof payload?.error==='string'?payload.error:'professor_connection_failed'));

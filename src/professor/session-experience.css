@@ -11,3 +11,19 @@
 .professor-session-panel > .professor-session-reference,
 .professor-session-panel > .professor-mic-state{grid-column:1/-1}
 @media(min-width:781px){.professor-session-panel{grid-template-columns:92px minmax(0,1fr)}.professor-session-panel > .professor-live-copy{grid-column:2/-1}}
+
+.professor-history-holder{grid-column:1/-1;min-width:0}
+.recent-professor-sessions{padding:16px 18px;border:1px solid #d5e1ee;border-radius:16px;background:#f8fafd;color:#18334f;text-align:left;font-size:14px;line-height:1.65;overflow-wrap:anywhere}
+.recent-professor-sessions h4{margin:0 0 8px;font-size:17px;color:#18334f}
+.recent-professor-sessions p{color:#526b85;font-size:13px;margin:8px 0}
+.recent-professor-sessions button{border:1px solid #b5c9e0;border-radius:9px;background:white;color:#174980;padding:10px 13px;min-height:44px;font:inherit;cursor:pointer}
+.recent-professor-sessions button:focus-visible{outline:3px solid #214f9d;outline-offset:3px}
+.recent-professor-sessions button:disabled{cursor:wait;opacity:.65}
+.recent-session-list{list-style:none;padding:0;margin:14px 0 0}
+.recent-session-list li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid #d5e1ee}
+.recent-session-list time{display:block;font-weight:700}
+.recent-session-list span{display:block;font-size:12px;color:#526b85}
+.recent-session-list button{flex-shrink:0}
+.recent-session-list button[aria-pressed=true]{background:#e9f0fc;border-color:#2b5795}
+.recent-professor-sessions>.session-outcome{max-width:none;margin-bottom:0}
+@media(max-width:500px){.recent-session-list li{align-items:stretch;flex-direction:column}.recent-session-list button{width:100%}}

@@ -90,3 +90,11 @@ test('account switch or cancellation during admission cannot publish a recovery 
  }finally{globalThis.fetch=saved;globalThis.__workspaceSyntheticAuth.auth.getSession=auth;}
 });
 test.after(()=>{globalThis.fetch=originalFetch;delete globalThis.__workspaceSyntheticAuth;mock.restoreAll();});
+test('lost start response requests a read-only history check, without a second admission or microphone',async()=>{
+ const saved=globalThis.fetch;let calls=0;
+ try{
+  globalThis.fetch=async()=>{calls++;throw Error('private transport details');};
+  await assert.rejects(()=>connectProfessor(request,{expectedUserId:userId}),e=>e.message.includes('Check previous sessions')&&!e.message.includes('private transport'));
+  assert.equal(calls,1);assert.equal(latestRoom.connects,0);assert.ok(!latestRoom.microphones.includes(true));assert.equal(latestRoom.disconnects,1);
+ }finally{globalThis.fetch=saved;}
+});
