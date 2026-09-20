@@ -4,7 +4,7 @@
   "track": "english",
   "slug": "professional-emails-requests-follow-up",
   "roadmapSequence": 4,
-  "reviewedOn": "2026-09-14",
+  "reviewedOn": "2026-09-20",
   "module": {
     "track": "english",
     "title": "Professional emails: clear requests and useful follow-up",
@@ -156,7 +156,7 @@
         "Reason and fallback are clear without invented approval or attachment.",
         "Natural alternative wording accepted; follow-up avoids unsupported blame."
       ],
-      "transfer": "For a vendor enquiry, adjust the greeting and context to the relationship while retaining an actionable request. Do not make every message more formal by default."
+      "transfer": "Apply the same structure outside work: a community class organiser needs your preferred date before confirming a place. Ask whether a place is available, name your preferred date and ask when you can expect confirmation. Do not describe the place as booked before the organiser confirms it. Then compare the tone with a vendor enquiry; a more formal message is not always a better one."
     },
     "checkpoint": [
       {
@@ -255,24 +255,24 @@
     "sources": [
       {
         "id": "emails",
-        "label": "British Council — English for emails",
-        "url": "https://learnenglish.britishcouncil.org/free-resources/business/english-emails",
-        "supports": "Writing, organising and checking workplace emails. Original workplace scenarios below are independently authored.",
-        "reviewedOn": "2026-09-14"
+        "label": "British Council — Organising your writing",
+        "url": "https://learnenglish.britishcouncil.org/free-resources/business/english-emails/unit-7-organising-your-writing",
+        "supports": "Making the purpose clear and organising email paragraphs. The invoice case, deadlines, follow-up and everyday transfer below are original teaching examples.",
+        "reviewedOn": "2026-09-20"
       },
       {
         "id": "enquiries",
         "label": "British Council — Enquiries",
         "url": "https://learnenglish.britishcouncil.org/free-resources/business/english-emails/unit-6-enquiries",
         "supports": "Question formation and requesting a response.",
-        "reviewedOn": "2026-09-14"
+        "reviewedOn": "2026-09-20"
       },
       {
         "id": "proof",
         "label": "British Council — Proofreading",
         "url": "https://learnenglish.britishcouncil.org/free-resources/business/english-emails/unit-8-proofreading",
         "supports": "Spelling, agreement and punctuation review.",
-        "reviewedOn": "2026-09-14"
+        "reviewedOn": "2026-09-20"
       }
     ]
   },
@@ -298,5 +298,25 @@
     "Local drafts and checkpoint answers must never enter Professor payloads.",
     "This guide is offline only; sequence 4 is not admitted to Professor/evaluator/Audio."
   ],
-  "publicationGate": "Separate content review and exact identity acceptance before any explicitly authorized database publication. No provider activation implied."
+  "publicationGate": "Separate content review and exact identity acceptance before any explicitly authorized database publication. No provider activation implied.",
+  "publication": {
+    "subtitle": "Make requests, deadlines and follow-up clear without promising an unconfirmed outcome",
+    "estimatedMinutes": 20,
+    "learningObjectives": [
+      "Put the required action and reason near the start of a concise message.",
+      "Give a precise response deadline and an actionable alternative if it cannot be met.",
+      "Follow up on an outstanding request without inventing blame, approval or attachments.",
+      "Proofread both factual meaning and language, accepting valid regional English.",
+      "Transfer the request structure to an everyday enquiry without implying a confirmed booking."
+    ],
+    "databaseFieldDraft": {
+      "technical_brief_pt": "Escreva um pedido com ação, motivo, prazo e alternativa. Diferencie solicitar uma aprovação de prometer um pagamento. Revise o sentido e os dados antes da gramática.",
+      "manager_commentary_pt": "O destinatário deve entender o que fazer e quando responder. Um follow-up útil descreve a pendência sem atribuir intenção e combina um próximo passo viável.",
+      "worked_example_pt": "Caso fictício: pedir a Aoife o status de aprovação da invoice 482 até as 15h de Dublin em 16 de setembro, para preparar a lista de pagamentos. Se o prazo não for possível, pedir outro horário de resposta. Não há anexo nem aprovação confirmada.",
+      "ireland_overlay_pt": "Use a referência de horário informada no caso, sem assumir que Dublin tem o mesmo deslocamento UTC durante todo o ano. Variedades válidas de inglês são aceitas.",
+      "global_core_pt": "Pedido, razão, prazo e alternativa formam uma estrutura de prática flexível para e-mails de trabalho e solicitações do cotidiano.",
+      "common_mistakes_pt": "Usar ASAP sem prazo; ocultar o pedido; confundir by com until; afirmar que houve aprovação sem evidência; inventar um anexo; atribuir culpa no follow-up; corrigir uma variedade válida de inglês como se fosse erro.",
+      "interview_angle_pt": "Explique como escreveria um follow-up firme e cortês quando a informação necessária ainda não foi confirmada."
+    }
+  }
 }
