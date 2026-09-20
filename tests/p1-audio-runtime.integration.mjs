@@ -106,6 +106,7 @@ const originalFetch=globalThis.fetch;
 globalThis.fetch=async(url,opts)=>{
  if(url==='https://api.openai.com/v1/models/gpt-4o-mini-tts'){
   assert.equal(opts.method,'GET');assert.equal(opts.body,undefined);assert.equal(opts.redirect,'error');
+  state.modelAuthorization=opts.headers.Authorization;
   state.events.push('model_lookup');
   return new Response(JSON.stringify({id:'gpt-4o-mini-tts'}),{status:200,headers:{'openai-organization':'org_fictional','openai-project':'proj_fictional','x-request-id':'req_lookup'}});
  }
@@ -150,7 +151,15 @@ test('connection diagnosis classifies copy errors without returning any credenti
   const body=await response.json();assert.equal(body.credentialFormat,expected);
   assert.equal(JSON.stringify(body).includes(keyValue),false);assert.equal(JSON.stringify(body).includes('1234567890'),false);
   assert.deepEqual(state.events,['profiles','model_lookup']);assert.equal(state.tts.length,0);assert.equal(state.writes.length,0);
+  if(expected==='whitespace_present')assert.equal(state.modelAuthorization,'Bearer '+keyValue.replace(/\s+/g,''));
  }
+});
+test('connection diagnosis extracts one complete key from harmless copied UI text',async()=>{
+ const fake='sk-proj-FICTIONAL_VALUE_FOR_TESTS_ONLY_1234567890';
+ reset('finance',{stage:'closed',supabaseUrl:'https://aazfyosqqeujureksqjs.supabase.co',keyValue:'API key\n'+fake+'\nCopy'});
+ const response=await handler(new Request('https://fictional.invalid/audio',{method:'POST',body:JSON.stringify({action:'check_provider'})}));
+ assert.equal(response.status,200);assert.equal(state.modelAuthorization,'Bearer '+fake);
+ assert.deepEqual(state.events,['profiles','model_lookup']);assert.equal(state.tts.length,0);assert.equal(state.writes.length,0);
 });
 test('authored v3 logs only safe provider failure metadata and retains the uncertain hold',async()=>{
  const records=[];const logger=mock.method(console,'error',message=>records.push(message));

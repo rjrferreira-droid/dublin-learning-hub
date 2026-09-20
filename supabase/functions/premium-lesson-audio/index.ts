@@ -26,6 +26,11 @@ function credentialFormatHint(value:string){
  if(/\s/.test(value))return 'whitespace_present';
  return /^sk-[A-Za-z0-9_-]{30,}$/.test(value)?'key_like_value':'unexpected_format';
 }
+function normalizedOpenAiKey(value:string|undefined){
+ if(!value)return undefined;
+ const candidates=value.match(/sk-[A-Za-z0-9_-]{30,}/g);
+ return candidates?.length===1?candidates[0]:value.replace(/\s+/g,'');
+}
 async function readProviderErrorCode(response:Response):Promise<string|null>{
  if((response.headers.get('content-type')??'').split(';',1)[0].trim().toLowerCase()!=='application/json'){
   await response.body?.cancel().catch(()=>undefined);return null;
@@ -126,7 +131,11 @@ Deno.serve(async(req:Request)=>{
   const supabaseUrl=Deno.env.get("SUPABASE_URL")!;
   const anonKey=Deno.env.get("SUPABASE_ANON_KEY")!;
   const serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const openaiKey=Deno.env.get("OPENAI_API_KEY");
+  const rawOpenaiKey=Deno.env.get("OPENAI_API_KEY");
+  // Secret-entry UIs and mobile clipboards can insert spaces or line breaks.
+  // OpenAI API keys contain no whitespace, so discard only whitespace and
+  // preserve every credential character and its order.
+  const openaiKey=normalizedOpenAiKey(rawOpenaiKey);
   const audioRuntimeStage=Deno.env.get('P1_AUDIO_RUNTIME_STAGE');
   const authHeader=req.headers.get("Authorization")??"";
   const userClient=createClient(supabaseUrl,anonKey,{global:{headers:{Authorization:authHeader}}});
@@ -143,7 +152,7 @@ Deno.serve(async(req:Request)=>{
     const assigned=await diagnosticAdmin.from('profiles').select('learner_track').eq('id',user.id).single();
     if(assigned.error||assigned.data?.learner_track!=='rafael_finance')return json({error:'forbidden'},403);
     if(!openaiKey)return json({configured:false,modelAccess:false,generationEnabled:false,providerStatus:null});
-    const credentialFormat=credentialFormatHint(openaiKey);
+    const credentialFormat=credentialFormatHint(rawOpenaiKey!);
     const safeHeader=(value:string|null,pattern:RegExp)=>value&&pattern.test(value)?value:null;
     try{
       const response=await fetch('https://api.openai.com/v1/models/gpt-4o-mini-tts',{
