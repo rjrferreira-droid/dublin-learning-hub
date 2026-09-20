@@ -3,7 +3,7 @@
   "status":"full_draft_not_published_to_database",
   "track":"english",
   "roadmapSequence":3,
-  "reviewedOn":"2026-09-14",
+  "reviewedOn":"2026-09-20",
   "workingTitle":"Explain numbers and variances to a stakeholder",
   "subtitle":"Headline, driver, evidence, uncertainty and next action",
   "targetDurationMinutes":20,
@@ -128,7 +128,7 @@
   },
   "workshops":[
     {"id":"eng-var-w1","title":"By versus to","prompt":"A defect rate moves from 4% to 5%. Explain the change in one precise sentence without confusing relative percentage change and percentage points.","expected":"For example: 'The defect rate increased to 5%, up one percentage point from 4%.' A correct relative-change statement may be added, but is not required."},
-    {"id":"eng-var-w2","title":"Evidence not complete","prompt":"Actual spend is above plan, but the price-volume split is still being checked. Give a clear stakeholder update without sounding evasive or certain.","expected":"State the total confirmed variance, identify the current working hypothesis as provisional, name the missing bridge and give the next check."},
+    {"id":"eng-var-w2","title":"Evidence not complete","prompt":"Actual spend is 0.8 million above plan. Price appears to be the main driver, but the price-volume split is still being checked. Give a clear stakeholder update without sounding evasive or certain.","expected":"State the confirmed 0.8 million variance, identify the price explanation as provisional, name the missing bridge and give the next check. Do not invent a numerical split."},
     {"id":"eng-var-w3","title":"CFO follow-up","prompt":"After your variance explanation, the CFO asks only: 'How much of this is expected to reverse?' Answer directly using a supplied temporary item of 0.1m.","expected":"Answer 0.1m is expected to reverse under the supplied facts, then add only the minimum caveat needed. Do not restart the whole variance explanation."}
   ],
   "checkpoint":[
