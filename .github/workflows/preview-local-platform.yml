@@ -109,6 +109,10 @@ jobs:
       - name: Install local browser
         run: npx playwright install --with-deps chromium
       - name: Actual browser login, published catalog, written lessons and account isolation
+        # This isolation suite exercises all three preserved tracks. The main
+        # experience workflow separately verifies the default hidden Payroll UI.
+        env:
+          VITE_SHOW_PAYROLL: 'true'
         run: python3 quality/tests/run-local-browser.py "$RUNNER_TEMP/local-platform-status.json"
       - name: Require unchanged repository
         run: git diff --exit-code
