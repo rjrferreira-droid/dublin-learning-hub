@@ -17,9 +17,15 @@ dispatch but are not evidence of the cause of the provider's confirmed HTTP 429.
 The explicit closed stage subsequently returns audio_runtime_closed (503)
 before provider dispatch. It is distinct from the original provider error.
 
-No successful historical premium narration has been identified in the reviewed
-acceptance records. Screenshots of READY / Load audio are not playback evidence.
-Do not describe the archived handler as a proven working rollback target.
+Correction after inspecting the original backend qwvsrcgsfoguxdbcdrxq: the
+original IFRS 18 lesson has a stored Premium Audio asset generated on
+2026-09-01 at 19:51:57 UTC, voice marin, 1,615 transcript characters. The
+matching audio/mpeg Storage object exists and has 1,849,728 bytes. This confirms
+the user's report of prior generated audio. The original deployed function is
+version 2 (artifact 2852c95a540027ebbfd36e4f56537a6baf138cbebc7b6505d3d5b07d80010c78),
+not the version-3 V2 baseline previously compared. No original data was changed.
+The original public-cache implementation must not be copied wholesale into the
+new private-storage and protected-budget runtime.
 No runtime rollback, secret/limit modification or new premium request was made.
 
 ## Independent delivery

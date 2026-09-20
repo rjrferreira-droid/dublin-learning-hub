@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { isFeatureEnabled } from '../config/features';
+import {invokeEdge} from '../services/edge';
 import { normalizePremiumAudioError, premiumAudioService, type PremiumAudioError, type PremiumAudioResult } from '../services/premiumAudio';
 
 type PremiumAudioPanelProps = {
@@ -13,6 +14,19 @@ export function PremiumAudioPanel({ lessonId, lessonTitle }: PremiumAudioPanelPr
   const [audio, setAudio] = useState<AudioState>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<PremiumAudioError | null>(null);
+  const [connection, setConnection] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
+
+  async function checkConnection(){
+    if(checking)return;
+    setChecking(true);setConnection(null);
+    try{
+      const result=await invokeEdge<{configured:boolean;modelAccess:boolean;generationEnabled:boolean;providerStatus:number|null;organization?:string|null;project?:string|null;providerErrorCode?:string|null},{action:string}>('premium-lesson-audio',{action:'check_provider'});
+      const status=!result.configured?'The audio provider key is missing.':result.modelAccess?'The configured key can access the speech model. This does not verify generation quota or playback.':`The audio provider did not confirm model access (HTTP ${result.providerStatus??'unavailable'}).`;
+      setConnection([status,result.providerErrorCode?`Provider code: ${result.providerErrorCode}.`:'',result.organization?`Organization: ${result.organization}.`:'',result.project?`Project: ${result.project}.`:'',result.generationEnabled?'':'Premium generation remains paused.','No audio was generated.'].filter(Boolean).join(' '));
+    }catch{setConnection('The connection check could not complete. No audio was requested.');}
+    finally{setChecking(false);}
+  }
 
   const enabled = isFeatureEnabled('premiumAudio');
   const available = enabled && Boolean(lessonId);
@@ -38,6 +52,10 @@ export function PremiumAudioPanel({ lessonId, lessonTitle }: PremiumAudioPanelPr
       <p className="lead">
         A professor-style narration of this lesson, generated once and cached for future listening.
       </p>
+      {new URLSearchParams(window.location.search).get('previewCheck')==='1'&&<div className="callout">
+        <button className="secondary-btn" type="button" onClick={()=>void checkConnection()} disabled={checking}>{checking?'Checking audio connection…':'Check audio connection'}</button>
+        {connection&&<p role="status" data-testid="audio-provider-connection">{connection}</p>}
+      </div>}
 
       {!enabled ? (
         <div className="callout">

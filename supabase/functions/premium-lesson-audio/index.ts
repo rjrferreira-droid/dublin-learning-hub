@@ -122,6 +122,30 @@ Deno.serve(async(req:Request)=>{
   if(!user)return json({error:"unauthorized"},401);
 
   let body:any;try{body=await req.json();}catch{return json({error:"invalid_json"},400)}
+  // Explicit, authenticated read-only diagnosis of the credential installed in
+  // THIS runtime. Never dispatch speech, reserve budget or return credentials.
+  if(body?.action==='check_provider'){
+    if(Object.keys(body).length!==1)return json({error:'invalid_diagnostic_request'},400);
+    if(supabaseUrl!=='https://aazfyosqqeujureksqjs.supabase.co')return json({error:'diagnostic_unavailable'},403);
+    const diagnosticAdmin=createClient(supabaseUrl,serviceKey);
+    const assigned=await diagnosticAdmin.from('profiles').select('learner_track').eq('id',user.id).single();
+    if(assigned.error||assigned.data?.learner_track!=='rafael_finance')return json({error:'forbidden'},403);
+    if(!openaiKey)return json({configured:false,modelAccess:false,generationEnabled:false,providerStatus:null});
+    const safeHeader=(value:string|null,pattern:RegExp)=>value&&pattern.test(value)?value:null;
+    try{
+      const response=await fetch('https://api.openai.com/v1/models/gpt-4o-mini-tts',{
+        method:'GET',headers:{Authorization:`Bearer ${openaiKey}`},signal:AbortSignal.timeout(10000),redirect:'error',
+      });
+      const result={configured:true,modelAccess:response.ok,providerStatus:response.status,
+        generationEnabled:audioRuntimeStage==='isolated-preview-authored-v3',
+        organization:safeHeader(response.headers.get('openai-organization'),/^[a-zA-Z0-9_-]{1,100}$/),
+        project:safeHeader(response.headers.get('openai-project'),/^proj_[a-zA-Z0-9_-]{1,100}$/),
+        providerRequestId:safeHeader(response.headers.get('x-request-id'),/^req_[a-zA-Z0-9_-]{1,120}$/),
+        providerErrorCode:response.ok?null:await readProviderErrorCode(response)};
+      await response.body?.cancel().catch(()=>undefined);
+      return json(result);
+    }catch{return json({configured:true,modelAccess:false,generationEnabled:false,providerStatus:null,error:'provider_connection_unavailable'});}
+  }
   const lessonId=String(body.lesson_id??"");
   if(!lessonId)return json({error:"lesson_id_required"},400);
   // Explicit deployment stop: authenticated requests cannot touch data, Storage,
