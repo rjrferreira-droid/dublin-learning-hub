@@ -2,6 +2,17 @@
 
 ## User decisions
 
+Standing product requirements: these decisions apply to all subsequent Learning Hub structure, material, implementation and acceptance work unless Rafael explicitly changes them. They are requirements, not claims of completed features.
+
+### Workload, audio and language parity
+
+- English: about 40 minutes per daily unit as a planning reference, not a quota or maximum. Units may take 30–70 minutes or be split at natural stopping points. Professor conversation around 10 minutes is likewise a reference; preserve explanations and learner turns. Show estimated ranges, essential work and optional deepening. Adapt pace independently for Rafael and Viviane.
+- ACCA FR: about two hours per study day, with 1.5–3-hour sessions when useful. A difficult chapter may span multiple days. Do not compress required exam material to meet an arbitrary timer. Existing provider safety/session-cost limits remain in force; a study unit is not one continuous paid voice session.
+- Premium Audio is an explicit core component in both courses, designed as an original contextual podcast with examples, explanations and retrieval prompts, not merely verbatim reading. English episodes prepare vocabulary/comprehension and conversation. FR episodes explain reasoning and review traps, complementing rather than replacing visual calculations and exam practice. Podcast time is included in the estimated workload, not silently added to it.
+- English curriculum balance remains approximately 50% everyday life and 50% professional use across the curriculum. Include contextual grammar, listening, vocabulary, reading/writing, Professor interaction, evaluation and spaced review.
+- Spanish is a later phase after the core English/FR expansion. It must use the same pedagogical and technical structure as English, including Premium Audio, grammar, original exercises, Professor, feedback and review. Reuse components, but create and review Spanish-specific material; simple translation is not sufficient. Workload references remain flexible. Do not call a small Spanish pilot a complete course.
+- Use aCOWtancy and other reputable resources alongside official sources. Link to external study materials; incorporate licensed reusable material according to its terms. Free access or personal use is not assumed to grant blanket republication rights. FR completion requires verified coverage of 100% of the selected exam syllabus outcomes, appropriate practice, revision and exam preparation—not a claim based on the number of resources or lessons.
+
 Priority: improve the existing Professor, contextual grammar and ACCA Financial Reporting curriculum. Do not divert this work into Spanish or Payroll expansion.
 
 Grammar in Use is an optional external recommendation only. No photo upload, OCR, model marking, answer transcription or duplicate grading. Learners use their own edition and answer key. Never invent unit numbers: until the edition and contents are verified, recommend a topic rather than a numbered unit. These external exercises do not count as measured Hub progress.
