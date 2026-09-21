@@ -1,5 +1,5 @@
 export type CatalogTrack='finance'|'payroll'|'english';
-export type CatalogLesson={id:string;slug:string;title:string;subtitle:string|null;sequence:number;moduleSequence:number;estimatedMinutes:number;track:CatalogTrack;moduleSlug:string;courseSlug:string};
+export type CatalogLesson={id:string;slug:string;title:string;subtitle:string|null;sequence:number;moduleSequence:number;estimatedMinutes:number;track:CatalogTrack;moduleSlug:string;courseSlug:string;origin?:'local-model'};
 export type CatalogRows={courses:unknown[];modules:unknown[];lessons:unknown[]};
 const trackByLearner:Record<string,CatalogTrack>={rafael_finance:'finance',viviane_payroll:'payroll',english_academy:'english'};
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

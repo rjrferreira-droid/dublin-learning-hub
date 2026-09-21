@@ -3,7 +3,7 @@ import {AppliedPracticePanel} from './AppliedPracticePanel';
 import {BrowserLessonReader} from './BrowserLessonReader';
 import { lessonModuleFor, type LessonModule } from '../learning/lessonModules';
 import {checkLocalChoice} from '../learning/checkLocalChoice';
-import {loadP1ModuleFor} from '../learning/p1RuntimeModules';
+import {loadReviewedRuntimeModuleFor} from '../learning/loadReviewedRuntimeModule';
 import {loadReviewedLesson,type WrittenLoadResult} from '../learning/loadReviewedLesson';
 import { STUDY_PACKS, type StudyTrack } from '../learning/teachingPacks';
 import '../learning/lesson-study.css';
@@ -18,7 +18,7 @@ export function LessonStudyPanel({track,lessonId,lessonSlug,activeTab,onTabChang
  useEffect(()=>{
   if(staticModule||!lessonSlug)return;
   const controller=new AbortController();
-  void loadReviewedLesson({track,lessonId,lessonSlug},()=>loadP1ModuleFor(track,{id:lessonId,slug:lessonSlug}),controller.signal)
+  void loadReviewedLesson({track,lessonId,lessonSlug},()=>loadReviewedRuntimeModuleFor(track,{id:lessonId,slug:lessonSlug}),controller.signal)
    .then(result=>{if(!controller.signal.aborted)setDeferred({scope,attempt,result});});
   return ()=>controller.abort();
  },[track,lessonId,lessonSlug,staticModule,scope,attempt]);

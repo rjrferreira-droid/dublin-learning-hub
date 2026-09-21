@@ -8,6 +8,7 @@ import {isSequence4Slug} from './learning/sequence4Registry';
 import {WORKSHOP_CASES} from './learning/appliedPractice';
 import {loadPublishedCurriculumCatalog,type CatalogLesson} from './services/curriculumCatalog';
 import {lessonsForTrack,chooseNextPublishedLesson} from './learning/curriculumCatalogCore';
+import {LOCAL_MODEL_LESSONS,curriculumModelPreviewEnabled} from './learning/localModelLessonRegistry';
 import {isSequence3Slug} from './learning/sequence3Registry';
 import {p1SlugFor} from './learning/p1RuntimeModules';
 import { LessonStudyPanel } from './components/LessonStudyPanel';
@@ -42,6 +43,7 @@ type Track = {
   lessonId: string;
   lessonSlug: string;
   focus: string;
+  origin?: CatalogLesson['origin'];
 };
 
 const tracks: Track[] = [
@@ -172,7 +174,11 @@ function App() {
   const [selectedCatalogLesson,setSelectedCatalogLesson]=useState<CatalogLesson|null>(null);
 
   const profile = useMemo(() => getLearnerProfile(learnerKey), [learnerKey]);
-  const supportedCatalog=useMemo(()=>catalog.filter((lesson)=>{const base=tracks.find(t=>t.key===lesson.track);return !!base&&(lesson.id===base.lessonId||lesson.slug===p1SlugFor(lesson.track)||isSequence3Slug(lesson.track,lesson.slug)||isSequence4Slug(lesson.track,lesson.slug)||isRemainingWrittenSlug(lesson.track,lesson.slug));}),[catalog]);
+  const curriculumPreview=useMemo(()=>curriculumModelPreviewEnabled(window.location.search),[]);
+  const supportedCatalog=useMemo(()=>{
+    const published=catalog.filter((lesson)=>{const base=tracks.find(t=>t.key===lesson.track);return !!base&&(lesson.id===base.lessonId||lesson.slug===p1SlugFor(lesson.track)||isSequence3Slug(lesson.track,lesson.slug)||isSequence4Slug(lesson.track,lesson.slug)||isRemainingWrittenSlug(lesson.track,lesson.slug));});
+    return curriculumPreview?[...LOCAL_MODEL_LESSONS,...published]:published;
+  },[catalog,curriculumPreview]);
   const activeTrack = useMemo(() => {
     const base=tracks.find((t)=>t.key===trackKey)??tracks[0];
     const selected=selectedCatalogLesson?.track===trackKey?selectedCatalogLesson:null;
@@ -480,10 +486,11 @@ function LearningLibrary({ learnerKey, catalog, catalogUnavailable, openLesson }
   const available=catalog.filter(lesson=>isTrackVisible(lesson.track));
   return <section className="page-stack" data-testid="learning-library">
     <div className="section-heading"><div><div className="eyebrow">LEARNING LIBRARY</div><h2>Published lessons with reviewed runtime content</h2></div><span>{available.length||visibleTracks.length} available now</span></div>
+    {available.some(lesson=>lesson.origin==='local-model')&&<p role="status" className="priority-note" data-testid="local-curriculum-preview"><strong>Local curriculum preview</strong><span>Model lessons are read-only, not published and do not enable Professor, Audio or saved progress.</span></p>}
     {catalogUnavailable&&<p role="status" className="priority-note"><strong>Catalog temporarily unavailable</strong><span>Verified Golden Lessons from your visible tracks remain available as a safe fallback.</span></p>}
     <div className="library-grid">
       {available.length?available.map((lesson,index)=>{const base=tracks.find(t=>t.key===lesson.track)!;return <article className={`lesson-library-card ${lesson.track===primaryTrack?'primary-track-card':''}`} key={lesson.id} data-testid={`catalog-lesson-${lesson.slug}`}>
-        <div className="lesson-index">{String(index+1).padStart(2,'0')}</div><span className={`track-badge ${lesson.track}`}>{base.accent}</span><h3>{lesson.title}</h3><p>{lesson.subtitle??base.focus}</p><div className="lesson-meta"><span>{lesson.estimatedMinutes} min</span><span>{base.name}</span><span>{lesson.id===base.lessonId?'Professor':'Written ready'}</span></div><button className="primary-btn" onClick={()=>openLesson(lesson.track,lesson)}>Open lesson</button>
+        <div className="lesson-index">{String(index+1).padStart(2,'0')}</div><span className={`track-badge ${lesson.track}`}>{base.accent}</span><h3>{lesson.title}</h3><p>{lesson.subtitle??base.focus}</p><div className="lesson-meta"><span>{lesson.estimatedMinutes} min</span><span>{base.name}</span><span>{lesson.origin==='local-model'?'Model · local':lesson.id===base.lessonId?'Professor':'Written ready'}</span></div><button className="primary-btn" onClick={()=>openLesson(lesson.track,lesson)}>Open lesson</button>
       </article>}):visibleTracks.map((track,index)=><article className={`lesson-library-card ${track.key===primaryTrack?'primary-track-card':''}`} key={track.key}><div className="lesson-index">0{index+1}</div><span className={`track-badge ${track.key}`}>{track.accent}</span><h3>{track.lesson}</h3><p>{track.focus}</p><div className="lesson-meta"><span>10–15 min</span><span>Verified fallback</span><span>Professor</span></div><button className="primary-btn" onClick={()=>openLesson(track.key)}>Open Golden Lesson</button></article>)}
     </div>
   </section>;
@@ -514,7 +521,7 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close 
     <section className="lesson-shell" data-testid="lesson-shell">
       <div className="lesson-toolbar">
         <button className="back-btn" onClick={close}>← Dashboard</button>
-        <div className="lesson-progress"><span>{interactiveLessonSupported?'Golden Lesson':'Reviewed written lesson'}</span><b>{measuredSession ? `Last evaluated ${shortDate(measuredSession.completedAt ?? measuredSession.startedAt)}` : 'Baseline not measured yet'}</b></div>
+        <div className="lesson-progress"><span>{track.origin==='local-model'?'Local model lesson':interactiveLessonSupported?'Golden Lesson':'Reviewed written lesson'}</span><b>{measuredSession ? `Last evaluated ${shortDate(measuredSession.completedAt ?? measuredSession.startedAt)}` : 'Baseline not measured yet'}</b></div>
       </div>
       <div className="lesson-tabs" role="tablist">
         {lessonTabs.map((tab) => (
@@ -523,7 +530,7 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close 
       </div>
       <div className="lesson-layout">
         <article className="lesson-content-card">
-          <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">Premium lesson</span></div>
+          <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">{track.origin==='local-model'?'Local preview · no providers':'Premium lesson'}</span></div>
           <div className="eyebrow">{activeTab.toUpperCase()}</div>
           {interactiveLessonSupported?<LessonProfessorWorkspace track={track.key} lessonId={track.lessonId} learnerKey={learnerKey} activeTab={activeTab} onTabChange={setActiveTab} onActivityChange={setConversationBusy} workshopId={workshopId} onClearWorkshop={clearWorkshop}/>:null}
           <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} lessonSlug={track.lessonSlug} activeTab={activeTab} onTabChange={setActiveTab} onPrepareWorkshop={prepareWorkshop} handoffDisabled={conversationBusy||!canUseActions||!interactiveLessonSupported} readerDisabled={conversationBusy||!canUseActions} />

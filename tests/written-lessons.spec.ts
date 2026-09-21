@@ -1,6 +1,6 @@
 import {test,expect,type Page} from '@playwright/test';
 const courses=[{track:'finance',account:'rafael_finance',name:'Rafael',button:'Continue Finance',answers:[2,1,3,0,2]},{track:'payroll',account:'viviane_payroll',name:'Viviane',button:'Continue Payroll',answers:[1,2,0,3,1]},{track:'english',account:'rafael_finance',name:'Rafael',button:'Start English practice',answers:[1,2,0,3,1]}] as const;
-async function openFixture(page:Page,course:typeof courses[number]){
+async function openFixture(page:Page,course:typeof courses[number],curriculumPreview=false){
  const id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';let sensitiveRequests=0;
  const user={id,email:'written-fixture@example.invalid',aud:'authenticated',role:'authenticated',created_at:'2026-01-01T00:00:00Z',app_metadata:{provider:'email'},user_metadata:{learner_track:course.account,display_name:course.name}};
  const token='eyJhbGciOiJIUzI1NiJ9.'+Buffer.from(JSON.stringify({sub:id,exp:Math.floor(Date.now()/1000)+3600,role:'authenticated'})).toString('base64url')+'.fictional';
@@ -18,7 +18,7 @@ async function openFixture(page:Page,course:typeof courses[number]){
   await route.fulfill({status:200,headers,contentType:'application/json',body:JSON.stringify(body)});
  });
  await page.routeWebSocket('**/*',ws=>{const u=new URL(ws.url());if(['localhost','127.0.0.1'].includes(u.hostname))ws.connectToServer();else ws.close();});
- await page.goto('/');await page.getByLabel('E-mail').fill('written-fixture@example.invalid');await page.getByLabel('Senha').fill('Fictional-written-only-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
+ await page.goto(curriculumPreview?'/?curriculumPreview=1':'/');await page.getByLabel('E-mail').fill('written-fixture@example.invalid');await page.getByLabel('Senha').fill('Fictional-written-only-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
  await page.getByRole('button',{name:course.button,exact:true}).click();
  return ()=>sensitiveRequests;
 }
@@ -49,4 +49,20 @@ for(const course of courses)for(const viewport of [{name:'desktop',width:1440,he
 });
 test('checkpoint is keyboard usable and never claims persisted learning progress',async({page})=>{
  const requests=await openFixture(page,courses[0]);await page.getByRole('tab',{name:'Test',exact:true}).click();const q=page.getByTestId('checkpoint-question-0');await q.getByRole('radio').first().focus();await page.keyboard.press('ArrowDown');await expect(q.getByRole('radio').nth(1)).toBeChecked();await q.getByRole('button',{name:'Check answer',exact:true}).focus();await page.keyboard.press('Enter');await expect(page.getByTestId('local-checkpoint-result')).toContainText('not saved to your profile');expect(requests()).toBe(0);
+});
+
+test('ACCA A1 local model is navigable on desktop and mobile without providers or persistence',async({page})=>{
+ for(const viewport of [{width:1440,height:1000},{width:390,height:844}]){
+  await page.setViewportSize(viewport);const requests=await openFixture(page,courses[0],true);
+  await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();
+  await page.locator('.nav-stack').getByRole('button',{name:/Learning/}).click();
+  const library=page.getByTestId('learning-library');await expect(library.getByTestId('local-curriculum-preview')).toBeVisible();
+  const card=library.getByTestId('catalog-lesson-acca-fr-a1-purpose-users-reporting');await expect(card).toContainText('Model · local');await card.getByRole('button',{name:'Open lesson'}).click();
+  await expect(page.getByText('Local model lesson',{exact:true})).toBeVisible();await expect(page.getByText('Local preview · no providers',{exact:true})).toBeVisible();
+  const panel=page.getByTestId('lesson-study-panel');await expect(panel.locator('.lesson-teaching-block')).toHaveCount(4);
+  await page.getByRole('tab',{name:'Practice',exact:true}).click();await expect(panel.getByTestId('written-practice-0')).toBeVisible();
+  await page.getByRole('tab',{name:'Audio',exact:true}).click();await expect(page.getByTestId('p1-interactive-gate')).toContainText('awaiting activation');
+  await page.getByRole('tab',{name:'Professor',exact:true}).click();await expect(page.getByTestId('p1-interactive-gate')).toContainText('awaiting activation');
+  expect(requests()).toBe(0);await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();
+ }
 });
