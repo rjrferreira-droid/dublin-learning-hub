@@ -67,7 +67,7 @@ function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDis
    <p className="lesson-study-note">No microphone is opened here; reading an example is not a pronunciation or fluency result.</p>
   </section>
   <section className="lesson-study-section" hidden={activeTab!=='Practice'} data-testid="lesson-practice">
-   {!module.practiceExercises&&<AppliedPracticePanel key={module.track} track={module.track} onPrepare={onPrepareWorkshop} handoffDisabled={handoffDisabled}/>}
+   {module.lessonId===pack.lessonId&&<AppliedPracticePanel key={module.track} track={module.track} onPrepare={onPrepareWorkshop} handoffDisabled={handoffDisabled}/>}
    <h2>Retrieve, then compare</h2><p>Try each question before opening help. Drafts remain while you switch tabs, but disappear when this lesson closes, the page reloads or the account signs out. Avoid confidential information.</p>
    {exercises.map((q,i)=><section className="lesson-exercise" key={q.id} data-testid={'written-practice-'+i}>
     <h3>{i+1}. {q.question}</h3><label htmlFor={'draft-'+q.id}>Your practice draft {i+1}</label>

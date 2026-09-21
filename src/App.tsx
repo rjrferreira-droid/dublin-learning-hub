@@ -182,7 +182,7 @@ function App() {
   const activeTrack = useMemo(() => {
     const base=tracks.find((t)=>t.key===trackKey)??tracks[0];
     const selected=selectedCatalogLesson?.track===trackKey?selectedCatalogLesson:null;
-    return selected?{...base,lesson:selected.title,lessonId:selected.id,lessonSlug:selected.slug,focus:selected.subtitle??base.focus}:base;
+    return selected?{...base,lesson:selected.title,lessonId:selected.id,lessonSlug:selected.slug,focus:selected.subtitle??base.focus,origin:selected.origin}:base;
   },[trackKey,selectedCatalogLesson]);
 
   const refreshMemory = useCallback(async () => {

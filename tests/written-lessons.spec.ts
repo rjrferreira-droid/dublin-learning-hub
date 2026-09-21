@@ -51,18 +51,16 @@ test('checkpoint is keyboard usable and never claims persisted learning progress
  const requests=await openFixture(page,courses[0]);await page.getByRole('tab',{name:'Test',exact:true}).click();const q=page.getByTestId('checkpoint-question-0');await q.getByRole('radio').first().focus();await page.keyboard.press('ArrowDown');await expect(q.getByRole('radio').nth(1)).toBeChecked();await q.getByRole('button',{name:'Check answer',exact:true}).focus();await page.keyboard.press('Enter');await expect(page.getByTestId('local-checkpoint-result')).toContainText('not saved to your profile');expect(requests()).toBe(0);
 });
 
-test('ACCA A1 local model is navigable on desktop and mobile without providers or persistence',async({page})=>{
- for(const viewport of [{width:1440,height:1000},{width:390,height:844}]){
-  await page.setViewportSize(viewport);const requests=await openFixture(page,courses[0],true);
-  await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();
-  await page.locator('.nav-stack').getByRole('button',{name:/Learning/}).click();
-  const library=page.getByTestId('learning-library');await expect(library.getByTestId('local-curriculum-preview')).toBeVisible();
-  const card=library.getByTestId('catalog-lesson-acca-fr-a1-purpose-users-reporting');await expect(card).toContainText('Model · local');await card.getByRole('button',{name:'Open lesson'}).click();
-  await expect(page.getByText('Local model lesson',{exact:true})).toBeVisible();await expect(page.getByText('Local preview · no providers',{exact:true})).toBeVisible();
-  const panel=page.getByTestId('lesson-study-panel');await expect(panel.locator('.lesson-teaching-block')).toHaveCount(4);
-  await page.getByRole('tab',{name:'Practice',exact:true}).click();await expect(panel.getByTestId('written-practice-0')).toBeVisible();
-  await page.getByRole('tab',{name:'Audio',exact:true}).click();await expect(page.getByTestId('p1-interactive-gate')).toContainText('awaiting activation');
-  await page.getByRole('tab',{name:'Professor',exact:true}).click();await expect(page.getByTestId('p1-interactive-gate')).toContainText('awaiting activation');
-  expect(requests()).toBe(0);await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();
- }
+for(const viewport of [{name:'desktop',width:1440,height:1000},{name:'mobile',width:390,height:844}])test(`ACCA A1 local model at ${viewport.name} is provider-free`,async({page})=>{
+ await page.setViewportSize(viewport);const requests=await openFixture(page,courses[0],true);
+ await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();
+ await page.locator('.nav-stack').getByRole('button',{name:/Learning/}).click();
+ const library=page.getByTestId('learning-library');await expect(library.getByTestId('local-curriculum-preview')).toBeVisible();
+ const card=library.getByTestId('catalog-lesson-acca-fr-a1-purpose-users-reporting');await expect(card).toContainText('Model · local');await card.getByRole('button',{name:'Open lesson'}).click();
+ await expect(page.getByText('Local model lesson',{exact:true})).toBeVisible();await expect(page.getByText('Local preview · no providers',{exact:true})).toBeVisible();
+ const panel=page.getByTestId('lesson-study-panel');await expect(panel.locator('.lesson-teaching-block')).toHaveCount(4);
+ await page.getByRole('tab',{name:'Practice',exact:true}).click();await expect(panel.getByTestId('written-practice-0')).toBeVisible();await expect(panel.getByTestId('applied-practice')).toHaveCount(0);
+ await page.getByRole('tab',{name:'Audio',exact:true}).click();await expect(page.getByTestId('p1-interactive-gate')).toContainText('awaiting activation');
+ await page.getByRole('tab',{name:'Professor',exact:true}).click();await expect(page.getByTestId('p1-interactive-gate')).toContainText('awaiting activation');
+ expect(requests()).toBe(0);
 });
