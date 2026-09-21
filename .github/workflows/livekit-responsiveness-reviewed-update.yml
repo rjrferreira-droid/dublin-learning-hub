@@ -1,0 +1,25 @@
+name: Reviewed Professor responsiveness update
+# Registers the manual action in the default branch only.
+# The reviewed implementation lives on feat/professor-experience-2026-09-13.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_update:
+        description: 'Publish the reviewed conversation fixes to the existing V2 Professor; no new session or secret changes.'
+        type: boolean
+        required: true
+        default: false
+      expected_current_version:
+        description: 'Verified current LiveKit version (this release accepts nb67ioJmoKBN only).'
+        type: string
+        required: true
+permissions: {}
+jobs:
+  select-reviewed-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain the required branch without accessing credentials
+        run: |
+          echo 'Select feat/professor-experience-2026-09-13 in Run workflow.'
+          echo 'This default-branch registration does not deploy any application or agent.'
+          exit 1
