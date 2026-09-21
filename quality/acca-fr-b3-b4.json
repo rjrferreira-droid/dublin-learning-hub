@@ -1,0 +1,298 @@
+{
+  "version": "acca-fr-b3-b4-2026-09-21-v1",
+  "status": "authored_local_curriculum_not_database_published",
+  "sequence": [
+    {
+      "track": "acca-fr",
+      "status": "authored_local_lesson_not_database_published",
+      "durationMinutes": {
+        "reference": 120,
+        "range": [
+          90,
+          180
+        ],
+        "hardLimit": false
+      },
+      "prerequisites": [
+        "ACCA FR A1-A4",
+        "ACCA FR B1-B2 or equivalent diagnostic"
+      ],
+      "syllabus": {
+        "sitting": "must_be_pinned_before_publication",
+        "section": "B",
+        "outcomeReferences": "category-level draft; cross-check exact lettering against selected sitting",
+        "topic": "impairment of assets"
+      },
+      "revision": {
+        "spacingDays": [
+          1,
+          7,
+          21
+        ]
+      },
+      "premiumAudio": {
+        "status": "script_outline_only_no_generation",
+        "minutes": "14-20",
+        "outline": [
+          "Decision map",
+          "Worked calculation",
+          "Common exam traps",
+          "Retrieval pauses"
+        ],
+        "preserveExistingRuntime": true
+      },
+      "professorGuide": {
+        "opening": "Ask the learner to state the decision rule before calculating.",
+        "support": "Reveal one stage of the decision map, then invite a new attempt.",
+        "challenge": "Change one supplied fact and ask which stage and number change.",
+        "close": "Separate study completion from demonstrated competence and exam readiness."
+      },
+      "evidenceBoundary": "Authored answer keys and podcast outlines are not learner evidence; text does not evidence pronunciation.",
+      "code": "B3",
+      "id": "acca-fr-b3",
+      "title": "Impairment of assets and cash-generating units",
+      "objectives": [
+        "Identify internal and external impairment indicators.",
+        "Calculate recoverable amount as the higher of value in use and fair value less costs of disposal.",
+        "Allocate a cash-generating unit impairment in the required order while respecting asset floors.",
+        "Explain reversal limits and the special rule for goodwill."
+      ],
+      "sections": [
+        "Indicators and when to test",
+        "Recoverable amount and individual assets",
+        "Cash-generating units, goodwill and allocation",
+        "Reversals, presentation and exam technique"
+      ],
+      "workedExample": {
+        "scenario": "A CGU has goodwill 40, plant 260 and a building 200. Its recoverable amount is 430. The building's individual fair value less costs of disposal is 190 and no separate value in use is available.",
+        "calculation": {
+          "carryingAmount": 500,
+          "recoverableAmount": 430,
+          "impairment": 70,
+          "goodwillWriteOff": 40,
+          "residualLoss": 30,
+          "plantAllocation": 20,
+          "buildingAllocationBeforeFloor": 13.04,
+          "buildingFloor": 190,
+          "buildingClosing": 190,
+          "plantClosing": 240
+        },
+        "steps": [
+          "Loss is 500 - 430 = 70.",
+          "Write off goodwill first: 40.",
+          "Allocate remaining 30 pro rata to plant 260 and building 200: approximately 16.96 and 13.04 before floors.",
+          "Building cannot fall below 190, so only 10 is allocated to it; the remaining 20 goes to plant."
+        ],
+        "answer": "Goodwill closes at nil, building at 190 and plant at 240. The final allocation must respect the building floor; rounded preliminary allocations are not the final answer.",
+        "auditNote": "The headline calculation values below are authoritative and deliberately test floor reallocation."
+      },
+      "practice": [
+        {
+          "id": "b3-p1",
+          "prompt": "Asset carrying amount 180; value in use 150; fair value less costs of disposal 160. Calculate impairment.",
+          "answer": "20",
+          "explanation": "Recoverable amount is the higher amount, 160; 180 - 160 = 20."
+        },
+        {
+          "id": "b3-p2",
+          "prompt": "Why is goodwill tested through a CGU rather than normally on its own?",
+          "answer": "It does not generate cash inflows independently and must be allocated to the CGU(s) expected to benefit.",
+          "explanation": "Use the unit at which goodwill is monitored, within the Standard's limits."
+        },
+        {
+          "id": "b3-p3",
+          "prompt": "Can an impairment reversal raise an asset above the carrying amount it would have had without impairment?",
+          "answer": "No.",
+          "explanation": "The reversal is capped at the no-impairment carrying amount; goodwill impairment is not reversed."
+        }
+      ],
+      "examTask": {
+        "minutes": 22,
+        "prompt": "Calculate and allocate a CGU impairment including goodwill and one asset floor; explain a later reversal.",
+        "modelPoints": [
+          "Use the higher recoverable-amount measure.",
+          "Allocate to goodwill first.",
+          "Apply individual asset floors and reallocate excess.",
+          "Cap reversals and never reverse goodwill impairment."
+        ]
+      },
+      "sources": [
+        {
+          "id": "acca-fr-syllabus",
+          "url": "https://www.accaglobal.com/gb/en/student/exam-support-resources/fundamentals-exams-study-resources/f7/syllabus-study-guide.html",
+          "use": "Authoritative landing page; exact outcome lettering must be checked against the selected sitting."
+        },
+        {
+          "id": "ias-36",
+          "url": "https://www.ifrs.org/issued-standards/list-of-standards/ias-36-impairment-of-assets/",
+          "use": "Primary IAS 36 overview."
+        },
+        {
+          "id": "acowtancy-fr",
+          "url": "https://www.acowtancy.com/papers/acca-fr/",
+          "use": "Organisation/revision reference only; no proprietary text or question-bank reproduction."
+        }
+      ]
+    },
+    {
+      "track": "acca-fr",
+      "status": "authored_local_lesson_not_database_published",
+      "durationMinutes": {
+        "reference": 120,
+        "range": [
+          90,
+          180
+        ],
+        "hardLimit": false
+      },
+      "prerequisites": [
+        "ACCA FR A1-A4",
+        "ACCA FR B1-B2 or equivalent diagnostic"
+      ],
+      "syllabus": {
+        "sitting": "must_be_pinned_before_publication",
+        "section": "B",
+        "outcomeReferences": "category-level draft; cross-check exact lettering against selected sitting",
+        "topic": "inventories and agriculture"
+      },
+      "revision": {
+        "spacingDays": [
+          1,
+          7,
+          21
+        ]
+      },
+      "premiumAudio": {
+        "status": "script_outline_only_no_generation",
+        "minutes": "14-20",
+        "outline": [
+          "Decision map",
+          "Worked calculation",
+          "Common exam traps",
+          "Retrieval pauses"
+        ],
+        "preserveExistingRuntime": true
+      },
+      "professorGuide": {
+        "opening": "Ask the learner to state the decision rule before calculating.",
+        "support": "Reveal one stage of the decision map, then invite a new attempt.",
+        "challenge": "Change one supplied fact and ask which stage and number change.",
+        "close": "Separate study completion from demonstrated competence and exam readiness."
+      },
+      "evidenceBoundary": "Authored answer keys and podcast outlines are not learner evidence; text does not evidence pronunciation.",
+      "code": "B4",
+      "id": "acca-fr-b4",
+      "title": "Inventories and biological assets",
+      "objectives": [
+        "Measure inventories at the lower of cost and net realisable value.",
+        "Build cost from purchase, conversion and eligible attributable costs while excluding abnormal and storage/administrative/selling items where required.",
+        "Apply FIFO or weighted average consistently to interchangeable items and reject LIFO under IAS 2.",
+        "Distinguish biological assets, agricultural produce at harvest and inventory after harvest at a foundation level."
+      ],
+      "sections": [
+        "Inventory cost and exclusions",
+        "Cost formulas and net realisable value",
+        "Write-downs, reversals and disclosure logic",
+        "IAS 41 boundary: biological assets, produce at harvest and IAS 2 after harvest"
+      ],
+      "workedExample": {
+        "scenario": "Opening 100 units at 8; purchase 200 units at 10; 180 units sold. Estimated selling price of the 120 closing units is 9.50 each, with completion and selling costs of 1.00 per unit.",
+        "calculation": {
+          "unitsAvailable": 300,
+          "unitsClosing": 120,
+          "fifoCost": 1200,
+          "weightedAverageUnitCost": 9.3333333333,
+          "weightedAverageCost": 1120,
+          "nrvPerUnit": 8.5,
+          "totalNrv": 1020,
+          "closingInventoryFIFO": 1020,
+          "writeDownFIFO": 180,
+          "closingInventoryWeightedAverage": 1020,
+          "writeDownWeightedAverage": 100
+        },
+        "steps": [
+          "NRV per unit is 9.50 - 1.00 = 8.50.",
+          "Under FIFO, closing units come from the 10 purchase: cost 1,200.",
+          "Weighted average cost per unit is (800 + 2,000) / 300 = 9.3333; closing cost is 1,120.",
+          "Both costs exceed total NRV of 1,020, so closing inventory is 1,020 under either formula."
+        ],
+        "answer": "Report closing inventory at 1,020. The write-down differs because the selected permitted cost formula changes cost before the lower-of-cost-and-NRV test."
+      },
+      "practice": [
+        {
+          "id": "b4-p1",
+          "prompt": "Purchase price 50, import duty 5, carriage 3, abnormal waste 4 and selling cost 2. What enters inventory cost before conversion costs?",
+          "answer": "58",
+          "explanation": "Price, non-recoverable duty and carriage are included; abnormal waste and selling costs are expensed."
+        },
+        {
+          "id": "b4-p2",
+          "prompt": "Cost 72; selling price 80; completion 6; selling costs 5. Calculate carrying amount.",
+          "answer": "69",
+          "explanation": "NRV is 80 - 6 - 5 = 69, lower than cost 72."
+        },
+        {
+          "id": "b4-p3",
+          "prompt": "What happens to agricultural produce at the point of harvest?",
+          "answer": "It is measured under IAS 41 at fair value less costs to sell at harvest; that amount becomes cost for subsequent IAS 2 accounting.",
+          "explanation": "Keep the pre-harvest biological-asset phase separate from post-harvest inventory."
+        }
+      ],
+      "examTask": {
+        "minutes": 22,
+        "prompt": "Calculate closing inventory using a permitted cost formula and NRV, identify excluded costs, and explain the accounting boundary for harvested produce.",
+        "modelPoints": [
+          "Show units and cost formula.",
+          "Calculate NRV per unit and total.",
+          "Expense abnormal/excluded costs.",
+          "Move from IAS 41 measurement at harvest to IAS 2 afterwards."
+        ]
+      },
+      "sources": [
+        {
+          "id": "acca-fr-syllabus",
+          "url": "https://www.accaglobal.com/gb/en/student/exam-support-resources/fundamentals-exams-study-resources/f7/syllabus-study-guide.html",
+          "use": "Authoritative landing page; exact outcome lettering must be checked against the selected sitting."
+        },
+        {
+          "id": "ias-2",
+          "url": "https://www.ifrs.org/issued-standards/list-of-standards/ias-2-inventories/",
+          "use": "Primary IAS 2 overview."
+        },
+        {
+          "id": "ias-41",
+          "url": "https://www.ifrs.org/issued-standards/list-of-standards/ias-41-agriculture/",
+          "use": "Primary IAS 41 overview."
+        },
+        {
+          "id": "acowtancy-fr",
+          "url": "https://www.acowtancy.com/papers/acca-fr/",
+          "use": "Organisation/revision reference only; no proprietary text or question-bank reproduction."
+        }
+      ]
+    }
+  ],
+  "integration": {
+    "previousCodes": [
+      "A1",
+      "A2",
+      "A3",
+      "A4",
+      "B1",
+      "B2"
+    ],
+    "currentCodes": [
+      "B3",
+      "B4"
+    ],
+    "nextCandidate": "B5 only after B3-B4 validation",
+    "completeSyllabusClaim": false
+  },
+  "release": {
+    "databasePublication": false,
+    "supabaseMutation": false,
+    "deployment": false,
+    "paidProviderCalls": false,
+    "audioGeneration": false
+  }
+}
