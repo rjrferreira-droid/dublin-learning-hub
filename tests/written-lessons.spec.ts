@@ -54,6 +54,8 @@ test('checkpoint is keyboard usable and never claims persisted learning progress
 const localModels=[
  {slug:'acca-fr-a1-purpose-users-reporting',title:'ACCA FR A1 · Purpose and users of financial reporting'},
  {slug:'acca-fr-a2-qualitative-characteristics-cost-constraint',title:'ACCA FR A2 · Qualitative characteristics and the cost constraint'},
+ {slug:'acca-fr-b3-impairment-assets',title:'ACCA FR B3 · Impairment of assets'},
+ {slug:'acca-fr-b4-inventories-biological-assets',title:'ACCA FR B4 · Inventories and biological assets'},
 ] as const;
 for(const model of localModels)for(const viewport of [{name:'desktop',width:1440,height:1000},{name:'mobile',width:390,height:844}])test(`${model.title} at ${viewport.name} is provider-free`,async({page})=>{
  await page.setViewportSize(viewport);const requests=await openFixture(page,courses[0],true);

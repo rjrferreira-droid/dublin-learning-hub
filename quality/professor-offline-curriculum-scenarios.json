@@ -1,5 +1,5 @@
 {
-  "version": "curriculum-professor-offline-scenarios-2026-09-21-v1",
+  "version": "curriculum-professor-offline-scenarios-2026-09-21-v2",
   "status": "authored_offline_expectations_not_model_results",
   "globalBoundaries": [
     "One clear question at a time.",
@@ -149,6 +149,148 @@
           "forbidden": [
             "Correct every possible issue at once.",
             "Replace the learner’s whole story before one retry."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B3",
+      "lessonId": "b1300000-2026-4acc-8b03-000000000003",
+      "scenarios": [
+        {
+          "id": "b3-correct-calculation",
+          "learner": "Carrying amount is 620, value in use is 570 and FVLCD is 590, so recoverable amount is 590 and the impairment is 30.",
+          "state": "substantive_correct",
+          "expected": [
+            "Acknowledge the higher-of comparison briefly.",
+            "Ask one transfer question changing a recovery measure."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the calculation was saved."
+          ]
+        },
+        {
+          "id": "b3-higher-lower-misconception",
+          "learner": "Recoverable amount is 570 because prudence means choosing the lower recovery value.",
+          "state": "misconception",
+          "expected": [
+            "Ask whether the asset can be recovered through use or sale.",
+            "Guide the learner to choose the better available recovery route before calculating the loss."
+          ],
+          "forbidden": [
+            "Reveal the entire answer before one retry.",
+            "Describe deliberate understatement as prudence."
+          ]
+        },
+        {
+          "id": "b3-cgu-hint",
+          "learner": "I know the CGU is impaired, but I cannot remember where to allocate the loss first. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Point to the asset that cannot generate independent recovery and sits as a residual from acquisition.",
+            "Invite the learner to name goodwill before discussing pro-rata allocation."
+          ],
+          "forbidden": [
+            "Record the help request as a knowledge error.",
+            "Skip asset floors."
+          ]
+        },
+        {
+          "id": "b3-self-correction",
+          "learner": "A goodwill impairment can be reversed—sorry, no, goodwill impairment is never reversed.",
+          "state": "self_corrected",
+          "expected": [
+            "Use the corrected statement as the current answer.",
+            "Ask how a reversal ceiling works for another asset."
+          ],
+          "forbidden": [
+            "Store the abandoned statement as the final error.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "b3-worked-answer",
+          "learner": "Please show me a worked CGU allocation with goodwill and an asset floor.",
+          "state": "answer_requested",
+          "expected": [
+            "Give one concise calculation in goodwill-first order.",
+            "Label the asset floor and invite an optional changed-number retry."
+          ],
+          "forbidden": [
+            "Withhold the requested worked answer indefinitely.",
+            "Claim supported practice proves independent competence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B4",
+      "lessonId": "b1400000-2026-4acc-8b04-000000000004",
+      "scenarios": [
+        {
+          "id": "b4-correct-nrv",
+          "learner": "Cost is 80 and NRV is 77, so inventory is 77 and the write-down is 3.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the lower-of comparison briefly.",
+            "Ask one transfer question changing a completion or selling cost."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim progress was persisted."
+          ]
+        },
+        {
+          "id": "b4-cost-misconception",
+          "learner": "Abnormal waste should be added to inventory because it happened during production.",
+          "state": "misconception",
+          "expected": [
+            "Ask whether the waste was necessary to bring inventory to its present condition.",
+            "Guide the learner to separate normal conversion cost from abnormal period expense."
+          ],
+          "forbidden": [
+            "Call the learner careless.",
+            "Correct unrelated cost categories at the same time."
+          ]
+        },
+        {
+          "id": "b4-harvest-hint",
+          "learner": "I am stuck at the harvest date. Which value becomes the starting cost under IAS 2?",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt for the IAS 41 measurement at the point of harvest.",
+            "Invite a fresh answer before stating fair value less costs to sell."
+          ],
+          "forbidden": [
+            "Treat the help request as failure.",
+            "Confuse NRV with the harvest measurement."
+          ]
+        },
+        {
+          "id": "b4-self-correction",
+          "learner": "Apples growing on a bearer tree are another bearer plant—sorry, they are agricultural produce within IAS 41.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected classification.",
+            "Ask what happens to measurement at harvest."
+          ],
+          "forbidden": [
+            "Preserve the abandoned classification as the final answer.",
+            "Infer exam readiness."
+          ]
+        },
+        {
+          "id": "b4-supported-boundary",
+          "learner": "Can you walk me through the tree, growing apples and harvested apples before I try a new example?",
+          "state": "answer_requested",
+          "expected": [
+            "Explain IAS 16 for the bearer plant, IAS 41 for growing produce and IAS 2 after harvest.",
+            "Invite one optional classification transfer without calling it independent mastery."
+          ],
+          "forbidden": [
+            "Omit the harvest boundary.",
+            "Claim the worked explanation is assessed evidence."
           ]
         }
       ]
