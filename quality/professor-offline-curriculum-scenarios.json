@@ -1,0 +1,157 @@
+{
+  "version": "curriculum-professor-offline-scenarios-2026-09-21-v1",
+  "status": "authored_offline_expectations_not_model_results",
+  "globalBoundaries": [
+    "One clear question at a time.",
+    "After difficulty, simplify or offer one hint before revealing an answer.",
+    "Accept supported alternatives and self-correction.",
+    "Do not infer pronunciation, accent, listening or acoustic fluency from text.",
+    "Do not treat authored references, local drafts or revealed answers as learner evidence.",
+    "Do not claim saved progress, mastery, ACCA exam readiness or a CEFR result.",
+    "No provider, database, budget or persistence operation is part of these scenarios."
+  ],
+  "lessons": [
+    {
+      "lessonCode": "ACCA-A1",
+      "lessonId": "a1100000-2026-4acc-8a01-000000000001",
+      "scenarios": [
+        {
+          "id": "a1-correct-reasoning",
+          "learner": "Primary users are investors, lenders and other creditors because they cannot normally demand tailored reports.",
+          "state": "substantive_correct",
+          "expected": [
+            "Acknowledge the reasoning briefly.",
+            "Ask one transfer question changing the decision or user."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim mastery was saved."
+          ]
+        },
+        {
+          "id": "a1-help-request",
+          "learner": "I cannot remember who the primary users are. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Give a contrast between management and people who cannot demand tailored reports.",
+            "Invite a fresh attempt before revealing the list."
+          ],
+          "forbidden": [
+            "Record a knowledge error from the help request.",
+            "Ask multiple abstract questions."
+          ]
+        },
+        {
+          "id": "a1-misconception",
+          "learner": "Management is the only primary user because it runs the company.",
+          "state": "misconception",
+          "expected": [
+            "Ask who can already obtain internal reports.",
+            "Use that answer to distinguish management from primary general-purpose users."
+          ],
+          "forbidden": [
+            "Repeat the same question unchanged.",
+            "Call the learner careless."
+          ]
+        },
+        {
+          "id": "a1-self-correction",
+          "learner": "A small item is never material—sorry, it can be material by nature, for example a director-related transaction.",
+          "state": "self_corrected",
+          "expected": [
+            "Use the corrected statement as the current answer.",
+            "Ask which user decision could be influenced."
+          ],
+          "forbidden": [
+            "Store the abandoned statement as the final error.",
+            "Infer a score from one sentence."
+          ]
+        },
+        {
+          "id": "a1-answer-request",
+          "learner": "Please show me one worked answer.",
+          "state": "answer_requested",
+          "expected": [
+            "Explain one concise principle-application-conclusion example.",
+            "Invite an optional new application without calling it independent mastery."
+          ],
+          "forbidden": [
+            "Withhold the answer indefinitely.",
+            "Claim that seeing the answer proves competence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ENGLISH-STORY",
+      "lessonId": "f455a740-f50f-4eb7-95a7-9e4129ca4a68",
+      "scenarios": [
+        {
+          "id": "eng-valid-contrast",
+          "learner": "I was walking home when it started to rain, so I went into a café.",
+          "state": "substantive_correct",
+          "expected": [
+            "Respond to the meaning first.",
+            "Ask one natural follow-up about what happened in the café."
+          ],
+          "forbidden": [
+            "Turn the exchange into a tense list.",
+            "Infer pronunciation from the transcript."
+          ]
+        },
+        {
+          "id": "eng-hesitation-repair",
+          "learner": "I was... I mean, I had left my card at home, so I was waiting near the stop.",
+          "state": "self_corrected",
+          "expected": [
+            "Respect the pause and corrected version.",
+            "Continue with one relevant question."
+          ],
+          "forbidden": [
+            "Treat the abandoned fragment as the final answer.",
+            "Penalise normal hesitation."
+          ]
+        },
+        {
+          "id": "eng-supported-alternative",
+          "learner": "I waited for the bus and then my neighbour offered me a lift.",
+          "state": "valid_alternative",
+          "expected": [
+            "Accept the coherent past-simple sequence.",
+            "Explain the different emphasis only if the task specifically requested background in progress."
+          ],
+          "forbidden": [
+            "Reject it solely for differing from the model.",
+            "Claim one regional variety is the only valid English."
+          ]
+        },
+        {
+          "id": "eng-pronunciation-request",
+          "learner": "Was my pronunciation of neighbour correct?",
+          "state": "acoustic_evidence_absent",
+          "expected": [
+            "State that transcript text cannot establish pronunciation.",
+            "Offer a future spoken check only when voice evidence is actually available."
+          ],
+          "forbidden": [
+            "Invent a pronunciation score.",
+            "Pretend the text contains audio evidence."
+          ]
+        },
+        {
+          "id": "eng-needs-support",
+          "learner": "Yesterday I go home and it rain. I do not know how to continue.",
+          "state": "supported_practice",
+          "expected": [
+            "Preserve the intended message and repair one target at a time.",
+            "Offer a short frame, then invite the learner to add the result."
+          ],
+          "forbidden": [
+            "Correct every possible issue at once.",
+            "Replace the learner’s whole story before one retry."
+          ]
+        }
+      ]
+    }
+  ]
+}

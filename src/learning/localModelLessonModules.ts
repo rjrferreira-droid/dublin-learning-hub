@@ -1,5 +1,5 @@
 import type {LessonModule} from './lessonModules.ts';
-import {ACCA_A1_MODEL_ID,ACCA_A1_MODEL_SLUG,isLocalModelLesson} from './localModelLessonRegistry.ts';
+import {ACCA_A1_MODEL_ID,ACCA_A1_MODEL_SLUG,localModelCodeFor} from './localModelLessonRegistry.ts';
 import type {P1Track} from './p1RuntimeRegistry.ts';
 const reviewedOn='2026-09-21';
 export const ACCA_A1_PREMIUM_AUDIO_OUTLINE={status:'outline_only_no_generation',estimatedMinutes:'14–18',segments:['Why general purpose reporting exists and who uses it.','General reports compared with a private cash forecast.','Materiality by nature and magnitude.','Retrieval pauses on users, stewardship and missing evidence.'],preservation:'No existing Premium Audio asset, cache, budget or runtime is modified or invoked.'} as const;
@@ -58,5 +58,5 @@ export const ACCA_A1_MODEL_MODULE:LessonModule={
   {id:'materiality-practice',label:'IFRS Foundation · Materiality Practice Statement',url:'https://www.ifrs.org/issued-standards/list-of-standards/materiality-practice-statement/',supports:'Entity-specific nature and magnitude considerations.',reviewedOn}
  ]
 };
-export function localModelLessonFor(track:P1Track,lesson:{id:string;slug:string}):LessonModule|null{return isLocalModelLesson(track,lesson)?ACCA_A1_MODEL_MODULE:null;}
+export function localModelLessonFor(track:P1Track,lesson:{id:string;slug:string}):LessonModule|null{return localModelCodeFor(track,lesson)==='A1'?ACCA_A1_MODEL_MODULE:null;}
 export {ACCA_A1_MODEL_ID,ACCA_A1_MODEL_SLUG};
