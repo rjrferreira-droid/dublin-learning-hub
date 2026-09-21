@@ -134,10 +134,10 @@ function coachingIntensity(profile: ProfessorProfile, metadata: ProfessorJobMeta
   return profile === 'english' ? 'normal' : 'coach';
 }
 
-function semanticVadEagerness(intensity: CoachingIntensity): 'low' | 'medium' {
-  // Give learners room to hesitate and self-correct in normal/coaching sessions.
-  // Pressure mode stays balanced so oral mocks still feel responsive.
-  return intensity === 'pressure' ? 'medium' : 'low';
+function semanticVadEagerness(): 'medium' {
+  // Semantic detection still recognises hesitation. Use its balanced default
+  // instead of extending every coaching turn with the low-eagerness timeout.
+  return 'medium';
 }
 
 function baseSpeechSpeed(profile: ProfessorProfile, intensity: CoachingIntensity): number {
@@ -266,10 +266,10 @@ function openingInstruction(profile: ProfessorProfile, metadata: ProfessorJobMet
   }
   if (profile === 'english') {
     return typeof share === 'number' && share < 70
-      ? `Greet the learner with accessible natural English.${lesson} Ask one open question that immediately starts the task. Keep the first turn short and allow brief Portuguese support only if needed.${tone}`
-      : `Greet the learner naturally.${lesson} Start with one open question that immediately starts the task. Do not sound like an exam.${tone}`;
+      ? `Greet the learner with accessible natural English.${lesson} Set up the situation in one short sentence before asking one concrete question. Do not assume the learner has read the lesson. Keep the first turn short and allow brief Portuguese support only if needed.${tone}`
+      : `Greet the learner naturally.${lesson} Set up the situation in one short sentence before asking one concrete question. Do not assume the learner has read the lesson. Do not sound like an exam.${tone}`;
   }
-  return `Greet the learner briefly as a senior finance coach.${lesson} Ask for a concise explanation of the central issue before giving any teaching.${tone}`;
+  return `Greet the learner briefly as a senior finance coach.${lesson} First explain a concrete situation from the supplied lesson context in one or two short sentences, then ask exactly one specific question about a first decision. Do not ask for the central issue of an unstated scenario or assume the learner has read the lesson. Do not give away the answer. If the learner asks for clarification, explain the situation in simpler words rather than repeating the same abstract question.${tone}`;
 }
 
 function transcriptTurnFromItem(item: any): TranscriptTurn | null {
@@ -403,7 +403,24 @@ export default defineAgent({
     let midTurnInterruptions = 0;
     let midTurnInterrupting = false;
     let lastMidTurnInterruptAt = 0;
-    const learningMemory = await loadLearningMemory(metadata);
+    // Log only timings and an opaque session ID, never metadata or learner text.
+    const timingStartedAt = performance.now();
+    const timingSessionId = /^[a-f0-9-]{36}$/i.test(metadata.persistence?.sessionId ?? '')
+      ? metadata.persistence!.sessionId : undefined;
+    const timing = (stage: string, durationMs?: number) => {
+      console.info('professor_timing', JSON.stringify({
+        sessionId: timingSessionId, stage,
+        elapsedMs: Math.round(performance.now() - timingStartedAt),
+        ...(durationMs !== undefined && Number.isFinite(durationMs) && durationMs >= 0
+          ? { durationMs: Math.round(durationMs) } : {}),
+      }));
+    };
+    timing('worker_entry');
+    // Independent I/O can overlap; memory is still included before the first reply.
+    const [learningMemory] = await Promise.all([
+      loadLearningMemory(metadata).then(value => { timing('memory_ready'); return value; }),
+      ctx.connect().then(() => { timing('room_connected'); }),
+    ]);
 
     const agent = voice.Agent.create({
       instructions: `${professorInstructions(profile)}${coachingGuidance(profile, metadata)}${languageGuidance(metadata)}${lessonGuidance(metadata)}${learningMemoryGuidance(learningMemory)}`,
@@ -416,11 +433,33 @@ export default defineAgent({
         speed: baseSpeechSpeed(profile, intensity),
         turnDetection: {
           type: 'semantic_vad',
-          eagerness: semanticVadEagerness(intensity),
+          eagerness: semanticVadEagerness(),
           create_response: true,
           interrupt_response: true,
         },
       }),
+    });
+
+    let firstSpeech = true;
+    let userStoppedAt: number | null = null;
+    session.on(voice.AgentSessionEventTypes.UserStateChanged, event => {
+      if (event.newState === 'speaking') userStoppedAt = null;
+      if (event.oldState === 'speaking' && event.newState !== 'speaking') {
+        userStoppedAt = performance.now();
+        timing('user_turn_detected');
+      }
+    });
+    session.on(voice.AgentSessionEventTypes.AgentStateChanged, event => {
+      if (event.newState !== 'speaking') return;
+      timing(firstSpeech ? 'first_speech' : 'response_speech',
+        userStoppedAt === null ? undefined : performance.now() - userStoppedAt);
+      firstSpeech = false;
+      userStoppedAt = null;
+    });
+    session.on(voice.AgentSessionEventTypes.MetricsCollected, event => {
+      if (event.metrics.type === 'realtime_model_metrics') {
+        timing('model_first_token', event.metrics.ttftMs);
+      }
     });
 
     session.on(voice.AgentSessionEventTypes.ConversationItemAdded, (event: any) => {
@@ -477,11 +516,12 @@ export default defineAgent({
       await persistOnce();
     });
 
-    await ctx.connect();
+    timing('session_start_requested');
     await session.start({
       agent,
       room: ctx.room,
     });
+    timing('session_ready');
 
     sessionTimer = setTimeout(() => {
       closeReason = 'professor_session_time_limit';
@@ -490,6 +530,7 @@ export default defineAgent({
     }, sessionLimitSeconds * 1000);
     sessionTimer.unref?.();
 
+    timing('opening_requested');
     await session.generateReply({
       instructions: openingInstruction(profile, metadata),
     });
