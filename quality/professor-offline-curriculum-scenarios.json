@@ -1,5 +1,5 @@
 {
-  "version": "curriculum-professor-offline-scenarios-2026-09-21-v3",
+  "version": "curriculum-professor-offline-scenarios-2026-09-21-v4",
   "status": "authored_offline_expectations_not_model_results",
   "globalBoundaries": [
     "One clear question at a time.",
@@ -432,6 +432,148 @@
           ],
           "forbidden": [
             "Merge the balances into one unexplained number.",
+            "Claim the worked explanation is learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B7",
+      "lessonId": "b1700000-2026-4acc-8b07-000000000007",
+      "scenarios": [
+        {
+          "id": "b7-correct-provision",
+          "learner": "Products were sold with warranty, outflow is probable and expected value is reliable, so the warranty provision is recognised.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the three-part recognition logic briefly.",
+            "Ask one transfer question changing the obligation or probability."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the conclusion was saved."
+          ]
+        },
+        {
+          "id": "b7-intention-misconception",
+          "learner": "Management plans to repair equipment next year, so a provision must be recognised now.",
+          "state": "misconception",
+          "expected": [
+            "Ask which past event leaves no realistic alternative to settlement.",
+            "Guide the learner to distinguish an avoidable future action from a present obligation."
+          ],
+          "forbidden": [
+            "Reveal every IAS 37 category before one retry.",
+            "Treat a budget as an obligating event."
+          ]
+        },
+        {
+          "id": "b7-event-hint",
+          "learner": "The customer failed after year end and I cannot decide whether that event adjusts the receivable. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Ask when the customer’s financial difficulty existed.",
+            "Invite classification from the underlying condition rather than the announcement date."
+          ],
+          "forbidden": [
+            "Record the help request as a final error.",
+            "Assume every later event is non-adjusting."
+          ]
+        },
+        {
+          "id": "b7-self-correction",
+          "learner": "A probable contingent asset is recognised—sorry, it is disclosed, and recognition waits until inflow is virtually certain.",
+          "state": "self_corrected",
+          "expected": [
+            "Use the corrected asset treatment as the current answer.",
+            "Ask the learner to contrast it with a probable present obligation."
+          ],
+          "forbidden": [
+            "Store the abandoned recognition as the final error.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "b7-worked-estimate",
+          "learner": "Please show me one probability-weighted warranty estimate before I try another provision.",
+          "state": "answer_requested",
+          "expected": [
+            "Show outcomes, probabilities and weighted total in a concise table or sequence.",
+            "Invite an optional changed-probability retry without calling it independent mastery."
+          ],
+          "forbidden": [
+            "Withhold the requested calculation indefinitely.",
+            "Claim supported practice is assessed evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B8",
+      "lessonId": "b1800000-2026-4acc-8b08-000000000008",
+      "scenarios": [
+        {
+          "id": "b8-correct-deferred-tax",
+          "learner": "PPE carrying amount is 600 and tax base is 420, so the taxable difference is 180 and the DTL at 25% is 45.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the asset recovery logic briefly.",
+            "Ask one transfer question changing the tax base or enacted rate."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim progress was persisted."
+          ]
+        },
+        {
+          "id": "b8-permanent-misconception",
+          "learner": "Every non-deductible expense creates a deferred tax asset.",
+          "state": "misconception",
+          "expected": [
+            "Ask whether the expense will become deductible in a future period.",
+            "Guide the learner to distinguish permanent from temporary differences."
+          ],
+          "forbidden": [
+            "Correct unrelated current-tax mechanics at once.",
+            "Create future tax benefits without evidence."
+          ]
+        },
+        {
+          "id": "b8-liability-taxbase-hint",
+          "learner": "I am stuck on the tax base of a warranty provision that is deductible only when paid. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Ask how much of the carrying liability will be deductible on settlement.",
+            "Invite the learner to subtract that future deduction from carrying amount."
+          ],
+          "forbidden": [
+            "Treat the help request as failure.",
+            "State a deferred tax asset without checking recoverability."
+          ]
+        },
+        {
+          "id": "b8-self-correction",
+          "learner": "Deferred tax balances are discounted—sorry, IAS 12 does not discount them.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected measurement rule.",
+            "Ask which enacted or substantively enacted rate should be used."
+          ],
+          "forbidden": [
+            "Preserve the abandoned discounting as the final answer.",
+            "Infer exam readiness."
+          ]
+        },
+        {
+          "id": "b8-supported-reconciliation",
+          "learner": "Can you walk me from current tax and payments on account to the deferred tax movement and total tax expense?",
+          "state": "answer_requested",
+          "expected": [
+            "Keep current liability, deferred balance and profit-or-loss movement as separate reconciliations.",
+            "Invite an optional changed-number transfer without describing it as independent competence."
+          ],
+          "forbidden": [
+            "Net cash payments directly against deferred tax.",
             "Claim the worked explanation is learner evidence."
           ]
         }
