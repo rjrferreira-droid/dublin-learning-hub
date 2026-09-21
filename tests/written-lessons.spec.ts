@@ -56,6 +56,8 @@ const localModels=[
  {slug:'acca-fr-a2-qualitative-characteristics-cost-constraint',title:'ACCA FR A2 · Qualitative characteristics and the cost constraint'},
  {slug:'acca-fr-b3-impairment-assets',title:'ACCA FR B3 · Impairment of assets'},
  {slug:'acca-fr-b4-inventories-biological-assets',title:'ACCA FR B4 · Inventories and biological assets'},
+ {slug:'acca-fr-b5-financial-instruments',title:'ACCA FR B5 · Financial instruments'},
+ {slug:'acca-fr-b6-leasing',title:'ACCA FR B6 · Leasing'},
 ] as const;
 for(const model of localModels)for(const viewport of [{name:'desktop',width:1440,height:1000},{name:'mobile',width:390,height:844}])test(`${model.title} at ${viewport.name} is provider-free`,async({page})=>{
  await page.setViewportSize(viewport);const requests=await openFixture(page,courses[0],true);

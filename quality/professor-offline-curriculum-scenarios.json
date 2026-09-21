@@ -1,5 +1,5 @@
 {
-  "version": "curriculum-professor-offline-scenarios-2026-09-21-v2",
+  "version": "curriculum-professor-offline-scenarios-2026-09-21-v3",
   "status": "authored_offline_expectations_not_model_results",
   "globalBoundaries": [
     "One clear question at a time.",
@@ -291,6 +291,148 @@
           "forbidden": [
             "Omit the harvest boundary.",
             "Claim the worked explanation is assessed evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B5",
+      "lessonId": "b1500000-2026-4acc-8b05-000000000005",
+      "scenarios": [
+        {
+          "id": "b5-correct-amortised-cost",
+          "learner": "Opening liability is 940, effective interest is 75.2 and coupon cash is 50, so closing amortised cost is 965.2.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the effective-rate schedule briefly.",
+            "Ask one transfer question changing the coupon or opening balance."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the schedule was saved."
+          ]
+        },
+        {
+          "id": "b5-coupon-misconception",
+          "learner": "Finance cost is always the coupon, so the expense must be 50.",
+          "state": "misconception",
+          "expected": [
+            "Ask which balance receives the effective interest rate.",
+            "Guide the learner to separate effective finance cost from coupon cash."
+          ],
+          "forbidden": [
+            "Reveal every calculation before one retry.",
+            "Treat nominal and effective rates as interchangeable."
+          ]
+        },
+        {
+          "id": "b5-liability-equity-hint",
+          "learner": "I cannot decide whether these redeemable shares are liability or equity. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Ask whether the issuer can avoid delivering cash.",
+            "Invite a classification from contractual substance before naming the answer."
+          ],
+          "forbidden": [
+            "Record the help request as a final error.",
+            "Rely only on the word shares."
+          ]
+        },
+        {
+          "id": "b5-self-correction",
+          "learner": "The whole convertible bond is equity—sorry, the cash obligation is measured as liability first and the residual can be equity.",
+          "state": "self_corrected",
+          "expected": [
+            "Use the corrected split as the current answer.",
+            "Ask how the liability changes under effective interest."
+          ],
+          "forbidden": [
+            "Store the abandoned statement as the final error.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "b5-worked-answer",
+          "learner": "Please show me one complete effective-interest row before I try another instrument.",
+          "state": "answer_requested",
+          "expected": [
+            "Show opening balance, effective interest, cash and closing balance in order.",
+            "Invite an optional changed-number retry without calling it independent mastery."
+          ],
+          "forbidden": [
+            "Withhold the requested worked row indefinitely.",
+            "Claim supported practice is assessed evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B6",
+      "lessonId": "b1600000-2026-4acc-8b06-000000000006",
+      "scenarios": [
+        {
+          "id": "b6-correct-rollforward",
+          "learner": "The liability starts at 90, adds 9 interest and deducts the 30 payment, so it closes at 69.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the in-arrears sequence briefly.",
+            "Ask one transfer question changing payment timing."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim progress was persisted."
+          ]
+        },
+        {
+          "id": "b6-cash-expense-misconception",
+          "learner": "The entire 30 cash payment is the lease expense for the year.",
+          "state": "misconception",
+          "expected": [
+            "Ask which amounts appear as finance cost and depreciation.",
+            "Guide the learner to separate liability repayment from profit-or-loss charges."
+          ],
+          "forbidden": [
+            "Correct unrelated lease-definition issues at once.",
+            "Call the cash payment irrelevant."
+          ]
+        },
+        {
+          "id": "b6-control-hint",
+          "learner": "The contract names a machine, but I am unsure whether the customer controls its use. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt separately for economic benefits and the right to direct use.",
+            "Invite a fresh conclusion after considering substantive substitution rights."
+          ],
+          "forbidden": [
+            "Treat the help request as failure.",
+            "Assume identification alone proves a lease."
+          ]
+        },
+        {
+          "id": "b6-self-correction",
+          "learner": "The right-of-use asset always equals the liability—sorry, direct costs, incentives and restoration can make them different.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected distinction.",
+            "Ask the learner to build one initial asset reconciliation."
+          ],
+          "forbidden": [
+            "Preserve the abandoned equality as the final answer.",
+            "Infer exam readiness."
+          ]
+        },
+        {
+          "id": "b6-supported-measurement",
+          "learner": "Can you walk me through the liability and right-of-use asset schedules before I try a new lease?",
+          "state": "answer_requested",
+          "expected": [
+            "Explain the two linked schedules with one concise numerical example.",
+            "Invite an optional transfer without describing it as independent competence."
+          ],
+          "forbidden": [
+            "Merge the balances into one unexplained number.",
+            "Claim the worked explanation is learner evidence."
           ]
         }
       ]
