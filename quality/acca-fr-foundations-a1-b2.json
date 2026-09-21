@@ -1,0 +1,766 @@
+{
+  "version": "acca-fr-foundations-a1-b2-2026-09-21-v1",
+  "status": "authored_local_curriculum_not_database_published",
+  "design": {
+    "studySessionMinutes": {
+      "reference": 120,
+      "range": [
+        90,
+        180
+      ],
+      "hardLimit": false
+    },
+    "phases": [
+      "learn",
+      "worked example",
+      "graduated practice",
+      "exam task",
+      "review"
+    ],
+    "originalQuestions": true,
+    "officialApprovalClaim": false,
+    "sittingVerificationRequired": true
+  },
+  "sequence": [
+    {
+      "code": "A1",
+      "id": "acca-fr-a1",
+      "title": "Purpose and users of financial reporting",
+      "track": "acca-fr",
+      "status": "authored_local_lesson_not_database_published",
+      "syllabus": {
+        "sitting": "must_be_pinned_before_publication",
+        "section": "A",
+        "topic": "conceptual and regulatory framework",
+        "outcomeReferences": "category-level draft; cross-check exact lettering against selected sitting"
+      },
+      "durationMinutes": {
+        "reference": 120,
+        "range": [
+          90,
+          180
+        ],
+        "hardLimit": false
+      },
+      "prerequisites": [
+        "Basic double entry and primary financial statements"
+      ],
+      "objectives": [
+        "Explain the objective of general purpose financial reporting.",
+        "Distinguish primary users and their information needs.",
+        "Separate stewardship, decision usefulness and entity-specific management information.",
+        "Apply materiality to a reporting judgement."
+      ],
+      "sections": [
+        "Objective and primary users",
+        "Useful information and stewardship",
+        "Materiality in context",
+        "Exam wording: explain, distinguish, apply"
+      ],
+      "workedExample": {
+        "scenario": "A lender asks for a private weekly cash forecast while investors receive annual financial statements.",
+        "steps": [
+          "Identify the general-purpose report users.",
+          "Explain why a private forecast is entity-specific management/lender information.",
+          "Assess whether a covenant uncertainty is material to the annual statements."
+        ],
+        "answer": "The annual statements serve existing and potential investors, lenders and other creditors generally. The private weekly forecast is not itself a general-purpose statement. A covenant uncertainty may require recognition, presentation or disclosure analysis if it could influence users' decisions."
+      },
+      "practice": [
+        {
+          "id": "a1-p1",
+          "prompt": "Name the primary-user groups.",
+          "answer": "Existing and potential investors, lenders and other creditors.",
+          "explanation": "They cannot normally demand tailored reports."
+        },
+        {
+          "id": "a1-p2",
+          "prompt": "Is every large number material?",
+          "answer": "No.",
+          "explanation": "Materiality depends on nature and magnitude in the entity's circumstances."
+        },
+        {
+          "id": "a1-p3",
+          "prompt": "Why is stewardship relevant?",
+          "answer": "It helps users assess management's use of resources.",
+          "explanation": "It supports resource-allocation decisions."
+        }
+      ],
+      "examTask": {
+        "minutes": 12,
+        "prompt": "Explain whether omission of a small related-party transaction can be material and identify the relevant reasoning.",
+        "modelPoints": [
+          "Materiality is entity-specific.",
+          "Nature can matter even when amount is small.",
+          "Conclude from supplied facts, not a universal threshold."
+        ]
+      },
+      "revision": {
+        "retrieval": [
+          "State the central rule from A1 without notes.",
+          "Explain one common trap from A1."
+        ],
+        "spacingDays": [
+          1,
+          7,
+          21
+        ]
+      },
+      "premiumAudio": {
+        "status": "script_outline_only_no_generation",
+        "minutes": "12-18",
+        "outline": [
+          "Why the topic matters",
+          "One worked example narrated step by step",
+          "Two common traps",
+          "Three retrieval pauses"
+        ],
+        "preserveExistingRuntime": true
+      },
+      "professorGuide": {
+        "opening": "Ask for the learner's current reasoning before explaining.",
+        "support": "Give one hint or simplify the representation before revealing the answer.",
+        "challenge": "Change one fact and ask what changes in the conclusion.",
+        "close": "Recap the rule, one trap and the next practice step; do not claim saved mastery."
+      },
+      "sources": [
+        {
+          "id": "acca-fr-syllabus",
+          "url": "https://www.accaglobal.com/gb/en/student/exam-support-resources/fundamentals-exams-study-resources/f7/syllabus-study-guide.html",
+          "use": "Authoritative landing page; pin and verify the selected sitting before claiming outcome completion."
+        },
+        {
+          "id": "ifrs-standards",
+          "url": "https://www.ifrs.org/issued-standards/",
+          "use": "Primary standard summaries and issued-standard access."
+        },
+        {
+          "id": "acowtancy-fr",
+          "url": "https://www.acowtancy.com/papers/acca-fr/",
+          "use": "Organisation/revision reference only; no proprietary text or question-bank reproduction."
+        }
+      ],
+      "evidenceBoundary": "Authored solutions are teaching references. Only separately persisted, identity-bound assessment may become learner evidence."
+    },
+    {
+      "code": "A2",
+      "id": "acca-fr-a2",
+      "title": "Qualitative characteristics and the cost constraint",
+      "track": "acca-fr",
+      "status": "authored_local_lesson_not_database_published",
+      "syllabus": {
+        "sitting": "must_be_pinned_before_publication",
+        "section": "A",
+        "topic": "conceptual framework",
+        "outcomeReferences": "category-level draft; cross-check exact lettering against selected sitting"
+      },
+      "durationMinutes": {
+        "reference": 120,
+        "range": [
+          90,
+          180
+        ],
+        "hardLimit": false
+      },
+      "prerequisites": [
+        "ACCA FR A1 or equivalent diagnostic"
+      ],
+      "objectives": [
+        "Distinguish relevance from faithful representation.",
+        "Apply comparability, verifiability, timeliness and understandability.",
+        "Explain prudence and neutrality without deliberate bias.",
+        "Resolve a trade-off using the cost constraint."
+      ],
+      "sections": [
+        "Fundamental characteristics",
+        "Enhancing characteristics",
+        "Prudence, neutrality and uncertainty",
+        "Trade-offs and cost"
+      ],
+      "workedExample": {
+        "scenario": "Two valuation methods are available: Method X is timely and independently observable but omits a material condition; Method Y includes the condition using a transparent estimate.",
+        "steps": [
+          "Test relevance.",
+          "Test completeness, neutrality and freedom from error in process.",
+          "Consider verifiability and cost."
+        ],
+        "answer": "Method X is verifiable but not faithfully representative if it omits a material condition. Method Y may be preferable if the estimate is relevant, complete and transparently described; estimation uncertainty does not automatically mean error."
+      },
+      "practice": [
+        {
+          "id": "a2-p1",
+          "prompt": "Can information be useful if irrelevant but perfectly accurate?",
+          "answer": "No.",
+          "explanation": "Both relevance and faithful representation are fundamental."
+        },
+        {
+          "id": "a2-p2",
+          "prompt": "Does prudence permit hidden reserves?",
+          "answer": "No.",
+          "explanation": "Prudence is caution under uncertainty, consistent with neutrality."
+        },
+        {
+          "id": "a2-p3",
+          "prompt": "What does verifiability mean?",
+          "answer": "Knowledgeable independent observers could reach consensus that the depiction is faithfully represented.",
+          "explanation": "It does not require one unique estimate."
+        }
+      ],
+      "examTask": {
+        "minutes": 15,
+        "prompt": "Recommend which measurement to use and discuss two qualitative-characteristic trade-offs.",
+        "modelPoints": [
+          "Start with relevance and faithful representation.",
+          "Use enhancing characteristics to compare viable alternatives.",
+          "Mention transparent uncertainty and cost where facts support it."
+        ]
+      },
+      "revision": {
+        "retrieval": [
+          "State the central rule from A2 without notes.",
+          "Explain one common trap from A2."
+        ],
+        "spacingDays": [
+          1,
+          7,
+          21
+        ]
+      },
+      "premiumAudio": {
+        "status": "script_outline_only_no_generation",
+        "minutes": "12-18",
+        "outline": [
+          "Why the topic matters",
+          "One worked example narrated step by step",
+          "Two common traps",
+          "Three retrieval pauses"
+        ],
+        "preserveExistingRuntime": true
+      },
+      "professorGuide": {
+        "opening": "Ask for the learner's current reasoning before explaining.",
+        "support": "Give one hint or simplify the representation before revealing the answer.",
+        "challenge": "Change one fact and ask what changes in the conclusion.",
+        "close": "Recap the rule, one trap and the next practice step; do not claim saved mastery."
+      },
+      "sources": [
+        {
+          "id": "acca-fr-syllabus",
+          "url": "https://www.accaglobal.com/gb/en/student/exam-support-resources/fundamentals-exams-study-resources/f7/syllabus-study-guide.html",
+          "use": "Authoritative landing page; pin and verify the selected sitting before claiming outcome completion."
+        },
+        {
+          "id": "ifrs-standards",
+          "url": "https://www.ifrs.org/issued-standards/",
+          "use": "Primary standard summaries and issued-standard access."
+        },
+        {
+          "id": "acowtancy-fr",
+          "url": "https://www.acowtancy.com/papers/acca-fr/",
+          "use": "Organisation/revision reference only; no proprietary text or question-bank reproduction."
+        }
+      ],
+      "evidenceBoundary": "Authored solutions are teaching references. Only separately persisted, identity-bound assessment may become learner evidence."
+    },
+    {
+      "code": "A3",
+      "id": "acca-fr-a3",
+      "title": "Recognition, derecognition and measurement",
+      "track": "acca-fr",
+      "status": "authored_local_lesson_not_database_published",
+      "syllabus": {
+        "sitting": "must_be_pinned_before_publication",
+        "section": "A",
+        "topic": "conceptual framework",
+        "outcomeReferences": "category-level draft; cross-check exact lettering against selected sitting"
+      },
+      "durationMinutes": {
+        "reference": 120,
+        "range": [
+          90,
+          180
+        ],
+        "hardLimit": false
+      },
+      "prerequisites": [
+        "ACCA FR A1 or equivalent diagnostic"
+      ],
+      "objectives": [
+        "Apply the asset, liability, income and expense definitions.",
+        "Explain recognition as providing relevant and faithfully represented information.",
+        "Distinguish historical cost and current-value bases.",
+        "Identify when derecognition or continued presentation needs analysis."
+      ],
+      "sections": [
+        "Elements and economic resources",
+        "Recognition and uncertainty",
+        "Measurement bases",
+        "Derecognition and unit of account"
+      ],
+      "workedExample": {
+        "scenario": "An entity pays 120 for a non-refundable right expected to generate benefits and separately faces a probable obligation from past environmental damage.",
+        "steps": [
+          "Identify rights and obligations, not labels.",
+          "Assess control/present obligation and past events.",
+          "Select a measurement basis consistent with useful information."
+        ],
+        "answer": "The purchased right may be an asset if it is a controlled present economic resource. The environmental duty may be a liability if a present obligation exists from the past damage. Recognition and measurement require the relevant IFRS requirements; probability wording alone is not a substitute for those requirements."
+      },
+      "practice": [
+        {
+          "id": "a3-p1",
+          "prompt": "Is physical form required for an asset?",
+          "answer": "No.",
+          "explanation": "An asset is a present economic resource, which is a right with potential to produce benefits."
+        },
+        {
+          "id": "a3-p2",
+          "prompt": "Does uncertainty automatically prevent recognition?",
+          "answer": "No.",
+          "explanation": "Assess relevance and faithful representation under the applicable Standard."
+        },
+        {
+          "id": "a3-p3",
+          "prompt": "Give one current-value basis.",
+          "answer": "Fair value, value in use or current cost.",
+          "explanation": "The exact basis depends on the item and Standard."
+        }
+      ],
+      "examTask": {
+        "minutes": 18,
+        "prompt": "Analyse two supplied items for element definition, recognition and measurement; state any information still needed.",
+        "modelPoints": [
+          "Do not jump from cash payment to asset.",
+          "Separate definition, recognition and measurement.",
+          "Avoid inventing Standard-specific thresholds."
+        ]
+      },
+      "revision": {
+        "retrieval": [
+          "State the central rule from A3 without notes.",
+          "Explain one common trap from A3."
+        ],
+        "spacingDays": [
+          1,
+          7,
+          21
+        ]
+      },
+      "premiumAudio": {
+        "status": "script_outline_only_no_generation",
+        "minutes": "12-18",
+        "outline": [
+          "Why the topic matters",
+          "One worked example narrated step by step",
+          "Two common traps",
+          "Three retrieval pauses"
+        ],
+        "preserveExistingRuntime": true
+      },
+      "professorGuide": {
+        "opening": "Ask for the learner's current reasoning before explaining.",
+        "support": "Give one hint or simplify the representation before revealing the answer.",
+        "challenge": "Change one fact and ask what changes in the conclusion.",
+        "close": "Recap the rule, one trap and the next practice step; do not claim saved mastery."
+      },
+      "sources": [
+        {
+          "id": "acca-fr-syllabus",
+          "url": "https://www.accaglobal.com/gb/en/student/exam-support-resources/fundamentals-exams-study-resources/f7/syllabus-study-guide.html",
+          "use": "Authoritative landing page; pin and verify the selected sitting before claiming outcome completion."
+        },
+        {
+          "id": "ifrs-standards",
+          "url": "https://www.ifrs.org/issued-standards/",
+          "use": "Primary standard summaries and issued-standard access."
+        },
+        {
+          "id": "acowtancy-fr",
+          "url": "https://www.acowtancy.com/papers/acca-fr/",
+          "use": "Organisation/revision reference only; no proprietary text or question-bank reproduction."
+        }
+      ],
+      "evidenceBoundary": "Authored solutions are teaching references. Only separately persisted, identity-bound assessment may become learner evidence."
+    },
+    {
+      "code": "A4",
+      "id": "acca-fr-a4",
+      "title": "Regulation, standard setting and ethical reporting judgement",
+      "track": "acca-fr",
+      "status": "authored_local_lesson_not_database_published",
+      "syllabus": {
+        "sitting": "must_be_pinned_before_publication",
+        "section": "A",
+        "topic": "regulatory framework",
+        "outcomeReferences": "category-level draft; cross-check exact lettering against selected sitting"
+      },
+      "durationMinutes": {
+        "reference": 120,
+        "range": [
+          90,
+          180
+        ],
+        "hardLimit": false
+      },
+      "prerequisites": [
+        "ACCA FR A1 or equivalent diagnostic"
+      ],
+      "objectives": [
+        "Explain why financial reporting is regulated.",
+        "Distinguish IFRS Foundation, IASB and jurisdictional adoption/enforcement roles.",
+        "Use due-process logic at a high level.",
+        "Identify bias, omission and pressure risks in an accounting judgement."
+      ],
+      "sections": [
+        "Need for regulation",
+        "Standard-setting architecture",
+        "Adoption, compliance and enforcement",
+        "Ethics and transparent judgement"
+      ],
+      "workedExample": {
+        "scenario": "A manager asks the reporting team to defer a known impairment review until after a financing meeting.",
+        "steps": [
+          "Identify the applicable reporting requirement and reporting-period facts.",
+          "Identify pressure and bias risk.",
+          "Document evidence, escalate appropriately and keep the conclusion independent."
+        ],
+        "answer": "Financing pressure does not change the reporting requirement. The team should perform the required assessment using reporting-date evidence, document the judgement, and use governance/escalation routes if management pressure threatens faithful reporting."
+      },
+      "practice": [
+        {
+          "id": "a4-p1",
+          "prompt": "Does IASB enforce every company's statements?",
+          "answer": "No.",
+          "explanation": "IASB issues IFRS Accounting Standards; adoption and enforcement involve jurisdictions and regulators."
+        },
+        {
+          "id": "a4-p2",
+          "prompt": "Why use due process?",
+          "answer": "To support transparent, consultative and evidence-informed standard setting.",
+          "explanation": "It does not eliminate judgement."
+        },
+        {
+          "id": "a4-p3",
+          "prompt": "What is the first response to pressure to omit evidence?",
+          "answer": "Preserve and assess the evidence under the requirement.",
+          "explanation": "Then document and escalate through appropriate governance."
+        }
+      ],
+      "examTask": {
+        "minutes": 15,
+        "prompt": "Discuss the reporting and ethical issues in the financing-pressure scenario and recommend actions.",
+        "modelPoints": [
+          "Apply the reporting-date requirement.",
+          "Explain the bias/conflict.",
+          "Give proportionate documentation and escalation steps."
+        ]
+      },
+      "revision": {
+        "retrieval": [
+          "State the central rule from A4 without notes.",
+          "Explain one common trap from A4."
+        ],
+        "spacingDays": [
+          1,
+          7,
+          21
+        ]
+      },
+      "premiumAudio": {
+        "status": "script_outline_only_no_generation",
+        "minutes": "12-18",
+        "outline": [
+          "Why the topic matters",
+          "One worked example narrated step by step",
+          "Two common traps",
+          "Three retrieval pauses"
+        ],
+        "preserveExistingRuntime": true
+      },
+      "professorGuide": {
+        "opening": "Ask for the learner's current reasoning before explaining.",
+        "support": "Give one hint or simplify the representation before revealing the answer.",
+        "challenge": "Change one fact and ask what changes in the conclusion.",
+        "close": "Recap the rule, one trap and the next practice step; do not claim saved mastery."
+      },
+      "sources": [
+        {
+          "id": "acca-fr-syllabus",
+          "url": "https://www.accaglobal.com/gb/en/student/exam-support-resources/fundamentals-exams-study-resources/f7/syllabus-study-guide.html",
+          "use": "Authoritative landing page; pin and verify the selected sitting before claiming outcome completion."
+        },
+        {
+          "id": "ifrs-standards",
+          "url": "https://www.ifrs.org/issued-standards/",
+          "use": "Primary standard summaries and issued-standard access."
+        },
+        {
+          "id": "acowtancy-fr",
+          "url": "https://www.acowtancy.com/papers/acca-fr/",
+          "use": "Organisation/revision reference only; no proprietary text or question-bank reproduction."
+        }
+      ],
+      "evidenceBoundary": "Authored solutions are teaching references. Only separately persisted, identity-bound assessment may become learner evidence."
+    },
+    {
+      "code": "B1",
+      "id": "acca-fr-b1",
+      "title": "Property, plant and equipment: initial and subsequent measurement",
+      "track": "acca-fr",
+      "status": "authored_local_lesson_not_database_published",
+      "syllabus": {
+        "sitting": "must_be_pinned_before_publication",
+        "section": "B",
+        "topic": "accounting for transactions",
+        "outcomeReferences": "category-level draft; cross-check exact lettering against selected sitting"
+      },
+      "durationMinutes": {
+        "reference": 120,
+        "range": [
+          90,
+          180
+        ],
+        "hardLimit": false
+      },
+      "prerequisites": [
+        "ACCA FR A1 or equivalent diagnostic"
+      ],
+      "objectives": [
+        "Identify directly attributable costs at initial recognition.",
+        "Exclude operating losses and abnormal waste from asset cost.",
+        "Calculate depreciation from the available-for-use date.",
+        "Account for a revaluation movement at a foundation level."
+      ],
+      "sections": [
+        "Recognition and cost",
+        "Subsequent expenditure",
+        "Depreciation and componentisation",
+        "Cost and revaluation models"
+      ],
+      "workedExample": {
+        "scenario": "Machine price 500; delivery 20; installation 30; staff training 12; abnormal testing waste 8; residual value 50; useful life 10 years; available for use on 1 April.",
+        "calculation": {
+          "capitalisedCost": 550,
+          "excluded": 20,
+          "annualDepreciation": 50,
+          "formula": "(550 - 50) / 10"
+        },
+        "answer": "Capitalise price, delivery and installation: 550. Expense training and abnormal waste: 20. Full-year depreciation is 50; charge from 1 April using the entity's time-apportionment policy."
+      },
+      "practice": [
+        {
+          "id": "b1-p1",
+          "prompt": "Calculate capitalised cost.",
+          "answer": "550",
+          "explanation": "500 + 20 + 30; training and abnormal waste are excluded."
+        },
+        {
+          "id": "b1-p2",
+          "prompt": "Calculate annual straight-line depreciation.",
+          "answer": "50",
+          "explanation": "(550 - 50) / 10."
+        },
+        {
+          "id": "b1-p3",
+          "prompt": "When does depreciation begin?",
+          "answer": "When the asset is available for use.",
+          "explanation": "Not automatically on invoice or payment date."
+        }
+      ],
+      "examTask": {
+        "minutes": 20,
+        "prompt": "Prepare the PPE calculation and explain treatment of each cost plus the depreciation commencement date.",
+        "modelPoints": [
+          "Show inclusions and exclusions.",
+          "Use depreciable amount, not gross cost.",
+          "State time apportionment from available-for-use date."
+        ]
+      },
+      "revision": {
+        "retrieval": [
+          "State the central rule from B1 without notes.",
+          "Explain one common trap from B1."
+        ],
+        "spacingDays": [
+          1,
+          7,
+          21
+        ]
+      },
+      "premiumAudio": {
+        "status": "script_outline_only_no_generation",
+        "minutes": "12-18",
+        "outline": [
+          "Why the topic matters",
+          "One worked example narrated step by step",
+          "Two common traps",
+          "Three retrieval pauses"
+        ],
+        "preserveExistingRuntime": true
+      },
+      "professorGuide": {
+        "opening": "Ask for the learner's current reasoning before explaining.",
+        "support": "Give one hint or simplify the representation before revealing the answer.",
+        "challenge": "Change one fact and ask what changes in the conclusion.",
+        "close": "Recap the rule, one trap and the next practice step; do not claim saved mastery."
+      },
+      "sources": [
+        {
+          "id": "acca-fr-syllabus",
+          "url": "https://www.accaglobal.com/gb/en/student/exam-support-resources/fundamentals-exams-study-resources/f7/syllabus-study-guide.html",
+          "use": "Authoritative landing page; pin and verify the selected sitting before claiming outcome completion."
+        },
+        {
+          "id": "ifrs-standards",
+          "url": "https://www.ifrs.org/issued-standards/",
+          "use": "Primary standard summaries and issued-standard access."
+        },
+        {
+          "id": "acowtancy-fr",
+          "url": "https://www.acowtancy.com/papers/acca-fr/",
+          "use": "Organisation/revision reference only; no proprietary text or question-bank reproduction."
+        }
+      ],
+      "evidenceBoundary": "Authored solutions are teaching references. Only separately persisted, identity-bound assessment may become learner evidence."
+    },
+    {
+      "code": "B2",
+      "id": "acca-fr-b2",
+      "title": "Intangible assets and development expenditure",
+      "track": "acca-fr",
+      "status": "authored_local_lesson_not_database_published",
+      "syllabus": {
+        "sitting": "must_be_pinned_before_publication",
+        "section": "B",
+        "topic": "accounting for transactions",
+        "outcomeReferences": "category-level draft; cross-check exact lettering against selected sitting"
+      },
+      "durationMinutes": {
+        "reference": 120,
+        "range": [
+          90,
+          180
+        ],
+        "hardLimit": false
+      },
+      "prerequisites": [
+        "ACCA FR A1 or equivalent diagnostic"
+      ],
+      "objectives": [
+        "Distinguish research from development expenditure.",
+        "Apply the development-capitalisation criteria as a complete set.",
+        "Explain finite versus indefinite useful life treatment.",
+        "Avoid recognising internally generated brands and similar items when prohibited."
+      ],
+      "sections": [
+        "Identifiability and control",
+        "Research versus development",
+        "Development criteria",
+        "Amortisation and review"
+      ],
+      "workedExample": {
+        "scenario": "Research phase costs 90. From 1 July all development criteria are demonstrated; later eligible costs are 240. Product available for use 1 October with five-year life.",
+        "calculation": {
+          "expenseResearch": 90,
+          "capitaliseDevelopment": 240,
+          "annualAmortisation": 48,
+          "threeMonthAmortisation": 12,
+          "formula": "240 / 5 × 3/12"
+        },
+        "answer": "Expense 90 research. Capitalise only the 240 incurred after all criteria are demonstrated. Annual amortisation is 48 and three months from availability is 12."
+      },
+      "practice": [
+        {
+          "id": "b2-p1",
+          "prompt": "Can later success reinstate earlier research cost?",
+          "answer": "No.",
+          "explanation": "Previously expensed research is not reinstated."
+        },
+        {
+          "id": "b2-p2",
+          "prompt": "Calculate capitalised development cost.",
+          "answer": "240",
+          "explanation": "Only eligible post-criteria expenditure."
+        },
+        {
+          "id": "b2-p3",
+          "prompt": "Calculate three months' amortisation.",
+          "answer": "12",
+          "explanation": "240 / 5 × 3/12."
+        }
+      ],
+      "examTask": {
+        "minutes": 20,
+        "prompt": "Calculate the amounts in profit or loss and financial position and explain the recognition cut-off.",
+        "modelPoints": [
+          "Expense research.",
+          "Capitalise only after every criterion is met.",
+          "Amortise from available-for-use date."
+        ]
+      },
+      "revision": {
+        "retrieval": [
+          "State the central rule from B2 without notes.",
+          "Explain one common trap from B2."
+        ],
+        "spacingDays": [
+          1,
+          7,
+          21
+        ]
+      },
+      "premiumAudio": {
+        "status": "script_outline_only_no_generation",
+        "minutes": "12-18",
+        "outline": [
+          "Why the topic matters",
+          "One worked example narrated step by step",
+          "Two common traps",
+          "Three retrieval pauses"
+        ],
+        "preserveExistingRuntime": true
+      },
+      "professorGuide": {
+        "opening": "Ask for the learner's current reasoning before explaining.",
+        "support": "Give one hint or simplify the representation before revealing the answer.",
+        "challenge": "Change one fact and ask what changes in the conclusion.",
+        "close": "Recap the rule, one trap and the next practice step; do not claim saved mastery."
+      },
+      "sources": [
+        {
+          "id": "acca-fr-syllabus",
+          "url": "https://www.accaglobal.com/gb/en/student/exam-support-resources/fundamentals-exams-study-resources/f7/syllabus-study-guide.html",
+          "use": "Authoritative landing page; pin and verify the selected sitting before claiming outcome completion."
+        },
+        {
+          "id": "ifrs-standards",
+          "url": "https://www.ifrs.org/issued-standards/",
+          "use": "Primary standard summaries and issued-standard access."
+        },
+        {
+          "id": "acowtancy-fr",
+          "url": "https://www.acowtancy.com/papers/acca-fr/",
+          "use": "Organisation/revision reference only; no proprietary text or question-bank reproduction."
+        }
+      ],
+      "evidenceBoundary": "Authored solutions are teaching references. Only separately persisted, identity-bound assessment may become learner evidence."
+    }
+  ],
+  "coverage": {
+    "codes": [
+      "A1",
+      "A2",
+      "A3",
+      "A4",
+      "B1",
+      "B2"
+    ],
+    "claim": "Foundation coverage only. This is not 100% FR syllabus coverage or exam readiness."
+  },
+  "release": {
+    "databasePublication": false,
+    "supabaseMutation": false,
+    "deployment": false,
+    "paidProviderCalls": false
+  }
+}
