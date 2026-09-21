@@ -8,15 +8,17 @@ on:
       - 'scripts/prepare-professor-responsiveness.py'
       - 'scripts/livekit-responsiveness-publish.py'
       - 'tests/professor-responsiveness.test.ts'
+      - 'tests/evaluator-transcription.test.ts'
+      - 'quality/candidates/professor-spoken-evaluation-2026-09-21.patch'
   workflow_dispatch:
     inputs:
       confirm_update:
-        description: 'Publish the reviewed conversation fixes to the existing V2 Professor; no new session or secret changes.'
+        description: 'Publish the reviewed spoken-evaluation fix to the existing V2 Professor; no new session or secret changes.'
         type: boolean
         required: true
         default: false
       expected_current_version:
-        description: 'Verified current LiveKit version (this release accepts nb67ioJmoKBN only).'
+        description: 'Verified current LiveKit version (this release accepts zq2GAqPRCciq only).'
         type: string
         required: true
 permissions:
@@ -43,6 +45,7 @@ jobs:
           python3 -m py_compile scripts/livekit-responsiveness-publish.py
           npm ci
           LH_RESPONSIVENESS_ENTRY="$RUNNER_TEMP/lh-responsive-release/professor-agent/src/index.ts" node --experimental-strip-types --test tests/professor-responsiveness.test.ts
+          LH_EVALUATION_EVIDENCE_ENTRY="$RUNNER_TEMP/lh-responsive-release/professor-agent/src/evaluationEvidence.ts" node --experimental-strip-types --test tests/evaluator-transcription.test.ts
           npm --prefix "$RUNNER_TEMP/lh-responsive-release/professor-agent" ci
           npm --prefix "$RUNNER_TEMP/lh-responsive-release/professor-agent" audit --audit-level=high
           npm --prefix "$RUNNER_TEMP/lh-responsive-release/professor-agent" run typecheck

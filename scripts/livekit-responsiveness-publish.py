@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 AGENT='CA_T9kcWtn6Xki7'; SUBDOMAIN='dublin-learning-hub-v2-odgkxtya'
 SOURCE=os.environ.get('GITHUB_SHA',''); EXPECTED=os.environ.get('LH_EXPECTED_PREVIOUS','')
-report={'scope':'responsiveness_v1_existing_worker_update','agentId':AGENT,'sourceCommit':SOURCE,'previousVersion':None,'newVersion':None,'deployCommandInvoked':False,'providerVersionConfirmed':False,'providerStatus':None,'newAgentCreated':False,'learnerSessionStarted':False,'result':'failed','phase':'preflight'}
+report={'scope':'spoken_evaluation_v1_existing_worker_update','agentId':AGENT,'sourceCommit':SOURCE,'previousVersion':None,'newVersion':None,'deployCommandInvoked':False,'providerVersionConfirmed':False,'providerStatus':None,'newAgentCreated':False,'learnerSessionStarted':False,'result':'failed','phase':'preflight'}
 def field(obj,name,default=None):
     if not isinstance(obj,dict): return default
     return next((v for k,v in obj.items() if k.replace('_','').lower()==name.replace('_','').lower()),default)
@@ -32,15 +32,16 @@ try:
     if cfg.get('project',{}).get('subdomain')!=SUBDOMAIN or cfg.get('agent',{}).get('id')!=AGENT: raise RuntimeError('unexpected_config')
     if any(Path('professor-agent').glob('.env*')): raise RuntimeError('local_secret_file_forbidden')
     import hashlib
-    if EXPECTED != 'nb67ioJmoKBN': raise RuntimeError('unexpected_previous_version')
+    if EXPECTED != 'zq2GAqPRCciq': raise RuntimeError('unexpected_previous_version')
     if hashlib.sha256(Path('professor-agent/src/index.ts').read_bytes()).hexdigest() != '2b22f5129a21e4a520bd18b2a27baffc36e9e0938d385d453e756ce8c22219e6': raise RuntimeError('unreviewed_worker')
+    if hashlib.sha256(Path('professor-agent/src/evaluationEvidence.ts').read_bytes()).hexdigest() != '32b5e777a67739e05c40feb265ad15ce765d933232ffecb6c60fc375c3126b93': raise RuntimeError('unreviewed_evaluator')
     report['phase']='remote_preflight'
     row,previous=current(); report['previousVersion']=previous if re.fullmatch('[A-Za-z0-9_-]{1,100}',previous or '') else None
     if previous!=EXPECTED or field(row,'status') not in ('Running','Sleeping'): raise RuntimeError('agent_changed_or_unhealthy')
     report['phase']='deploy_existing_once'; report['deployCommandInvoked']=True
     args=['lk','agent','deploy','--no-default-attributes',
           '--attribute','lh_source_commit='+SOURCE,
-          '--attribute','lh_scope=responsiveness-2026-09-21',
+          '--attribute','lh_scope=spoken-evaluation-2026-09-21',
           '--attribute','lh_evaluator_guard=learner-evidence-v1',
           '--attribute','lh_sharp_patch=0.35.4','professor-agent']
     try:
@@ -53,7 +54,7 @@ try:
         try:
             row,version=current(); state=field(row,'status'); report['providerStatus']=state if isinstance(state,str) else None
             versions=field(read('versions'),'versions',[])
-            matches=[v for v in versions if field(v,'version')==version and field(v,'attributes',{}).get('lh_source_commit')==SOURCE and field(v,'attributes',{}).get('lh_scope')=='responsiveness-2026-09-21' and field(v,'attributes',{}).get('lh_evaluator_guard')=='learner-evidence-v1']
+            matches=[v for v in versions if field(v,'version')==version and field(v,'attributes',{}).get('lh_source_commit')==SOURCE and field(v,'attributes',{}).get('lh_scope')=='spoken-evaluation-2026-09-21' and field(v,'attributes',{}).get('lh_evaluator_guard')=='learner-evidence-v1']
             if version!=EXPECTED and len(matches)==1 and state in ('Running','Sleeping'):
                 report['newVersion']=version; report['providerVersionConfirmed']=True; report['result']='updated_and_provider_ready'; report['phase']='complete'; break
             if state in ('Error','CrashLoop','Build Failed','Server Error','Disabled'): break

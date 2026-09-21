@@ -28,4 +28,11 @@ if set(before) != set(after) or [p for p in before if before[p] != after[p]] != 
     raise SystemExit('unexpected_release_delta')
 if hashlib.sha256(after['professor-agent/src/index.ts']).hexdigest() != '2b22f5129a21e4a520bd18b2a27baffc36e9e0938d385d453e756ce8c22219e6':
     raise SystemExit('unreviewed_worker')
-print('Prepared published baseline plus reviewed responsiveness changes; evaluator, callbacks, models and budgets preserved.')
+spoken_patch = Path('quality/candidates/professor-spoken-evaluation-2026-09-21.patch')
+if hashlib.sha256(spoken_patch.read_bytes()).hexdigest() != 'feed93de01ae4512ef4a06b777e8094da28ca843cb4fdac207638d02bdaeccd1':
+    raise SystemExit('unreviewed_spoken_patch')
+subprocess.run(['git', 'apply', '--check', str(spoken_patch.resolve())], cwd=destination, check=True)
+subprocess.run(['git', 'apply', str(spoken_patch.resolve())], cwd=destination, check=True)
+if hashlib.sha256((destination / 'professor-agent/src/evaluationEvidence.ts').read_bytes()).hexdigest() != '32b5e777a67739e05c40feb265ad15ce765d933232ffecb6c60fc375c3126b93':
+    raise SystemExit('unreviewed_spoken_evaluator')
+print('Prepared published baseline plus reviewed responsiveness changes; plus spoken-evaluation guard; callbacks, models and budgets preserved.')
