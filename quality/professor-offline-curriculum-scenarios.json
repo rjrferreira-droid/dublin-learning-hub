@@ -1,5 +1,5 @@
 {
-  "version": "curriculum-professor-offline-scenarios-2026-09-22-v5",
+  "version": "curriculum-professor-offline-scenarios-2026-09-22-v6",
   "status": "authored_offline_expectations_not_model_results",
   "globalBoundaries": [
     "One clear question at a time.",
@@ -717,6 +717,148 @@
           "forbidden": [
             "Use cash receipts as the allocation basis.",
             "Claim the worked explanation is learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B11",
+      "lessonId": "b2100000-2026-4acc-8b11-000000000011",
+      "scenarios": [
+        {
+          "id": "b11-correct-asset-grant",
+          "learner": "The machine costs 500, the grant is 100 and the life is five years, so the deferred method gives depreciation of 100, grant income of 20 and net expense of 80.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the separate gross amounts and net expense briefly.",
+            "Ask one transfer question changing the useful life or presentation method."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the calculation was saved."
+          ]
+        },
+        {
+          "id": "b11-cash-misconception",
+          "learner": "The grant cash arrived, so the entire amount must be income today.",
+          "state": "misconception",
+          "expected": [
+            "Ask which conditions and related costs the grant is intended to cover.",
+            "Guide the learner to separate receipt, recognition and systematic profit-or-loss timing."
+          ],
+          "forbidden": [
+            "Treat cash receipt alone as sufficient for immediate income.",
+            "Correct every presentation and repayment rule at once."
+          ]
+        },
+        {
+          "id": "b11-recognition-hint",
+          "learner": "The funding letter is approved, but I am unsure whether the grant can be recognised. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Ask whether compliance with conditions and receipt are both reasonably assured.",
+            "Invite the learner to identify evidence for each limb before concluding."
+          ],
+          "forbidden": [
+            "Record the help request as failure.",
+            "Assume approval proves compliance with future conditions."
+          ]
+        },
+        {
+          "id": "b11-self-correction",
+          "learner": "A repayable grant is always a prior-period error—sorry, IAS 20 treats the repayment effect as a change in estimate.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected change-in-estimate treatment.",
+            "Ask how an unamortised deferred credit affects the repayment entry."
+          ],
+          "forbidden": [
+            "Preserve the abandoned error treatment as the final answer.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "b11-supported-presentation",
+          "learner": "Please show me the deferred-income and net-asset methods side by side before I try another asset grant.",
+          "state": "answer_requested",
+          "expected": [
+            "Show depreciation, grant income and closing balances under both methods.",
+            "Reconcile the same net expense and invite an optional changed-number retry."
+          ],
+          "forbidden": [
+            "Describe one permitted presentation as the only IAS 20 method.",
+            "Claim the worked comparison is learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B12",
+      "lessonId": "b2200000-2026-4acc-8b12-000000000012",
+      "scenarios": [
+        {
+          "id": "b12-correct-translation",
+          "learner": "The FC100,000 payable moves from CU80,000 at 0.80 to CU86,000 at the 0.86 closing rate, so there is a CU6,000 exchange loss.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the monetary-item calculation briefly.",
+            "Ask one transfer question changing the closing rate or using a receivable."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the exchange result was persisted."
+          ]
+        },
+        {
+          "id": "b12-inventory-misconception",
+          "learner": "The payable uses the closing rate, so the related historical-cost inventory must also be retranslated at that rate.",
+          "state": "misconception",
+          "expected": [
+            "Ask whether each item is monetary and how the inventory is measured.",
+            "Guide the learner to separate the monetary payable from historical-cost non-monetary inventory."
+          ],
+          "forbidden": [
+            "Retranslate historical-cost inventory solely because the payable is monetary.",
+            "Correct unrelated presentation-currency mechanics at once."
+          ]
+        },
+        {
+          "id": "b12-rate-hint",
+          "learner": "I have transaction, closing and settlement rates and cannot tell which one to use for the year-end payable. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Ask whether the payable is monetary and which date is being measured.",
+            "Invite selection of the closing rate before revealing the amount."
+          ],
+          "forbidden": [
+            "Treat the request for help as a final error.",
+            "Use the later settlement rate at the reporting date."
+          ]
+        },
+        {
+          "id": "b12-self-correction",
+          "learner": "Functional currency is whichever currency looks best in the statements—sorry, presentation currency can be chosen, but functional currency follows the primary economic environment.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected functional-versus-presentation distinction.",
+            "Ask for one primary indicator of functional currency."
+          ],
+          "forbidden": [
+            "Store the abandoned free-choice claim as the final answer.",
+            "Infer exam readiness from one correction."
+          ]
+        },
+        {
+          "id": "b12-supported-settlement",
+          "learner": "Can you walk me from initial recognition through year end and settlement for one foreign-currency payable?",
+          "state": "answer_requested",
+          "expected": [
+            "Keep transaction-date, reporting-date and settlement calculations in separate steps.",
+            "Invite an optional changed-rate retry without describing it as independent competence."
+          ],
+          "forbidden": [
+            "Place all exchange movement in one period without a reporting-date close.",
+            "Claim the worked explanation is assessed evidence."
           ]
         }
       ]

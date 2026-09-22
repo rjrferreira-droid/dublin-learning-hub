@@ -62,6 +62,8 @@ const localModels=[
  {slug:'acca-fr-b8-taxation',title:'ACCA FR B8 · Taxation'},
  {slug:'acca-fr-b9-reporting-financial-non-financial-performance',title:'ACCA FR B9 · Reporting financial and non-financial performance'},
  {slug:'acca-fr-b10-revenue',title:'ACCA FR B10 · Revenue'},
+ {slug:'acca-fr-b11-government-grants',title:'ACCA FR B11 · Government grants'},
+ {slug:'acca-fr-b12-foreign-currency-transactions',title:'ACCA FR B12 · Foreign currency transactions'},
 ] as const;
 for(const model of localModels)for(const viewport of [{name:'desktop',width:1440,height:1000},{name:'mobile',width:390,height:844}])test(`${model.title} at ${viewport.name} is provider-free`,async({page})=>{
  await page.setViewportSize(viewport);const requests=await openFixture(page,courses[0],true);
