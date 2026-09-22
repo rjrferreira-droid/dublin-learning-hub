@@ -176,6 +176,23 @@ textarea { width:100%; min-height:120px; resize:vertical; border:1px solid #dce3
 .review-date { display:grid; place-items:center; height:42px; border-radius:10px; color:#fff; background:var(--navy-900); font-size:10px; font-weight:850; }
 .review-row strong, .review-row span { display:block; }
 .review-row strong { color:#273a56; font-size:12px; }.review-row div span{color:#8a96a7;font-size:9px;margin-top:3px}
+.acca-study-board { display:grid; gap:16px; padding:22px; border:1px solid #dce5f0; border-radius:22px; background:linear-gradient(180deg,#fff,#f7f9fc); box-shadow:0 9px 28px rgba(9,29,66,.05); }
+.acca-study-board .section-heading { margin-top:0; }
+.acca-agenda-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.acca-agenda-card { display:flex; flex-direction:column; gap:9px; min-height:170px; padding:17px; border:1px solid #e0e6ef; border-radius:15px; background:#fff; }
+.acca-agenda-card.review-due { border-color:#edb5bf; background:#fff8f9; }
+.acca-agenda-card>span { color:var(--red-600); font-size:9px; font-weight:850; letter-spacing:.13em; }
+.acca-agenda-card>strong { color:#17304f; font-size:14px; line-height:1.45; }
+.acca-agenda-card>small { color:#6f7e93; line-height:1.5; }
+.acca-agenda-card>button,.acca-agenda-card>.progress-track { margin-top:auto; width:max-content; max-width:100%; }
+.acca-agenda-card>.progress-track { width:100%; }
+.acca-module-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:9px; }
+.acca-module-card { display:grid; gap:8px; padding:13px; border-radius:13px; background:#f0f4f9; }
+.acca-module-card>div:first-child { display:flex; align-items:center; gap:8px; }
+.acca-module-card b { display:grid; place-items:center; width:28px; height:28px; border-radius:9px; background:var(--navy-900); color:#fff; }
+.acca-module-card span,.acca-module-card small { color:#697991; font-size:9px; }
+.acca-module-card>strong { color:#17304f; font-size:16px; }
+.review-row.local-review-due { border-color:#edb5bf; box-shadow:0 6px 18px rgba(199,42,67,.07); }
 .performance-card { background:#fff; border:1px solid #e2e7ef; border-radius:16px; padding:18px; }
 .performance-card > span { color:#758399; font-size:10px; }.performance-card strong{display:block;color:#142540;font-size:27px;margin:5px 0 11px}.performance-card small{display:block;margin-top:8px;color:#8a96a7;font-size:9px}
 .professor-hero { min-height:430px; border-radius:24px; padding:40px; color:#fff; background:linear-gradient(135deg,var(--navy-950),#0d3269); display:grid; grid-template-columns:auto 1fr; gap:28px; align-items:center; overflow:hidden; position:relative; }
@@ -190,6 +207,7 @@ textarea { width:100%; min-height:120px; resize:vertical; border:1px solid #dce3
   .hero-panel { grid-column:1/-1; }
   .metric-card { grid-column:span 4; }
   .track-card { grid-column:span 6; }
+  .acca-module-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
   .track-card:last-of-type { grid-column:span 12; }
   .lesson-layout { grid-template-columns:1fr; }
   .lesson-side-card { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px 20px; }
@@ -211,6 +229,7 @@ textarea { width:100%; min-height:120px; resize:vertical; border:1px solid #dce3
   .top-actions { display:none; }
   .content-grid { gap:12px; padding-top:16px; }
   .hero-panel, .metric-card, .track-card { grid-column:1/-1; }
+  .acca-agenda-grid,.acca-module-grid { grid-template-columns:1fr; }
   .hero-panel { padding:23px; min-height:250px; }
   .hero-panel h2 { font-size:25px; }
   .section-heading { align-items:flex-start; flex-direction:column; gap:6px; }
