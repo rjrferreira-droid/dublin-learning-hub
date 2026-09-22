@@ -631,7 +631,7 @@ function EnglishAcademyView({ profile, learnerKey, catalog, localProgress, openL
           <div className="eyebrow light">ENGLISH ACADEMY • {profile.displayName.toUpperCase()}</div>
           <h2>General English first. Professional confidence built on top.</h2>
           <p>British and American English are both accepted, with deliberate Irish exposure for real life in Dublin. The programme adapts to the learner rather than forcing one fixed textbook path.</p>
-          <div className="hero-actions"><button className="primary-btn" onClick={() => nextLesson?openLesson('english',nextLesson):openLesson('english')}>{nextLesson?action:'Open English lesson'}</button><span className="academy-level">{profile.english.cefr} provisional • {profile.english.targetCefr} target</span></div>
+          <div className="hero-actions"><button className="primary-btn" onClick={() => nextLesson?openLesson('english',nextLesson):openLesson('english')}>{nextLesson?action:'Open English Golden Lesson'}</button><span className="academy-level">{profile.english.cefr} provisional • {profile.english.targetCefr} target</span></div>
         </div>
         <div className="exposure-ring" aria-label="Language exposure mix"><strong>40 / 40 / 20</strong><span>UK • US • Ireland</span></div>
       </div>
