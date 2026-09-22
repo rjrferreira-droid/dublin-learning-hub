@@ -93,7 +93,7 @@ for(const model of localModels)for(const viewport of [{name:'desktop',width:1440
  await page.setViewportSize(viewport);const requests=await openFixture(page,courses[0],true);
  await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await page.locator('.nav-stack').getByRole('button',{name:/Learning/}).click();
  const library=page.getByTestId('learning-library');await expect(library.getByTestId('local-curriculum-preview')).toBeVisible();
- const card=library.getByTestId('catalog-lesson-'+model.slug);await expect(card).toContainText('Model · local');await card.getByRole('button',{name:'Open lesson'}).click();
+ const card=library.getByTestId('catalog-lesson-'+model.slug);await expect(card).toContainText('Model · local');await card.getByRole('button',{name:/^(Open|Resume|Review) lesson$/}).click();
  await expect(page.getByText('Local model lesson',{exact:true})).toBeVisible();await expect(page.getByText('Local preview · no providers',{exact:true})).toBeVisible();const panel=page.getByTestId('lesson-study-panel');await expect(panel.getByRole('heading',{name:model.title,exact:true})).toBeVisible();
  await expect(panel.locator('.lesson-teaching-block')).toHaveCount(4);
  await page.getByRole('tab',{name:'Practice',exact:true}).click();await expect(panel.getByTestId('written-practice-0')).toBeVisible();await expect(panel.getByTestId('applied-practice')).toHaveCount(0);
