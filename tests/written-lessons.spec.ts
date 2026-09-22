@@ -19,7 +19,7 @@ async function openFixture(page:Page,course:typeof courses[number],curriculumPre
  });
  await page.routeWebSocket('**/*',ws=>{const u=new URL(ws.url());if(['localhost','127.0.0.1'].includes(u.hostname))ws.connectToServer();else ws.close();});
  await page.goto(curriculumPreview?'/?curriculumPreview=1':'/');await page.getByLabel('E-mail').fill('written-fixture@example.invalid');await page.getByLabel('Senha').fill('Fictional-written-only-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
- await page.getByRole('button',{name:course.button,exact:true}).click();
+ const entryButton=curriculumPreview&&course.track==='finance'?'Start ACCA FR A1':course.button;await page.getByRole('button',{name:entryButton,exact:true}).click();
  return ()=>sensitiveRequests;
 }
 for(const course of courses)for(const viewport of [{name:'desktop',width:1440,height:1000},{name:'mobile',width:390,height:844}])test(`${course.track} written lesson at ${viewport.name}: coherent tabs, retained drafts and local checkpoint`,async({page},info)=>{
@@ -58,7 +58,10 @@ test('local ACCA study flow saves completion in-browser and advances to the next
  await expect(panel.getByRole('button',{name:'Finish lesson locally',exact:true})).toBeDisabled();
  for(let i=0;i<5;i++){const q=panel.getByTestId('checkpoint-question-'+i);await q.getByRole('radio').first().check();await q.getByRole('button',{name:'Check answer',exact:true}).click();}
  await panel.getByRole('button',{name:'Finish lesson locally',exact:true}).click();await expect(panel.getByTestId('local-completion-saved')).toContainText('Completed in this browser');
- await page.reload();await expect(page.getByRole('button',{name:'Continue Finance',exact:true})).toBeVisible();await page.getByRole('button',{name:'Continue Finance',exact:true}).click();
+ await expect(panel.getByRole('button',{name:'Continue to ACCA FR A2 · Qualitative characteristics and the cost constraint',exact:true})).toBeVisible();
+ await panel.getByRole('button',{name:'Continue to ACCA FR A2 · Qualitative characteristics and the cost constraint',exact:true}).click();await expect(page.getByTestId('lesson-study-panel').getByRole('heading',{name:'ACCA FR A2 · Qualitative characteristics and the cost constraint',exact:true})).toBeVisible();
+ await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await expect(page.getByText("TODAY'S ACCA FOCUS • 1/23 FINISHED",{exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'ACCA FR A2 · Qualitative characteristics and the cost constraint',exact:true})).toBeVisible();
+ await page.reload();await expect(page.getByRole('button',{name:'Resume ACCA FR A2',exact:true}).first()).toBeVisible();await page.getByRole('button',{name:'Resume ACCA FR A2',exact:true}).first().click();
  await expect(page.getByTestId('lesson-study-panel').getByRole('heading',{name:'ACCA FR A2 · Qualitative characteristics and the cost constraint',exact:true})).toBeVisible();
  await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await page.locator('.nav-stack').getByRole('button',{name:/Learning/}).click();
  await expect(page.getByTestId('local-curriculum-preview')).toContainText('1/23 finished here');await expect(page.getByTestId('catalog-lesson-acca-fr-a1-purpose-users-reporting')).toContainText(/Finished locally/);expect(requests()).toBe(0);

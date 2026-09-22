@@ -9,8 +9,8 @@ import { STUDY_PACKS, type StudyTrack } from '../learning/teachingPacks';
 import '../learning/lesson-study.css';
 
 const studyTabs=new Set(['Learn','English','Practice','Visual','Case','Test','Sources']);
-type Props={track:StudyTrack;lessonId:string;lessonSlug?:string;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean;readerDisabled?:boolean;localCompletion?:{completedAt:string;correct:number;total:number};onCompleteLocal?:(correct:number,total:number)=>void};
-export function LessonStudyPanel({track,lessonId,lessonSlug,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled,readerDisabled,localCompletion,onCompleteLocal}:Props){
+type Props={track:StudyTrack;lessonId:string;lessonSlug?:string;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean;readerDisabled?:boolean;localCompletion?:{completedAt:string;correct:number;total:number};onCompleteLocal?:(correct:number,total:number)=>void;nextLessonTitle?:string;onOpenNextLesson?:()=>void};
+export function LessonStudyPanel({track,lessonId,lessonSlug,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled,readerDisabled,localCompletion,onCompleteLocal,nextLessonTitle,onOpenNextLesson}:Props){
  const staticModule=lessonModuleFor(track,lessonId);
  const scope=JSON.stringify([track,lessonId,lessonSlug]);
  const [attempt,setAttempt]=useState(0);
@@ -28,9 +28,9 @@ export function LessonStudyPanel({track,lessonId,lessonSlug,activeTab,onTabChang
   <p role="status">{!lessonSlug||result?.status==='missing'?'No reviewed written module is available for this lesson yet.':result?.status==='unavailable'?'The written lesson could not be loaded. Check your connection and try again.':'Loading reviewed lesson…'}</p>
   {result?.status==='unavailable'?<button type="button" className="secondary-btn" onClick={()=>setAttempt(n=>n+1)}>Try loading again</button>:null}
  </div>:null;
- return <>{(activeTab==='Learn'||activeTab==='Audio')&&<BrowserLessonReader key={module.lessonId+activeTab} module={module} disabled={readerDisabled}/>}<StudyContent key={module.lessonId} module={module} activeTab={activeTab} onTabChange={onTabChange} onPrepareWorkshop={onPrepareWorkshop} handoffDisabled={handoffDisabled} localCompletion={localCompletion} onCompleteLocal={onCompleteLocal}/></>;
+ return <>{(activeTab==='Learn'||activeTab==='Audio')&&<BrowserLessonReader key={module.lessonId+activeTab} module={module} disabled={readerDisabled}/>}<StudyContent key={module.lessonId} module={module} activeTab={activeTab} onTabChange={onTabChange} onPrepareWorkshop={onPrepareWorkshop} handoffDisabled={handoffDisabled} localCompletion={localCompletion} onCompleteLocal={onCompleteLocal} nextLessonTitle={nextLessonTitle} onOpenNextLesson={onOpenNextLesson}/></>;
 }
-function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled,localCompletion,onCompleteLocal}:{module:LessonModule;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean;localCompletion?:{completedAt:string;correct:number;total:number};onCompleteLocal?:(correct:number,total:number)=>void}){
+function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled,localCompletion,onCompleteLocal,nextLessonTitle,onOpenNextLesson}:{module:LessonModule;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean;localCompletion?:{completedAt:string;correct:number;total:number};onCompleteLocal?:(correct:number,total:number)=>void;nextLessonTitle?:string;onOpenNextLesson?:()=>void}){
  const pack=STUDY_PACKS[module.track];
  const exercises=module.practiceExercises??pack.exercises;
  const [drafts,setDrafts]=useState<Record<string,string>>({});
@@ -101,7 +101,7 @@ function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDis
    </fieldset>;})}
    <div className="lesson-checkpoint-actions"><button type="button" onClick={()=>setAnswers({})}>Restart this local checkpoint</button>{onCompleteLocal?<button type="button" className="lesson-complete-button" disabled={checked.length!==module.checkpoint.length} onClick={()=>onCompleteLocal(correct.length,module.checkpoint.length)}>{localCompletion?'Update local completion':'Finish lesson locally'}</button>:null}</div>
    {onCompleteLocal&&checked.length!==module.checkpoint.length?<p className="lesson-study-note">Check all {module.checkpoint.length} answers to finish this lesson locally. You can retry; completion records practice, not mastery.</p>:null}
-   {localCompletion?<p role="status" className="lesson-completion-saved" data-testid="local-completion-saved">Completed in this browser · {localCompletion.correct}/{localCompletion.total} correct in the saved attempt</p>:null}
+   {localCompletion?<div className="lesson-completion-saved" data-testid="local-completion-saved"><span role="status">Completed in this browser · {localCompletion.correct}/{localCompletion.total} correct in the saved attempt</span>{nextLessonTitle&&onOpenNextLesson?<button type="button" className="lesson-next-button" onClick={onOpenNextLesson}>Continue to {nextLessonTitle}</button>:<strong>All local ACCA lessons are now available for review.</strong>}</div>:null}
   </section>
   <section className="lesson-study-section" hidden={activeTab!=='Sources'} data-testid="lesson-sources">
    <h2>Sources, assumptions and coverage</h2><p>{module.scope}</p>

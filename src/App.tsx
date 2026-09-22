@@ -9,7 +9,7 @@ import {WORKSHOP_CASES} from './learning/appliedPractice';
 import {loadPublishedCurriculumCatalog,type CatalogLesson} from './services/curriculumCatalog';
 import {lessonsForTrack,chooseNextPublishedLesson} from './learning/curriculumCatalogCore';
 import {LOCAL_MODEL_LESSONS,curriculumModelPreviewEnabled} from './learning/localModelLessonRegistry';
-import {completeLocalLesson,readLocalStudyProgress,recordLocalLessonOpened,writeLocalStudyProgress,type LocalStudyProgress} from './learning/localStudyProgress';
+import {completeLocalLesson,localLessonAfter,readLocalStudyProgress,recordLocalLessonOpened,summarizeLocalCourse,writeLocalStudyProgress,type LocalStudyProgress} from './learning/localStudyProgress';
 import {isSequence3Slug} from './learning/sequence3Registry';
 import {p1SlugFor} from './learning/p1RuntimeModules';
 import { LessonStudyPanel } from './components/LessonStudyPanel';
@@ -188,6 +188,7 @@ function App() {
     const selected=selectedCatalogLesson?.track===trackKey?selectedCatalogLesson:null;
     return selected?{...base,lesson:selected.title,lessonId:selected.id,lessonSlug:selected.slug,focus:selected.subtitle??base.focus,origin:selected.origin}:base;
   },[trackKey,selectedCatalogLesson]);
+  const nextLocalLesson=useMemo(()=>selectedCatalogLesson?.origin==='local-model'?localLessonAfter(supportedCatalog,selectedCatalogLesson.id):null,[selectedCatalogLesson,supportedCatalog]);
 
   const refreshMemory = useCallback(async () => {
     const revision = ++memoryRequest.current;
@@ -324,9 +325,9 @@ function App() {
         </header>
 
         {lessonOpen ? (
-          <LessonView key={account.userId+':'+learnerKey+':'+activeTrack.lessonId} track={activeTrack} learnerKey={learnerKey} memory={visibleMemory} activeTab={lessonTab} setActiveTab={setLessonTab} close={() => { setLessonOpen(false); setView('dashboard'); }} localCompletion={localProgress.completed[activeTrack.lessonId]} onCompleteLocal={activeTrack.origin==='local-model'?completeCurrentLocalLesson:undefined} />
+          <LessonView key={account.userId+':'+learnerKey+':'+activeTrack.lessonId} track={activeTrack} learnerKey={learnerKey} memory={visibleMemory} activeTab={lessonTab} setActiveTab={setLessonTab} close={() => { setLessonOpen(false); setView('dashboard'); }} localCompletion={localProgress.completed[activeTrack.lessonId]} onCompleteLocal={activeTrack.origin==='local-model'?completeCurrentLocalLesson:undefined} nextLocalLesson={nextLocalLesson} onOpenNextLocal={nextLocalLesson?()=>openLesson(nextLocalLesson.track,nextLocalLesson):undefined} />
         ) : view === 'dashboard' ? (
-          <Dashboard learnerKey={learnerKey} profile={profile} memory={visibleMemory} memoryStatus={memoryStatus} openLesson={openLesson} openView={setView} />
+          <Dashboard learnerKey={learnerKey} profile={profile} memory={visibleMemory} memoryStatus={memoryStatus} openLesson={openLesson} openView={setView} catalog={supportedCatalog} localProgress={localProgress} />
         ) : view === 'learn' ? (
           <LearningLibrary learnerKey={learnerKey} catalog={supportedCatalog} catalogUnavailable={catalogUnavailable} openLesson={openLesson} localProgress={localProgress} />
         ) : view === 'english-academy' ? (
@@ -375,13 +376,15 @@ function EmptyEvidence({ status }: { status: MemoryStatus }) {
   );
 }
 
-function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, openView }: {
+function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, openView, catalog, localProgress }: {
   learnerKey: LearnerKey;
   profile: LearningProfile;
   memory: LearningMemorySnapshot | null;
   memoryStatus: MemoryStatus;
-  openLesson: (key: TrackKey) => void;
+  openLesson: (key: TrackKey,lesson?:CatalogLesson) => void;
   openView: (view: ViewKey) => void;
+  catalog: CatalogLesson[];
+  localProgress: LocalStudyProgress;
 }) {
   const intelligence = useMemo(() => realIntelligence(memory, learnerKey), [memory, learnerKey]);
   const priorities = useMemo(() => rankAdaptivePriorities({ ...intelligence, now: new Date(), limit: 4 }), [intelligence]);
@@ -390,24 +393,31 @@ function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, open
   const dueReviews = memory?.reviews.filter((item) => item.status === 'due').length ?? 0;
   const measuredCompetencies = memory?.competencies.length ?? 0;
   const evaluatedSessions = memory?.history.length ?? 0;
+  const localCourse=useMemo(()=>summarizeLocalCourse(catalog,localProgress,'finance'),[catalog,localProgress]);
+  const showLocalCourse=primaryTrack==='finance'&&localCourse.total>0;
+  const dailyLesson=showLocalCourse?localCourse.nextLesson:null;
+  const dailyCode=dailyLesson?.title.split(' · ')[0]??'ACCA FR';
+  const dailyResuming=!localCourse.allCompleted&&!!dailyLesson&&localProgress.lastOpenedLessonId===dailyLesson.id;
+  const dailyAction=localCourse.allCompleted?'Review final lesson':dailyResuming?'Resume '+dailyCode:'Start '+dailyCode;
+  const studyBlocks=dailyLesson?Math.ceil(dailyLesson.estimatedMinutes/30):0;
 
   return (
     <section className="content-grid dashboard-grid">
       <div className="hero-panel">
-        <div className="hero-kicker">TODAY'S FOCUS • {profile.displayName.toUpperCase()}</div>
-        <h2>Build capability, not just knowledge.</h2>
-        <p>Measured Professor sessions, recurring errors and spaced reviews determine adaptive priorities. When evidence is missing, the portal says so instead of filling the gap with demo scores.</p>
+        <div className="hero-kicker">{showLocalCourse?`TODAY'S ACCA FOCUS • ${localCourse.completedCount}/${localCourse.total} FINISHED`:`TODAY'S FOCUS • ${profile.displayName.toUpperCase()}`}</div>
+        <h2>{dailyLesson?.title??'Build capability, not just knowledge.'}</h2>
+        <p>{dailyLesson?`${dailyLesson.subtitle??'Local ACCA self-study lesson'}. Plan about ${dailyLesson.estimatedMinutes} minutes across ${studyBlocks} focused 30-minute block${studyBlocks===1?'':'s'}; your completion marker stays only in this browser.`:'Measured Professor sessions, recurring errors and spaced reviews determine adaptive priorities. When evidence is missing, the portal says so instead of filling the gap with demo scores.'}</p>
         <div className="hero-actions">
-          <button className="primary-btn" onClick={() => openLesson(primaryTrack)}>{primaryLabel}</button>
-          <button className="secondary-btn" onClick={() => openLesson('english')}>Start English practice</button>
+          <button className="primary-btn" onClick={() => dailyLesson?openLesson('finance',dailyLesson):openLesson(primaryTrack)}>{dailyLesson?dailyAction:primaryLabel}</button>
+          <button className="secondary-btn" onClick={() => dailyLesson?openView('learn'):openLesson('english')}>{dailyLesson?'View all 23 lessons':'Start English practice'}</button>
         </div>
         <div className="union-accent" aria-hidden="true" />
       </div>
 
       <div className="metric-card">
-        <div className="metric-label">REVIEWS DUE</div>
-        <div className="metric-value">{dueReviews}</div>
-        <div className="metric-foot">{memory?.reviews.length ?? 0} scheduled in memory</div>
+        <div className="metric-label">{showLocalCourse?'ACCA LOCAL PROGRESS':'REVIEWS DUE'}</div>
+        <div className="metric-value">{showLocalCourse?`${localCourse.completedCount}/${localCourse.total}`:dueReviews}</div>
+        <div className="metric-foot">{showLocalCourse?`${localCourse.percent}% of the local preview finished`:`${memory?.reviews.length ?? 0} scheduled in memory`}</div>
       </div>
       <div className="metric-card">
         <div className="metric-label">MEASURED COMPETENCIES</div>
@@ -446,20 +456,23 @@ function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, open
         const trackSessions = memory?.history.filter((session) => session.lessonId === track.lessonId) ?? [];
         const latestTrackSession = trackSessions[0] ?? null;
         const measuredAverage = sessionAverage(latestTrackSession);
+        const trackLocal=showLocalCourse&&track.key==='finance';
+        const displayedLesson=trackLocal&&dailyLesson?dailyLesson.title:track.lesson;
         return (
           <article className={`track-card ${track.key === primaryTrack ? 'primary-track-card' : ''}`} key={track.key}>
             <div className="track-card-head">
               <span className={`track-badge ${track.key}`}>{track.accent}</span>
-              <span className="readiness-pill">{measuredAverage == null ? 'Awaiting evidence' : `${Math.round(measuredAverage)}% measured`}</span>
+              <span className="readiness-pill">{trackLocal?`${localCourse.completedCount}/${localCourse.total} finished locally`:measuredAverage == null ? 'Awaiting evidence' : `${Math.round(measuredAverage)}% measured`}</span>
             </div>
             <h3>{track.name}</h3>
             <p className="track-subtitle">{track.subtitle}</p>
-            <p className="next-label">NEXT GOLDEN LESSON</p>
-            <strong className="lesson-name">{track.lesson}</strong>
+            <p className="next-label">{trackLocal?(dailyResuming?'RESUME ACCA LESSON':'NEXT ACCA LESSON'):'NEXT GOLDEN LESSON'}</p>
+            <strong className="lesson-name">{displayedLesson}</strong>
             <div className="progress-row">
-              <span>{trackSessions.length === 0 ? 'No evaluated session yet' : `${trackSessions.length} evaluated session${trackSessions.length === 1 ? '' : 's'} • latest ${shortDate(latestTrackSession?.completedAt ?? latestTrackSession?.startedAt)}`}</span>
+              <span>{trackLocal?`${localCourse.percent}% complete in this browser`:trackSessions.length === 0 ? 'No evaluated session yet' : `${trackSessions.length} evaluated session${trackSessions.length === 1 ? '' : 's'} • latest ${shortDate(latestTrackSession?.completedAt ?? latestTrackSession?.startedAt)}`}</span>
             </div>
-            <button className="card-action" onClick={() => openLesson(track.key)}>Continue learning →</button>
+            {trackLocal?<div className="progress-track" aria-label={`${localCourse.percent}% of local ACCA lessons finished`}><span style={{width:`${localCourse.percent}%`}} /></div>:null}
+            <button className="card-action" onClick={() => openLesson(track.key,trackLocal?dailyLesson??undefined:undefined)}>{trackLocal?dailyAction:'Continue learning'} →</button>
           </article>
         );
       })}
@@ -508,7 +521,7 @@ function LearningLibrary({ learnerKey, catalog, catalogUnavailable, openLesson,l
   </section>;
 }
 
-function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,localCompletion,onCompleteLocal }: {
+function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,localCompletion,onCompleteLocal,nextLocalLesson,onOpenNextLocal }: {
   track: Track;
   learnerKey: LearnerKey;
   memory: LearningMemorySnapshot | null;
@@ -517,6 +530,8 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,
   close: () => void;
   localCompletion?:{completedAt:string;correct:number;total:number};
   onCompleteLocal?:(correct:number,total:number)=>void;
+  nextLocalLesson?:CatalogLesson|null;
+  onOpenNextLocal?:()=>void;
 }) {
   const account = useLearnerSession();
   const canUseActions = canUseLearnerActions(account.learnerKey,learnerKey,track.key);
@@ -547,7 +562,7 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,
           <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">{track.origin==='local-model'?'Local preview · no providers':'Premium lesson'}</span></div>
           <div className="eyebrow">{activeTab.toUpperCase()}</div>
           {interactiveLessonSupported?<LessonProfessorWorkspace track={track.key} lessonId={track.lessonId} learnerKey={learnerKey} activeTab={activeTab} onTabChange={setActiveTab} onActivityChange={setConversationBusy} workshopId={workshopId} onClearWorkshop={clearWorkshop}/>:null}
-          <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} lessonSlug={track.lessonSlug} activeTab={activeTab} onTabChange={setActiveTab} onPrepareWorkshop={prepareWorkshop} handoffDisabled={conversationBusy||!canUseActions||!interactiveLessonSupported} readerDisabled={conversationBusy||!canUseActions} localCompletion={localCompletion} onCompleteLocal={onCompleteLocal} />
+          <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} lessonSlug={track.lessonSlug} activeTab={activeTab} onTabChange={setActiveTab} onPrepareWorkshop={prepareWorkshop} handoffDisabled={conversationBusy||!canUseActions||!interactiveLessonSupported} readerDisabled={conversationBusy||!canUseActions} localCompletion={localCompletion} onCompleteLocal={onCompleteLocal} nextLessonTitle={nextLocalLesson?.title} onOpenNextLesson={onOpenNextLocal} />
           {!interactiveLessonSupported && (activeTab === 'Audio' || activeTab === 'Professor') ? <p role="status" data-testid="p1-interactive-gate">{activeTab==='Audio'&&track.key!=='payroll'&&isP1Slug(track.key,track.lessonSlug)?'Verify this lesson below to access its audio controls.':'This reviewed written lesson is available for self-study. This interactive feature is awaiting activation.'}</p> : null}
           {!interactiveLessonSupported && canUseActions && isP1Slug(track.key,track.lessonSlug) && (activeTab === 'Audio' || activeTab === 'Professor') ? <LessonReadinessCheck key={[account.userId,track.key,track.lessonId,track.lessonSlug].join(':')} userId={account.userId} lessonId={track.lessonId} lessonSlug={track.lessonSlug} lessonTitle={track.lesson} track={track.key} activeTab={activeTab}/> : null}
           {interactiveLessonSupported && (conversationBusy && activeTab === 'Audio' ? <p role="status" data-testid="audio-conversation-guard">End the Professor session before playing lesson audio. Written tabs remain available.</p> : <>{activeTab === 'Audio' && (canUseActions ? <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} /> : <p role="status" data-testid="audio-account-mismatch">Audio actions require the matching signed-in learner account.</p>)}</>)}
