@@ -1,5 +1,5 @@
 {
-  "version": "curriculum-professor-offline-scenarios-2026-09-21-v4",
+  "version": "curriculum-professor-offline-scenarios-2026-09-22-v5",
   "status": "authored_offline_expectations_not_model_results",
   "globalBoundaries": [
     "One clear question at a time.",
@@ -574,6 +574,148 @@
           ],
           "forbidden": [
             "Net cash payments directly against deferred tax.",
+            "Claim the worked explanation is learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B9",
+      "lessonId": "b1900000-2026-4acc-8b09-000000000009",
+      "scenarios": [
+        {
+          "id": "b9-correct-eps",
+          "learner": "Two million shares existed all year and 600,000 were issued on 1 October, so the weighted average is 2.15 million.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the three-month weighting briefly.",
+            "Ask one transfer question changing the issue date or issue type."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the calculation was persisted."
+          ]
+        },
+        {
+          "id": "b9-sale-intention-misconception",
+          "learner": "The board wants to sell the division, so it is automatically held for sale today.",
+          "state": "misconception",
+          "expected": [
+            "Ask whether the asset is available immediately and the sale is highly probable.",
+            "Guide the learner to test commitment, marketing, price and expected completion."
+          ],
+          "forbidden": [
+            "Treat intention alone as sufficient.",
+            "Reveal every IFRS 5 condition before one retry."
+          ]
+        },
+        {
+          "id": "b9-estimate-hint",
+          "learner": "New wear data changed the useful life and I cannot tell whether that is a policy, estimate or error. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Ask whether earlier reporting misused information that was already available.",
+            "Invite classification from new information versus an earlier mistake."
+          ],
+          "forbidden": [
+            "Record the help request as failure.",
+            "Assume every change is retrospective."
+          ]
+        },
+        {
+          "id": "b9-self-correction",
+          "learner": "IFRS S1 is only environmental metrics—sorry, it covers prospect-relevant sustainability risks and opportunities through governance, strategy, risk management, and metrics and targets.",
+          "state": "self_corrected",
+          "expected": [
+            "Use the corrected scope and four core areas as the current answer.",
+            "Ask for one example of a financial-prospect connection."
+          ],
+          "forbidden": [
+            "Store the abandoned environmental-only claim as the final answer.",
+            "Infer exam readiness from one correction."
+          ]
+        },
+        {
+          "id": "b9-supported-dilution",
+          "learner": "Please show me one convertible-debt diluted EPS bridge before I try another question.",
+          "state": "answer_requested",
+          "expected": [
+            "Show the after-tax numerator adjustment and assumed conversion shares separately.",
+            "Invite an optional changed-number retry without calling it independent mastery."
+          ],
+          "forbidden": [
+            "Add shares without considering the numerator.",
+            "Claim the worked answer is assessed evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B10",
+      "lessonId": "b2000000-2026-4acc-8b10-000000000010",
+      "scenarios": [
+        {
+          "id": "b10-correct-allocation",
+          "learner": "The stand-alone prices are 600 and 400, so a 900 transaction price allocates 540 and 360.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the relative allocation briefly.",
+            "Ask one transfer question changing a stand-alone price or the timing of transfer."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the allocation was saved."
+          ]
+        },
+        {
+          "id": "b10-invoice-misconception",
+          "learner": "The invoice was issued, so all revenue must be recognised immediately.",
+          "state": "misconception",
+          "expected": [
+            "Ask which promised good or service has transferred to the customer.",
+            "Guide the learner to separate billing from performance and control."
+          ],
+          "forbidden": [
+            "Treat invoicing as proof of satisfaction.",
+            "Correct unrelated contract-cost points at once."
+          ]
+        },
+        {
+          "id": "b10-overtime-hint",
+          "learner": "I cannot decide whether this construction obligation is over time. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Ask one question about customer control, simultaneous consumption, or no alternative use plus enforceable payment.",
+            "Invite the learner to apply the relevant criterion before revealing a conclusion."
+          ],
+          "forbidden": [
+            "Treat contract duration alone as decisive.",
+            "Record the help request as a final error."
+          ]
+        },
+        {
+          "id": "b10-self-correction",
+          "learner": "A contract asset is the same as a receivable—sorry, a receivable is unconditional except for time, while a contract asset has another condition.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected distinction.",
+            "Ask what balance arises when cash is received before performance."
+          ],
+          "forbidden": [
+            "Preserve the abandoned equivalence as the final answer.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "b10-supported-five-steps",
+          "learner": "Can you walk me through one handset-and-service contract using all five steps?",
+          "state": "answer_requested",
+          "expected": [
+            "Work in contract, obligations, price, allocation and recognition order.",
+            "Invite one optional changed-fact retry without describing it as independent competence."
+          ],
+          "forbidden": [
+            "Use cash receipts as the allocation basis.",
             "Claim the worked explanation is learner evidence."
           ]
         }

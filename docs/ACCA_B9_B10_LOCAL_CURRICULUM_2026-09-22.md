@@ -1,0 +1,7 @@
+# ACCA FR B9–B10 local curriculum — 22 September 2026
+
+B9 and B10 extend the explicit `?curriculumPreview=1` curriculum with two independently lazy-loaded written lessons. B9 follows the updated 2026/27 title, **Reporting financial and non-financial performance**, and covers IFRS 5 held-for-sale assets and discontinued operations, material items, IAS 8 policies/estimates/errors, IAS 33 basic and diluted EPS, and the objective and core content of IFRS S1. B10 covers IFRS 15’s five-step model, point-in-time and over-time recognition, measures of progress, contract costs, statement extracts, principal-agent analysis, repurchase agreements, bill-and-hold and consignment.
+
+Each lesson contains four teaching sections, six English/Portuguese terms, an original visual calculation, a worked case, three supported exercises, five local checkpoint questions, a Premium Audio outline and an offline Professor guide. ACCA’s September 2026–June 2027 syllabus landing page and the IFRS Foundation’s IFRS 5, IFRS 18, IAS 8, IAS 33, IFRS S1 and IFRS 15 pages are the authoritative sources. Exact selected-sitting outcome wording remains a publication gate.
+
+The lessons are authored local previews, not ACCA-approved tuition, legal advice, complete syllabus coverage, persisted assessment or evidence of exam readiness. Professor and podcast assets remain inactive outlines. No provider call, audio generation, database change, Supabase operation, deployment, publication, learner-progress write or paid service is included.
