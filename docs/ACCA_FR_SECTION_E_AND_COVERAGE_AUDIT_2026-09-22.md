@@ -12,8 +12,8 @@
 | Syllabus area | Runtime status | Evidence / next action |
 | --- | --- | --- |
 | A1–A2 | Integrated local preview | Two complete runtime lessons. |
-| A3–A4 | Authored, not runtime-integrated | Present in `quality/acca-fr-foundations-a1-b2.json`; must become full reviewed runtime lessons. |
-| B1–B2 | Authored, not runtime-integrated | Present in `quality/acca-fr-foundations-a1-b2.json`; must become full reviewed runtime lessons. |
+| A3–A4 | Reviewed local runtime lessons | Full written modules, exact local identities, lazy loading, practice, checkpoints, cases and provider-free Professor guides are now implemented. |
+| B1–B2 | Reviewed local runtime lessons | Full IAS 16 and IAS 38 written modules, exact local identities, lazy loading, calculations, practice, checkpoints and provider-free Professor guides are now implemented. |
 | B3–B12 | Integrated local preview | Ten complete runtime lessons. |
 | C1–C4 | Integrated local preview | Four complete runtime lessons. |
 | D1–D2 | Integrated local preview | Two complete runtime lessons. |

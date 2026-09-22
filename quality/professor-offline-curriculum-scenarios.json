@@ -1,5 +1,5 @@
 {
-  "version": "curriculum-professor-offline-scenarios-2026-09-22-v9",
+  "version": "curriculum-professor-offline-scenarios-2026-09-22-v10",
   "status": "authored_offline_expectations_not_model_results",
   "globalBoundaries": [
     "One clear question at a time.",
@@ -78,6 +78,290 @@
           "forbidden": [
             "Withhold the answer indefinitely.",
             "Claim that seeing the answer proves competence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-A3",
+      "lessonId": "a1300000-2026-4acc-8a03-000000000003",
+      "scenarios": [
+        {
+          "id": "a3-correct-four-stage-reasoning",
+          "learner": "The payment is not enough: I first identify a controlled right, then consider recognition, measurement and what remains on derecognition.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the separation of definition, recognition, measurement and derecognition.",
+            "Ask one transfer question changing control, uncertainty or retained exposure."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the judgement was saved as evidence."
+          ]
+        },
+        {
+          "id": "a3-cash-payment-misconception",
+          "learner": "The company paid cash, so that automatically proves it recognised an asset.",
+          "state": "misconception",
+          "expected": [
+            "Ask what present right the entity controls after payment.",
+            "Guide the learner to separate transaction evidence from the asset definition."
+          ],
+          "forbidden": [
+            "Treat every payment as an asset.",
+            "Skip the applicable recognition and measurement requirements."
+          ]
+        },
+        {
+          "id": "a3-measurement-hint",
+          "learner": "I know fair value and value in use are current values, but I need one hint to distinguish them.",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt the learner to contrast market-participant and entity-specific perspectives.",
+            "Invite a fresh one-sentence distinction before revealing a model answer."
+          ],
+          "forbidden": [
+            "Record the help request as failure.",
+            "Say the two measurement bases are interchangeable."
+          ]
+        },
+        {
+          "id": "a3-uncertainty-self-correction",
+          "learner": "Uncertainty always blocks recognition—sorry, a supportable estimate can still be useful if the method and uncertainty are represented faithfully.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected distinction between uncertainty and non-recognition.",
+            "Ask which missing evidence would affect existence versus measurement."
+          ],
+          "forbidden": [
+            "Preserve the abandoned absolute rule.",
+            "Infer exam readiness from one correction."
+          ]
+        },
+        {
+          "id": "a3-supported-analysis",
+          "learner": "Please show me one concise analysis linking a right, recognition, a measurement basis and later derecognition.",
+          "state": "answer_requested",
+          "expected": [
+            "Give one structured principle-application-conclusion example.",
+            "Invite an optional changed-fact retry without claiming independent competence."
+          ],
+          "forbidden": [
+            "Collapse all stages into a cash-entry rule.",
+            "Claim the supported answer is learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-A4",
+      "lessonId": "a1400000-2026-4acc-8a04-000000000004",
+      "scenarios": [
+        {
+          "id": "a4-correct-role-separation",
+          "learner": "The IASB issues standards, a jurisdiction decides adoption, and the entity, auditor and regulator have different compliance roles.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the separation of issuance, adoption, application and enforcement.",
+            "Ask one transfer question changing the jurisdiction or reporting entity."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim every jurisdiction has identical applicability."
+          ]
+        },
+        {
+          "id": "a4-iasb-enforcement-misconception",
+          "learner": "The IASB audits and enforces every company's IFRS financial statements directly.",
+          "state": "misconception",
+          "expected": [
+            "Ask which body issues standards and which bodies monitor a specific entity.",
+            "Guide the learner to distinguish global standard setting from local enforcement."
+          ],
+          "forbidden": [
+            "Assign every governance role to the IASB.",
+            "Invent a jurisdiction-specific regulator."
+          ]
+        },
+        {
+          "id": "a4-pressure-hint",
+          "learner": "Management wants adverse evidence omitted until financing closes. Can I have one hint about the first response?",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt the learner to preserve reporting-date evidence and identify the applicable requirement.",
+            "Ask for one proportionate review or escalation safeguard."
+          ],
+          "forbidden": [
+            "Record the help request as failure.",
+            "Advise deleting or delaying relevant evidence."
+          ]
+        },
+        {
+          "id": "a4-due-process-self-correction",
+          "learner": "Consultation is a vote—sorry, feedback informs public deliberation but the board must weigh evidence and explain its decision.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected description of consultation.",
+            "Ask why transparent reasoning matters even when comments conflict."
+          ],
+          "forbidden": [
+            "Preserve the abandoned voting claim.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "a4-supported-ethical-response",
+          "learner": "Please show me a concise response connecting the accounting requirement, pressure risk, documentation and escalation.",
+          "state": "answer_requested",
+          "expected": [
+            "Give a proportional sequence anchored in evidence and governance.",
+            "Invite an optional changed-date or changed-pressure retry."
+          ],
+          "forbidden": [
+            "Make an unsupported accusation of misconduct.",
+            "Claim the supported response is persisted evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B1",
+      "lessonId": "b1100000-2026-4acc-8b01-000000000005",
+      "scenarios": [
+        {
+          "id": "b1-correct-cost-depreciation",
+          "learner": "I capitalised CU980, expensed training and abnormal waste, and started component depreciation when the line was available for use.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the cost exclusions and available-for-use principle.",
+            "Ask one transfer question changing a component life or revaluation fact."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the PPE schedule was saved."
+          ]
+        },
+        {
+          "id": "b1-training-capitalisation-misconception",
+          "learner": "Staff training is part of the project, so it must be included in the machine's cost.",
+          "state": "misconception",
+          "expected": [
+            "Ask whether training brings the asset itself to the necessary location and condition.",
+            "Guide the learner to expense training while preserving qualifying asset costs."
+          ],
+          "forbidden": [
+            "Capitalise every project-related cost.",
+            "Ignore abnormal waste."
+          ]
+        },
+        {
+          "id": "b1-component-hint",
+          "learner": "The furnace and the rest of the line have different lives. Can I have one hint before calculating depreciation?",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt the learner to split significant components and depreciable amounts.",
+            "Invite calculation of each annual charge before time apportionment."
+          ],
+          "forbidden": [
+            "Record the help request as failure.",
+            "Force one useful life on significant different components."
+          ]
+        },
+        {
+          "id": "b1-start-date-self-correction",
+          "learner": "Depreciation starts when the invoice arrives—sorry, it starts when the asset is available for use.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected commencement date.",
+            "Ask how an installation delay changes the period charge."
+          ],
+          "forbidden": [
+            "Preserve the invoice-date rule.",
+            "Infer exam readiness from one correction."
+          ]
+        },
+        {
+          "id": "b1-supported-ppe-schedule",
+          "learner": "Please show me a structured answer from initial cost through depreciation, revaluation and disposal.",
+          "state": "answer_requested",
+          "expected": [
+            "Give a linked schedule with each cost classified once.",
+            "Invite an optional changed-cost retry without claiming independent competence."
+          ],
+          "forbidden": [
+            "Double count a revaluation as revenue.",
+            "Claim the worked schedule is learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B2",
+      "lessonId": "b1200000-2026-4acc-8b02-000000000006",
+      "scenarios": [
+        {
+          "id": "b2-correct-development-cutoff",
+          "learner": "All six criteria were first supported on 1 July, so earlier research and development stay expensed and only later eligible costs are capitalised.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the complete-set criteria and prospective cut-off.",
+            "Ask one transfer question changing funding evidence or availability date."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the conclusion was persisted."
+          ]
+        },
+        {
+          "id": "b2-reinstate-research-misconception",
+          "learner": "The product succeeded, so we can now reinstate all earlier research costs as an asset.",
+          "state": "misconception",
+          "expected": [
+            "Ask when every development criterion was first demonstrated.",
+            "Guide the learner to keep correctly expensed research and pre-criteria costs out of the asset."
+          ],
+          "forbidden": [
+            "Reinstate prior research expense.",
+            "Use launch success as a retrospective recognition date."
+          ]
+        },
+        {
+          "id": "b2-criteria-hint",
+          "learner": "Technical feasibility is proven but I am unsure whether capitalisation starts. Can I have one hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt the learner to test the remaining five criteria and their evidence.",
+            "Invite identification of the last criterion satisfied before giving the cut-off."
+          ],
+          "forbidden": [
+            "Record the help request as failure.",
+            "Treat feasibility alone as sufficient."
+          ]
+        },
+        {
+          "id": "b2-amortisation-self-correction",
+          "learner": "Amortisation starts when costs are capitalised—sorry, it starts when the finite-life asset is available for use.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected availability principle.",
+            "Ask how a delayed launch affects amortisation and impairment testing."
+          ],
+          "forbidden": [
+            "Preserve the capitalisation-date rule.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "b2-supported-timeline",
+          "learner": "Please show me one timeline connecting research, the criteria date, availability, amortisation and closing carrying amount.",
+          "state": "answer_requested",
+          "expected": [
+            "Give a dated calculation that separates expense, asset and amortisation.",
+            "Invite an optional changed-date retry without claiming independent competence."
+          ],
+          "forbidden": [
+            "Hide the recognition cut-off in a balancing figure.",
+            "Claim the supported timeline is learner evidence."
           ]
         }
       ]

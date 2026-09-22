@@ -54,6 +54,10 @@ test('checkpoint is keyboard usable and never claims persisted learning progress
 const localModels=[
  {slug:'acca-fr-a1-purpose-users-reporting',title:'ACCA FR A1 · Purpose and users of financial reporting'},
  {slug:'acca-fr-a2-qualitative-characteristics-cost-constraint',title:'ACCA FR A2 · Qualitative characteristics and the cost constraint'},
+ {slug:'acca-fr-a3-recognition-derecognition-measurement',title:'ACCA FR A3 · Recognition, derecognition and measurement'},
+ {slug:'acca-fr-a4-regulation-standard-setting-ethics',title:'ACCA FR A4 · Regulation, standard setting and ethical reporting judgement'},
+ {slug:'acca-fr-b1-property-plant-equipment',title:'ACCA FR B1 · Property, plant and equipment'},
+ {slug:'acca-fr-b2-intangible-assets-development',title:'ACCA FR B2 · Intangible assets and development expenditure'},
  {slug:'acca-fr-b3-impairment-assets',title:'ACCA FR B3 · Impairment of assets'},
  {slug:'acca-fr-b4-inventories-biological-assets',title:'ACCA FR B4 · Inventories and biological assets'},
  {slug:'acca-fr-b5-financial-instruments',title:'ACCA FR B5 · Financial instruments'},
