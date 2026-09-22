@@ -9,8 +9,8 @@ import { STUDY_PACKS, type StudyTrack } from '../learning/teachingPacks';
 import '../learning/lesson-study.css';
 
 const studyTabs=new Set(['Learn','English','Practice','Visual','Case','Test','Sources']);
-type Props={track:StudyTrack;lessonId:string;lessonSlug?:string;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean;readerDisabled?:boolean};
-export function LessonStudyPanel({track,lessonId,lessonSlug,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled,readerDisabled}:Props){
+type Props={track:StudyTrack;lessonId:string;lessonSlug?:string;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean;readerDisabled?:boolean;localCompletion?:{completedAt:string;correct:number;total:number};onCompleteLocal?:(correct:number,total:number)=>void};
+export function LessonStudyPanel({track,lessonId,lessonSlug,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled,readerDisabled,localCompletion,onCompleteLocal}:Props){
  const staticModule=lessonModuleFor(track,lessonId);
  const scope=JSON.stringify([track,lessonId,lessonSlug]);
  const [attempt,setAttempt]=useState(0);
@@ -28,9 +28,9 @@ export function LessonStudyPanel({track,lessonId,lessonSlug,activeTab,onTabChang
   <p role="status">{!lessonSlug||result?.status==='missing'?'No reviewed written module is available for this lesson yet.':result?.status==='unavailable'?'The written lesson could not be loaded. Check your connection and try again.':'Loading reviewed lesson…'}</p>
   {result?.status==='unavailable'?<button type="button" className="secondary-btn" onClick={()=>setAttempt(n=>n+1)}>Try loading again</button>:null}
  </div>:null;
- return <>{(activeTab==='Learn'||activeTab==='Audio')&&<BrowserLessonReader key={module.lessonId+activeTab} module={module} disabled={readerDisabled}/>}<StudyContent key={module.lessonId} module={module} activeTab={activeTab} onTabChange={onTabChange} onPrepareWorkshop={onPrepareWorkshop} handoffDisabled={handoffDisabled}/></>;
+ return <>{(activeTab==='Learn'||activeTab==='Audio')&&<BrowserLessonReader key={module.lessonId+activeTab} module={module} disabled={readerDisabled}/>}<StudyContent key={module.lessonId} module={module} activeTab={activeTab} onTabChange={onTabChange} onPrepareWorkshop={onPrepareWorkshop} handoffDisabled={handoffDisabled} localCompletion={localCompletion} onCompleteLocal={onCompleteLocal}/></>;
 }
-function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled}:{module:LessonModule;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean}){
+function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled,localCompletion,onCompleteLocal}:{module:LessonModule;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean;localCompletion?:{completedAt:string;correct:number;total:number};onCompleteLocal?:(correct:number,total:number)=>void}){
  const pack=STUDY_PACKS[module.track];
  const exercises=module.practiceExercises??pack.exercises;
  const [drafts,setDrafts]=useState<Record<string,string>>({});
@@ -92,14 +92,16 @@ function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDis
    <h3>Transfer the skill</h3><p>{module.caseStudy.transfer}</p>
   </section>
   <section className="lesson-study-section" hidden={activeTab!=='Test'} data-testid="lesson-checkpoint">
-   <h2>Check your understanding</h2><p>Fixed-answer questions with immediate, local feedback. This is practice against an answer key, not an AI evaluation, mastery score or course completion.</p>
-   <p role="status" className="lesson-local-result" data-testid="local-checkpoint-result">{checked.length} of {module.checkpoint.length} checked · {correct.length} correct in this attempt · not saved to your profile</p>
+   <h2>Check your understanding</h2><p>Fixed-answer questions with immediate, local feedback. This is practice against an answer key, not an AI evaluation, mastery score or course completion. The optional browser marker records only that you finished this lesson attempt.</p>
+   <p role="status" className="lesson-local-result" data-testid="local-checkpoint-result">{checked.length} of {module.checkpoint.length} checked · {correct.length} correct in this attempt{onCompleteLocal?' · progress stays in this browser':' · not saved to your profile'}</p>
    {module.checkpoint.map((q,i)=>{const choice=answers[q.id];const result=choice?.checked?checkLocalChoice(q,choice.selected):'unanswered';return <fieldset key={q.id} className="lesson-check-question" data-testid={'checkpoint-question-'+i}>
     <legend>{i+1}. {q.prompt}</legend>{q.options.map((option,n)=><label key={n}><input type="radio" name={q.id} checked={choice?.selected===n} onChange={()=>setAnswers(x=>({...x,[q.id]:{selected:n,checked:false}}))}/><span>{option}</span></label>)}
     <button type="button" disabled={choice?.selected===undefined} onClick={()=>setAnswers(x=>({...x,[q.id]:{...x[q.id],checked:true}}))}>Check answer</button>
     {result!=='unanswered'&&<div className={'lesson-answer-feedback '+result} role="status"><strong>{result==='correct'?'Correct for this question':'Not this option — review the explanation'}</strong><p>{q.explanation}</p><button type="button" onClick={()=>review(feedbackFor(q.id)!.reviewSection)}>Review the related concept</button></div>}
    </fieldset>;})}
-   <button type="button" onClick={()=>setAnswers({})}>Restart this local checkpoint</button>
+   <div className="lesson-checkpoint-actions"><button type="button" onClick={()=>setAnswers({})}>Restart this local checkpoint</button>{onCompleteLocal?<button type="button" className="lesson-complete-button" disabled={checked.length!==module.checkpoint.length} onClick={()=>onCompleteLocal(correct.length,module.checkpoint.length)}>{localCompletion?'Update local completion':'Finish lesson locally'}</button>:null}</div>
+   {onCompleteLocal&&checked.length!==module.checkpoint.length?<p className="lesson-study-note">Check all {module.checkpoint.length} answers to finish this lesson locally. You can retry; completion records practice, not mastery.</p>:null}
+   {localCompletion?<p role="status" className="lesson-completion-saved" data-testid="local-completion-saved">Completed in this browser · {localCompletion.correct}/{localCompletion.total} correct in the saved attempt</p>:null}
   </section>
   <section className="lesson-study-section" hidden={activeTab!=='Sources'} data-testid="lesson-sources">
    <h2>Sources, assumptions and coverage</h2><p>{module.scope}</p>

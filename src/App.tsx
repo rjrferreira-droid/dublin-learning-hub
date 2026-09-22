@@ -9,6 +9,7 @@ import {WORKSHOP_CASES} from './learning/appliedPractice';
 import {loadPublishedCurriculumCatalog,type CatalogLesson} from './services/curriculumCatalog';
 import {lessonsForTrack,chooseNextPublishedLesson} from './learning/curriculumCatalogCore';
 import {LOCAL_MODEL_LESSONS,curriculumModelPreviewEnabled} from './learning/localModelLessonRegistry';
+import {completeLocalLesson,readLocalStudyProgress,recordLocalLessonOpened,writeLocalStudyProgress,type LocalStudyProgress} from './learning/localStudyProgress';
 import {isSequence3Slug} from './learning/sequence3Registry';
 import {p1SlugFor} from './learning/p1RuntimeModules';
 import { LessonStudyPanel } from './components/LessonStudyPanel';
@@ -115,6 +116,8 @@ function shortDate(value: string | null | undefined) {
   return new Intl.DateTimeFormat('en-IE', { day: '2-digit', month: 'short' }).format(date);
 }
 
+function localProgressStorage(){try{return typeof window==='undefined'?null:window.localStorage;}catch{return null;}}
+
 function realIntelligence(snapshot: LearningMemorySnapshot | null, learnerKey: LearnerKey): {
   competencies: CompetencySignal[];
   errors: ErrorBankItem[];
@@ -172,6 +175,7 @@ function App() {
   const [catalog,setCatalog]=useState<CatalogLesson[]>([]);
   const [catalogUnavailable,setCatalogUnavailable]=useState(false);
   const [selectedCatalogLesson,setSelectedCatalogLesson]=useState<CatalogLesson|null>(null);
+  const [localProgress,setLocalProgress]=useState<LocalStudyProgress>(()=>readLocalStudyProgress(localProgressStorage(),account.userId));
 
   const profile = useMemo(() => getLearnerProfile(learnerKey), [learnerKey]);
   const curriculumPreview=useMemo(()=>curriculumModelPreviewEnabled(window.location.search),[]);
@@ -204,6 +208,8 @@ function App() {
     return () => { memoryRequest.current++; };
   }, [refreshMemory]);
 
+  useEffect(()=>setLocalProgress(readLocalStudyProgress(localProgressStorage(),account.userId)),[account.userId]);
+
   useEffect(()=>{
     const controller=new AbortController();setCatalogUnavailable(false);
     void loadPublishedCurriculumCatalog(controller.signal).then(setCatalog).catch(()=>{if(!controller.signal.aborted){setCatalog([]);setCatalogUnavailable(true);}});
@@ -223,13 +229,19 @@ function App() {
           : 'empty';
 
   const openLesson = (key: TrackKey,lesson?:CatalogLesson) => {
-    const measured=new Set((visibleMemory?.history??[]).map(x=>x.lessonId));
+    const measured=new Set([...(visibleMemory?.history??[]).map(x=>x.lessonId),...Object.keys(localProgress.completed)]);
     const resolved=lesson??chooseNextPublishedLesson(supportedCatalog,key,measured);
+    if(resolved?.origin==='local-model')setLocalProgress(current=>{const next=recordLocalLessonOpened(current,resolved.id);writeLocalStudyProgress(localProgressStorage(),next,account.userId);return next;});
     setSelectedCatalogLesson(resolved??null);
     setTrackKey(key);
     setLessonTab('Learn');
     setLessonOpen(true);
     setView('learn');
+  };
+
+  const completeCurrentLocalLesson=(correct:number,total:number)=>{
+    if(selectedCatalogLesson?.origin!=='local-model')return;
+    setLocalProgress(current=>{const next=completeLocalLesson(current,selectedCatalogLesson.id,correct,total);writeLocalStudyProgress(localProgressStorage(),next,account.userId);return next;});
   };
 
   const selectLearner = (key: LearnerKey) => {
@@ -312,11 +324,11 @@ function App() {
         </header>
 
         {lessonOpen ? (
-          <LessonView key={account.userId+':'+learnerKey+':'+activeTrack.lessonId} track={activeTrack} learnerKey={learnerKey} memory={visibleMemory} activeTab={lessonTab} setActiveTab={setLessonTab} close={() => { setLessonOpen(false); setView('dashboard'); }} />
+          <LessonView key={account.userId+':'+learnerKey+':'+activeTrack.lessonId} track={activeTrack} learnerKey={learnerKey} memory={visibleMemory} activeTab={lessonTab} setActiveTab={setLessonTab} close={() => { setLessonOpen(false); setView('dashboard'); }} localCompletion={localProgress.completed[activeTrack.lessonId]} onCompleteLocal={activeTrack.origin==='local-model'?completeCurrentLocalLesson:undefined} />
         ) : view === 'dashboard' ? (
           <Dashboard learnerKey={learnerKey} profile={profile} memory={visibleMemory} memoryStatus={memoryStatus} openLesson={openLesson} openView={setView} />
         ) : view === 'learn' ? (
-          <LearningLibrary learnerKey={learnerKey} catalog={supportedCatalog} catalogUnavailable={catalogUnavailable} openLesson={openLesson} />
+          <LearningLibrary learnerKey={learnerKey} catalog={supportedCatalog} catalogUnavailable={catalogUnavailable} openLesson={openLesson} localProgress={localProgress} />
         ) : view === 'english-academy' ? (
           <EnglishAcademyView profile={profile} learnerKey={learnerKey} openLesson={() => openLesson('english')} />
         ) : view === 'revision' ? (
@@ -481,28 +493,30 @@ function PriorityCard({ priority, rank }: { priority: AdaptivePriority; rank: nu
   );
 }
 
-function LearningLibrary({ learnerKey, catalog, catalogUnavailable, openLesson }: { learnerKey: LearnerKey; catalog: CatalogLesson[]; catalogUnavailable:boolean; openLesson: (key: TrackKey,lesson?:CatalogLesson) => void }) {
+function LearningLibrary({ learnerKey, catalog, catalogUnavailable, openLesson,localProgress }: { learnerKey: LearnerKey; catalog: CatalogLesson[]; catalogUnavailable:boolean; openLesson: (key: TrackKey,lesson?:CatalogLesson) => void;localProgress:LocalStudyProgress }) {
   const primaryTrack=primaryVisibleTrack(learnerKey);
   const available=catalog.filter(lesson=>isTrackVisible(lesson.track));
   return <section className="page-stack" data-testid="learning-library">
     <div className="section-heading"><div><div className="eyebrow">LEARNING LIBRARY</div><h2>Published lessons with reviewed runtime content</h2></div><span>{available.length||visibleTracks.length} available now</span></div>
-    {available.some(lesson=>lesson.origin==='local-model')&&<p role="status" className="priority-note" data-testid="local-curriculum-preview"><strong>Local curriculum preview</strong><span>Model lessons are read-only, not published and do not enable Professor, Audio or saved progress.</span></p>}
+    {available.some(lesson=>lesson.origin==='local-model')&&<p role="status" className="priority-note" data-testid="local-curriculum-preview"><strong>Local curriculum preview · {Object.keys(localProgress.completed).length}/23 finished here</strong><span>Model lessons are not published and do not enable Professor or Audio. Completion and checkpoint totals stay only in this browser; drafts and individual answers are not stored.</span></p>}
     {catalogUnavailable&&<p role="status" className="priority-note"><strong>Catalog temporarily unavailable</strong><span>Verified Golden Lessons from your visible tracks remain available as a safe fallback.</span></p>}
     <div className="library-grid">
-      {available.length?available.map((lesson,index)=>{const base=tracks.find(t=>t.key===lesson.track)!;return <article className={`lesson-library-card ${lesson.track===primaryTrack?'primary-track-card':''}`} key={lesson.id} data-testid={`catalog-lesson-${lesson.slug}`}>
-        <div className="lesson-index">{String(index+1).padStart(2,'0')}</div><span className={`track-badge ${lesson.track}`}>{base.accent}</span><h3>{lesson.title}</h3><p>{lesson.subtitle??base.focus}</p><div className="lesson-meta"><span>{lesson.estimatedMinutes} min</span><span>{base.name}</span><span>{lesson.origin==='local-model'?'Model · local':lesson.id===base.lessonId?'Professor':'Written ready'}</span></div><button className="primary-btn" onClick={()=>openLesson(lesson.track,lesson)}>Open lesson</button>
+      {available.length?available.map((lesson,index)=>{const base=tracks.find(t=>t.key===lesson.track)!;const completion=localProgress.completed[lesson.id];const isResume=localProgress.lastOpenedLessonId===lesson.id&&!completion;return <article className={`lesson-library-card ${lesson.track===primaryTrack?'primary-track-card':''} ${completion?'lesson-locally-complete':''}`} key={lesson.id} data-testid={`catalog-lesson-${lesson.slug}`}>
+        <div className="lesson-index">{String(index+1).padStart(2,'0')}</div><span className={`track-badge ${lesson.track}`}>{base.accent}</span><h3>{lesson.title}</h3><p>{lesson.subtitle??base.focus}</p><div className="lesson-meta"><span>{lesson.estimatedMinutes} min</span><span>{base.name}</span><span>{completion?`Finished locally · ${completion.correct}/${completion.total}`:lesson.origin==='local-model'?'Model · local':lesson.id===base.lessonId?'Professor':'Written ready'}</span></div><button className="primary-btn" onClick={()=>openLesson(lesson.track,lesson)}>{completion?'Review lesson':isResume?'Resume lesson':'Open lesson'}</button>
       </article>}):visibleTracks.map((track,index)=><article className={`lesson-library-card ${track.key===primaryTrack?'primary-track-card':''}`} key={track.key}><div className="lesson-index">0{index+1}</div><span className={`track-badge ${track.key}`}>{track.accent}</span><h3>{track.lesson}</h3><p>{track.focus}</p><div className="lesson-meta"><span>10–15 min</span><span>Verified fallback</span><span>Professor</span></div><button className="primary-btn" onClick={()=>openLesson(track.key)}>Open Golden Lesson</button></article>)}
     </div>
   </section>;
 }
 
-function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close }: {
+function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,localCompletion,onCompleteLocal }: {
   track: Track;
   learnerKey: LearnerKey;
   memory: LearningMemorySnapshot | null;
   activeTab: string;
   setActiveTab: (tab: string) => void;
   close: () => void;
+  localCompletion?:{completedAt:string;correct:number;total:number};
+  onCompleteLocal?:(correct:number,total:number)=>void;
 }) {
   const account = useLearnerSession();
   const canUseActions = canUseLearnerActions(account.learnerKey,learnerKey,track.key);
@@ -533,7 +547,7 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close 
           <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">{track.origin==='local-model'?'Local preview · no providers':'Premium lesson'}</span></div>
           <div className="eyebrow">{activeTab.toUpperCase()}</div>
           {interactiveLessonSupported?<LessonProfessorWorkspace track={track.key} lessonId={track.lessonId} learnerKey={learnerKey} activeTab={activeTab} onTabChange={setActiveTab} onActivityChange={setConversationBusy} workshopId={workshopId} onClearWorkshop={clearWorkshop}/>:null}
-          <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} lessonSlug={track.lessonSlug} activeTab={activeTab} onTabChange={setActiveTab} onPrepareWorkshop={prepareWorkshop} handoffDisabled={conversationBusy||!canUseActions||!interactiveLessonSupported} readerDisabled={conversationBusy||!canUseActions} />
+          <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} lessonSlug={track.lessonSlug} activeTab={activeTab} onTabChange={setActiveTab} onPrepareWorkshop={prepareWorkshop} handoffDisabled={conversationBusy||!canUseActions||!interactiveLessonSupported} readerDisabled={conversationBusy||!canUseActions} localCompletion={localCompletion} onCompleteLocal={onCompleteLocal} />
           {!interactiveLessonSupported && (activeTab === 'Audio' || activeTab === 'Professor') ? <p role="status" data-testid="p1-interactive-gate">{activeTab==='Audio'&&track.key!=='payroll'&&isP1Slug(track.key,track.lessonSlug)?'Verify this lesson below to access its audio controls.':'This reviewed written lesson is available for self-study. This interactive feature is awaiting activation.'}</p> : null}
           {!interactiveLessonSupported && canUseActions && isP1Slug(track.key,track.lessonSlug) && (activeTab === 'Audio' || activeTab === 'Professor') ? <LessonReadinessCheck key={[account.userId,track.key,track.lessonId,track.lessonSlug].join(':')} userId={account.userId} lessonId={track.lessonId} lessonSlug={track.lessonSlug} lessonTitle={track.lesson} track={track.key} activeTab={activeTab}/> : null}
           {interactiveLessonSupported && (conversationBusy && activeTab === 'Audio' ? <p role="status" data-testid="audio-conversation-guard">End the Professor session before playing lesson audio. Written tabs remain available.</p> : <>{activeTab === 'Audio' && (canUseActions ? <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} /> : <p role="status" data-testid="audio-account-mismatch">Audio actions require the matching signed-in learner account.</p>)}</>)}
@@ -542,6 +556,7 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close 
         <aside className="lesson-side-card">
           <div className="eyebrow">MEASURED LEARNING SIGNALS</div>
           <h3>{measuredSession ? 'Latest evaluated evidence' : 'Baseline pending'}</h3>
+          {localCompletion?<div className="priority-note local-progress-note"><strong>Finished in this browser</strong><span>{localCompletion.correct}/{localCompletion.total} checkpoint answers correct in the saved attempt · practice completion only, not measured mastery.</span></div>:null}
           {measuredScores.length > 0
             ? measuredScores.map(([label, value]) => <Signal key={label} label={label} value={Math.round(value)} />)
             : <div className="priority-note"><strong>No synthetic score</strong><span>Complete an evaluated Professor session for this lesson. Scores will appear only after measured evidence exists.</span></div>}

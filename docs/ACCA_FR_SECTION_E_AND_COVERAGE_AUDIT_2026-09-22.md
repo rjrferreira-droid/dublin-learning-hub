@@ -21,6 +21,6 @@
 
 ## Audit conclusion
 
-The preview now contains 19 complete lessons and reaches every main capability A–E, but it is not yet a complete outcome-level FR course. A3, A4, B1 and B2 remain authored curriculum records rather than reviewed runtime lessons. They are the next four content gaps. Publication, ACCA-approval, assessment-validity and exam-readiness claims remain prohibited until the selected sitting is rechecked and the missing topics are integrated and reviewed.
+The preview now contains 23 complete runtime lessons and reaches every main capability A–E. It is still not a claim of complete outcome-level coverage, ACCA approval, assessment validity or exam readiness. Those claims remain prohibited until the selected sitting is rechecked at outcome level and the learning experience is validated with real study use.
 
 No database, Supabase, provider, audio/TTS, deployment or production path is used by this checkpoint.

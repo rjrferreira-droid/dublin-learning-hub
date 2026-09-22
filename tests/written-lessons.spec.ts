@@ -51,6 +51,19 @@ test('checkpoint is keyboard usable and never claims persisted learning progress
  const requests=await openFixture(page,courses[0]);await page.getByRole('tab',{name:'Test',exact:true}).click();const q=page.getByTestId('checkpoint-question-0');await q.getByRole('radio').first().focus();await page.keyboard.press('ArrowDown');await expect(q.getByRole('radio').nth(1)).toBeChecked();await q.getByRole('button',{name:'Check answer',exact:true}).focus();await page.keyboard.press('Enter');await expect(page.getByTestId('local-checkpoint-result')).toContainText('not saved to your profile');expect(requests()).toBe(0);
 });
 
+test('local ACCA study flow saves completion in-browser and advances to the next lesson',async({page})=>{
+ const requests=await openFixture(page,courses[0],true);const panel=page.getByTestId('lesson-study-panel');
+ await expect(panel.getByRole('heading',{name:'ACCA FR A1 · Purpose and users of financial reporting',exact:true})).toBeVisible();
+ await page.getByRole('tab',{name:'Test',exact:true}).click();
+ await expect(panel.getByRole('button',{name:'Finish lesson locally',exact:true})).toBeDisabled();
+ for(let i=0;i<5;i++){const q=panel.getByTestId('checkpoint-question-'+i);await q.getByRole('radio').first().check();await q.getByRole('button',{name:'Check answer',exact:true}).click();}
+ await panel.getByRole('button',{name:'Finish lesson locally',exact:true}).click();await expect(panel.getByTestId('local-completion-saved')).toContainText('Completed in this browser');
+ await page.reload();await expect(page.getByRole('button',{name:'Continue Finance',exact:true})).toBeVisible();await page.getByRole('button',{name:'Continue Finance',exact:true}).click();
+ await expect(page.getByTestId('lesson-study-panel').getByRole('heading',{name:'ACCA FR A2 · Qualitative characteristics and the cost constraint',exact:true})).toBeVisible();
+ await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await page.locator('.nav-stack').getByRole('button',{name:/Learning/}).click();
+ await expect(page.getByTestId('local-curriculum-preview')).toContainText('1/23 finished here');await expect(page.getByTestId('catalog-lesson-acca-fr-a1-purpose-users-reporting')).toContainText(/Finished locally/);expect(requests()).toBe(0);
+});
+
 const localModels=[
  {slug:'acca-fr-a1-purpose-users-reporting',title:'ACCA FR A1 · Purpose and users of financial reporting'},
  {slug:'acca-fr-a2-qualitative-characteristics-cost-constraint',title:'ACCA FR A2 · Qualitative characteristics and the cost constraint'},
