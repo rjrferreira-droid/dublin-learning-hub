@@ -19,7 +19,9 @@ async function openFixture(page:Page,course:typeof courses[number],curriculumPre
  });
  await page.routeWebSocket('**/*',ws=>{const u=new URL(ws.url());if(['localhost','127.0.0.1'].includes(u.hostname))ws.connectToServer();else ws.close();});
  await page.goto(curriculumPreview?'/?curriculumPreview=1':'/');await page.getByLabel('E-mail').fill('written-fixture@example.invalid');await page.getByLabel('Senha').fill('Fictional-written-only-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
- const entryButton=curriculumPreview&&course.track==='finance'?'Start ACCA FR A1':course.button;await page.getByRole('button',{name:entryButton,exact:true}).click();
+ const entryButton=curriculumPreview&&course.track==='finance'?'Start ACCA FR A1':course.button;
+ if(curriculumPreview&&course.track==='finance')await page.getByTestId('acca-study-board').getByRole('button',{name:entryButton,exact:true}).click();
+ else await page.getByRole('button',{name:entryButton,exact:true}).click();
  return ()=>sensitiveRequests;
 }
 for(const course of courses)for(const viewport of [{name:'desktop',width:1440,height:1000},{name:'mobile',width:390,height:844}])test(`${course.track} written lesson at ${viewport.name}: coherent tabs, retained drafts and local checkpoint`,async({page},info)=>{
