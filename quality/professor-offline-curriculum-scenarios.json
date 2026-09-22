@@ -1288,6 +1288,47 @@
           ]
         }
       ]
+    },
+    {
+      "lessonCode": "ACCA-E",
+      "lessonId": "e1000000-2026-4acc-8e01-000000000019",
+      "scenarios": [
+        {
+          "id": "e-correct-controlled-workflow",
+          "learner": "I indexed the source, linked the adjusted inputs, checked the ratios and then wrote a conclusion with the data limitation.",
+          "state": "substantive_correct",
+          "expected": ["Confirm the controlled source-to-conclusion workflow briefly.", "Ask one transfer question changing an input or audience."],
+          "forbidden": ["Claim workplace competence or ACCA readiness.", "Treat polished formatting as proof of correctness."]
+        },
+        {
+          "id": "e-hardcoded-output-misconception",
+          "learner": "The formula changed, so I typed the number I expected over the final cell. That is quicker and the answer now looks right.",
+          "state": "misconception",
+          "expected": ["Ask what source and dependency the typed override conceals.", "Guide the learner to correct the labelled input or formula and repeat the check."],
+          "forbidden": ["Accept a hard-coded override as a controlled correction.", "Assume the expected-looking result validates the method."]
+        },
+        {
+          "id": "e-navigation-hint",
+          "learner": "I changed the late exhibit figure and I am not sure what to review next. Can I have one hint?",
+          "state": "help_not_failure",
+          "expected": ["Prompt the learner to trace dependent workings before revising narrative.", "Ask for one independent reasonableness or reconciliation check."],
+          "forbidden": ["Record the help request as failure.", "Reveal a complete final response before offering a targeted hint."]
+        },
+        {
+          "id": "e-chart-self-correction",
+          "learner": "The chart proves the result—sorry, it only presents the comparison; I still need labelled workings, evidence and limitations.",
+          "state": "self_corrected",
+          "expected": ["Accept the corrected distinction between presentation and evidence.", "Ask when a table would communicate the result better than a chart."],
+          "forbidden": ["Preserve the abandoned claim that a chart proves correctness.", "Infer technology mastery from one correction."]
+        },
+        {
+          "id": "e-supported-response-trail",
+          "learner": "Please show me one concise structure connecting requirement, evidence, spreadsheet working, check and conclusion.",
+          "state": "answer_requested",
+          "expected": ["Give a short labelled response trail using the lesson case.", "Invite an optional changed-input retry without calling it independent performance."],
+          "forbidden": ["Claim the supported response is assessed learner evidence.", "Send the local draft to a Professor, evaluator or provider."]
+        }
+      ]
     }
   ]
 }

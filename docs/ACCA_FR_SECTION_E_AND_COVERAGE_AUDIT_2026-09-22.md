@@ -1,0 +1,26 @@
+# ACCA FR section E and coverage audit · 22 September 2026
+
+## Section E checkpoint
+
+- Source boundary: ACCA Financial Reporting syllabus and study guide, September 2026 to June 2027.
+- One integrated capstone maps all four E outcomes: access/manipulate information, work on response options, navigate/amend responses and present information effectively.
+- The lesson uses an original simulated digital workflow. It does not reproduce or certify the live ACCA exam environment.
+- Professor guidance and five scenarios are authored offline; Premium Audio remains an inactive outline.
+
+## Coverage result
+
+| Syllabus area | Runtime status | Evidence / next action |
+| --- | --- | --- |
+| A1–A2 | Integrated local preview | Two complete runtime lessons. |
+| A3–A4 | Authored, not runtime-integrated | Present in `quality/acca-fr-foundations-a1-b2.json`; must become full reviewed runtime lessons. |
+| B1–B2 | Authored, not runtime-integrated | Present in `quality/acca-fr-foundations-a1-b2.json`; must become full reviewed runtime lessons. |
+| B3–B12 | Integrated local preview | Ten complete runtime lessons. |
+| C1–C4 | Integrated local preview | Four complete runtime lessons. |
+| D1–D2 | Integrated local preview | Two complete runtime lessons. |
+| E1–E4 capabilities | Integrated in one capstone | Four teaching sections and one linked case. |
+
+## Audit conclusion
+
+The preview now contains 19 complete lessons and reaches every main capability A–E, but it is not yet a complete outcome-level FR course. A3, A4, B1 and B2 remain authored curriculum records rather than reviewed runtime lessons. They are the next four content gaps. Publication, ACCA-approval, assessment-validity and exam-readiness claims remain prohibited until the selected sitting is rechecked and the missing topics are integrated and reviewed.
+
+No database, Supabase, provider, audio/TTS, deployment or production path is used by this checkpoint.
