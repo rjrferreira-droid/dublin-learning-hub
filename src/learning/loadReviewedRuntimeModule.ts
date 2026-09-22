@@ -1,10 +1,14 @@
 import type {LessonModule} from './lessonModules.ts';
 import type {P1Track} from './p1RuntimeRegistry.ts';
 import {localModelCodeFor} from './localModelLessonRegistry.ts';
+import {localEnglishCodeFor} from './localEnglishLessonRegistry.ts';
 import {loadP1ModuleFor} from './p1RuntimeModules.ts';
 /** Reviewed local content loader. It performs no publication, persistence or provider operation. */
 export async function loadReviewedRuntimeModuleFor(track:P1Track,lesson:{id:string;slug:string}):Promise<LessonModule|null>{
  const local=localModelCodeFor(track,lesson);
+ const localEnglish=localEnglishCodeFor(track,lesson);
+ if(localEnglish==='E1'||localEnglish==='E2'){const {localEnglishLessonFor}=await import('./localEnglishLessonModules.ts');return localEnglishLessonFor(track,lesson);}
+ if(localEnglish!==null)return loadP1ModuleFor(track,lesson);
  if(local==='A1'){const {localModelLessonFor}=await import('./localModelLessonModules.ts');return localModelLessonFor(track,lesson);}
  if(local==='A2'){const {localModelA2For}=await import('./localModelLessonA2.ts');return localModelA2For(track,lesson);}
  if(local==='A3'){const {localModelA3For}=await import('./localModelLessonA3.ts');return localModelA3For(track,lesson);}

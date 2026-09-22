@@ -9,7 +9,8 @@ import {WORKSHOP_CASES} from './learning/appliedPractice';
 import {loadPublishedCurriculumCatalog,type CatalogLesson} from './services/curriculumCatalog';
 import {lessonsForTrack,chooseNextPublishedLesson} from './learning/curriculumCatalogCore';
 import {LOCAL_MODEL_LESSONS,curriculumModelPreviewEnabled} from './learning/localModelLessonRegistry';
-import {buildLocalReviewSchedule,completeLocalLesson,completeLocalReview,localLessonAfter,readLocalStudyProgress,recordLocalLessonOpened,summarizeLocalCourse,writeLocalStudyProgress,type LocalReviewItem,type LocalReviewStage,type LocalStudyProgress} from './learning/localStudyProgress';
+import {LOCAL_ENGLISH_LESSONS} from './learning/localEnglishLessonRegistry';
+import {buildLocalReviewSchedule,completeLocalLesson,completeLocalReview,lastOpenedLocalLessonId,localLessonAfter,readLocalStudyProgress,recordLocalLessonOpened,summarizeLocalCourse,writeLocalStudyProgress,type LocalReviewItem,type LocalReviewStage,type LocalStudyProgress} from './learning/localStudyProgress';
 import {isSequence3Slug} from './learning/sequence3Registry';
 import {p1SlugFor} from './learning/p1RuntimeModules';
 import { LessonStudyPanel } from './components/LessonStudyPanel';
@@ -182,7 +183,10 @@ function App() {
   const curriculumPreview=useMemo(()=>curriculumModelPreviewEnabled(window.location.search),[]);
   const supportedCatalog=useMemo(()=>{
     const published=catalog.filter((lesson)=>{const base=tracks.find(t=>t.key===lesson.track);return !!base&&(lesson.id===base.lessonId||lesson.slug===p1SlugFor(lesson.track)||isSequence3Slug(lesson.track,lesson.slug)||isSequence4Slug(lesson.track,lesson.slug)||isRemainingWrittenSlug(lesson.track,lesson.slug));});
-    return curriculumPreview?[...LOCAL_MODEL_LESSONS,...published]:published;
+    if(!curriculumPreview)return published;
+    const local=[...LOCAL_MODEL_LESSONS,...LOCAL_ENGLISH_LESSONS];
+    const localKeys=new Set(local.map(lesson=>`${lesson.track}:${lesson.slug}`));
+    return [...local,...published.filter(lesson=>!localKeys.has(`${lesson.track}:${lesson.slug}`))];
   },[catalog,curriculumPreview]);
   const activeTrack = useMemo(() => {
     const base=tracks.find((t)=>t.key===trackKey)??tracks[0];
@@ -233,7 +237,7 @@ function App() {
   const openLesson = (key: TrackKey,lesson?:CatalogLesson,options?:{tab?:string;reviewStage?:LocalReviewStage}) => {
     const measured=new Set([...(visibleMemory?.history??[]).map(x=>x.lessonId),...Object.keys(localProgress.completed)]);
     const resolved=lesson??chooseNextPublishedLesson(supportedCatalog,key,measured);
-    if(resolved?.origin==='local-model')setLocalProgress(current=>{const next=recordLocalLessonOpened(current,resolved.id);writeLocalStudyProgress(localProgressStorage(),next,account.userId);return next;});
+    if(resolved?.origin==='local-model')setLocalProgress(current=>{const next=recordLocalLessonOpened(current,resolved.id,resolved.track);writeLocalStudyProgress(localProgressStorage(),next,account.userId);return next;});
     setActiveLocalReview(resolved?.origin==='local-model'&&options?.reviewStage?{lessonId:resolved.id,stage:options.reviewStage}:null);
     setSelectedCatalogLesson(resolved??null);
     setTrackKey(key);
@@ -338,7 +342,7 @@ function App() {
         ) : view === 'learn' ? (
           <LearningLibrary learnerKey={learnerKey} catalog={supportedCatalog} catalogUnavailable={catalogUnavailable} openLesson={openLesson} localProgress={localProgress} />
         ) : view === 'english-academy' ? (
-          <EnglishAcademyView profile={profile} learnerKey={learnerKey} openLesson={() => openLesson('english')} />
+          <EnglishAcademyView profile={profile} learnerKey={learnerKey} catalog={supportedCatalog} localProgress={localProgress} openLesson={openLesson} openView={setView} />
         ) : view === 'revision' ? (
           <RevisionView memory={visibleMemory} memoryStatus={memoryStatus} catalog={supportedCatalog} localProgress={localProgress} openLocalReview={(item)=>openLesson(item.lesson.track,item.lesson,{tab:'Test',reviewStage:item.stage})} />
         ) : view === 'error-bank' ? (
@@ -404,7 +408,7 @@ function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, open
   const showLocalCourse=primaryTrack==='finance'&&localCourse.total>0;
   const dailyLesson=showLocalCourse?localCourse.nextLesson:null;
   const dailyCode=dailyLesson?.title.split(' · ')[0]??'ACCA FR';
-  const dailyResuming=!localCourse.allCompleted&&!!dailyLesson&&localProgress.lastOpenedLessonId===dailyLesson.id;
+  const dailyResuming=!localCourse.allCompleted&&!!dailyLesson&&lastOpenedLocalLessonId(localProgress,'finance')===dailyLesson.id;
   const dailyAction=localCourse.allCompleted?'Review final lesson':dailyResuming?'Resume '+dailyCode:'Start '+dailyCode;
   const studyBlocks=dailyLesson?Math.ceil(dailyLesson.estimatedMinutes/30):0;
   const localReviews=useMemo(()=>buildLocalReviewSchedule(catalog,localProgress),[catalog,localProgress]);
@@ -530,12 +534,14 @@ function PriorityCard({ priority, rank }: { priority: AdaptivePriority; rank: nu
 function LearningLibrary({ learnerKey, catalog, catalogUnavailable, openLesson,localProgress }: { learnerKey: LearnerKey; catalog: CatalogLesson[]; catalogUnavailable:boolean; openLesson: (key: TrackKey,lesson?:CatalogLesson) => void;localProgress:LocalStudyProgress }) {
   const primaryTrack=primaryVisibleTrack(learnerKey);
   const available=catalog.filter(lesson=>isTrackVisible(lesson.track));
+  const accaCourse=summarizeLocalCourse(catalog,localProgress,'finance');
+  const englishCourse=summarizeLocalCourse(catalog,localProgress,'english');
   return <section className="page-stack" data-testid="learning-library">
     <div className="section-heading"><div><div className="eyebrow">LEARNING LIBRARY</div><h2>Published lessons with reviewed runtime content</h2></div><span>{available.length||visibleTracks.length} available now</span></div>
-    {available.some(lesson=>lesson.origin==='local-model')&&<p role="status" className="priority-note" data-testid="local-curriculum-preview"><strong>Local curriculum preview · {Object.keys(localProgress.completed).length}/23 finished here</strong><span>Model lessons are not published and do not enable Professor or Audio. Completion and checkpoint totals stay only in this browser; drafts and individual answers are not stored.</span></p>}
+    {available.some(lesson=>lesson.origin==='local-model')&&<p role="status" className="priority-note" data-testid="local-curriculum-preview"><strong>Local curriculum preview · ACCA {accaCourse.completedCount}/{accaCourse.total} · English {englishCourse.completedCount}/{englishCourse.total}</strong><span>Model lessons are not published and do not enable Professor or Audio. Completion and checkpoint totals stay only in this browser; drafts and individual answers are not stored.</span></p>}
     {catalogUnavailable&&<p role="status" className="priority-note"><strong>Catalog temporarily unavailable</strong><span>Verified Golden Lessons from your visible tracks remain available as a safe fallback.</span></p>}
     <div className="library-grid">
-      {available.length?available.map((lesson,index)=>{const base=tracks.find(t=>t.key===lesson.track)!;const completion=localProgress.completed[lesson.id];const isResume=localProgress.lastOpenedLessonId===lesson.id&&!completion;return <article className={`lesson-library-card ${lesson.track===primaryTrack?'primary-track-card':''} ${completion?'lesson-locally-complete':''}`} key={lesson.id} data-testid={`catalog-lesson-${lesson.slug}`}>
+      {available.length?available.map((lesson,index)=>{const base=tracks.find(t=>t.key===lesson.track)!;const completion=localProgress.completed[lesson.id];const isResume=lastOpenedLocalLessonId(localProgress,lesson.track)===lesson.id&&!completion;return <article className={`lesson-library-card ${lesson.track===primaryTrack?'primary-track-card':''} ${completion?'lesson-locally-complete':''}`} key={lesson.id} data-testid={`catalog-lesson-${lesson.slug}`}>
         <div className="lesson-index">{String(index+1).padStart(2,'0')}</div><span className={`track-badge ${lesson.track}`}>{base.accent}</span><h3>{lesson.title}</h3><p>{lesson.subtitle??base.focus}</p><div className="lesson-meta"><span>{lesson.estimatedMinutes} min</span><span>{base.name}</span><span>{completion?`Finished locally · ${completion.correct}/${completion.total}`:lesson.origin==='local-model'?'Model · local':lesson.id===base.lessonId?'Professor':'Written ready'}</span></div><button className="primary-btn" onClick={()=>openLesson(lesson.track,lesson)}>{completion?'Review lesson':isResume?'Resume lesson':'Open lesson'}</button>
       </article>}):visibleTracks.map((track,index)=><article className={`lesson-library-card ${track.key===primaryTrack?'primary-track-card':''}`} key={track.key}><div className="lesson-index">0{index+1}</div><span className={`track-badge ${track.key}`}>{track.accent}</span><h3>{track.lesson}</h3><p>{track.focus}</p><div className="lesson-meta"><span>10–15 min</span><span>Verified fallback</span><span>Professor</span></div><button className="primary-btn" onClick={()=>openLesson(track.key)}>Open Golden Lesson</button></article>)}
     </div>
@@ -609,7 +615,15 @@ function Signal({ label, value }: { label: string; value: number }) {
   return <div className="signal-row"><div><span>{label}</span><b>{value}%</b></div><div className="progress-track"><span style={{ width: `${Math.max(0, Math.min(100, value))}%` }} /></div></div>;
 }
 
-function EnglishAcademyView({ profile, learnerKey, openLesson }: { profile: LearningProfile; learnerKey: LearnerKey; openLesson: () => void }) {
+function EnglishAcademyView({ profile, learnerKey, catalog, localProgress, openLesson, openView }: { profile: LearningProfile; learnerKey: LearnerKey;catalog:CatalogLesson[];localProgress:LocalStudyProgress;openLesson:(key:TrackKey,lesson?:CatalogLesson)=>void;openView:(view:ViewKey)=>void }) {
+  const course=useMemo(()=>summarizeLocalCourse(catalog,localProgress,'english'),[catalog,localProgress]);
+  const nextLesson=course.nextLesson;
+  const resuming=!course.allCompleted&&!!nextLesson&&lastOpenedLocalLessonId(localProgress,'english')===nextLesson.id;
+  const action=course.allCompleted?'Review final English lesson':resuming?'Resume English lesson':'Start English lesson';
+  const reviews=useMemo(()=>buildLocalReviewSchedule(catalog,localProgress,new Date(),'english'),[catalog,localProgress]);
+  const dueReviews=reviews.filter(item=>item.status==='due').length;
+  const everyday=course.modules.find(module=>module.code==='E');
+  const professional=course.modules.find(module=>module.code==='P');
   return (
     <section className="page-stack" data-testid="english-academy-view">
       <div className="academy-hero">
@@ -617,10 +631,20 @@ function EnglishAcademyView({ profile, learnerKey, openLesson }: { profile: Lear
           <div className="eyebrow light">ENGLISH ACADEMY • {profile.displayName.toUpperCase()}</div>
           <h2>General English first. Professional confidence built on top.</h2>
           <p>British and American English are both accepted, with deliberate Irish exposure for real life in Dublin. The programme adapts to the learner rather than forcing one fixed textbook path.</p>
-          <div className="hero-actions"><button className="primary-btn" onClick={openLesson}>Open English Golden Lesson</button><span className="academy-level">{profile.english.cefr} provisional • {profile.english.targetCefr} target</span></div>
+          <div className="hero-actions"><button className="primary-btn" onClick={() => nextLesson?openLesson('english',nextLesson):openLesson('english')}>{nextLesson?action:'Open English lesson'}</button><span className="academy-level">{profile.english.cefr} provisional • {profile.english.targetCefr} target</span></div>
         </div>
         <div className="exposure-ring" aria-label="Language exposure mix"><strong>40 / 40 / 20</strong><span>UK • US • Ireland</span></div>
       </div>
+
+      {course.total>0?<section className="acca-study-board english-study-board" data-testid="english-study-board">
+        <div className="section-heading"><div><div className="eyebrow">ENGLISH DAILY AGENDA</div><h2>Build everyday fluency and professional confidence together</h2></div><span>Balanced local core · no provider calls</span></div>
+        <div className="acca-agenda-grid">
+          <article className="acca-agenda-card"><span>NEXT LESSON</span><strong>{nextLesson?.title??'Local core completed'}</strong><small>{nextLesson?`${nextLesson.estimatedMinutes} min · progress stays in this browser`:'All four lessons remain available for review.'}</small>{nextLesson?<button className="primary-btn" onClick={()=>openLesson('english',nextLesson)}>{action}</button>:null}</article>
+          <article className="acca-agenda-card"><span>50 / 50 BALANCE</span><strong>{everyday?.total??0} everyday · {professional?.total??0} professional</strong><small>This first local core keeps both halves equal before later lessons are added in balanced pairs.</small><button className="secondary-btn" onClick={()=>openView('learn')}>View English lessons</button></article>
+          <article className={`acca-agenda-card ${dueReviews?'review-due':''}`}><span>SPACED RETRIEVAL</span><strong>{dueReviews?`${dueReviews} review${dueReviews===1?'':'s'} due`:'D+1 · D+7 · D+30'}</strong><small>{course.completedCount?`${course.completedCount}/${course.total} lessons finished locally`:'Finish the first lesson to start the review cycle.'}</small><button className="secondary-btn" onClick={()=>openView('revision')}>{dueReviews?'Open due reviews':'View review plan'}</button></article>
+        </div>
+        <div className="acca-module-grid" aria-label="English progress by balance area">{course.modules.map(module=><article key={module.code} className="acca-module-card"><div><b>{module.code}</b><span>{module.label}</span></div><strong>{module.completedCount}/{module.total}</strong><div className="progress-track"><span style={{width:`${module.percent}%`}} /></div><small>{module.remainingMinutes?`${module.remainingMinutes} min estimated remaining`:'Area locally completed'}</small></article>)}</div>
+      </section>:null}
 
       <div className="academy-grid">
         <article className="academy-card wide-academy-card">
@@ -655,21 +679,27 @@ function EnglishAcademyView({ profile, learnerKey, openLesson }: { profile: Lear
   );
 }
 
-function RevisionView({ memory, memoryStatus, catalog, localProgress, openLocalReview }: { memory: LearningMemorySnapshot | null; memoryStatus: MemoryStatus;catalog:CatalogLesson[];localProgress:LocalStudyProgress;openLocalReview:(item:LocalReviewItem)=>void }) {
-  const reviews = memory?.reviews ?? [];
-  const localCourse=useMemo(()=>summarizeLocalCourse(catalog,localProgress,'finance'),[catalog,localProgress]);
-  const localReviews=useMemo(()=>buildLocalReviewSchedule(catalog,localProgress),[catalog,localProgress]);
+function LocalReviewSection({track,label,catalog,localProgress,openLocalReview}:{track:'finance'|'english';label:string;catalog:CatalogLesson[];localProgress:LocalStudyProgress;openLocalReview:(item:LocalReviewItem)=>void}){
+  const localCourse=useMemo(()=>summarizeLocalCourse(catalog,localProgress,track),[catalog,localProgress,track]);
+  const localReviews=useMemo(()=>buildLocalReviewSchedule(catalog,localProgress,new Date(),track),[catalog,localProgress,track]);
   const dueLocalReviews=localReviews.filter(item=>item.status==='due');
   const visibleLocalReviews=[...dueLocalReviews,...localReviews.filter(item=>item.status==='scheduled').slice(0,Math.max(0,6-dueLocalReviews.length))];
+  if(!localCourse.total)return null;
+  return <>
+    <div className="section-heading"><div><div className="eyebrow">LOCAL {label.toUpperCase()} RETRIEVAL</div><h2>Revisit completed {label} lessons before they fade</h2></div><span>{dueLocalReviews.length} due · D+1 • D+7 • D+30</span></div>
+    <p className="priority-note"><strong>Browser-only review plan</strong><span>These reminders use your local completion dates. A saved retrieval attempt records only the stage and aggregate checkpoint result; it is not measured mastery{track==='finance'?' or exam readiness':''}.</span></p>
+    {visibleLocalReviews.length?<div className="review-list" data-testid={track==='finance'?'local-review-list':'local-english-review-list'}>{visibleLocalReviews.map(item=><div className={`review-row ${item.status==='due'?'local-review-due':''}`} key={`${item.lesson.id}:${item.stage}`}>
+      <span className="review-date">{item.stage}</span><div><strong>{item.lesson.title}</strong><span>{item.status==='due'?`Due since ${shortDate(item.dueAt)}`:`Scheduled ${shortDate(item.dueAt)}`}</span></div><button className={item.status==='due'?'primary-btn':'secondary-btn'} disabled={item.status!=='due'} onClick={()=>openLocalReview(item)}>{item.status==='due'?'Review now':'Scheduled'}</button>
+    </div>)}</div>:<div className="priority-note local-progress-note"><strong>{localCourse.completedCount?'Local review queue complete':'No local review scheduled yet'}</strong><span>{localCourse.completedCount?`All currently planned ${label} retrieval stages have been saved.`:`Finish a ${label} lesson checkpoint to schedule D+1, D+7 and D+30 retrieval.`}</span></div>}
+  </>;
+}
+
+function RevisionView({ memory, memoryStatus, catalog, localProgress, openLocalReview }: { memory: LearningMemorySnapshot | null; memoryStatus: MemoryStatus;catalog:CatalogLesson[];localProgress:LocalStudyProgress;openLocalReview:(item:LocalReviewItem)=>void }) {
+  const reviews = memory?.reviews ?? [];
   return (
     <section className="page-stack">
-      {localCourse.total>0?<>
-        <div className="section-heading"><div><div className="eyebrow">LOCAL ACCA RETRIEVAL</div><h2>Revisit completed lessons before they fade</h2></div><span>{dueLocalReviews.length} due · D+1 • D+7 • D+30</span></div>
-        <p className="priority-note"><strong>Browser-only review plan</strong><span>These reminders use your local completion dates. A saved retrieval attempt records only the stage and aggregate checkpoint result; it is not measured mastery or exam readiness.</span></p>
-        {visibleLocalReviews.length?<div className="review-list" data-testid="local-review-list">{visibleLocalReviews.map(item=><div className={`review-row ${item.status==='due'?'local-review-due':''}`} key={`${item.lesson.id}:${item.stage}`}>
-          <span className="review-date">{item.stage}</span><div><strong>{item.lesson.title}</strong><span>{item.status==='due'?`Due since ${shortDate(item.dueAt)}`:`Scheduled ${shortDate(item.dueAt)}`}</span></div><button className={item.status==='due'?'primary-btn':'secondary-btn'} disabled={item.status!=='due'} onClick={()=>openLocalReview(item)}>{item.status==='due'?'Review now':'Scheduled'}</button>
-        </div>)}</div>:<div className="priority-note local-progress-note"><strong>{localCourse.completedCount?'Local review queue complete':'No local review scheduled yet'}</strong><span>{localCourse.completedCount?'All currently planned ACCA retrieval stages have been saved.':'Finish an ACCA lesson checkpoint to schedule D+1, D+7 and D+30 retrieval.'}</span></div>}
-      </>:null}
+      <LocalReviewSection track="finance" label="ACCA" catalog={catalog} localProgress={localProgress} openLocalReview={openLocalReview}/>
+      <LocalReviewSection track="english" label="English" catalog={catalog} localProgress={localProgress} openLocalReview={openLocalReview}/>
       <div className="section-heading"><div><div className="eyebrow">MEASURED SPACED REVIEW</div><h2>Review what measured evidence says is most likely to be forgotten</h2></div><span>D+1 • D+7 • D+30 • D+90</span></div>
       {reviews.length === 0 ? <div className="review-list"><EmptyEvidence status={memoryStatus} /></div> : (
         <div className="review-list">
