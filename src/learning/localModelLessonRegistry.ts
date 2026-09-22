@@ -1,6 +1,6 @@
 import type {CatalogLesson} from './curriculumCatalogCore.ts';
 import type {P1Track} from './p1RuntimeRegistry.ts';
-export type LocalModelCode='A1'|'A2'|'B3'|'B4'|'B5'|'B6'|'B7'|'B8'|'B9'|'B10'|'B11'|'B12'|'C1'|'C2'|'C3'|'C4';
+export type LocalModelCode='A1'|'A2'|'B3'|'B4'|'B5'|'B6'|'B7'|'B8'|'B9'|'B10'|'B11'|'B12'|'C1'|'C2'|'C3'|'C4'|'D1'|'D2';
 export const ACCA_A1_MODEL_ID='a1100000-2026-4acc-8a01-000000000001';
 export const ACCA_A1_MODEL_SLUG='acca-fr-a1-purpose-users-reporting';
 export const ACCA_A2_MODEL_ID='a1200000-2026-4acc-8a02-000000000002';
@@ -33,6 +33,10 @@ export const ACCA_C3_MODEL_ID='c1300000-2026-4acc-8c03-000000000015';
 export const ACCA_C3_MODEL_SLUG='acca-fr-c3-limitations-interpretation-techniques';
 export const ACCA_C4_MODEL_ID='c1400000-2026-4acc-8c04-000000000016';
 export const ACCA_C4_MODEL_SLUG='acca-fr-c4-not-for-profit-public-sector';
+export const ACCA_D1_MODEL_ID='d1100000-2026-4acc-8d01-000000000017';
+export const ACCA_D1_MODEL_SLUG='acca-fr-d1-single-entity-financial-statements';
+export const ACCA_D2_MODEL_ID='d1200000-2026-4acc-8d02-000000000018';
+export const ACCA_D2_MODEL_SLUG='acca-fr-d2-consolidated-financial-statements';
 export const LOCAL_MODEL_LESSONS:readonly CatalogLesson[]=[
  {id:ACCA_A1_MODEL_ID,slug:ACCA_A1_MODEL_SLUG,title:'ACCA FR A1 · Purpose and users of financial reporting',subtitle:'Local model lesson · conceptual framework, users, stewardship and materiality',sequence:1,moduleSequence:1,estimatedMinutes:120,track:'finance',moduleSlug:'acca-fr-conceptual-framework',courseSlug:'acca-fr-local-model',origin:'local-model'},
  {id:ACCA_A2_MODEL_ID,slug:ACCA_A2_MODEL_SLUG,title:'ACCA FR A2 · Qualitative characteristics and the cost constraint',subtitle:'Local model lesson · relevance, faithful representation, prudence and cost',sequence:2,moduleSequence:1,estimatedMinutes:120,track:'finance',moduleSlug:'acca-fr-conceptual-framework',courseSlug:'acca-fr-local-model',origin:'local-model'},
@@ -50,6 +54,8 @@ export const LOCAL_MODEL_LESSONS:readonly CatalogLesson[]=[
  {id:ACCA_C2_MODEL_ID,slug:ACCA_C2_MODEL_SLUG,title:'ACCA FR C2 · Accounting ratios and trends',subtitle:'Local model lesson · profitability, liquidity, efficiency, gearing and stakeholder analysis',sequence:14,moduleSequence:3,estimatedMinutes:180,track:'finance',moduleSlug:'acca-fr-analysis-interpretation',courseSlug:'acca-fr-local-model',origin:'local-model'},
  {id:ACCA_C3_MODEL_ID,slug:ACCA_C3_MODEL_SLUG,title:'ACCA FR C3 · Limitations of interpretation techniques',subtitle:'Local model lesson · ratio limits, policies, cash-flow evidence and EPS trends',sequence:15,moduleSequence:3,estimatedMinutes:165,track:'finance',moduleSlug:'acca-fr-analysis-interpretation',courseSlug:'acca-fr-local-model',origin:'local-model'},
  {id:ACCA_C4_MODEL_ID,slug:ACCA_C4_MODEL_SLUG,title:'ACCA FR C4 · Not-for-profit and public sector entities',subtitle:'Local model lesson · service objectives, accountability, funding and outcome measures',sequence:16,moduleSequence:3,estimatedMinutes:150,track:'finance',moduleSlug:'acca-fr-analysis-interpretation',courseSlug:'acca-fr-local-model',origin:'local-model'},
+ {id:ACCA_D1_MODEL_ID,slug:ACCA_D1_MODEL_SLUG,title:'ACCA FR D1 · Single entity financial statements',subtitle:'Local model lesson · primary statements, equity movements and indirect cash flow',sequence:17,moduleSequence:4,estimatedMinutes:210,track:'finance',moduleSlug:'acca-fr-financial-statements',courseSlug:'acca-fr-local-model',origin:'local-model'},
+ {id:ACCA_D2_MODEL_ID,slug:ACCA_D2_MODEL_SLUG,title:'ACCA FR D2 · Consolidated financial statements',subtitle:'Local model lesson · control, goodwill, NCI, associates and group adjustments',sequence:18,moduleSequence:4,estimatedMinutes:240,track:'finance',moduleSlug:'acca-fr-financial-statements',courseSlug:'acca-fr-local-model',origin:'local-model'},
 ];
 export function localModelCodeFor(track:P1Track,lesson:{id:string;slug:string}):LocalModelCode|null{
  if(track!=='finance')return null;
@@ -69,6 +75,8 @@ export function localModelCodeFor(track:P1Track,lesson:{id:string;slug:string}):
  if(lesson.id===ACCA_C2_MODEL_ID&&lesson.slug===ACCA_C2_MODEL_SLUG)return 'C2';
  if(lesson.id===ACCA_C3_MODEL_ID&&lesson.slug===ACCA_C3_MODEL_SLUG)return 'C3';
  if(lesson.id===ACCA_C4_MODEL_ID&&lesson.slug===ACCA_C4_MODEL_SLUG)return 'C4';
+ if(lesson.id===ACCA_D1_MODEL_ID&&lesson.slug===ACCA_D1_MODEL_SLUG)return 'D1';
+ if(lesson.id===ACCA_D2_MODEL_ID&&lesson.slug===ACCA_D2_MODEL_SLUG)return 'D2';
  return null;
 }
 export function isLocalModelLesson(track:P1Track,lesson:{id:string;slug:string}){return localModelCodeFor(track,lesson)!==null;}

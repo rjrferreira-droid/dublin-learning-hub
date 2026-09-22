@@ -68,6 +68,8 @@ const localModels=[
  {slug:'acca-fr-c2-accounting-ratios-trends',title:'ACCA FR C2 · Accounting ratios and trends'},
  {slug:'acca-fr-c3-limitations-interpretation-techniques',title:'ACCA FR C3 · Limitations of interpretation techniques'},
  {slug:'acca-fr-c4-not-for-profit-public-sector',title:'ACCA FR C4 · Not-for-profit and public sector entities'},
+ {slug:'acca-fr-d1-single-entity-financial-statements',title:'ACCA FR D1 · Single entity financial statements'},
+ {slug:'acca-fr-d2-consolidated-financial-statements',title:'ACCA FR D2 · Consolidated financial statements'},
 ] as const;
 for(const model of localModels)for(const viewport of [{name:'desktop',width:1440,height:1000},{name:'mobile',width:390,height:844}])test(`${model.title} at ${viewport.name} is provider-free`,async({page})=>{
  await page.setViewportSize(viewport);const requests=await openFixture(page,courses[0],true);

@@ -1,5 +1,5 @@
 {
-  "version": "curriculum-professor-offline-scenarios-2026-09-22-v8",
+  "version": "curriculum-professor-offline-scenarios-2026-09-22-v9",
   "status": "authored_offline_expectations_not_model_results",
   "globalBoundaries": [
     "One clear question at a time.",
@@ -1143,6 +1143,148 @@
           "forbidden": [
             "Reduce the answer to profit-oriented ratios only.",
             "Claim the supported explanation is learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-D1",
+      "lessonId": "d1100000-2026-4acc-8d01-000000000017",
+      "scenarios": [
+        {
+          "id": "d1-correct-linked-statements",
+          "learner": "Operating profit is CU300, profit is CU210, net OCI is CU64 and the equity and cash-flow reconciliations close separately.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the separation of profit, OCI, equity and cash briefly.",
+            "Ask one transfer question changing a non-cash or owner transaction."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the statement pack was persisted."
+          ]
+        },
+        {
+          "id": "d1-dividend-expense-misconception",
+          "learner": "The CU70 dividend should be an operating expense because it reduces retained earnings and cash.",
+          "state": "misconception",
+          "expected": [
+            "Ask whether the payment is a transaction with owners or an expense incurred to generate income.",
+            "Guide the learner to separate equity recognition from the stated financing cash-flow classification."
+          ],
+          "forbidden": [
+            "Put the dividend in operating profit.",
+            "Say every equity movement is OCI."
+          ]
+        },
+        {
+          "id": "d1-indirect-cash-hint",
+          "learner": "I am stuck on the indirect cash-flow reconciliation after profit before tax. Can I have one hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt the learner to separate non-cash, non-operating and working-capital adjustments.",
+            "Invite calculation of one subtotal before revealing CU330."
+          ],
+          "forbidden": [
+            "Record the help request as a final error.",
+            "Count a PPE purchase both as depreciation and investing cash."
+          ]
+        },
+        {
+          "id": "d1-oci-self-correction",
+          "learner": "The revaluation gain is profit—sorry, under the stated facts it is OCI, net of its related tax effect, and moves the revaluation surplus.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected profit-versus-OCI treatment.",
+            "Ask how the treatment affects total comprehensive income and cash flow."
+          ],
+          "forbidden": [
+            "Preserve the abandoned profit classification as final.",
+            "Infer exam readiness from one correction."
+          ]
+        },
+        {
+          "id": "d1-supported-statement-pack",
+          "learner": "Please show me one concise answer linking profit, OCI, closing equity, operating cash and closing cash.",
+          "state": "answer_requested",
+          "expected": [
+            "Give a linked calculation with each amount entering the statements once.",
+            "Invite an optional changed-adjustment retry without calling it independent competence."
+          ],
+          "forbidden": [
+            "Provide disconnected totals without reconciliations.",
+            "Claim the supported answer is assessed learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-D2",
+      "lessonId": "d1200000-2026-4acc-8d02-000000000018",
+      "scenarios": [
+        {
+          "id": "d2-correct-goodwill-nci",
+          "learner": "Acquisition goodwill is CU90, closing goodwill is CU60 and closing NCI is CU179.6 after adjusted post-acquisition profit and its share of impairment.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the linked goodwill, post-acquisition and NCI workings briefly.",
+            "Ask one transfer question changing the NCI measurement basis."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the group working was saved."
+          ]
+        },
+        {
+          "id": "d2-investment-addition-misconception",
+          "learner": "In consolidation we add the parent's investment to all the subsidiary's assets because both belong to the group.",
+          "state": "misconception",
+          "expected": [
+            "Ask what economic interest the parent's investment represents.",
+            "Guide the learner to eliminate the investment and recognise underlying net assets, goodwill and NCI."
+          ],
+          "forbidden": [
+            "Double count the investment and subsidiary net assets.",
+            "Assume ownership percentage alone proves control."
+          ]
+        },
+        {
+          "id": "d2-unrealised-profit-hint",
+          "learner": "Half the internally sold inventory remains and I do not know which reserve to reduce. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt calculation of total internal profit and the portion still held.",
+            "Ask the learner to identify the seller before choosing group retained earnings or subsidiary post-acquisition profit."
+          ],
+          "forbidden": [
+            "Record the help request as failure.",
+            "Eliminate the full sales value instead of unrealised profit."
+          ]
+        },
+        {
+          "id": "d2-associate-self-correction",
+          "learner": "We consolidate 30% of every associate line—sorry, significant influence uses one equity-accounted investment and a share of results.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected equity-method presentation.",
+            "Ask how dividends and impairment affect the investment carrying amount."
+          ],
+          "forbidden": [
+            "Preserve proportional line-by-line consolidation as final.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "d2-supported-group-workings",
+          "learner": "Please show me a structured answer connecting net assets, goodwill, NCI, group retained earnings, unrealised profit and the associate.",
+          "state": "answer_requested",
+          "expected": [
+            "Give separate linked workings in a clear dependency order.",
+            "Invite an optional seller or NCI-basis change without claiming independent competence."
+          ],
+          "forbidden": [
+            "Use a balancing plug as goodwill or reserves.",
+            "Claim the worked answer is learner evidence."
           ]
         }
       ]
