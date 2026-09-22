@@ -68,19 +68,19 @@ test('local ACCA study flow saves completion in-browser and advances to the next
  await page.reload();await expect(page.getByRole('button',{name:'Resume ACCA FR A2',exact:true}).first()).toBeVisible();await page.getByRole('button',{name:'Resume ACCA FR A2',exact:true}).first().click();
  await expect(page.getByTestId('lesson-study-panel').getByRole('heading',{name:'ACCA FR A2 · Qualitative characteristics and the cost constraint',exact:true})).toBeVisible();
  await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await page.locator('.nav-stack').getByRole('button',{name:/Learning/}).click();
- await expect(page.getByTestId('local-curriculum-preview')).toContainText('ACCA 1/23 · English 0/4');await expect(page.getByTestId('catalog-lesson-acca-fr-a1-purpose-users-reporting')).toContainText(/Finished locally/);expect(requests()).toBe(0);
+ await expect(page.getByTestId('local-curriculum-preview')).toContainText('ACCA 1/23 · English 0/8');await expect(page.getByTestId('catalog-lesson-acca-fr-a1-purpose-users-reporting')).toContainText(/Finished locally/);expect(requests()).toBe(0);
 });
 
 test('balanced local English course completes, advances and schedules browser-only review',async({page})=>{
  const requests=await openFixture(page,courses[0],true);const panel=page.getByTestId('lesson-study-panel');
- await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await page.locator('.nav-stack').getByRole('button',{name:/English Academy/}).click();
- const board=page.getByTestId('english-study-board');await expect(board).toContainText('2 everyday · 2 professional');await expect(board).toContainText('D+1 · D+7 · D+30');
+ await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();const today=page.getByTestId('today-study-plan');await expect(today).toContainText('One technical block, one English block, one retrieval block');await expect(today).toContainText('Tell a story naturally');await expect(today).toContainText('ACCA FR Mini Mock 01');await page.locator('.nav-stack').getByRole('button',{name:/English Academy/}).click();
+ const board=page.getByTestId('english-study-board');await expect(board).toContainText('4 everyday · 4 professional');await expect(board).toContainText('D+1 · D+7 · D+30');
  await board.getByRole('button',{name:'Start English lesson',exact:true}).click();await expect(panel.getByRole('heading',{name:'Tell a story naturally: past forms, rhythm & follow-up questions',exact:true})).toBeVisible();
  await page.getByRole('tab',{name:'Test',exact:true}).click();for(let i=0;i<5;i++){const q=panel.getByTestId('checkpoint-question-'+i);await q.getByRole('radio').first().check();await q.getByRole('button',{name:'Check answer',exact:true}).click();}
  await panel.getByRole('button',{name:'Finish lesson locally',exact:true}).click();await expect(panel.getByTestId('local-completion-saved')).toContainText('Completed in this browser');
  await panel.getByRole('button',{name:'Continue to Everyday Dublin: weather, plans and natural small talk',exact:true}).click();await expect(panel.getByRole('heading',{name:'Everyday Dublin: weather, plans and natural small talk',exact:true})).toBeVisible();
  await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await page.locator('.nav-stack').getByRole('button',{name:/English Academy/}).click();
- await expect(page.getByTestId('english-study-board')).toContainText('1/4 lessons finished locally');await expect(page.getByTestId('english-study-board')).toContainText('Resume English lesson');
+ await expect(page.getByTestId('english-study-board')).toContainText('1/8 lessons finished locally');await expect(page.getByTestId('english-study-board')).toContainText('Resume English lesson');
  await page.locator('.nav-stack').getByRole('button',{name:/Revision/}).click();await expect(page.getByTestId('local-english-review-list')).toContainText('Tell a story naturally');await expect(page.getByTestId('local-english-review-list')).toContainText('D+1');await expect(page.getByTestId('local-english-review-list')).toContainText('Scheduled');
  await page.reload();await page.locator('.nav-stack').getByRole('button',{name:/English Academy/}).click();await expect(page.getByTestId('english-study-board')).toContainText('Resume English lesson');expect(requests()).toBe(0);
 });

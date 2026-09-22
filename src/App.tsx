@@ -409,6 +409,7 @@ function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, open
   const measuredCompetencies = memory?.competencies.length ?? 0;
   const evaluatedSessions = memory?.history.length ?? 0;
   const localCourse=useMemo(()=>summarizeLocalCourse(catalog,localProgress,'finance'),[catalog,localProgress]);
+  const englishCourse=useMemo(()=>summarizeLocalCourse(catalog,localProgress,'english'),[catalog,localProgress]);
   const showLocalCourse=primaryTrack==='finance'&&localCourse.total>0;
   const dailyLesson=showLocalCourse?localCourse.nextLesson:null;
   const dailyCode=dailyLesson?.title.split(' · ')[0]??'ACCA FR';
@@ -417,6 +418,8 @@ function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, open
   const studyBlocks=dailyLesson?Math.ceil(dailyLesson.estimatedMinutes/30):0;
   const localReviews=useMemo(()=>buildLocalReviewSchedule(catalog,localProgress),[catalog,localProgress]);
   const dueLocalReviews=localReviews.filter(item=>item.status==='due');
+  const englishReviews=useMemo(()=>buildLocalReviewSchedule(catalog,localProgress,new Date(),'english'),[catalog,localProgress]);
+  const dueEnglishReviews=englishReviews.filter(item=>item.status==='due');
   const nextLocalReview=dueLocalReviews[0]??localReviews[0]??null;
   const remainingHours=Math.round(localCourse.remainingMinutes/6)/10;
 
@@ -448,6 +451,15 @@ function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, open
         <div className="metric-value">{evaluatedSessions}</div>
         <div className="metric-foot">private learner history</div>
       </div>
+
+      {showLocalCourse&&englishCourse.total>0?<section className="acca-study-board full-span" data-testid="today-study-plan">
+        <div className="section-heading"><div><div className="eyebrow">WHAT TO STUDY TODAY</div><h2>One technical block, one English block, one retrieval block</h2></div><span>Simple local agenda · about 3 focused blocks</span></div>
+        <div className="acca-agenda-grid">
+          <article className="acca-agenda-card"><span>1 · ACCA FR</span><strong>{dailyLesson?.title??'Review your latest ACCA lesson'}</strong><small>{dailyLesson?`${dailyLesson.estimatedMinutes} min available as a complete lesson; choose one focused block today.`:'Curriculum complete — use a marked lesson for retrieval.'}</small><button className="primary-btn" onClick={()=>dailyLesson?openLesson('finance',dailyLesson):openView('revision')}>{dailyLesson?dailyAction:'Open revision'}</button></article>
+          <article className="acca-agenda-card"><span>2 · ENGLISH</span><strong>{englishCourse.nextLesson?.title??'Review your latest English lesson'}</strong><small>{englishCourse.nextLesson?`${englishCourse.nextLesson.estimatedMinutes} min · keep the 50/50 everyday/professional sequence moving.`:'Eight-lesson local core complete.'}</small><button className="primary-btn" onClick={()=>englishCourse.nextLesson?openLesson('english',englishCourse.nextLesson):openView('english-academy')}>{englishCourse.nextLesson?'Open English block':'Open English Academy'}</button></article>
+          <article className={`acca-agenda-card ${dueLocalReviews.length+dueEnglishReviews.length?'review-due':''}`}><span>3 · RETRIEVE OR TEST</span><strong>{dueLocalReviews.length+dueEnglishReviews.length?`${dueLocalReviews.length+dueEnglishReviews.length} spaced review${dueLocalReviews.length+dueEnglishReviews.length===1?'':'s'} due`:'ACCA FR Mini Mock 01'}</strong><small>{dueLocalReviews.length+dueEnglishReviews.length?'Clear due D+1, D+7 or D+30 retrieval before adding more new material.':'No local review is due; use the 30-minute mock for exam practice.'}</small><button className="secondary-btn" onClick={()=>openView(dueLocalReviews.length+dueEnglishReviews.length?'revision':'mock-exams')}>{dueLocalReviews.length+dueEnglishReviews.length?'Open reviews':'Open mock'}</button></article>
+        </div>
+      </section>:null}
 
       {showLocalCourse?<section className="acca-study-board full-span" data-testid="acca-study-board">
         <div className="section-heading"><div><div className="eyebrow">ACCA DAILY AGENDA</div><h2>Study, retrieve and keep the whole FR syllabus moving</h2></div><span>Local plan · no provider calls</span></div>
@@ -643,7 +655,7 @@ function EnglishAcademyView({ profile, learnerKey, catalog, localProgress, openL
       {course.total>0?<section className="acca-study-board english-study-board" data-testid="english-study-board">
         <div className="section-heading"><div><div className="eyebrow">ENGLISH DAILY AGENDA</div><h2>Build everyday fluency and professional confidence together</h2></div><span>Balanced local core · no provider calls</span></div>
         <div className="acca-agenda-grid">
-          <article className="acca-agenda-card"><span>NEXT LESSON</span><strong>{nextLesson?.title??'Local core completed'}</strong><small>{nextLesson?`${nextLesson.estimatedMinutes} min · progress stays in this browser`:'All four lessons remain available for review.'}</small>{nextLesson?<button className="primary-btn" onClick={()=>openLesson('english',nextLesson)}>{action}</button>:null}</article>
+          <article className="acca-agenda-card"><span>NEXT LESSON</span><strong>{nextLesson?.title??'Local core completed'}</strong><small>{nextLesson?`${nextLesson.estimatedMinutes} min · progress stays in this browser`:'All eight lessons remain available for review.'}</small>{nextLesson?<button className="primary-btn" onClick={()=>openLesson('english',nextLesson)}>{action}</button>:null}</article>
           <article className="acca-agenda-card"><span>50 / 50 BALANCE</span><strong>{everyday?.total??0} everyday · {professional?.total??0} professional</strong><small>This first local core keeps both halves equal before later lessons are added in balanced pairs.</small><button className="secondary-btn" onClick={()=>openView('learn')}>View English lessons</button></article>
           <article className={`acca-agenda-card ${dueReviews?'review-due':''}`}><span>SPACED RETRIEVAL</span><strong>{dueReviews?`${dueReviews} review${dueReviews===1?'':'s'} due`:'D+1 · D+7 · D+30'}</strong><small>{course.completedCount?`${course.completedCount}/${course.total} lessons finished locally`:'Finish the first lesson to start the review cycle.'}</small><button className="secondary-btn" onClick={()=>openView('revision')}>{dueReviews?'Open due reviews':'View review plan'}</button></article>
         </div>
