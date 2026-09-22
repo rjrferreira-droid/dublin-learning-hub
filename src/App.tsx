@@ -14,6 +14,7 @@ import {buildLocalReviewSchedule,completeLocalLesson,completeLocalReview,lastOpe
 import {isSequence3Slug} from './learning/sequence3Registry';
 import {p1SlugFor} from './learning/p1RuntimeModules';
 import { LessonStudyPanel } from './components/LessonStudyPanel';
+import {LocalMockExamView} from './components/LocalMockExamView';
 import {LessonProfessorWorkspace} from './components/LessonProfessorWorkspace';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLearnerSession } from './auth/LearnerSession';
@@ -33,7 +34,7 @@ import { supabase } from './services/supabase';
 import { isTrackVisible, primaryVisibleTrack } from './config/presentation';
 
 type TrackKey = 'finance' | 'payroll' | 'english';
-type ViewKey = 'dashboard' | 'learn' | 'revision' | 'performance' | 'professor' | 'error-bank' | 'english-academy';
+type ViewKey = 'dashboard' | 'learn' | 'mock-exams' | 'revision' | 'performance' | 'professor' | 'error-bank' | 'english-academy';
 
 type Track = {
   key: TrackKey;
@@ -294,6 +295,7 @@ function App() {
         <nav className="nav-stack">
           <NavButton label="Dashboard" icon="⌂" active={view === 'dashboard'} onClick={() => { setView('dashboard'); setLessonOpen(false); }} />
           <NavButton label="Learning" icon="▤" active={view === 'learn'} onClick={() => { setView('learn'); setLessonOpen(false); }} />
+          <NavButton label="Mock exams" icon="✓" active={view === 'mock-exams'} onClick={() => { setView('mock-exams'); setLessonOpen(false); }} />
           <NavButton label="English Academy" icon="EN" active={view === 'english-academy'} onClick={() => { setView('english-academy'); setLessonOpen(false); }} />
           <NavButton label="Revision" icon="↻" active={view === 'revision'} onClick={() => { setView('revision'); setLessonOpen(false); }} />
           <NavButton label="Error Bank" icon="!" active={view === 'error-bank'} onClick={() => { setView('error-bank'); setLessonOpen(false); }} />
@@ -341,6 +343,8 @@ function App() {
           <Dashboard learnerKey={learnerKey} profile={profile} memory={visibleMemory} memoryStatus={memoryStatus} openLesson={openLesson} openView={setView} catalog={supportedCatalog} localProgress={localProgress} />
         ) : view === 'learn' ? (
           <LearningLibrary learnerKey={learnerKey} catalog={supportedCatalog} catalogUnavailable={catalogUnavailable} openLesson={openLesson} localProgress={localProgress} />
+        ) : view === 'mock-exams' ? (
+          <LocalMockExamView scope={account.userId} />
         ) : view === 'english-academy' ? (
           <EnglishAcademyView profile={profile} learnerKey={learnerKey} catalog={supportedCatalog} localProgress={localProgress} openLesson={openLesson} openView={setView} />
         ) : view === 'revision' ? (
@@ -796,6 +800,7 @@ function ProfessorView({ learnerKey, profile, openLesson }: { learnerKey: Learne
 function titleForView(view: ViewKey) {
   if (view === 'dashboard') return 'Your learning command centre';
   if (view === 'learn') return 'Learning library';
+  if (view === 'mock-exams') return 'ACCA FR Mock Engine';
   if (view === 'english-academy') return 'English Academy';
   if (view === 'revision') return 'Revision queue';
   if (view === 'error-bank') return 'Error Bank';
@@ -806,6 +811,7 @@ function titleForView(view: ViewKey) {
 function subtitleForView(view: ViewKey, profile: LearningProfile) {
   if (view === 'dashboard') return `One adaptive system tuned for ${profile.displayName}, with measured learning evidence kept private to the signed-in account.`;
   if (view === 'learn') return 'Explore Finance and English at your own pace.';
+  if (view === 'mock-exams') return 'Timed, provider-free exam practice with transparent local marking and spaced debriefs.';
   if (view === 'english-academy') return 'General English, professional communication and real-world Dublin exposure in one adaptive programme.';
   if (view === 'revision') return 'Only scheduled reviews from real evaluated sessions appear here.';
   if (view === 'error-bank') return 'Only recurring technical and language mistakes recorded from learner evidence appear here.';

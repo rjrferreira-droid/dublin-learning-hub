@@ -85,6 +85,16 @@ test('balanced local English course completes, advances and schedules browser-on
  await page.reload();await page.locator('.nav-stack').getByRole('button',{name:/English Academy/}).click();await expect(page.getByTestId('english-study-board')).toContainText('Resume English lesson');expect(requests()).toBe(0);
 });
 
+test('local ACCA mock runs, marks and schedules review without provider requests',async({page})=>{
+ const requests=await openFixture(page,courses[0],true);await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await page.locator('.nav-stack').getByRole('button',{name:/Mock exams/}).click();
+ const mock=page.getByTestId('local-mock-exam');await expect(mock.getByRole('heading',{name:'ACCA FR Mini Mock 01',exact:true})).toBeVisible();await expect(mock).toContainText('Browser-only summary');await mock.getByRole('button',{name:'Start 30-minute mock',exact:true}).click();
+ const correct=[0,1,1,1,0,1];for(let i=0;i<correct.length;i++)await mock.getByTestId(`mock-question-${i}`).getByRole('radio').nth(correct[i]).check();
+ await mock.getByLabel('Your answer',{exact:true}).fill('Revenue grew, but both margins and ROCE weakened. More cash-flow and segment evidence is needed.');await mock.getByRole('button',{name:'Submit and open marking guide',exact:true}).click();
+ await expect(mock.getByTestId('mock-marking-guide')).toContainText('12/12');const marking=mock.locator('.mock-marking-point input');await expect(marking).toHaveCount(8);for(let i=0;i<8;i++)await marking.nth(i).check();await expect(mock.getByTestId('mock-marking-guide')).toContainText('20/20');
+ await mock.getByRole('button',{name:'Save attempt & schedule reviews',exact:true}).click();await expect(mock.getByTestId('mock-result-saved')).toContainText('written response was not saved');await mock.getByRole('button',{name:'Back to mock overview',exact:true}).click();
+ await expect(mock.getByTestId('mock-latest-attempt')).toContainText('20/20 marks');await expect(mock).toContainText('D+1');await expect(mock).toContainText('Review scheduled');expect(requests()).toBe(0);
+});
+
 const localModels=[
  {slug:'acca-fr-a1-purpose-users-reporting',title:'ACCA FR A1 · Purpose and users of financial reporting'},
  {slug:'acca-fr-a2-qualitative-characteristics-cost-constraint',title:'ACCA FR A2 · Qualitative characteristics and the cost constraint'},
