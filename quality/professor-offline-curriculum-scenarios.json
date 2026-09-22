@@ -1,5 +1,5 @@
 {
-  "version": "curriculum-professor-offline-scenarios-2026-09-22-v6",
+  "version": "curriculum-professor-offline-scenarios-2026-09-22-v7",
   "status": "authored_offline_expectations_not_model_results",
   "globalBoundaries": [
     "One clear question at a time.",
@@ -859,6 +859,148 @@
           "forbidden": [
             "Place all exchange movement in one period without a reporting-date close.",
             "Claim the worked explanation is assessed evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-C1",
+      "lessonId": "c1100000-2026-4acc-8c01-000000000013",
+      "scenarios": [
+        {
+          "id": "c1-correct-average-inventory",
+          "learner": "Closing inventory days are 50.7, but average inventory days are 111.5, so the seasonal year-end balance does not prove efficiency improved.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the distinction between a reporting-date balance and representative average.",
+            "Ask one transfer question changing the seasonal pattern or available average."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the reasoning was persisted."
+          ]
+        },
+        {
+          "id": "c1-history-misconception",
+          "learner": "Last year revenue grew by 15%, so audited financial statements prove it will grow by exactly 15% next year.",
+          "state": "misconception",
+          "expected": [
+            "Separate reliability of historical reporting from certainty about future conditions.",
+            "Ask for one forward-looking item such as orders, market evidence or capacity."
+          ],
+          "forbidden": [
+            "Say historical information has no analytical value.",
+            "Accept mechanical extrapolation as a forecast."
+          ]
+        },
+        {
+          "id": "c1-seasonality-hint",
+          "learner": "I know the closing balance may be seasonal, but I am stuck on what evidence to request. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Point toward monthly or quarterly balances and the operating cycle.",
+            "Invite the learner to name one representative comparison before explaining more."
+          ],
+          "forbidden": [
+            "Record the help request as a final error.",
+            "Assume an average automatically replaces the reported closing balance."
+          ]
+        },
+        {
+          "id": "c1-group-self-correction",
+          "learner": "A stable consolidated margin proves every subsidiary was stable—sorry, different segment movements can offset in the group total.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected aggregation limitation.",
+            "Ask which segment or group-composition disclosure would test the conclusion."
+          ],
+          "forbidden": [
+            "Store the abandoned claim as the learner's final answer.",
+            "Infer exam readiness from one correction."
+          ]
+        },
+        {
+          "id": "c1-supported-limitation-analysis",
+          "learner": "Please show me how to distinguish a seasonal snapshot, a late-acquisition denominator effect and revenue recorded before control transfers.",
+          "state": "answer_requested",
+          "expected": [
+            "Explain the three issues separately as representation, comparability and recognition questions.",
+            "Invite an optional changed-fact retry without calling it independent mastery."
+          ],
+          "forbidden": [
+            "Treat analytical commentary as a substitute for correcting an accounting error.",
+            "Claim the worked explanation is assessed learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-C2",
+      "lessonId": "c1200000-2026-4acc-8c02-000000000014",
+      "scenarios": [
+        {
+          "id": "c2-correct-profitability",
+          "learner": "Operating margin is 12%, asset turnover is 1.25 times and ROCE is 15%, so the two components reconcile under the stated capital convention.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the margin-times-turnover reconciliation briefly.",
+            "Ask one transfer question changing operating profit or capital employed."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the calculation was saved."
+          ]
+        },
+        {
+          "id": "c2-ratio-alone-misconception",
+          "learner": "Revenue grew by 25%, so performance definitely improved and the lender does not need any other ratios or cash-flow information.",
+          "state": "misconception",
+          "expected": [
+            "Ask what happened to margins, collections and debt-service headroom.",
+            "Guide the learner to connect growth with cash flow and lender risk."
+          ],
+          "forbidden": [
+            "Accept one favourable percentage as a complete conclusion.",
+            "List generic causes without using the scenario."
+          ]
+        },
+        {
+          "id": "c2-quick-ratio-hint",
+          "learner": "Current assets are 480, inventory is 240 and current liabilities are 300, but I cannot remember the quick ratio. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt the learner to remove inventory from current assets before division.",
+            "Invite calculation of the remaining quick assets before revealing 0.80."
+          ],
+          "forbidden": [
+            "Record the request for help as a knowledge error.",
+            "Describe the ratio as a complete cash forecast."
+          ]
+        },
+        {
+          "id": "c2-financing-self-correction",
+          "learner": "Higher gearing means lower financing risk—sorry, more debt can increase fixed commitments, and I should also inspect interest cover and cash flow.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected risk relationship and linked evidence.",
+            "Ask which debt term or maturity fact would matter to a lender."
+          ],
+          "forbidden": [
+            "Preserve the abandoned lower-risk statement as final.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "c2-supported-integrated-analysis",
+          "learner": "Please show me one lender-focused answer connecting margins, working-capital days, gearing, interest cover and missing evidence.",
+          "state": "answer_requested",
+          "expected": [
+            "Give a concise calculation-comparison-cause-consequence-evidence chain.",
+            "Invite one optional changed-stakeholder or changed-number retry."
+          ],
+          "forbidden": [
+            "Provide only a list of ratios without interpretation.",
+            "Claim the supported answer proves independent competence."
           ]
         }
       ]
