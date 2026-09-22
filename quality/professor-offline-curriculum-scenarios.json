@@ -1,5 +1,5 @@
 {
-  "version": "curriculum-professor-offline-scenarios-2026-09-22-v7",
+  "version": "curriculum-professor-offline-scenarios-2026-09-22-v8",
   "status": "authored_offline_expectations_not_model_results",
   "globalBoundaries": [
     "One clear question at a time.",
@@ -1001,6 +1001,148 @@
           "forbidden": [
             "Provide only a list of ratios without interpretation.",
             "Claim the supported answer proves independent competence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-C3",
+      "lessonId": "c1300000-2026-4acc-8c03-000000000015",
+      "scenarios": [
+        {
+          "id": "c3-correct-eps-cash",
+          "learner": "Profit rose, but EPS fell from CU1.00 to CU0.75 and operating-cash conversion fell to 43.1%, so the stronger-profit conclusion needs more evidence.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the denominator and cash-conversion reasoning briefly.",
+            "Ask one transfer question changing shares or operating cash."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the analysis was persisted."
+          ]
+        },
+        {
+          "id": "c3-ratio-verdict-misconception",
+          "learner": "The competitor has higher ROCE, so it is definitely better even though its property is revalued and ours is held at old cost.",
+          "state": "misconception",
+          "expected": [
+            "Ask how the different property bases affect capital employed.",
+            "Guide the learner to retain a comparability limitation before ranking performance."
+          ],
+          "forbidden": [
+            "Accept a precise ratio as proof of causation.",
+            "Invent an undisclosed policy adjustment."
+          ]
+        },
+        {
+          "id": "c3-policy-hint",
+          "learner": "The entities use different accounting policies and I do not know how to compare them. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Point toward policy notes, restated comparatives or disclosed reconciliations.",
+            "Invite one evidence-based sensitivity before revealing a conclusion."
+          ],
+          "forbidden": [
+            "Record the help request as a final error.",
+            "Recommend changing numbers without reliable evidence."
+          ]
+        },
+        {
+          "id": "c3-cash-self-correction",
+          "learner": "Cash flow is always better than profit—sorry, they answer different questions and should be reconciled with working capital and investment.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected complementary relationship.",
+            "Ask what an investing outflow could represent besides deterioration."
+          ],
+          "forbidden": [
+            "Store the abandoned cash-superiority claim as final.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "c3-supported-integrated-analysis",
+          "learner": "Please show me one answer linking stable margin, weaker cash conversion, lower EPS and different peer policies.",
+          "state": "answer_requested",
+          "expected": [
+            "Give a concise signal-limitation-evidence chain for each issue.",
+            "Invite an optional changed-number retry without calling it independent competence."
+          ],
+          "forbidden": [
+            "Provide only calculations without interpretation.",
+            "Claim the worked answer is assessed learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-C4",
+      "lessonId": "c1400000-2026-4acc-8c04-000000000016",
+      "scenarios": [
+        {
+          "id": "c4-correct-balanced-mission",
+          "learner": "The charity reached more users and lowered cost per user, but liquidity, unrestricted reserves, outcome rate and satisfaction weakened, so performance is mixed.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the balance between reach, efficiency, sustainability and effectiveness.",
+            "Ask one transfer question changing the stakeholder or funding restriction."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the conclusion was saved."
+          ]
+        },
+        {
+          "id": "c4-surplus-misconception",
+          "learner": "The not-for-profit made a surplus, so that proves it achieved its mission and no service measures are needed.",
+          "state": "misconception",
+          "expected": [
+            "Separate financial resilience from mission achievement.",
+            "Ask for one reach, quality or outcome measure relevant to beneficiaries."
+          ],
+          "forbidden": [
+            "Treat surplus maximisation as the universal primary objective.",
+            "Say financial sustainability is irrelevant."
+          ]
+        },
+        {
+          "id": "c4-restricted-funding-hint",
+          "learner": "The entity has plenty of restricted cash but cannot cover general payroll. I am stuck on why. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Ask which purpose, period or conditions restrict the resources.",
+            "Invite the learner to distinguish restricted from unrestricted liquidity."
+          ],
+          "forbidden": [
+            "Record the help request as failure.",
+            "Assume all grant cash is interchangeable."
+          ]
+        },
+        {
+          "id": "c4-effectiveness-self-correction",
+          "learner": "Lower cost per user proves effectiveness—sorry, that is an efficiency signal; effectiveness needs evidence about intended outcomes.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected efficiency-versus-effectiveness distinction.",
+            "Ask for one outcome measure and one quality safeguard."
+          ],
+          "forbidden": [
+            "Preserve the abandoned equivalence as the final answer.",
+            "Infer exam readiness from one correction."
+          ]
+        },
+        {
+          "id": "c4-supported-board-analysis",
+          "learner": "Please show me a board-focused answer combining surplus, cost per user, restricted funds, liquidity and outcome quality.",
+          "state": "answer_requested",
+          "expected": [
+            "Connect financial capacity, restrictions, service volume, efficiency and effectiveness.",
+            "Invite an optional changed-stakeholder retry without claiming independent mastery."
+          ],
+          "forbidden": [
+            "Reduce the answer to profit-oriented ratios only.",
+            "Claim the supported explanation is learner evidence."
           ]
         }
       ]

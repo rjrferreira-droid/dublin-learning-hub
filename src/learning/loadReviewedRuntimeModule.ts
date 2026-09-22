@@ -19,5 +19,7 @@ export async function loadReviewedRuntimeModuleFor(track:P1Track,lesson:{id:stri
  if(local==='B12'){const {localModelB12For}=await import('./localModelLessonB12.ts');return localModelB12For(track,lesson);}
  if(local==='C1'){const {localModelC1For}=await import('./localModelLessonC1.ts');return localModelC1For(track,lesson);}
  if(local==='C2'){const {localModelC2For}=await import('./localModelLessonC2.ts');return localModelC2For(track,lesson);}
+ if(local==='C3'){const {localModelC3For}=await import('./localModelLessonC3.ts');return localModelC3For(track,lesson);}
+ if(local==='C4'){const {localModelC4For}=await import('./localModelLessonC4.ts');return localModelC4For(track,lesson);}
  return loadP1ModuleFor(track,lesson);
 }
