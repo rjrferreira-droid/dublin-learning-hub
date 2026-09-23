@@ -6,7 +6,7 @@
 - The daily agenda now shows a suggested three-lesson weekly pace, estimated hours and weeks remaining, and separate progress for syllabus modules A–E.
 - A lesson can be marked finished only after all five fixed checkpoint questions have been checked. The stored record contains lesson ID, completion time and aggregate correct/total counts; drafts and individual answers remain ephemeral.
 - After saving completion, the checkpoint offers a direct, learner-controlled transition to the next lesson. It does not navigate automatically, so the learner can still review the completed attempt.
-- Completion schedules browser-only D+1, D+7 and D+30 retrieval. A due review opens the original checkpoint and saves only its stage, date and aggregate result while preserving the original lesson-completion date.
+- Completion schedules account-synced D+1, D+7 and D+30 retrieval. A due review opens the original checkpoint and saves only its stage, date and aggregate result while preserving the original lesson-completion date. The browser keeps a local resilience copy while Supabase V2 is temporarily unavailable.
 - The Learning Library shows finished, resume and review states plus a 23-lesson local counter. Completion is a self-study navigation marker, not persisted learner evidence, AI evaluation, mastery, course completion or exam readiness.
 - Browser storage is versioned, scoped to the authenticated user ID, strictly parsed and fail-closed when unavailable or malformed. Existing v1 completion data migrates to v2 review storage without a network request.
 - The 23 ACCA FR runtime lessons remain local Preview content. Professor and Premium Audio remain inactive for these lessons.

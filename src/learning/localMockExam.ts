@@ -81,6 +81,28 @@ export function readLocalMockProgress(storage:Pick<Storage,'getItem'>|null|undef
 export function writeLocalMockProgress(storage:Pick<Storage,'setItem'>|null|undefined,progress:LocalMockProgress,scope='default'){
  if(!storage)return false;try{storage.setItem(mockProgressKey(scope),JSON.stringify(progress));return true;}catch{return false;}
 }
+export function mergeLocalMockProgress(primary:LocalMockProgress,secondary:LocalMockProgress):LocalMockProgress{
+ const left=parseLocalMockProgress(primary),right=parseLocalMockProgress(secondary);
+ const attempts:LocalMockProgress['attempts']={};
+ const reviews:LocalMockProgress['reviews']={};
+ for(const mockId of new Set([...Object.keys(right.attempts),...Object.keys(left.attempts)])){
+  const byId=new Map<string,LocalMockAttempt>();
+  for(const attempt of [...(right.attempts[mockId]??[]),...(left.attempts[mockId]??[])]){
+   const existing=byId.get(attempt.id);
+   if(!existing||Date.parse(attempt.submittedAt)>=Date.parse(existing.submittedAt))byId.set(attempt.id,attempt);
+  }
+  const merged=[...byId.values()].sort((a,b)=>Date.parse(a.submittedAt)-Date.parse(b.submittedAt)).slice(-10);
+  if(!merged.length)continue;
+  attempts[mockId]=merged;
+  const latestId=merged.at(-1)!.id,mergedReviews:Partial<Record<LocalMockReviewStage,LocalMockReview>>={};
+  const candidates=[left,right].filter(source=>source.attempts[mockId]?.at(-1)?.id===latestId);
+  for(const stage of LOCAL_MOCK_REVIEW_STAGES){
+   for(const source of candidates){const candidate=source.reviews[mockId]?.[stage],existing=mergedReviews[stage];if(candidate&&(!existing||Date.parse(candidate.reviewedAt)>=Date.parse(existing.reviewedAt)))mergedReviews[stage]=candidate;}
+  }
+  if(Object.keys(mergedReviews).length)reviews[mockId]=mergedReviews;
+ }
+ return parseLocalMockProgress({version:1,attempts,reviews});
+}
 export function recordLocalMockAttempt(progress:LocalMockProgress,mockId:string,attempt:LocalMockAttempt):LocalMockProgress{
  const parsed=parseLocalMockProgress({version:1,attempts:{[mockId]:[attempt]},reviews:{}}).attempts[mockId]?.[0];if(!parsed)return progress;
  const previous=progress.attempts[mockId]??[];if(previous.some(item=>item.id===parsed.id))return progress;

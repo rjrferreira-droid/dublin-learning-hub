@@ -70,6 +70,27 @@ export function writeLocalStudyProgress(storage:Pick<Storage,'setItem'>|null|und
  try{storage.setItem(localStudyProgressKey(scope),JSON.stringify(progress));return true;}catch{return false;}
 }
 
+export function mergeLocalStudyProgress(primary:LocalStudyProgress,secondary:LocalStudyProgress):LocalStudyProgress{
+ const left=parseLocalStudyProgress(primary),right=parseLocalStudyProgress(secondary);
+ const completed:LocalStudyProgress['completed']={...right.completed};
+ for(const [lessonId,candidate] of Object.entries(left.completed)){
+  const existing=completed[lessonId];
+  if(!existing||Date.parse(candidate.completedAt)>=Date.parse(existing.completedAt))completed[lessonId]=candidate;
+ }
+ const reviews:LocalStudyProgress['reviews']={};
+ for(const lessonId of new Set([...Object.keys(right.reviews),...Object.keys(left.reviews)])){
+  if(!completed[lessonId])continue;
+  const merged:Partial<Record<LocalReviewStage,LocalReviewCompletion>>={};
+  for(const stage of LOCAL_REVIEW_STAGES){
+   const a=left.reviews[lessonId]?.[stage],b=right.reviews[lessonId]?.[stage];
+   if(a&&b)merged[stage]=Date.parse(a.reviewedAt)>=Date.parse(b.reviewedAt)?a:b;
+   else if(a||b)merged[stage]=(a??b)!;
+  }
+  if(Object.keys(merged).length)reviews[lessonId]=merged;
+ }
+ return parseLocalStudyProgress({version:3,lastOpenedLessonIds:{...right.lastOpenedLessonIds,...left.lastOpenedLessonIds},legacyLastOpenedLessonId:left.legacyLastOpenedLessonId??right.legacyLastOpenedLessonId,completed,reviews});
+}
+
 export function recordLocalLessonOpened(progress:LocalStudyProgress,lessonId:string,track:CatalogTrack):LocalStudyProgress{
  return validId(lessonId)?{...progress,lastOpenedLessonIds:{...progress.lastOpenedLessonIds,[track]:lessonId}}:progress;
 }

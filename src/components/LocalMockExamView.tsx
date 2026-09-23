@@ -1,7 +1,9 @@
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
-import {ACCA_FR_MOCK_1,buildLocalMockReviewSchedule,completeLocalMockReview,gradeMockObjectives,readLocalMockProgress,recordLocalMockAttempt,writeLocalMockProgress,type LocalMockReviewStage} from '../learning/localMockExam';
+import {ACCA_FR_MOCK_1,buildLocalMockReviewSchedule,completeLocalMockReview,gradeMockObjectives,mergeLocalMockProgress,parseLocalMockProgress,readLocalMockProgress,recordLocalMockAttempt,writeLocalMockProgress,type LocalMockReviewStage} from '../learning/localMockExam';
+import {ACCOUNT_STUDY_NAMESPACES,loadAccountStudyState,saveAccountStudyState} from '../services/accountStudyState';
 
 type Phase='ready'|'running'|'marking'|'saved';
+type SyncStatus='loading'|'synced'|'saving'|'local-fallback';
 const storage=()=>{try{return typeof window==='undefined'?null:window.localStorage;}catch{return null;}};
 const shortDate=(value:string)=>new Intl.DateTimeFormat('en-IE',{day:'2-digit',month:'short'}).format(new Date(value));
 const clock=(seconds:number)=>`${String(Math.floor(seconds/60)).padStart(2,'0')}:${String(seconds%60).padStart(2,'0')}`;
@@ -15,6 +17,9 @@ export function LocalMockExamView({scope}:{scope:string}){
  const [awarded,setAwarded]=useState<Record<string,boolean>>({});
  const [remaining,setRemaining]=useState(exam.durationMinutes*60);
  const [reviewStage,setReviewStage]=useState<LocalMockReviewStage|null>(null);
+ const [syncStatus,setSyncStatus]=useState<SyncStatus>('loading');
+ const progressRef=useRef(progress);
+ const saveRevision=useRef(0);
  const startedAt=useRef<number|null>(null);
  const objectiveCorrect=useMemo(()=>gradeMockObjectives(exam,answers),[answers,exam]);
  const constructedMarks=exam.constructed.markingGuide.reduce((sum,item)=>sum+(awarded[item.id]?item.marks:0),0);
@@ -30,6 +35,14 @@ export function LocalMockExamView({scope}:{scope:string}){
   return()=>window.clearInterval(timer);
  },[phase]);
  useEffect(()=>{if(phase==='running'&&remaining===0)submit();},[phase,remaining,submit]);
+ useEffect(()=>{
+  let cancelled=false;const local=readLocalMockProgress(storage(),scope);progressRef.current=local;setProgress(local);setSyncStatus('loading');
+  void loadAccountStudyState(scope,ACCOUNT_STUDY_NAMESPACES.mockExam).then(payload=>{
+   if(cancelled)return;const remote=parseLocalMockProgress(payload),merged=mergeLocalMockProgress(progressRef.current,remote);progressRef.current=merged;setProgress(merged);writeLocalMockProgress(storage(),merged,scope);
+   if(JSON.stringify(merged)!==JSON.stringify(remote)){const revision=++saveRevision.current;setSyncStatus('saving');void saveAccountStudyState(scope,ACCOUNT_STUDY_NAMESPACES.mockExam,merged).then(()=>{if(!cancelled&&revision===saveRevision.current)setSyncStatus('synced');}).catch(()=>{if(!cancelled&&revision===saveRevision.current)setSyncStatus('local-fallback');});}else setSyncStatus('synced');
+  }).catch(()=>{if(!cancelled)setSyncStatus('local-fallback');});
+  return()=>{cancelled=true;saveRevision.current++;};
+ },[scope]);
 
  const begin=(stage:LocalMockReviewStage|null=null)=>{
   setAnswers({});setResponse('');setAwarded({});setRemaining(exam.durationMinutes*60);setReviewStage(stage);startedAt.current=Date.now();setPhase('running');
@@ -39,7 +52,9 @@ export function LocalMockExamView({scope}:{scope:string}){
   const next=reviewStage
    ?completeLocalMockReview(progress,exam.id,reviewStage,achievedMarks,maximum,now)
    :recordLocalMockAttempt(progress,exam.id,{id:crypto.randomUUID(),submittedAt:now,objectiveCorrect,objectiveTotal:exam.objectiveQuestions.length,constructedMarks,totalMarks:achievedMarks,elapsedSeconds:Math.min(exam.durationMinutes*60,Math.max(0,Math.round((Date.now()-(startedAt.current??Date.now()))/1000)))});
-  writeLocalMockProgress(storage(),next,scope);setProgress(next);setPhase('saved');
+  progressRef.current=next;writeLocalMockProgress(storage(),next,scope);setProgress(next);setPhase('saved');
+  const revision=++saveRevision.current;setSyncStatus('saving');
+  void saveAccountStudyState(scope,ACCOUNT_STUDY_NAMESPACES.mockExam,next).then(()=>{if(revision===saveRevision.current)setSyncStatus('synced');}).catch(()=>{if(revision===saveRevision.current)setSyncStatus('local-fallback');});
  };
 
  if(phase==='ready')return <section className="mock-shell" data-testid="local-mock-exam">
@@ -47,7 +62,7 @@ export function LocalMockExamView({scope}:{scope:string}){
   <div className="mock-overview-grid">
    <article><span>SECTION A</span><strong>6 objective questions</strong><small>12 marks · automatically checked only after submission</small></article>
    <article><span>SECTION B</span><strong>1 constructed response</strong><small>8 marks · self-mark against an explicit guide</small></article>
-   <article><span>PRIVACY</span><strong>Browser-only summary</strong><small>Your written response is discarded when this screen closes.</small></article>
+   <article><span>PRIVACY</span><strong>Account-synced result</strong><small>Only marks and review dates sync. Your written response is discarded when this screen closes.</small></article>
   </div>
   {latest?<div className="mock-latest" data-testid="mock-latest-attempt"><div><span>LATEST ATTEMPT</span><strong>{latest.totalMarks}/20 marks</strong><small>{latest.objectiveCorrect}/{latest.objectiveTotal} objective answers correct · {latest.constructedMarks}/8 self-awarded</small></div><button className="primary-btn" onClick={()=>begin()}>Take a new attempt</button></div>:<button className="primary-btn mock-start" onClick={()=>begin()}>Start 30-minute mock</button>}
   <div className="mock-review-plan"><div className="section-heading"><div><div className="eyebrow">SPACED DEBRIEF</div><h3>D+1 · D+7 · D+30</h3></div><span>Scheduled from the latest saved attempt</span></div>
@@ -63,7 +78,7 @@ export function LocalMockExamView({scope}:{scope:string}){
    <header className="mock-section-heading"><div className="eyebrow">SECTION B · 8 MARKS</div><h2>Constructed response</h2></header>
    <div className="mock-scenario">{exam.constructed.scenario.map(line=><p key={line}>{line}</p>)}</div><ol className="mock-requirements">{exam.constructed.requirements.map(item=><li key={item}>{item}</li>)}</ol>
    <label className="mock-response-label" htmlFor="mock-response">Your answer</label><textarea id="mock-response" value={response} disabled={phase!=='running'} maxLength={8000} onChange={event=>setResponse(event.target.value)} placeholder="Show calculations, then write a concise evaluation…"/><p className="lesson-study-note">Temporary draft only. It is not uploaded, automatically graded or saved in local storage.</p>
-   {phase==='running'?<div className="mock-submit-row"><span>{Object.keys(answers).length}/{exam.objectiveQuestions.length} objective answers selected</span><button className="primary-btn" disabled={!allAnswered} onClick={submit}>Submit and open marking guide</button></div>:<div className="mock-marking" data-testid="mock-marking-guide"><div className="mock-result"><span>OBJECTIVE RESULT</span><strong>{objectiveCorrect*2}/{exam.objectiveMarks}</strong><small>{objectiveCorrect} of {exam.objectiveQuestions.length} correct</small></div><div><div className="eyebrow">SELF-MARK THE CONSTRUCTED RESPONSE</div><h2>Tick only points evidenced in your answer</h2><p>Use the guide honestly. The Learning Hub records your total, not the written response.</p></div>{exam.constructed.markingGuide.map(item=><label className="mock-marking-point" key={item.id}><input type="checkbox" checked={!!awarded[item.id]} disabled={phase==='saved'} onChange={event=>setAwarded(current=>({...current,[item.id]:event.target.checked}))}/><span><strong>{item.label} · {item.marks} mark</strong><small>{item.guidance}</small></span></label>)}<div className="mock-final-score"><div><span>TOTAL</span><strong>{achievedMarks}/20</strong><small>{objectiveCorrect*2}/12 objective · {constructedMarks}/8 constructed</small></div>{phase==='marking'?<button className="primary-btn" onClick={save}>{reviewStage?`Save ${reviewStage} review`:'Save attempt & schedule reviews'}</button>:<button className="secondary-btn" onClick={()=>{setPhase('ready');setReviewStage(null);}}>Back to mock overview</button>}</div>{phase==='saved'?<p role="status" className="lesson-completion-saved" data-testid="mock-result-saved">{reviewStage?`${reviewStage} review`:'Attempt'} saved in this browser. The written response was not saved.</p>:null}</div>}
+   {phase==='running'?<div className="mock-submit-row"><span>{Object.keys(answers).length}/{exam.objectiveQuestions.length} objective answers selected</span><button className="primary-btn" disabled={!allAnswered} onClick={submit}>Submit and open marking guide</button></div>:<div className="mock-marking" data-testid="mock-marking-guide"><div className="mock-result"><span>OBJECTIVE RESULT</span><strong>{objectiveCorrect*2}/{exam.objectiveMarks}</strong><small>{objectiveCorrect} of {exam.objectiveQuestions.length} correct</small></div><div><div className="eyebrow">SELF-MARK THE CONSTRUCTED RESPONSE</div><h2>Tick only points evidenced in your answer</h2><p>Use the guide honestly. The Learning Hub records your total, not the written response.</p></div>{exam.constructed.markingGuide.map(item=><label className="mock-marking-point" key={item.id}><input type="checkbox" checked={!!awarded[item.id]} disabled={phase==='saved'} onChange={event=>setAwarded(current=>({...current,[item.id]:event.target.checked}))}/><span><strong>{item.label} · {item.marks} mark</strong><small>{item.guidance}</small></span></label>)}<div className="mock-final-score"><div><span>TOTAL</span><strong>{achievedMarks}/20</strong><small>{objectiveCorrect*2}/12 objective · {constructedMarks}/8 constructed</small></div>{phase==='marking'?<button className="primary-btn" onClick={save}>{reviewStage?`Save ${reviewStage} review`:'Save attempt & schedule reviews'}</button>:<button className="secondary-btn" onClick={()=>{setPhase('ready');setReviewStage(null);}}>Back to mock overview</button>}</div>{phase==='saved'?<p role="status" className="lesson-completion-saved" data-testid="mock-result-saved">{reviewStage?`${reviewStage} review`:'Attempt'} {syncStatus==='synced'?'saved to your account.':syncStatus==='local-fallback'?'saved on this device; account sync is temporarily unavailable.':'saved on this device and syncing to your account.'} The written response was not saved.</p>:null}</div>}
   </div>
  </section>;
 }

@@ -10,7 +10,7 @@ import {loadPublishedCurriculumCatalog,type CatalogLesson} from './services/curr
 import {lessonsForTrack,chooseNextPublishedLesson} from './learning/curriculumCatalogCore';
 import {LOCAL_MODEL_LESSONS,curriculumModelPreviewEnabled} from './learning/localModelLessonRegistry';
 import {LOCAL_ENGLISH_LESSONS} from './learning/localEnglishLessonRegistry';
-import {buildLocalReviewSchedule,completeLocalLesson,completeLocalReview,lastOpenedLocalLessonId,localLessonAfter,readLocalStudyProgress,recordLocalLessonOpened,summarizeLocalCourse,writeLocalStudyProgress,type LocalReviewItem,type LocalReviewStage,type LocalStudyProgress} from './learning/localStudyProgress';
+import {buildLocalReviewSchedule,completeLocalLesson,completeLocalReview,lastOpenedLocalLessonId,localLessonAfter,mergeLocalStudyProgress,parseLocalStudyProgress,readLocalStudyProgress,recordLocalLessonOpened,summarizeLocalCourse,writeLocalStudyProgress,type LocalReviewItem,type LocalReviewStage,type LocalStudyProgress} from './learning/localStudyProgress';
 import {isSequence3Slug} from './learning/sequence3Registry';
 import {p1SlugFor} from './learning/p1RuntimeModules';
 import { LessonStudyPanel } from './components/LessonStudyPanel';
@@ -31,6 +31,7 @@ import {
   type LearningMemorySnapshot,
 } from './services/learningMemory';
 import { supabase } from './services/supabase';
+import {ACCOUNT_STUDY_NAMESPACES,loadAccountStudyState,saveAccountStudyState} from './services/accountStudyState';
 import { isTrackVisible, primaryVisibleTrack } from './config/presentation';
 
 type TrackKey = 'finance' | 'payroll' | 'english';
@@ -91,6 +92,7 @@ const reviewIntervals = new Set(['D+1', 'D+7', 'D+30', 'D+90']);
 const errorDomains = new Set(['technical', 'grammar', 'vocabulary', 'pronunciation', 'fluency', 'register']);
 
 type MemoryStatus = 'loading' | 'ready' | 'empty' | 'unavailable' | 'other-profile';
+type StudySyncStatus = 'loading' | 'synced' | 'saving' | 'local-fallback';
 
 function scorePairs(session: LearningMemorySession) {
   return [
@@ -178,6 +180,9 @@ function App() {
   const [catalogUnavailable,setCatalogUnavailable]=useState(false);
   const [selectedCatalogLesson,setSelectedCatalogLesson]=useState<CatalogLesson|null>(null);
   const [localProgress,setLocalProgress]=useState<LocalStudyProgress>(()=>readLocalStudyProgress(localProgressStorage(),account.userId));
+  const localProgressRef=useRef(localProgress);
+  const studySaveRevision=useRef(0);
+  const [studySyncStatus,setStudySyncStatus]=useState<StudySyncStatus>('loading');
   const [activeLocalReview,setActiveLocalReview]=useState<{lessonId:string;stage:LocalReviewStage}|null>(null);
 
   const profile = useMemo(() => getLearnerProfile(learnerKey), [learnerKey]);
@@ -215,7 +220,24 @@ function App() {
     return () => { memoryRequest.current++; };
   }, [refreshMemory]);
 
-  useEffect(()=>{setLocalProgress(readLocalStudyProgress(localProgressStorage(),account.userId));setActiveLocalReview(null);},[account.userId]);
+  const persistStudyProgress=useCallback((next:LocalStudyProgress)=>{
+    localProgressRef.current=next;setLocalProgress(next);writeLocalStudyProgress(localProgressStorage(),next,account.userId);
+    const revision=++studySaveRevision.current;setStudySyncStatus('saving');
+    void saveAccountStudyState(account.userId,ACCOUNT_STUDY_NAMESPACES.curriculum,next).then(()=>{if(revision===studySaveRevision.current)setStudySyncStatus('synced');}).catch(()=>{if(revision===studySaveRevision.current)setStudySyncStatus('local-fallback');});
+  },[account.userId]);
+
+  useEffect(()=>{
+    let cancelled=false;
+    const local=readLocalStudyProgress(localProgressStorage(),account.userId);localProgressRef.current=local;setLocalProgress(local);setActiveLocalReview(null);setStudySyncStatus('loading');
+    if(!curriculumPreview){setStudySyncStatus('synced');return()=>{cancelled=true;studySaveRevision.current++;};}
+    void loadAccountStudyState(account.userId,ACCOUNT_STUDY_NAMESPACES.curriculum).then(payload=>{
+      if(cancelled)return;
+      const remote=parseLocalStudyProgress(payload),merged=mergeLocalStudyProgress(localProgressRef.current,remote);
+      localProgressRef.current=merged;setLocalProgress(merged);writeLocalStudyProgress(localProgressStorage(),merged,account.userId);
+      if(JSON.stringify(merged)!==JSON.stringify(remote))persistStudyProgress(merged);else setStudySyncStatus('synced');
+    }).catch(()=>{if(!cancelled)setStudySyncStatus('local-fallback');});
+    return()=>{cancelled=true;studySaveRevision.current++;};
+  },[account.userId,curriculumPreview,persistStudyProgress]);
 
   useEffect(()=>{
     const controller=new AbortController();setCatalogUnavailable(false);
@@ -238,7 +260,7 @@ function App() {
   const openLesson = (key: TrackKey,lesson?:CatalogLesson,options?:{tab?:string;reviewStage?:LocalReviewStage}) => {
     const measured=new Set([...(visibleMemory?.history??[]).map(x=>x.lessonId),...Object.keys(localProgress.completed)]);
     const resolved=lesson??chooseNextPublishedLesson(supportedCatalog,key,measured);
-    if(resolved?.origin==='local-model')setLocalProgress(current=>{const next=recordLocalLessonOpened(current,resolved.id,resolved.track);writeLocalStudyProgress(localProgressStorage(),next,account.userId);return next;});
+    if(resolved?.origin==='local-model')persistStudyProgress(recordLocalLessonOpened(localProgressRef.current,resolved.id,resolved.track));
     setActiveLocalReview(resolved?.origin==='local-model'&&options?.reviewStage?{lessonId:resolved.id,stage:options.reviewStage}:null);
     setSelectedCatalogLesson(resolved??null);
     setTrackKey(key);
@@ -249,7 +271,8 @@ function App() {
 
   const completeCurrentLocalLesson=(correct:number,total:number)=>{
     if(selectedCatalogLesson?.origin!=='local-model')return;
-    setLocalProgress(current=>{const next=activeLocalReview?.lessonId===selectedCatalogLesson.id?completeLocalReview(current,selectedCatalogLesson.id,activeLocalReview.stage,correct,total):completeLocalLesson(current,selectedCatalogLesson.id,correct,total);writeLocalStudyProgress(localProgressStorage(),next,account.userId);return next;});
+    const current=localProgressRef.current,next=activeLocalReview?.lessonId===selectedCatalogLesson.id?completeLocalReview(current,selectedCatalogLesson.id,activeLocalReview.stage,correct,total):completeLocalLesson(current,selectedCatalogLesson.id,correct,total);
+    persistStudyProgress(next);
   };
 
   const selectLearner = (key: LearnerKey) => {
@@ -331,6 +354,7 @@ function App() {
             <p>{lessonOpen ? activeTrack.focus : subtitleForView(view, profile)}</p>
           </div>
           <div className="top-actions">
+            {curriculumPreview?<span className="cefr-pill" data-testid="account-study-sync">{studySyncStatus==='synced'?'Progress synced':studySyncStatus==='saving'?'Saving progress…':studySyncStatus==='loading'?'Loading progress…':'Saved on this device'}</span>:null}
             <span className="cefr-pill">English {profile.english.cefr} → {profile.english.targetCefr}</span>
             <button className="ghost-btn" onClick={() => { setView('dashboard'); setLessonOpen(false); }}>Today</button>
             <button className="round-btn" aria-label="Refresh measured learning" onClick={() => void refreshMemory()}>↻</button>
@@ -468,7 +492,7 @@ function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, open
           <article className={`acca-agenda-card ${dueLocalReviews.length?'review-due':''}`}><span>SPACED RETRIEVAL</span><strong>{dueLocalReviews.length?`${dueLocalReviews.length} review${dueLocalReviews.length===1?'':'s'} due`:nextLocalReview?`Next: ${nextLocalReview.stage} on ${shortDate(nextLocalReview.dueAt)}`:'Complete A1 to schedule reviews'}</strong><small>{nextLocalReview?nextLocalReview.lesson.title:'D+1, D+7 and D+30 appear automatically after completion.'}</small><button className="secondary-btn" onClick={()=>openView('revision')}>{dueLocalReviews.length?'Open due reviews':'View review plan'}</button></article>
           <article className="acca-agenda-card"><span>WEEKLY PACE</span><strong>{localCourse.completedLast7Days}/{localCourse.weeklyTarget} lessons</strong><small>{remainingHours} estimated hours remain · about {localCourse.estimatedWeeksRemaining} week{localCourse.estimatedWeeksRemaining===1?'':'s'} at the suggested pace</small><div className="progress-track" aria-label={`${localCourse.completedLast7Days} of ${localCourse.weeklyTarget} weekly lessons`}><span style={{width:`${Math.min(100,localCourse.completedLast7Days/localCourse.weeklyTarget*100)}%`}} /></div></article>
         </div>
-        <div className="acca-module-grid" aria-label="ACCA progress by syllabus module">{localCourse.modules.map(module=><article key={module.code} className="acca-module-card"><div><b>{module.code}</b><span>{module.label}</span></div><strong>{module.completedCount}/{module.total}</strong><div className="progress-track"><span style={{width:`${module.percent}%`}} /></div><small>{module.remainingMinutes?`${Math.round(module.remainingMinutes/6)/10} h estimated remaining`:'Module locally completed'}</small></article>)}</div>
+        <div className="acca-module-grid" aria-label="ACCA progress by syllabus module">{localCourse.modules.map(module=><article key={module.code} className="acca-module-card"><div><b>{module.code}</b><span>{module.label}</span></div><strong>{module.completedCount}/{module.total}</strong><div className="progress-track"><span style={{width:`${module.percent}%`}} /></div><small>{module.remainingMinutes?`${Math.round(module.remainingMinutes/6)/10} h estimated remaining`:'Module completed'}</small></article>)}</div>
       </section>:null}
 
       <div className="section-heading full-span">
@@ -558,7 +582,7 @@ function LearningLibrary({ learnerKey, catalog, catalogUnavailable, openLesson,l
     {catalogUnavailable&&<p role="status" className="priority-note"><strong>Catalog temporarily unavailable</strong><span>Verified Golden Lessons from your visible tracks remain available as a safe fallback.</span></p>}
     <div className="library-grid">
       {available.length?available.map((lesson,index)=>{const base=tracks.find(t=>t.key===lesson.track)!;const completion=localProgress.completed[lesson.id];const isResume=lastOpenedLocalLessonId(localProgress,lesson.track)===lesson.id&&!completion;return <article className={`lesson-library-card ${lesson.track===primaryTrack?'primary-track-card':''} ${completion?'lesson-locally-complete':''}`} key={lesson.id} data-testid={`catalog-lesson-${lesson.slug}`}>
-        <div className="lesson-index">{String(index+1).padStart(2,'0')}</div><span className={`track-badge ${lesson.track}`}>{base.accent}</span><h3>{lesson.title}</h3><p>{lesson.subtitle??base.focus}</p><div className="lesson-meta"><span>{lesson.estimatedMinutes} min</span><span>{base.name}</span><span>{completion?`Finished locally · ${completion.correct}/${completion.total}`:lesson.origin==='local-model'?'Model · local':lesson.id===base.lessonId?'Professor':'Written ready'}</span></div><button className="primary-btn" onClick={()=>openLesson(lesson.track,lesson)}>{completion?'Review lesson':isResume?'Resume lesson':'Open lesson'}</button>
+        <div className="lesson-index">{String(index+1).padStart(2,'0')}</div><span className={`track-badge ${lesson.track}`}>{base.accent}</span><h3>{lesson.title}</h3><p>{lesson.subtitle??base.focus}</p><div className="lesson-meta"><span>{lesson.estimatedMinutes} min</span><span>{base.name}</span><span>{completion?`Finished · ${completion.correct}/${completion.total}`:lesson.origin==='local-model'?'Reviewed self-study':lesson.id===base.lessonId?'Professor':'Written ready'}</span></div><button className="primary-btn" onClick={()=>openLesson(lesson.track,lesson)}>{completion?'Review lesson':isResume?'Resume lesson':'Open lesson'}</button>
       </article>}):visibleTracks.map((track,index)=><article className={`lesson-library-card ${track.key===primaryTrack?'primary-track-card':''}`} key={track.key}><div className="lesson-index">0{index+1}</div><span className={`track-badge ${track.key}`}>{track.accent}</span><h3>{track.lesson}</h3><p>{track.focus}</p><div className="lesson-meta"><span>10–15 min</span><span>Verified fallback</span><span>Professor</span></div><button className="primary-btn" onClick={()=>openLesson(track.key)}>Open Golden Lesson</button></article>)}
     </div>
   </section>;
@@ -593,9 +617,9 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,
 
   return (
     <section className="lesson-shell" data-testid="lesson-shell">
-      <div className="lesson-toolbar">
+        <div className="lesson-toolbar">
         <button className="back-btn" onClick={close}>← Dashboard</button>
-        <div className="lesson-progress"><span>{track.origin==='local-model'?'Local model lesson':interactiveLessonSupported?'Golden Lesson':'Reviewed written lesson'}</span><b>{measuredSession ? `Last evaluated ${shortDate(measuredSession.completedAt ?? measuredSession.startedAt)}` : 'Baseline not measured yet'}</b></div>
+        <div className="lesson-progress"><span>{track.origin==='local-model'?'Reviewed self-study lesson':interactiveLessonSupported?'Golden Lesson':'Reviewed written lesson'}</span><b>{measuredSession ? `Last evaluated ${shortDate(measuredSession.completedAt ?? measuredSession.startedAt)}` : 'Baseline not measured yet'}</b></div>
       </div>
       <div className="lesson-tabs" role="tablist">
         {lessonTabs.map((tab) => (
@@ -604,7 +628,7 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,
       </div>
       <div className="lesson-layout">
         <article className="lesson-content-card">
-          <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">{track.origin==='local-model'?'Local preview · no providers':'Premium lesson'}</span></div>
+          <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">{track.origin==='local-model'?'Account-synced · no providers':'Premium lesson'}</span></div>
           <div className="eyebrow">{activeTab.toUpperCase()}</div>
           {interactiveLessonSupported?<LessonProfessorWorkspace track={track.key} lessonId={track.lessonId} learnerKey={learnerKey} activeTab={activeTab} onTabChange={setActiveTab} onActivityChange={setConversationBusy} workshopId={workshopId} onClearWorkshop={clearWorkshop}/>:null}
           <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} lessonSlug={track.lessonSlug} activeTab={activeTab} onTabChange={setActiveTab} onPrepareWorkshop={prepareWorkshop} handoffDisabled={conversationBusy||!canUseActions||!interactiveLessonSupported} readerDisabled={conversationBusy||!canUseActions} localCompletion={localCompletion} onCompleteLocal={onCompleteLocal} nextLessonTitle={nextLocalLesson?.title} onOpenNextLesson={onOpenNextLocal} localReviewStage={localReviewStage} localReviewCompletion={localReviewCompletion} />
@@ -616,7 +640,7 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,
         <aside className="lesson-side-card">
           <div className="eyebrow">MEASURED LEARNING SIGNALS</div>
           <h3>{measuredSession ? 'Latest evaluated evidence' : 'Baseline pending'}</h3>
-          {localCompletion?<div className="priority-note local-progress-note"><strong>Finished in this browser</strong><span>{localCompletion.correct}/{localCompletion.total} checkpoint answers correct in the saved attempt · practice completion only, not measured mastery.</span></div>:null}
+          {localCompletion?<div className="priority-note local-progress-note"><strong>Finished and saved to your account</strong><span>{localCompletion.correct}/{localCompletion.total} checkpoint answers correct in the saved attempt · practice completion only, not measured mastery.</span></div>:null}
           {measuredScores.length > 0
             ? measuredScores.map(([label, value]) => <Signal key={label} label={label} value={Math.round(value)} />)
             : <div className="priority-note"><strong>No synthetic score</strong><span>Complete an evaluated Professor session for this lesson. Scores will appear only after measured evidence exists.</span></div>}
@@ -655,11 +679,11 @@ function EnglishAcademyView({ profile, learnerKey, catalog, localProgress, openL
       {course.total>0?<section className="acca-study-board english-study-board" data-testid="english-study-board">
         <div className="section-heading"><div><div className="eyebrow">ENGLISH DAILY AGENDA</div><h2>Build everyday fluency and professional confidence together</h2></div><span>Balanced local core · no provider calls</span></div>
         <div className="acca-agenda-grid">
-          <article className="acca-agenda-card"><span>NEXT LESSON</span><strong>{nextLesson?.title??'Local core completed'}</strong><small>{nextLesson?`${nextLesson.estimatedMinutes} min · progress stays in this browser`:'All eight lessons remain available for review.'}</small>{nextLesson?<button className="primary-btn" onClick={()=>openLesson('english',nextLesson)}>{action}</button>:null}</article>
+          <article className="acca-agenda-card"><span>NEXT LESSON</span><strong>{nextLesson?.title??'Core completed'}</strong><small>{nextLesson?`${nextLesson.estimatedMinutes} min · progress syncs with your account`:'All eight lessons remain available for review.'}</small>{nextLesson?<button className="primary-btn" onClick={()=>openLesson('english',nextLesson)}>{action}</button>:null}</article>
           <article className="acca-agenda-card"><span>50 / 50 BALANCE</span><strong>{everyday?.total??0} everyday · {professional?.total??0} professional</strong><small>This first local core keeps both halves equal before later lessons are added in balanced pairs.</small><button className="secondary-btn" onClick={()=>openView('learn')}>View English lessons</button></article>
-          <article className={`acca-agenda-card ${dueReviews?'review-due':''}`}><span>SPACED RETRIEVAL</span><strong>{dueReviews?`${dueReviews} review${dueReviews===1?'':'s'} due`:'D+1 · D+7 · D+30'}</strong><small>{course.completedCount?`${course.completedCount}/${course.total} lessons finished locally`:'Finish the first lesson to start the review cycle.'}</small><button className="secondary-btn" onClick={()=>openView('revision')}>{dueReviews?'Open due reviews':'View review plan'}</button></article>
+          <article className={`acca-agenda-card ${dueReviews?'review-due':''}`}><span>SPACED RETRIEVAL</span><strong>{dueReviews?`${dueReviews} review${dueReviews===1?'':'s'} due`:'D+1 · D+7 · D+30'}</strong><small>{course.completedCount?`${course.completedCount}/${course.total} lessons finished`:'Finish the first lesson to start the review cycle.'}</small><button className="secondary-btn" onClick={()=>openView('revision')}>{dueReviews?'Open due reviews':'View review plan'}</button></article>
         </div>
-        <div className="acca-module-grid" aria-label="English progress by balance area">{course.modules.map(module=><article key={module.code} className="acca-module-card"><div><b>{module.code}</b><span>{module.label}</span></div><strong>{module.completedCount}/{module.total}</strong><div className="progress-track"><span style={{width:`${module.percent}%`}} /></div><small>{module.remainingMinutes?`${module.remainingMinutes} min estimated remaining`:'Area locally completed'}</small></article>)}</div>
+        <div className="acca-module-grid" aria-label="English progress by balance area">{course.modules.map(module=><article key={module.code} className="acca-module-card"><div><b>{module.code}</b><span>{module.label}</span></div><strong>{module.completedCount}/{module.total}</strong><div className="progress-track"><span style={{width:`${module.percent}%`}} /></div><small>{module.remainingMinutes?`${module.remainingMinutes} min estimated remaining`:'Area completed'}</small></article>)}</div>
       </section>:null}
 
       <div className="academy-grid">
@@ -703,7 +727,7 @@ function LocalReviewSection({track,label,catalog,localProgress,openLocalReview}:
   if(!localCourse.total)return null;
   return <>
     <div className="section-heading"><div><div className="eyebrow">LOCAL {label.toUpperCase()} RETRIEVAL</div><h2>Revisit completed {label} lessons before they fade</h2></div><span>{dueLocalReviews.length} due · D+1 • D+7 • D+30</span></div>
-    <p className="priority-note"><strong>Browser-only review plan</strong><span>These reminders use your local completion dates. A saved retrieval attempt records only the stage and aggregate checkpoint result; it is not measured mastery{track==='finance'?' or exam readiness':''}.</span></p>
+    <p className="priority-note"><strong>Account-synced review plan</strong><span>These reminders follow your saved completion dates across signed-in devices. A retrieval records only the stage and aggregate checkpoint result; it is not measured mastery{track==='finance'?' or exam readiness':''}.</span></p>
     {visibleLocalReviews.length?<div className="review-list" data-testid={track==='finance'?'local-review-list':'local-english-review-list'}>{visibleLocalReviews.map(item=><div className={`review-row ${item.status==='due'?'local-review-due':''}`} key={`${item.lesson.id}:${item.stage}`}>
       <span className="review-date">{item.stage}</span><div><strong>{item.lesson.title}</strong><span>{item.status==='due'?`Due since ${shortDate(item.dueAt)}`:`Scheduled ${shortDate(item.dueAt)}`}</span></div><button className={item.status==='due'?'primary-btn':'secondary-btn'} disabled={item.status!=='due'} onClick={()=>openLocalReview(item)}>{item.status==='due'?'Review now':'Scheduled'}</button>
     </div>)}</div>:<div className="priority-note local-progress-note"><strong>{localCourse.completedCount?'Local review queue complete':'No local review scheduled yet'}</strong><span>{localCourse.completedCount?`All currently planned ${label} retrieval stages have been saved.`:`Finish a ${label} lesson checkpoint to schedule D+1, D+7 and D+30 retrieval.`}</span></div>}

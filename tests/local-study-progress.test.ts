@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {buildLocalReviewSchedule,completeLocalLesson,completeLocalReview,lastOpenedLocalLessonId,legacyLocalStudyProgressKey,legacyV2LocalStudyProgressKey,localLessonAfter,localStudyProgressKey,parseLocalStudyProgress,readLocalStudyProgress,recordLocalLessonOpened,summarizeLocalCourse,writeLocalStudyProgress} from '../src/learning/localStudyProgress.ts';
+import {buildLocalReviewSchedule,completeLocalLesson,completeLocalReview,lastOpenedLocalLessonId,legacyLocalStudyProgressKey,legacyV2LocalStudyProgressKey,localLessonAfter,localStudyProgressKey,mergeLocalStudyProgress,parseLocalStudyProgress,readLocalStudyProgress,recordLocalLessonOpened,summarizeLocalCourse,writeLocalStudyProgress} from '../src/learning/localStudyProgress.ts';
 import {LOCAL_ENGLISH_LESSONS} from '../src/learning/localEnglishLessonRegistry.ts';
 import {LOCAL_MODEL_LESSONS} from '../src/learning/localModelLessonRegistry.ts';
 const lesson='a1100000-2026-4acc-8a01-000000000001';
@@ -26,6 +26,13 @@ test('browser adapter writes v3, reads legacy v1/v2 keys and tolerates unavailab
  const progress=completeLocalLesson(recordLocalLessonOpened(parseLocalStudyProgress(null),lesson,'finance'),lesson,5,5,'2026-09-22T17:00:00.000Z');
  assert.equal(writeLocalStudyProgress(storage,progress,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),true);assert.deepEqual(readLocalStudyProgress(storage,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'),progress);assert.ok(values.has(localStudyProgressKey('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')));assert.deepEqual(readLocalStudyProgress(storage,'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb').completed,{});
  assert.equal(writeLocalStudyProgress({setItem:()=>{throw Error('blocked');}},progress),false);
+});
+test('account merge keeps progress from both devices and the newest result per lesson or review stage',()=>{
+ const second=LOCAL_MODEL_LESSONS[1].id;
+ const primary=parseLocalStudyProgress({version:3,lastOpenedLessonIds:{finance:second},legacyLastOpenedLessonId:null,completed:{[lesson]:{completedAt:'2026-09-23T12:00:00.000Z',correct:5,total:5}},reviews:{[lesson]:{'D+1':{reviewedAt:'2026-09-24T12:00:00.000Z',correct:5,total:5}}}});
+ const secondary=parseLocalStudyProgress({version:3,lastOpenedLessonIds:{english:LOCAL_ENGLISH_LESSONS[0].id},legacyLastOpenedLessonId:null,completed:{[lesson]:{completedAt:'2026-09-22T12:00:00.000Z',correct:3,total:5},[second]:{completedAt:'2026-09-22T13:00:00.000Z',correct:4,total:5}},reviews:{[lesson]:{'D+1':{reviewedAt:'2026-09-24T10:00:00.000Z',correct:3,total:5}}}});
+ const merged=mergeLocalStudyProgress(primary,secondary);
+ assert.equal(merged.completed[lesson].correct,5);assert.equal(merged.completed[second].correct,4);assert.equal(merged.reviews[lesson]?.['D+1']?.correct,5);assert.equal(lastOpenedLocalLessonId(merged,'finance'),second);assert.equal(lastOpenedLocalLessonId(merged,'english'),LOCAL_ENGLISH_LESSONS[0].id);
 });
 test('local course summary counts lessons, weekly pace, remaining time and modules A to E',()=>{
  const initial=summarizeLocalCourse(LOCAL_MODEL_LESSONS,blank,'finance',new Date('2026-09-22T19:00:00.000Z'));

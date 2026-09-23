@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {ACCA_FR_MOCK_1,buildLocalMockReviewSchedule,completeLocalMockReview,gradeMockObjectives,mockProgressKey,parseLocalMockProgress,readLocalMockProgress,recordLocalMockAttempt,writeLocalMockProgress} from '../src/learning/localMockExam.ts';
+import {ACCA_FR_MOCK_1,buildLocalMockReviewSchedule,completeLocalMockReview,gradeMockObjectives,mergeLocalMockProgress,mockProgressKey,parseLocalMockProgress,readLocalMockProgress,recordLocalMockAttempt,writeLocalMockProgress} from '../src/learning/localMockExam.ts';
 
 const blank={version:1 as const,attempts:{},reviews:{}};
 const attempt={id:'11111111-1111-4111-8111-111111111111',submittedAt:'2026-09-22T12:00:00.000Z',objectiveCorrect:5,objectiveTotal:6,constructedMarks:6,totalMarks:16,elapsedSeconds:1400};
@@ -28,6 +28,13 @@ test('browser adapter isolates mock summaries by account scope',()=>{
  const values=new Map<string,string>();const storage={getItem:(key:string)=>values.get(key)??null,setItem:(key:string,value:string)=>{values.set(key,value);}};
  const progress=recordLocalMockAttempt(blank,ACCA_FR_MOCK_1.id,attempt);assert.equal(writeLocalMockProgress(storage,progress,'learner-one'),true);assert.deepEqual(readLocalMockProgress(storage,'learner-one'),progress);assert.deepEqual(readLocalMockProgress(storage,'learner-two'),blank);assert.ok(values.has(mockProgressKey('learner-one')));
  assert.equal(writeLocalMockProgress({setItem:()=>{throw Error('blocked');}},progress),false);
+});
+test('account merge deduplicates mock attempts and keeps reviews only for the latest attempt',()=>{
+ const newer={...attempt,id:'22222222-2222-4222-8222-222222222222',submittedAt:'2026-09-23T12:00:00.000Z',totalMarks:18};
+ const oldReviewed=completeLocalMockReview(recordLocalMockAttempt(blank,ACCA_FR_MOCK_1.id,attempt),ACCA_FR_MOCK_1.id,'D+1',17,20,'2026-09-24T12:00:00.000Z');
+ const latest=recordLocalMockAttempt(blank,ACCA_FR_MOCK_1.id,newer),merged=mergeLocalMockProgress(latest,oldReviewed);
+ assert.deepEqual(merged.attempts[ACCA_FR_MOCK_1.id].map(item=>item.id),[attempt.id,newer.id]);assert.deepEqual(merged.reviews,{});
+ assert.deepEqual(mergeLocalMockProgress(latest,latest),latest);
 });
 
 test('latest attempt schedules D+1, D+7 and D+30 and accepts only due reviews',()=>{
