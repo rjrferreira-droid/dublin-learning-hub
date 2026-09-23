@@ -330,7 +330,7 @@ function App() {
         <CourseTree learnerKey={learnerKey} tracks={learnerTracks} catalog={supportedCatalog} activeTrack={trackKey} activeLessonId={lessonOpen?activeTrack.lessonId:null} localProgress={localProgress} onSelectCourse={selectCourse} onSelectLesson={openLesson}/>
         <nav className="nav-stack utility-nav" aria-label="Learning tools">
           <NavButton label="Revision" icon="↻" active={view === 'revision'} onClick={() => { setView('revision'); setLessonOpen(false); }} />
-          <NavButton label="Professor" icon="◉" active={view === 'professor'} onClick={() => { setView('professor'); setLessonOpen(false); }} />
+          <NavButton label="Ask the Professor" icon="◉" active={view === 'professor'} onClick={() => { setView('professor'); setLessonOpen(false); }} />
         </nav>
 
         <div className="side-footer">
@@ -396,7 +396,7 @@ function evidenceMessage(status: MemoryStatus) {
   if (status === 'loading') return 'Reading measured learning evidence…';
   if (status === 'unavailable') return 'Measured learning evidence is temporarily unavailable. No placeholder scores are being substituted.';
   if (status === 'other-profile') return 'This profile has separate private learning evidence. Sign in with that learner account to see measured results.';
-  return 'Complete a Professor session to establish a measured baseline. Until then, the Learning Hub will not invent scores or priorities.';
+  return 'Study progress is available without a voice session. Use an evaluated Professor session only when you want a measured capability baseline; until then, the Learning Hub will not invent scores or priorities.';
 }
 
 function EmptyEvidence({ status }: { status: MemoryStatus }) {
@@ -535,7 +535,7 @@ function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, open
       <div className="hero-panel">
         <div className="hero-kicker">{showLocalCourse?`TODAY'S ACCA FOCUS • ${localCourse.completedCount}/${localCourse.total} FINISHED`:`TODAY'S FOCUS • ${profile.displayName.toUpperCase()}`}</div>
         <h2>{dailyLesson?.title??'Build capability, not just knowledge.'}</h2>
-        <p>{dailyLesson?`${dailyLesson.subtitle??'Local ACCA self-study lesson'}. Plan about ${dailyLesson.estimatedMinutes} minutes across ${studyBlocks} focused 30-minute block${studyBlocks===1?'':'s'}; your completion marker stays only in this browser.`:'Measured Professor sessions, recurring errors and spaced reviews determine adaptive priorities. When evidence is missing, the portal says so instead of filling the gap with demo scores.'}</p>
+        <p>{dailyLesson?`${dailyLesson.subtitle??'Local ACCA self-study lesson'}. Plan about ${dailyLesson.estimatedMinutes} minutes across ${studyBlocks} focused 30-minute block${studyBlocks===1?'':'s'}; your completion marker stays only in this browser.`:'Saved checkpoints and spaced reviews keep study moving. Optional evaluated sessions add capability evidence; when evidence is missing, the portal says so instead of filling the gap with demo scores.'}</p>
         <div className="hero-actions">
           <button className="primary-btn" onClick={() => dailyLesson?openLesson('finance',dailyLesson):openLesson(primaryTrack)}>{dailyLesson?dailyAction:primaryLabel}</button>
           <button className="secondary-btn" onClick={() => dailyLesson?openView('learn'):openLesson('english')}>{dailyLesson?'View all 23 lessons':'Start English practice'}</button>
@@ -629,7 +629,7 @@ function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, open
         <div>
           <div className="eyebrow">LEARNING LOOP</div>
           <h3>Every measured result changes what happens next.</h3>
-          <p>Professor conversations feed independent evaluation. Weak competencies and recurring mistakes return through the Error Bank and spaced reviews.</p>
+          <p>Checkpoints record study progress. Optional evaluated conversations can add capability evidence; confirmed weak points and recurring mistakes return through the Error Bank and spaced reviews.</p>
         </div>
         <div className="engine-flow">
           <span>Tutor</span><b>→</b><span>Evaluator</span><b>→</b><span>Error Bank</span><b>→</b><span>Curriculum Engine</span><b>→</b><span>Next action</span>
@@ -673,8 +673,8 @@ function LearningLibrary({ learnerKey,trackKey,catalog, catalogUnavailable, open
 
 const lessonTabsFor=(track:TrackKey):readonly {label:string;key:string}[]=>track==='english'?
  [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Grammar',key:'Grammar'},{label:'Practice',key:'Practice'},{label:'Speaking',key:'Speaking'},{label:'Visual',key:'Visual'},{label:'Case',key:'Case'},{label:'Test',key:'Test'},{label:'Sources',key:'Sources'},{label:'Professor',key:'Professor'}]:track==='payroll'?
- [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Calculation',key:'Visual'},{label:'Practice',key:'Practice'},{label:'Speaking',key:'Speaking'},{label:'Case',key:'Case'},{label:'Test',key:'Test'},{label:'Sources',key:'Sources'},{label:'Professor',key:'Professor'}]:
- [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Practice',key:'Practice'},{label:'Visual',key:'Visual'},{label:'Case',key:'Case'},{label:'Test',key:'Test'},{label:'Sources',key:'Sources'},{label:'Professor',key:'Professor'}];
+ [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Calculation',key:'Visual'},{label:'Practice',key:'Practice'},{label:'Speaking',key:'Speaking'},{label:'Case',key:'Case'},{label:'Test',key:'Test'},{label:'Sources',key:'Sources'}]:
+ [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Practice',key:'Practice'},{label:'Visual',key:'Visual'},{label:'Case',key:'Case'},{label:'Test',key:'Test'},{label:'Sources',key:'Sources'}];
 
 function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,localCompletion,onCompleteLocal,nextLocalLesson,onOpenNextLocal,localReviewStage,localReviewCompletion }: {
   track: Track;
@@ -698,8 +698,9 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,
   const [conversationBusy,setConversationBusy]=useState(false);
   const [workshopId,setWorkshopId]=useState<string|undefined>();
   const tabs=lessonTabsFor(track.key);
+  const lessonProfessorEnabled=track.key==='english'&&interactiveLessonSupported;
   const prepareWorkshop=(id:string)=>{
-    if(conversationBusy||!canUseActions||!interactiveLessonSupported||!WORKSHOP_CASES[track.key].some(c=>c.id===id))return;
+    if(conversationBusy||!canUseActions||!lessonProfessorEnabled||!WORKSHOP_CASES[track.key].some(c=>c.id===id))return;
     setWorkshopId(id);setActiveTab('Professor');
   };
   const clearWorkshop=()=>{if(!conversationBusy)setWorkshopId(undefined);};
@@ -719,9 +720,9 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,
         <article className="lesson-content-card">
           <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">{track.origin==='local-model'?'Account-synced · no providers':'Premium lesson'}</span></div>
           <div className="eyebrow">{activeTab.toUpperCase()}</div>
-          {interactiveLessonSupported?<LessonProfessorWorkspace track={track.key} lessonId={track.lessonId} learnerKey={learnerKey} activeTab={activeTab} onTabChange={setActiveTab} onActivityChange={setConversationBusy} workshopId={workshopId} onClearWorkshop={clearWorkshop}/>:null}
-          <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} lessonSlug={track.lessonSlug} activeTab={activeTab} onTabChange={setActiveTab} onPrepareWorkshop={prepareWorkshop} handoffDisabled={conversationBusy||!canUseActions||!interactiveLessonSupported} readerDisabled={conversationBusy||!canUseActions} localCompletion={localCompletion} onCompleteLocal={onCompleteLocal} nextLessonTitle={nextLocalLesson?.title} onOpenNextLesson={onOpenNextLocal} localReviewStage={localReviewStage} localReviewCompletion={localReviewCompletion} />
-          {!interactiveLessonSupported && (activeTab === 'Audio' || activeTab === 'Professor') ? <p role="status" data-testid="p1-interactive-gate">{activeTab==='Audio'&&track.key!=='payroll'&&isP1Slug(track.key,track.lessonSlug)?'Verify this lesson below to access its audio controls.':'This reviewed written lesson is available for self-study. This interactive feature is awaiting activation.'}</p> : null}
+          {lessonProfessorEnabled?<LessonProfessorWorkspace track={track.key} lessonId={track.lessonId} learnerKey={learnerKey} activeTab={activeTab} onTabChange={setActiveTab} onActivityChange={setConversationBusy} workshopId={workshopId} onClearWorkshop={clearWorkshop}/>:null}
+          <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} lessonSlug={track.lessonSlug} activeTab={activeTab} onTabChange={setActiveTab} onPrepareWorkshop={track.key==='english'?prepareWorkshop:undefined} handoffDisabled={conversationBusy||!canUseActions||!lessonProfessorEnabled} readerDisabled={conversationBusy||!canUseActions} localCompletion={localCompletion} onCompleteLocal={onCompleteLocal} nextLessonTitle={nextLocalLesson?.title} onOpenNextLesson={onOpenNextLocal} localReviewStage={localReviewStage} localReviewCompletion={localReviewCompletion} />
+          {!interactiveLessonSupported && (activeTab === 'Audio' || activeTab === 'Professor') ? <p role="status" data-testid="p1-interactive-gate">{activeTab==='Audio'&&track.key!=='payroll'&&isP1Slug(track.key,track.lessonSlug)?'Verify this lesson below to access its Premium Audio controls.':activeTab==='Audio'?'Browser read-aloud is ready above. Premium Audio for this unit will appear here after the published lesson is activated.':'The written English unit is ready. Its live Professor session will appear here after the published lesson is activated.'}</p> : null}
           {!interactiveLessonSupported && canUseActions && isP1Slug(track.key,track.lessonSlug) && (activeTab === 'Audio' || activeTab === 'Professor') ? <LessonReadinessCheck key={[account.userId,track.key,track.lessonId,track.lessonSlug].join(':')} userId={account.userId} lessonId={track.lessonId} lessonSlug={track.lessonSlug} lessonTitle={track.lesson} track={track.key} activeTab={activeTab}/> : null}
           {interactiveLessonSupported && (conversationBusy && activeTab === 'Audio' ? <p role="status" data-testid="audio-conversation-guard">End the Professor session before playing lesson audio. Written tabs remain available.</p> : <>{activeTab === 'Audio' && (canUseActions ? <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} /> : <p role="status" data-testid="audio-account-mismatch">Audio actions require the matching signed-in learner account.</p>)}</>)}
           {/* Interactive providers are mounted only for lessons with a reviewed server handoff. */}
@@ -732,7 +733,7 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,
           {localCompletion?<div className="priority-note local-progress-note"><strong>Finished and saved to your account</strong><span>{localCompletion.correct}/{localCompletion.total} checkpoint answers correct in the saved attempt · practice completion only, not measured mastery.</span></div>:null}
           {measuredScores.length > 0
             ? measuredScores.map(([label, value]) => <Signal key={label} label={label} value={Math.round(value)} />)
-            : <div className="priority-note"><strong>No synthetic score</strong><span>Complete an evaluated Professor session for this lesson. Scores will appear only after measured evidence exists.</span></div>}
+            : <div className="priority-note"><strong>No synthetic score</strong><span>{track.key==='english'?'Complete an evaluated English Professor session to create capability scores.':'Finish the checkpoint for study progress. Optional Professor debriefs create separate evaluated evidence.'}</span></div>}
           {measuredSession?.feedback?.summary ? <div className="priority-note"><strong>Evaluator summary</strong><span>{measuredSession.feedback.summary}</span></div> : null}
         </aside>
       </div>
@@ -917,15 +918,15 @@ function ProfessorView({ learnerKey, profile, openLesson }: { learnerKey: Learne
       <div className="professor-hero">
         <div className="professor-orb large">AI</div>
         <div>
-          <div className="eyebrow light">PROFESSOR • {profile.displayName.toUpperCase()}</div>
-          <h2>Natural voice. Persistent context. Independent evaluation.</h2>
-          <p>{profile.professor.style} The deployed live path uses LiveKit + OpenAI Realtime, and completed sessions feed the private learning record used for evaluation and adaptation.</p>
+          <div className="eyebrow light">ASK THE PROFESSOR • {profile.displayName.toUpperCase()}</div>
+          <h2>Use a live session when a doubt or debrief deserves conversation.</h2>
+          <p>{profile.professor.style} In ACCA and Payroll this is optional support, not a required lesson step. In English, the Professor remains part of each unit’s speaking pathway. Completed sessions can feed the private learning record used for evaluation and adaptation.</p>
           <div className="professor-focus-list">{profile.professor.technicalFocus.slice(0, 5).map((focus) => <span key={focus}>{focus}</span>)}</div>
           <div className="hero-actions"><button className="primary-btn" onClick={() => openLesson(primaryTrack)}>Open {track.name} lesson</button></div>
         </div>
       </div>
       <div className="wide-card">
-        <div><div className="eyebrow">LIVE PROFESSOR</div><h3>{track.lesson}</h3><p>This is the same deployed Professor session boundary used inside the Golden Lesson.</p></div>
+        <div><div className="eyebrow">OPTIONAL LIVE SESSION</div><h3>{track.lesson}</h3><p>Bring a specific doubt, ask for another explanation or debrief a completed exercise. Your written lesson remains complete without this session.</p></div>
         <ProfessorSessionPanel lessonId={track.lessonId} track={track.key} learnerKey={learnerKey} />
       </div>
     </section>
@@ -934,7 +935,7 @@ function ProfessorView({ learnerKey, profile, openLesson }: { learnerKey: Learne
 
 function titleForCourseView(view:ViewKey,track:Track){
  if(view==='revision')return 'Revision queue';
- if(view==='professor')return 'Professor';
+ if(view==='professor')return 'Ask the Professor';
  if(view==='mock-exams')return 'ACCA FR Mock Engine';
  if(view==='error-bank')return `${track.key==='finance'?'ACCA':track.key==='payroll'?'Payroll':'English'} Error Bank`;
  if(view==='performance')return `${track.key==='finance'?'ACCA':track.key==='payroll'?'Payroll':'English'} Performance`;
@@ -944,7 +945,7 @@ function titleForCourseView(view:ViewKey,track:Track){
 
 function subtitleForCourseView(view:ViewKey,profile:LearningProfile,track:Track){
  if(view==='revision')return 'Scheduled retrieval across your courses, based on saved completion and measured evidence.';
- if(view==='professor')return 'Live tutoring remains available while its next quality upgrade is planned.';
+ if(view==='professor')return 'Optional technical support for doubts and debriefs; English conversation stays inside each English unit.';
  if(view==='mock-exams')return 'Timed exam practice with transparent local marking and debriefs.';
  if(view==='error-bank')return 'This course keeps its own confirmed patterns, review state and recovery path.';
  if(view==='performance')return 'Study progress and evaluated capability are shown separately.';

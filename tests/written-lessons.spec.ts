@@ -132,6 +132,6 @@ for(const model of localModels)for(const viewport of [{name:'desktop',width:1440
  await expect(page.getByText('Reviewed self-study lesson',{exact:true})).toBeVisible();await expect(page.getByText('Account-synced · no providers',{exact:true})).toBeVisible();const panel=page.getByTestId('lesson-study-panel');await expect(panel.getByRole('heading',{name:model.title,exact:true})).toBeVisible();
  await expect(panel.locator('.lesson-teaching-block')).toHaveCount(4);
  await page.getByRole('tab',{name:'Practice',exact:true}).click();await expect(panel.getByTestId('written-practice-0')).toBeVisible();await expect(panel.getByTestId('applied-practice')).toHaveCount(0);
- await page.getByRole('tab',{name:'Audio',exact:true}).click();await expect(page.getByTestId('p1-interactive-gate')).toContainText('awaiting activation');
- await page.getByRole('tab',{name:'Professor',exact:true}).click();await expect(page.getByTestId('p1-interactive-gate')).toContainText('awaiting activation');expect(requests()).toBe(0);
+ await page.getByRole('tab',{name:'Audio',exact:true}).click();await expect(page.getByTestId('p1-interactive-gate')).toContainText('Premium Audio');
+ await expect(page.getByRole('tab',{name:'Professor',exact:true})).toHaveCount(0);expect(requests()).toBe(0);
 });

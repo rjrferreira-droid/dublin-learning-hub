@@ -84,11 +84,12 @@ for(const sequence of [2,3,4,5,6,7,8])for(const track of ['finance','payroll','e
  }
  await page.getByRole('tab',{name:'Practice',exact:true}).click();
  await study.getByTestId('written-practice-0').getByRole('textbox').fill('LOCAL P1 PRIVATE DRAFT');
- for(const name of ['Professor','Audio']){
+ const interactiveTabs=track==='english'?['Professor','Audio']:['Audio'];
+ for(const name of interactiveTabs){
   await page.getByRole('tab',{name,exact:true}).click();await expect(page.getByTestId('p1-interactive-gate')).toBeVisible();
   await expect(page.getByTestId('professor-session-panel')).toHaveCount(0);
   if(sequence===2){
-   if(stalledReadinessCase&&name==='Professor'){
+   if(stalledReadinessCase){
     await page.clock.install();
     await page.getByRole('button',{name:'Check lesson availability',exact:true}).click();
     await expect.poll(()=>readinessCalls).toBe(1);
@@ -118,7 +119,7 @@ for(const sequence of [2,3,4,5,6,7,8])for(const track of ['finance','payroll','e
  }
  await page.getByRole('tab',{name:'Practice',exact:true}).click();
  await expect(study.getByTestId('written-practice-0').getByRole('textbox')).toHaveValue('LOCAL P1 PRIVATE DRAFT');
- expect(readinessCalls).toBe(sequence===2?(stalledReadinessCase?3:2):0);
+ expect(readinessCalls).toBe(sequence===2?interactiveTabs.length+(stalledReadinessCase?1:0):0);
  expect(fixture.apiRequests).toHaveLength(0);expect(fixture.sensitive).toBe(0);
  await page.screenshot({path:info.outputPath(`p1-seq${sequence}-${track}-${width}.png`),fullPage:true});
 });

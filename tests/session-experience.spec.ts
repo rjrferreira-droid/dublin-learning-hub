@@ -39,7 +39,7 @@ test('saved without usable feedback is not described as an assessed success',asy
  await expect(page.getByTestId('session-outcome')).toContainText('Session saved · feedback not available');await expect(page.getByTestId('session-outcome')).toContainText('No score or learning gain is inferred');
 });
 test('written study does not load voice controls until the Professor tab is selected',async({page})=>{
- const f=await experienceFixture(page);let voiceModuleRequests=0;page.on('request',r=>{if(new URL(r.url()).pathname==='/src/components/ProfessorSessionPanel.tsx')voiceModuleRequests++;});
- await f.signIn();expect(voiceModuleRequests).toBe(0);await page.getByRole('button',{name:'Continue Finance',exact:true}).click();await page.getByRole('tab',{name:'Case',exact:true}).click();expect(voiceModuleRequests).toBe(0);
+ const f=await experienceFixture(page,{track:'english'});let voiceModuleRequests=0;page.on('request',r=>{if(new URL(r.url()).pathname==='/src/components/ProfessorSessionPanel.tsx')voiceModuleRequests++;});
+ await f.signIn();expect(voiceModuleRequests).toBe(0);await page.getByRole('button',{name:'Start English practice',exact:true}).click();await page.getByRole('tab',{name:'Case',exact:true}).click();expect(voiceModuleRequests).toBe(0);
  await page.getByRole('tab',{name:'Professor',exact:true}).click();await expect(page.getByTestId('professor-session-panel')).toBeVisible();expect(voiceModuleRequests).toBe(1);expect(f.fixture.apiRequests).toHaveLength(0);
 });

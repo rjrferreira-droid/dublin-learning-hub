@@ -107,7 +107,7 @@ function StudyContent({module,lessonSlug,activeTab,onTabChange,onPrepareWorkshop
    <h2>{module.caseStudy.title}</h2>{module.caseStudy.scenario.map((p,i)=><p key={i}>{p}</p>)}
    <div className="lesson-case-task"><strong>Your task</strong><p>{module.caseStudy.task}</p></div>
    <label htmlFor="lesson-case-draft">Your case response</label><textarea id="lesson-case-draft" maxLength={6000} value={drafts.case??''} onChange={e=>setDrafts(x=>({...x,case:e.target.value}))} placeholder="Draft here, or work through the case on paper…"/>
-   <p className="lesson-study-note">Temporary local draft only. Not submitted or assessed by the Professor.</p>
+   <p className="lesson-study-note">Temporary local draft only. Use the worked case and checklist for self-review; this answer is not automatically assessed.</p>
    <details><summary>Case hints</summary>{module.caseStudy.hints.map(h=><p key={h}>{h}</p>)}</details>
    <details><summary>Worked case and review checklist</summary><p className="lesson-case-worked-answer">{module.caseStudy.modelAnswer}</p><ul>{module.caseStudy.reviewChecks.map(c=><li key={c}>{c}</li>)}</ul></details>
    <h3>Transfer the skill</h3><p>{module.caseStudy.transfer}</p>
@@ -171,7 +171,7 @@ function SpeakingPractice({module,pronunciationTarget}:{module:LessonModule;pron
   <div className="speaking-target"><span>PHRASE TO REPEAT</span><blockquote>{phrase}</blockquote><button type="button" onClick={()=>{if('speechSynthesis'in window){window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(phrase);utterance.lang='en-IE';window.speechSynthesis.speak(utterance);}}}>Listen to the phrase</button></div>
   <div className="speaking-coach-grid"><article><strong>Pronunciation focus</strong><p>{pronunciationTarget}</p></article><article><strong>Transfer challenge</strong><p>{module.caseStudy.transfer}</p></article></div>
   <div className="speaking-recorder"><div><strong>{listening?'Listening…':attempts?`Attempt ${attempts} captured`:'Ready when you are'}</strong><span>{attempts}/3 attempts used</span></div><button type="button" className="lesson-speaking-button" disabled={!recognitionSupported||listening||attempts>=3} onClick={start}>{listening?'Listening…':'● Start speaking'}</button><small>Audio is not saved to Learning Hub history. The transcript disappears when this lesson closes.</small></div>
-  {!recognitionSupported?<p className="lesson-hint">Voice recognition is unavailable in this browser. You can still listen, repeat aloud and use the Professor tab for the live speaking path.</p>:null}
+  {!recognitionSupported?<p className="lesson-hint">Voice recognition is unavailable in this browser. You can still listen and repeat aloud. In English units, the Professor tab provides the live speaking path.</p>:null}
   {error?<p className="lesson-hint" role="status">{error}</p>:null}
   {transcript?<div className="speaking-feedback" role="status"><div><span>WORDS CAPTURED</span><strong>{match}% match</strong></div><p>“{transcript}”</p><p>{match!==null&&match>=85?'Clear capture. Repeat once with natural rhythm, or continue to the transfer challenge.':match!==null&&match>=60?'Most key words were captured. Slow down slightly and stress the content words.':'Try shorter chunks, then reconnect them with one natural pause.'}</p><small>This is transcript matching, not a clinical accent or acoustic-pronunciation score.</small></div>:null}
  </div>;

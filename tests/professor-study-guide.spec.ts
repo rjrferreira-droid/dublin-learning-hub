@@ -19,7 +19,9 @@ async function openFixture(page:Page,course:typeof courses[number]){
  });
  await page.routeWebSocket('**/*',ws=>{const u=new URL(ws.url());if(['localhost','127.0.0.1'].includes(u.hostname))ws.connectToServer();else ws.close();});
  await page.goto('/');await page.getByLabel('E-mail').fill('study-fixture@example.invalid');await page.getByLabel('Senha').fill('Fictional-study-only-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
- await page.getByRole('button',{name:course.button,exact:true}).click();await page.getByRole('tab',{name:'Professor',exact:true}).click();
+ if(course.track==='english'){
+  await page.getByRole('button',{name:course.button,exact:true}).click();await page.getByRole('tab',{name:'Professor',exact:true}).click();
+ }else await page.getByRole('button',{name:'Ask the Professor',exact:true}).click();
  return ()=>sensitiveRequests;
 }
 for(const course of courses)for(const viewport of [{name:'desktop',width:1440,height:1000},{name:'mobile',width:390,height:844}])test(`${course.track} study guide at ${viewport.name}: objectives, progressive help and no paid call`,async({page},info)=>{

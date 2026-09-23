@@ -203,11 +203,12 @@ test.describe('simulated account-bound browser journeys',()=>{
    const fixture=await setup(page);await page.goto('/');await signIn(page);
    for(const name of ['Finance Ireland','Irish Payroll','English Academy'])await expect(page.getByRole('heading',{name,exact:true})).toBeVisible();
    await page.getByRole('button',{name:'Continue Finance',exact:true}).click();
-   for(const tab of ['Audio','English','Practice','Case','Test','Professor']){
+   for(const tab of ['Audio','Practice','Case','Test']){
      await page.getByRole('tab',{name:tab,exact:true}).click();
      await expect(page.getByTestId('lesson-shell')).toBeVisible();
      await expect(page.getByRole('tab',{name:tab,exact:true})).toHaveAttribute('aria-selected','true');
    }
+   await expect(page.getByRole('tab',{name:'Professor',exact:true})).toHaveCount(0);
    expect(fixture.apiCalls).toBe(0);expect(fixture.writes).toBe(0);
  });
  test('history outage is explicit after SDK retries rather than replaced with invented results',async({page})=>{

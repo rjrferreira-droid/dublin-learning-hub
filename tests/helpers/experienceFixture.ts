@@ -44,7 +44,15 @@ export async function experienceFixture(page:Page,options:{track?:'finance'|'pay
  });
  await page.routeWebSocket('**/*',ws=>{const u=new URL(ws.url());if(['localhost','127.0.0.1'].includes(u.hostname))ws.connectToServer();else ws.close();});
  async function signIn(){await page.goto(options.validation?'/?validation=1':'/');await page.getByLabel('E-mail').fill(user.email);await page.getByLabel('Senha').fill('Fictional-experience-only-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();await expect(page.getByRole('button',{name:payroll?'Continue Payroll':'Continue Finance',exact:true})).toBeVisible();}
- async function openProfessor(){await page.getByRole('button',{name:track==='english'?'Start English practice':payroll?'Continue Payroll':'Continue Finance',exact:true}).click();await page.getByRole('tab',{name:'Professor',exact:true}).click();await expect(page.getByTestId('professor-session-panel')).toBeVisible();}
+ async function openProfessor(){
+  if(track==='english'){
+   await page.getByRole('button',{name:'Start English practice',exact:true}).click();
+   await page.getByRole('tab',{name:'Professor',exact:true}).click();
+  }else{
+   await page.getByRole('button',{name:'Ask the Professor',exact:true}).click();
+  }
+  await expect(page.getByTestId('professor-session-panel')).toBeVisible();
+ }
  async function start(){if(options.validation)await page.getByTestId('voice-validation-consent').getByRole('checkbox').check();await page.getByRole('button',{name:options.validation?'Start validation session':'Start voice session',exact:true}).click();}
  return {fixture,signIn,openProfessor,start};
 }

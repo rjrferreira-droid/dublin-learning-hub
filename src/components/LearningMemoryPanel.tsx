@@ -103,7 +103,7 @@ export function LearningMemoryPanel() {
           ) : message ? (
             <div className="learning-memory-state">{message}<button type="button" onClick={() => void load()}>Try again</button></div>
           ) : !snapshot || !latest ? (
-            <div className="learning-memory-state">Complete a Professor session to start building a measured learning profile.</div>
+            <div className="learning-memory-state">Your study progress works without voice. Complete an optional evaluated Professor session when you want to start a measured capability profile.</div>
           ) : (
             <>
               <div className="learning-memory-latest">

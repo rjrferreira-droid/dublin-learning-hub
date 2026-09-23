@@ -81,11 +81,12 @@ test.describe('authenticated Learning Hub shell',()=>{
     const lesson=page.getByTestId('lesson-shell');
     await expect(lesson).toBeVisible();
     await expect(lesson.getByRole('heading',{name:'IFRS 18, Group Reporting & Irish Statutory Accounts',exact:true})).toBeVisible();
-    for(const tab of ['Audio','English','Practice','Case','Test','Professor']){
+    for(const tab of ['Audio','Practice','Case','Test']){
       await page.getByRole('tab',{name:tab,exact:true}).click();
       await expect(lesson).toBeVisible();
       await expect(page.getByRole('tab',{name:tab,exact:true})).toHaveAttribute('aria-selected','true');
     }
+    await expect(page.getByRole('tab',{name:'Professor',exact:true})).toHaveCount(0);
   });
 
   test('Premium Audio is on-demand and cannot kick learner out of lesson',async({page})=>{
@@ -94,9 +95,9 @@ test.describe('authenticated Learning Hub shell',()=>{
     await page.getByRole('tab',{name:'Audio',exact:true}).click();
     await expect(page.getByTestId('premium-audio-panel')).toBeVisible();
     await expect(page.getByRole('button',{name:'Load audio',exact:true})).toBeVisible();
-    await page.getByRole('tab',{name:'English',exact:true}).click();
+    await page.getByRole('tab',{name:'Learn',exact:true}).click();
     await expect(page.getByTestId('lesson-shell')).toBeVisible();
-    await expect(page.getByRole('tab',{name:'English',exact:true})).toHaveAttribute('aria-selected','true');
+    await expect(page.getByRole('tab',{name:'Learn',exact:true})).toHaveAttribute('aria-selected','true');
   });
 
   test('English Academy is general plus professional, not business-only',async({page})=>{

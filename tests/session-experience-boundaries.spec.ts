@@ -2,13 +2,13 @@ import {test,expect} from '@playwright/test';
 import {experienceFixture,SYNTHETIC_SESSION_ID} from './helpers/experienceFixture';
 
 for(const savedOutcome of ['processing','ready'] as const)test(`uncertain dispatch keeps its session reference and reads ${savedOutcome} status without a second start`,async({page})=>{
- const f=await experienceFixture(page,{validation:true});f.fixture.outcome=savedOutcome;let starts=0;
+ const f=await experienceFixture(page,{track:'english',validation:true});f.fixture.outcome=savedOutcome;let starts=0;
  await page.route('**/api/livekit-token',async route=>{
   starts++;const request=route.request().postDataJSON();
   await route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({
    error:'professor_agent_dispatch_failed',retryAllowed:false,recovery:{
     sessionId:SYNTHETIC_SESSION_ID,roomName:'validation:fictional',maxSessionSeconds:300,
-    lessonId:request.lessonId,mode:request.mode,professorProfile:'finance',validationMode:true,
+    lessonId:request.lessonId,mode:request.mode,professorProfile:'english',validationMode:true,
     sessionPreparation:request.sessionPreparation,workshopSelection:request.workshopSelection,
    },
   })});
