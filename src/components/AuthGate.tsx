@@ -16,6 +16,8 @@ type AuthGateProps = {
   children: ReactNode;
 };
 
+type AuthMode = 'sign-in' | 'request-reset' | 'update-password';
+
 function learnerFromTrack(track: LearnerTrack): LearnerKey {
   return track === 'viviane_payroll' ? 'viviane' : 'rafael';
 }
@@ -45,15 +47,24 @@ export function AuthGate({ children }: AuthGateProps) {
   const [profileLoading, setProfileLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newPasswordConfirmation, setNewPasswordConfirmation] = useState('');
+  const [authMode, setAuthMode] = useState<AuthMode>('sign-in');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     let authRevision = 0;
-    const { data } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!mounted) return;
       authRevision++;
+      if (event === 'PASSWORD_RECOVERY') {
+        setAuthMode('update-password');
+        setErrorMessage(null);
+        setSuccessMessage(null);
+      }
       setSession(nextSession);
       setLoading(false);
       if (!nextSession) { setProfile(null); setProfileUserId(null); }
@@ -71,7 +82,7 @@ export function AuthGate({ children }: AuthGateProps) {
   }, []);
 
   useEffect(() => {
-    if (!session?.user) return;
+    if (!session?.user || authMode === 'update-password') return;
     let cancelled=false;
     const user=session.user;
     setProfileLoading(true);
@@ -83,7 +94,7 @@ export function AuthGate({ children }: AuthGateProps) {
       if (!cancelled) { setProfile(null); setProfileUserId(user.id); setProfileFailed(true); }
     }).finally(() => { if (!cancelled) setProfileLoading(false); });
     return () => { cancelled=true; };
-  }, [session?.user?.id,profileAttempt]);
+  }, [session?.user?.id,profileAttempt,authMode]);
 
   const activeLearner = useMemo(() => profile ? learnerFromTrack(profile.learner_track) : 'rafael', [profile]);
 
@@ -91,12 +102,59 @@ export function AuthGate({ children }: AuthGateProps) {
     event.preventDefault();
     setSubmitting(true);
     setErrorMessage(null);
+    setSuccessMessage(null);
 
     try {
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (error) throw error;
     } catch (error: unknown) {
       setErrorMessage(error instanceof Error ? error.message : 'Não foi possível concluir o acesso.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function requestPasswordReset(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitting(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    try {
+      const redirectTo = `${window.location.origin}/`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+      if (error) throw error;
+      setSuccessMessage('If this e-mail is assigned to the Learning Hub, a secure recovery link has been sent.');
+    } catch (error: unknown) {
+      setErrorMessage(error instanceof Error ? error.message : 'Não foi possível enviar o link de recuperação.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function submitNewPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    if (newPassword !== newPasswordConfirmation) {
+      setErrorMessage('As senhas não coincidem.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      const { error: signOutError } = await supabase.auth.signOut({ scope: 'local' });
+      if (signOutError) throw signOutError;
+      setNewPassword('');
+      setNewPasswordConfirmation('');
+      setPassword('');
+      setAuthMode('sign-in');
+      setSuccessMessage('Senha alterada. Entre novamente com a nova senha.');
+    } catch (error: unknown) {
+      setErrorMessage(error instanceof Error ? error.message : 'Não foi possível alterar a senha.');
     } finally {
       setSubmitting(false);
     }
@@ -121,7 +179,9 @@ export function AuthGate({ children }: AuthGateProps) {
     );
   }
 
-  if (!session) {
+  if (!session || authMode === 'update-password') {
+    const isResetRequest = authMode === 'request-reset';
+    const isPasswordUpdate = authMode === 'update-password';
     return (
       <div className="auth-screen">
         <section className="auth-hero">
@@ -147,30 +207,55 @@ export function AuthGate({ children }: AuthGateProps) {
         <section className="auth-panel">
           <div className="auth-card">
             <div className="auth-card-head">
-              <span>WELCOME BACK</span>
-              <h2>Enter Learning Hub</h2>
-              <p>Use the account assigned to this Learning Hub.</p>
+              <span>{isPasswordUpdate ? 'SECURE RECOVERY' : isResetRequest ? 'ACCOUNT RECOVERY' : 'WELCOME BACK'}</span>
+              <h2>{isPasswordUpdate ? 'Choose a new password' : isResetRequest ? 'Recover your access' : 'Enter Learning Hub'}</h2>
+              <p>{isPasswordUpdate ? 'Create a new password for your Learning Hub account.' : isResetRequest ? 'We will send a secure recovery link to the assigned e-mail.' : 'Use the account assigned to this Learning Hub.'}</p>
             </div>
 
-            <form className="auth-form" onSubmit={submitAuth}>
-              <label>
-                <span>E-mail</span>
-                <input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required placeholder="seu@email.com" />
-              </label>
-              <label>
-                <span>Senha</span>
-                <input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} required placeholder="Mínimo de 8 caracteres" />
-              </label>
+            {isPasswordUpdate ? (
+              <form className="auth-form" onSubmit={submitNewPassword}>
+                <label>
+                  <span>Nova senha</span>
+                  <input type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={8} required placeholder="Mínimo de 8 caracteres" />
+                </label>
+                <label>
+                  <span>Confirme a nova senha</span>
+                  <input type="password" autoComplete="new-password" value={newPasswordConfirmation} onChange={(event) => setNewPasswordConfirmation(event.target.value)} minLength={8} required placeholder="Digite novamente" />
+                </label>
+                {errorMessage ? <div className="auth-message error">{errorMessage}</div> : null}
+                <button className="auth-submit" type="submit" disabled={submitting}>{submitting ? 'Aguarde…' : 'Alterar senha'}</button>
+              </form>
+            ) : isResetRequest ? (
+              <form className="auth-form" onSubmit={requestPasswordReset}>
+                <label>
+                  <span>E-mail</span>
+                  <input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required placeholder="seu@email.com" />
+                </label>
+                {errorMessage ? <div className="auth-message error">{errorMessage}</div> : null}
+                {successMessage ? <div className="auth-message success">{successMessage}</div> : null}
+                <button className="auth-submit" type="submit" disabled={submitting}>{submitting ? 'Enviando…' : 'Enviar link de recuperação'}</button>
+                <button className="auth-mode-switch" type="button" onClick={() => { setAuthMode('sign-in'); setErrorMessage(null); setSuccessMessage(null); }}>Voltar para o login</button>
+              </form>
+            ) : (
+              <form className="auth-form" onSubmit={submitAuth}>
+                <label>
+                  <span>E-mail</span>
+                  <input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required placeholder="seu@email.com" />
+                </label>
+                <label>
+                  <span>Senha</span>
+                  <input type="password" autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} required placeholder="Mínimo de 8 caracteres" />
+                </label>
+                {errorMessage ? <div className="auth-message error">{errorMessage}</div> : null}
+                {successMessage ? <div className="auth-message success">{successMessage}</div> : null}
+                <button className="auth-submit" type="submit" disabled={submitting}>{submitting ? 'Aguarde…' : 'Entrar'}</button>
+                <button className="auth-mode-switch" type="button" onClick={() => { setAuthMode('request-reset'); setPassword(''); setErrorMessage(null); setSuccessMessage(null); }}>Esqueci minha senha</button>
+              </form>
+            )}
 
-              {errorMessage ? <div className="auth-message error">{errorMessage}</div> : null}
-              <button className="auth-submit" type="submit" disabled={submitting}>
-                {submitting ? 'Aguarde…' : 'Entrar'}
-              </button>
-            </form>
-
-            <p className="auth-registration-note" data-testid="registration-closed">
+            {!isPasswordUpdate ? <p className="auth-registration-note" data-testid="registration-closed">
               New account registration is temporarily unavailable while secure access assignment is being installed.
-            </p>
+            </p> : null}
 
             <div className="auth-security-note">Secure session • Supabase Auth • V2 isolated environment</div>
           </div>

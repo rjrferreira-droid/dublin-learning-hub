@@ -22,6 +22,12 @@ test('unauthenticated V2 entry is protected by the secure AuthGate',async({page}
   await expect(page.getByLabel('E-mail')).toBeVisible();
   await expect(page.getByLabel('Senha')).toBeVisible();
   await expect(page.getByRole('button',{name:'Entrar',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Esqueci minha senha',exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Esqueci minha senha',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Recover your access',exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Enviar link de recuperação',exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Voltar para o login',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Enter Learning Hub',exact:true})).toBeVisible();
 });
 
 test('Manuzinha standalone play space stays isolated from adult learning surfaces',async({page})=>{
