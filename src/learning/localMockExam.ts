@@ -1,10 +1,17 @@
+import {ACCA_FR_FULL_MOCK_1} from './localFullMockExam.ts';
+
 export const LOCAL_MOCK_PROGRESS_KEY_PREFIX='learning-hub:local-mock-progress:v1';
 export const LOCAL_MOCK_REVIEW_STAGES=['D+1','D+7','D+30'] as const;
 export type LocalMockReviewStage=typeof LOCAL_MOCK_REVIEW_STAGES[number];
 
 export type MockObjectiveQuestion={id:string;topic:string;prompt:string;options:readonly string[];correctIndex:number;explanation:string};
 export type MockMarkingPoint={id:string;label:string;guidance:string;marks:number};
-export type LocalMockExam={id:string;title:string;subtitle:string;focusAreas:readonly string[];durationMinutes:number;objectiveMarks:number;constructedMarks:number;objectiveQuestions:readonly MockObjectiveQuestion[];constructed:{scenario:readonly string[];requirements:readonly string[];markingGuide:readonly MockMarkingPoint[]}};
+export type MockConstructedResponse={id:string;title:string;scenario:readonly string[];requirements:readonly string[];markingGuide:readonly MockMarkingPoint[]};
+type LocalMockBase={id:string;title:string;subtitle:string;focusAreas:readonly string[];durationMinutes:number;objectiveMarks:number;constructedMarks:number;equivalenceNotice:string};
+export type LocalMiniMockExam=LocalMockBase&{format:'mini';objectiveQuestions:readonly MockObjectiveQuestion[];constructed:MockConstructedResponse};
+export type MockCase={id:string;title:string;scenario:readonly string[];questions:readonly MockObjectiveQuestion[]};
+export type LocalFullMockExam=LocalMockBase&{format:'full';sectionAQuestions:readonly MockObjectiveQuestion[];sectionBCases:readonly MockCase[];sectionCResponses:readonly MockConstructedResponse[]};
+export type LocalMockExam=LocalMiniMockExam|LocalFullMockExam;
 export type LocalMockAttempt={id:string;submittedAt:string;objectiveCorrect:number;objectiveTotal:number;constructedMarks:number;totalMarks:number;elapsedSeconds:number};
 export type LocalMockReview={reviewedAt:string;totalMarks:number;maximumMarks:number};
 export type LocalMockProgress={version:1;attempts:Record<string,LocalMockAttempt[]>;reviews:Record<string,Partial<Record<LocalMockReviewStage,LocalMockReview>>>};
@@ -18,7 +25,8 @@ const validDate=(value:unknown)=>typeof value==='string'&&!Number.isNaN(Date.par
 const boundedInt=(value:unknown,min:number,max:number)=>Number.isInteger(value)&&Number(value)>=min&&Number(value)<=max?Number(value):null;
 const scopedKey=(scope:string)=>`${LOCAL_MOCK_PROGRESS_KEY_PREFIX}:${/^[0-9a-z-]{1,80}$/i.test(scope)?scope:'default'}`;
 
-export const ACCA_FR_MOCK_1:LocalMockExam={
+export const ACCA_FR_MOCK_1:LocalMiniMockExam={
+ format:'mini',equivalenceNotice:'Partial 30-minute drill. It is not equivalent to the official 3-hour, 100-mark ACCA FR examination.',
  id:'acca-fr-mini-mock-01',title:'ACCA FR Mini Mock 01',subtitle:'Recognition, measurement, group reporting and performance analysis',focusAreas:['PPE and revenue','Provisions and tax','Consolidation','Performance analysis'],durationMinutes:30,objectiveMarks:12,constructedMarks:8,
  objectiveQuestions:[
   {id:'fr-m1-q1',topic:'IAS 16 · PPE',prompt:'A machine costs €120,000, has a €12,000 residual value and a six-year useful life. Using straight-line depreciation, what is the annual charge?',options:['€18,000','€20,000','€22,000','€108,000'],correctIndex:0,explanation:'Depreciable amount is €108,000 (€120,000 less €12,000), divided by six years: €18,000.'},
@@ -28,7 +36,7 @@ export const ACCA_FR_MOCK_1:LocalMockExam={
   {id:'fr-m1-q5',topic:'Consolidation',prompt:'A parent sells inventory to its subsidiary for €50,000 at a 25% mark-up on cost. Half remains in the group at year end. What unrealised profit is eliminated?',options:['€5,000','€6,250','€10,000','€12,500'],correctIndex:0,explanation:'Cost is €40,000 and total profit is €10,000. Half remains, so €5,000 is unrealised.'},
   {id:'fr-m1-q6',topic:'Performance analysis',prompt:'Revenue rises by 20% while operating profit falls. Which conclusion is best supported?',options:['Liquidity definitely improved','Operating margin fell','Gross margin must have risen','The entity generated positive cash flow'],correctIndex:1,explanation:'If operating profit falls while revenue rises, operating profit as a percentage of revenue necessarily falls. The other conclusions require more evidence.'}
  ],
- constructed:{
+ constructed:{id:'fr-m1-cr',title:'Performance analysis drill',
   scenario:[
    'North Quay Ltd reported revenue of €12.0m, gross profit of €3.6m, operating profit of €1.2m and capital employed of €7.5m for 2026.',
    'For 2025, revenue was €10.0m, gross profit €3.4m, operating profit €1.4m and capital employed €7.0m.',
@@ -51,7 +59,8 @@ export const ACCA_FR_MOCK_1:LocalMockExam={
  }
 };
 
-export const ACCA_FR_MOCK_2:LocalMockExam={
+export const ACCA_FR_MOCK_2:LocalMiniMockExam={
+ format:'mini',equivalenceNotice:'Partial 30-minute drill. It is not equivalent to the official 3-hour, 100-mark ACCA FR examination.',
  id:'acca-fr-mini-mock-02',title:'ACCA FR Mini Mock 02',subtitle:'Inventory, foreign currency, financial instruments, leases and cash-flow interpretation',focusAreas:['Inventory and FX','Financial instruments','Leases and EPS','Cash flow and liquidity'],durationMinutes:30,objectiveMarks:12,constructedMarks:8,
  objectiveQuestions:[
   {id:'fr-m2-q1',topic:'IAS 2 · Inventories',prompt:'An item of inventory cost €48,000. Its estimated selling price is €50,000 and the costs necessary to complete and sell it are €5,000. At what amount should it be measured?',options:['€45,000','€48,000','€50,000','€53,000'],correctIndex:0,explanation:'Net realisable value is €45,000 (€50,000 less €5,000). IAS 2 requires the lower of cost and net realisable value, so the inventory is written down to €45,000.'},
@@ -61,7 +70,7 @@ export const ACCA_FR_MOCK_2:LocalMockExam={
   {id:'fr-m2-q5',topic:'IAS 7 · Cash flows',prompt:'How is cash paid to acquire an item of property, plant and equipment normally classified in the statement of cash flows?',options:['Operating activity','Investing activity','Financing activity','Cash equivalent movement'],correctIndex:1,explanation:'Acquiring a long-term productive asset is normally an investing cash flow because it represents expenditure on a resource intended to generate future income and cash flows.'},
   {id:'fr-m2-q6',topic:'IAS 33 · Earnings per share',prompt:'Profit attributable to ordinary shareholders is €2.4m and the weighted-average number of ordinary shares is 1.2m. What is basic earnings per share?',options:['€0.50','€1.20','€2.00','€2.88'],correctIndex:2,explanation:'Basic earnings per share is profit attributable to ordinary shareholders divided by the weighted-average number of ordinary shares: €2.4m / 1.2m = €2.00.'}
  ],
- constructed:{
+ constructed:{id:'fr-m2-cr',title:'Cash-flow interpretation drill',
   scenario:[
    'Harbour Tech Ltd reported revenue of €15.0m and operating profit of €1.8m for 2026. Revenue was €13.5m and operating profit was €1.9m for 2025.',
    'The 2026 operating profit includes depreciation of €0.6m and a €0.1m loss on disposal of equipment. During 2026, inventory increased by €0.7m, trade receivables decreased by €0.2m and trade payables decreased by €0.3m.',
@@ -84,10 +93,14 @@ export const ACCA_FR_MOCK_2:LocalMockExam={
  }
 };
 
-export const LOCAL_ACCA_FR_MOCKS:readonly LocalMockExam[]=[ACCA_FR_MOCK_1,ACCA_FR_MOCK_2];
+export const LOCAL_ACCA_FR_MOCKS:readonly LocalMiniMockExam[]=[ACCA_FR_MOCK_1,ACCA_FR_MOCK_2];
+export const LOCAL_ACCA_FR_PRACTICE:readonly LocalMockExam[]=[...LOCAL_ACCA_FR_MOCKS,ACCA_FR_FULL_MOCK_1];
+
+export function objectiveQuestionsFor(exam:LocalMockExam):readonly MockObjectiveQuestion[]{return exam.format==='mini'?exam.objectiveQuestions:[...exam.sectionAQuestions,...exam.sectionBCases.flatMap(item=>item.questions)];}
+export function constructedResponsesFor(exam:LocalMockExam):readonly MockConstructedResponse[]{return exam.format==='mini'?[exam.constructed]:exam.sectionCResponses;}
 
 export function gradeMockObjectives(exam:LocalMockExam,answers:Readonly<Record<string,number|undefined>>){
- return exam.objectiveQuestions.reduce((score,question)=>score+(answers[question.id]===question.correctIndex?1:0),0);
+ return objectiveQuestionsFor(exam).reduce((score,question)=>score+(answers[question.id]===question.correctIndex?1:0),0);
 }
 
 export function mockProgressKey(scope='default'){return scopedKey(scope);}
