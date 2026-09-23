@@ -9,6 +9,7 @@ export async function loadReviewedRuntimeModuleFor(track:P1Track,lesson:{id:stri
  const localEnglish=localEnglishCodeFor(track,lesson);
  if(localEnglish==='E1'||localEnglish==='E2'){const {localEnglishLessonFor}=await import('./localEnglishLessonModules.ts');return localEnglishLessonFor(track,lesson);}
  if(localEnglish==='E3'||localEnglish==='E4'){const {localEnglishEverydayExpansionFor}=await import('./localEnglishEverydayExpansion.ts');return localEnglishEverydayExpansionFor(track,lesson);}
+ if(localEnglish==='E5'||localEnglish==='P5'){const {localEnglishBalancedExpansionFor}=await import('./localEnglishBalancedExpansion.ts');return localEnglishBalancedExpansionFor(track,lesson);}
  if(localEnglish!==null)return loadP1ModuleFor(track,lesson);
  if(local==='A1'){const {localModelLessonFor}=await import('./localModelLessonModules.ts');return localModelLessonFor(track,lesson);}
  if(local==='A2'){const {localModelA2For}=await import('./localModelLessonA2.ts');return localModelA2For(track,lesson);}

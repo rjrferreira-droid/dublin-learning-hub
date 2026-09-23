@@ -51,7 +51,7 @@ test('English local core is exactly balanced and keeps an independent resume poi
  let progress=recordLocalLessonOpened(blank,LOCAL_MODEL_LESSONS[4].id,'finance');
  progress=recordLocalLessonOpened(progress,LOCAL_ENGLISH_LESSONS[1].id,'english');
  const english=summarizeLocalCourse(catalog,progress,'english'),finance=summarizeLocalCourse(catalog,progress,'finance');
- assert.equal(english.total,8);assert.deepEqual(english.modules.map(x=>[x.code,x.total]),[['E',4],['P',4]]);assert.equal(english.nextLesson?.id,LOCAL_ENGLISH_LESSONS[1].id);assert.equal(finance.nextLesson?.id,LOCAL_MODEL_LESSONS[4].id);
+ assert.equal(english.total,10);assert.deepEqual(english.modules.map(x=>[x.code,x.total]),[['E',5],['P',5]]);assert.equal(english.nextLesson?.id,LOCAL_ENGLISH_LESSONS[1].id);assert.equal(finance.nextLesson?.id,LOCAL_MODEL_LESSONS[4].id);
  assert.equal(lastOpenedLocalLessonId(progress,'english'),LOCAL_ENGLISH_LESSONS[1].id);assert.equal(lastOpenedLocalLessonId(progress,'finance'),LOCAL_MODEL_LESSONS[4].id);
  const completed=completeLocalLesson(progress,LOCAL_ENGLISH_LESSONS[0].id,5,5,'2026-09-22T18:00:00.000Z');
  assert.deepEqual(buildLocalReviewSchedule(catalog,completed,new Date('2026-09-24T18:00:00.000Z'),'english').map(x=>[x.stage,x.status]),[['D+1','due'],['D+7','scheduled'],['D+30','scheduled']]);
