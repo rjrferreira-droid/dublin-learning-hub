@@ -7,6 +7,7 @@ import { CostCenterPanel } from './components/CostCenterPanel';
 import { LearningMemoryPanel } from './components/LearningMemoryPanel';
 import { LittleEnglish } from './components/LittleEnglish';
 import { presentation } from './config/presentation';
+import { curriculumPreviewRuntimeEnabled } from './config/curriculumPreview';
 import { WorkspaceLoadBoundary } from './components/WorkspaceLoadBoundary';
 import './styles.css';
 import './british-premium.css';
@@ -21,6 +22,7 @@ import './adult-mobile-utilities.css';
 import './mock-exam.css';
 
 const manuzinhaMode = new URLSearchParams(window.location.search).get('manuzinha') === '1';
+document.documentElement.dataset.curriculumPreview = curriculumPreviewRuntimeEnabled ? 'enabled' : 'disabled';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

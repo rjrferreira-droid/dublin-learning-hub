@@ -100,4 +100,3 @@ export function localModelCodeFor(track:P1Track,lesson:{id:string;slug:string}):
  return null;
 }
 export function isLocalModelLesson(track:P1Track,lesson:{id:string;slug:string}){return localModelCodeFor(track,lesson)!==null;}
-export function curriculumModelPreviewEnabled(search:string){return new URLSearchParams(search).get('curriculumPreview')==='1';}

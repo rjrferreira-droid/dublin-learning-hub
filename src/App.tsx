@@ -8,7 +8,8 @@ import {isSequence4Slug} from './learning/sequence4Registry';
 import {WORKSHOP_CASES} from './learning/appliedPractice';
 import {loadPublishedCurriculumCatalog,type CatalogLesson} from './services/curriculumCatalog';
 import {lessonsForTrack,chooseNextPublishedLesson} from './learning/curriculumCatalogCore';
-import {LOCAL_MODEL_LESSONS,curriculumModelPreviewEnabled} from './learning/localModelLessonRegistry';
+import {LOCAL_MODEL_LESSONS} from './learning/localModelLessonRegistry';
+import {curriculumPreviewRuntimeEnabled} from './config/curriculumPreview';
 import {LOCAL_ENGLISH_LESSONS} from './learning/localEnglishLessonRegistry';
 import {buildLocalReviewSchedule,completeLocalLesson,completeLocalReview,lastOpenedLocalLessonId,localLessonAfter,mergeLocalStudyProgress,parseLocalStudyProgress,readLocalStudyProgress,recordLocalLessonOpened,summarizeLocalCourse,writeLocalStudyProgress,type LocalReviewItem,type LocalReviewStage,type LocalStudyProgress} from './learning/localStudyProgress';
 import {isSequence3Slug} from './learning/sequence3Registry';
@@ -186,7 +187,7 @@ function App() {
   const [activeLocalReview,setActiveLocalReview]=useState<{lessonId:string;stage:LocalReviewStage}|null>(null);
 
   const profile = useMemo(() => getLearnerProfile(learnerKey), [learnerKey]);
-  const curriculumPreview=useMemo(()=>curriculumModelPreviewEnabled(window.location.search),[]);
+  const curriculumPreview=curriculumPreviewRuntimeEnabled;
   const supportedCatalog=useMemo(()=>{
     const published=catalog.filter((lesson)=>{const base=tracks.find(t=>t.key===lesson.track);return !!base&&(lesson.id===base.lessonId||lesson.slug===p1SlugFor(lesson.track)||isSequence3Slug(lesson.track,lesson.slug)||isSequence4Slug(lesson.track,lesson.slug)||isRemainingWrittenSlug(lesson.track,lesson.slug));});
     if(!curriculumPreview)return published;
