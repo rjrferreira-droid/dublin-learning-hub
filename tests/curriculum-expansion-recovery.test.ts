@@ -5,7 +5,9 @@ const grammar=read('quality/english-contextual-grammar.json');
 const acca=read('quality/acca-fr-foundations-a1-b2.json');
 test('permanent curriculum activates English and ACCA FR while preserving protected capabilities',()=>{
  assert.deepEqual(permanent.activePriorities,['english','acca-fr','professor-quality']);
- assert.equal(permanent.english.balance.everyday,50);assert.equal(permanent.english.balance.professional,50);
+ assert.deepEqual([permanent.english.balance.rafael.everyday,permanent.english.balance.rafael.professional],[50,50]);
+ assert.deepEqual([permanent.english.balance.viviane.everyday,permanent.english.balance.viviane.professional],[80,20]);
+ assert.ok(permanent.english.balance.viviane.excludedCentres.includes('finance'));
  assert.equal(permanent.premiumAudio.preservationRule.includes('Do not modify'),true);
  assert.equal(permanent.release.databasePublication,false);assert.equal(permanent.release.paidProviderCalls,false);
  assert.ok(permanent.preservedCapabilities.includes('manuzinha-isolation'));

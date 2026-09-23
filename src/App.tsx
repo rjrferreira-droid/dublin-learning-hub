@@ -10,7 +10,7 @@ import {loadPublishedCurriculumCatalog,type CatalogLesson} from './services/curr
 import {lessonsForTrack,chooseNextPublishedLesson} from './learning/curriculumCatalogCore';
 import {LOCAL_MODEL_LESSONS} from './learning/localModelLessonRegistry';
 import {curriculumPreviewRuntimeEnabled} from './config/curriculumPreview';
-import {LOCAL_ENGLISH_LESSONS} from './learning/localEnglishLessonRegistry';
+import {localEnglishLessonsForLearner} from './learning/localEnglishCatalogForLearner';
 import {buildLocalReviewSchedule,completeLocalLesson,completeLocalReview,lastOpenedLocalLessonId,localLessonAfter,mergeLocalStudyProgress,parseLocalStudyProgress,readLocalStudyProgress,recordLocalLessonOpened,summarizeLocalCourse,writeLocalStudyProgress,type LocalReviewItem,type LocalReviewStage,type LocalStudyProgress} from './learning/localStudyProgress';
 import {isSequence3Slug} from './learning/sequence3Registry';
 import {p1SlugFor} from './learning/p1RuntimeModules';
@@ -191,10 +191,10 @@ function App() {
   const supportedCatalog=useMemo(()=>{
     const published=catalog.filter((lesson)=>{const base=tracks.find(t=>t.key===lesson.track);return !!base&&(lesson.id===base.lessonId||lesson.slug===p1SlugFor(lesson.track)||isSequence3Slug(lesson.track,lesson.slug)||isSequence4Slug(lesson.track,lesson.slug)||isRemainingWrittenSlug(lesson.track,lesson.slug));});
     if(!curriculumPreview)return published;
-    const local=[...LOCAL_MODEL_LESSONS,...LOCAL_ENGLISH_LESSONS];
+    const local=[...LOCAL_MODEL_LESSONS,...localEnglishLessonsForLearner(learnerKey)];
     const localKeys=new Set(local.map(lesson=>`${lesson.track}:${lesson.slug}`));
     return [...local,...published.filter(lesson=>!localKeys.has(`${lesson.track}:${lesson.slug}`))];
-  },[catalog,curriculumPreview]);
+  },[catalog,curriculumPreview,learnerKey]);
   const activeTrack = useMemo(() => {
     const base=tracks.find((t)=>t.key===trackKey)??tracks[0];
     const selected=selectedCatalogLesson?.track===trackKey?selectedCatalogLesson:null;
@@ -665,23 +665,25 @@ function EnglishAcademyView({ profile, learnerKey, catalog, localProgress, openL
   const dueReviews=reviews.filter(item=>item.status==='due').length;
   const everyday=course.modules.find(module=>module.code==='E');
   const professional=course.modules.find(module=>module.code==='P');
+  const currentVivianeWeek=Math.min(4,Math.floor(course.completedCount/5)+1);
+  const currentVivianeWeekLessons=course.lessons.slice((currentVivianeWeek-1)*5,currentVivianeWeek*5);
   return (
     <section className="page-stack" data-testid="english-academy-view">
       <div className="academy-hero">
         <div>
           <div className="eyebrow light">ENGLISH ACADEMY • {profile.displayName.toUpperCase()}</div>
-          <h2>General English first. Professional confidence built on top.</h2>
-          <p>British and American English are both accepted, with deliberate Irish exposure for real life in Dublin. The programme adapts to the learner rather than forcing one fixed textbook path.</p>
+          <h2>{learnerKey==='viviane'?'Everyday fluency first. Payroll confidence in context.':'General English and technical communication in equal measure.'}</h2>
+          <p>British and American English are both accepted, with deliberate Irish exposure for real life in Dublin. {learnerKey==='viviane'?'Her professional practice centres on Payroll, Departamento Pessoal and People Operations — not Finance.':'Professional practice centres on Finance, Accounting, Tax, Payroll, Treasury and Compliance.'}</p>
           <div className="hero-actions"><button className="primary-btn" onClick={() => nextLesson?openLesson('english',nextLesson):openLesson('english')}>{nextLesson?action:'Open English Golden Lesson'}</button><span className="academy-level">{profile.english.cefr} provisional • {profile.english.targetCefr} target</span></div>
         </div>
         <div className="exposure-ring" aria-label="Language exposure mix"><strong>40 / 40 / 20</strong><span>UK • US • Ireland</span></div>
       </div>
 
       {course.total>0?<section className="acca-study-board english-study-board" data-testid="english-study-board">
-        <div className="section-heading"><div><div className="eyebrow">ENGLISH DAILY AGENDA</div><h2>Build everyday fluency and professional confidence together</h2></div><span>Balanced local core · no provider calls</span></div>
+        <div className="section-heading"><div><div className="eyebrow">ENGLISH DAILY AGENDA</div><h2>Build everyday fluency and professional confidence together</h2></div><span>{profile.english.curriculumMix.everydayPct}/{profile.english.curriculumMix.professionalPct} profile plan · no provider calls</span></div>
         <div className="acca-agenda-grid">
           <article className="acca-agenda-card"><span>NEXT LESSON</span><strong>{nextLesson?.title??'Core completed'}</strong><small>{nextLesson?`${nextLesson.estimatedMinutes} min · progress syncs with your account`:'All eight lessons remain available for review.'}</small>{nextLesson?<button className="primary-btn" onClick={()=>openLesson('english',nextLesson)}>{action}</button>:null}</article>
-          <article className="acca-agenda-card"><span>50 / 50 BALANCE</span><strong>{everyday?.total??0} everyday · {professional?.total??0} professional</strong><small>This first local core keeps both halves equal before later lessons are added in balanced pairs.</small><button className="secondary-btn" onClick={()=>openView('learn')}>View English lessons</button></article>
+          <article className="acca-agenda-card"><span>{profile.english.curriculumMix.everydayPct} / {profile.english.curriculumMix.professionalPct} BALANCE</span><strong>{everyday?.total??0} everyday · {professional?.total??0} {profile.english.curriculumMix.professionalLabel}</strong><small>{learnerKey==='viviane'?'Four everyday lessons and one Payroll/People Operations lesson per week.':'The monthly sequence keeps everyday and technical English equally represented.'}</small><button className="secondary-btn" onClick={()=>openView('learn')}>View English lessons</button></article>
           <article className={`acca-agenda-card ${dueReviews?'review-due':''}`}><span>SPACED RETRIEVAL</span><strong>{dueReviews?`${dueReviews} review${dueReviews===1?'':'s'} due`:'D+1 · D+7 · D+30'}</strong><small>{course.completedCount?`${course.completedCount}/${course.total} lessons finished`:'Finish the first lesson to start the review cycle.'}</small><button className="secondary-btn" onClick={()=>openView('revision')}>{dueReviews?'Open due reviews':'View review plan'}</button></article>
         </div>
         <div className="acca-module-grid" aria-label="English progress by balance area">{course.modules.map(module=><article key={module.code} className="acca-module-card"><div><b>{module.code}</b><span>{module.label}</span></div><strong>{module.completedCount}/{module.total}</strong><div className="progress-track"><span style={{width:`${module.percent}%`}} /></div><small>{module.remainingMinutes?`${module.remainingMinutes} min estimated remaining`:'Area completed'}</small></article>)}</div>
@@ -689,10 +691,10 @@ function EnglishAcademyView({ profile, learnerKey, catalog, localProgress, openL
 
       <div className="academy-grid">
         <article className="academy-card wide-academy-card">
-          <div className="eyebrow">THIS WEEK</div>
+          <div className="eyebrow">{learnerKey==='viviane'?`WEEK ${currentVivianeWeek} · 4 EVERYDAY + 1 PROFESSIONAL`:'THIS WEEK'}</div>
           <h3>Short, varied sessions that convert input into speech</h3>
           <div className="academy-week">
-            {DEFAULT_WEEK.map((session) => (
+            {(learnerKey==='viviane'?currentVivianeWeekLessons.map((lesson,index)=>({day:index+1,title:lesson.title,primarySkills:[lesson.moduleSequence===1?'everyday':'Payroll & People Ops'],minutes:lesson.estimatedMinutes,optional:false})):DEFAULT_WEEK).map((session) => (
               <div className="academy-session" key={session.day}>
                 <span>D{session.day}</span><div><strong>{session.title}</strong><small>{session.primarySkills.join(' • ')} • {session.minutes} min{session.optional ? ' • optional' : ''}</small></div>
               </div>

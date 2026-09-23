@@ -1,5 +1,5 @@
 {
-  "version": "permanent-curriculum-2026-09-21-v1",
+  "version": "permanent-curriculum-2026-09-23-v2",
   "status": "approved_structure_not_database_published",
   "supersedes": [
     {
@@ -25,9 +25,18 @@
   ],
   "english": {
     "balance": {
-      "everyday": 50,
-      "professional": 50,
-      "measurement": "curriculum-wide, not every individual lesson"
+      "rafael": {
+        "everyday": 50,
+        "professional": 50,
+        "professionalDomains": ["finance", "accounting", "tax", "payroll", "treasury", "contracts and compliance"]
+      },
+      "viviane": {
+        "everyday": 80,
+        "professional": 20,
+        "professionalDomains": ["payroll", "Departamento Pessoal", "People Operations", "benefits", "onboarding and offboarding", "employee service"],
+        "excludedCentres": ["finance", "accounting", "tax", "treasury", "financial reporting"]
+      },
+      "measurement": "curriculum-wide by learner profile; Viviane also keeps a weekly 4:1 lesson pattern"
     },
     "dailyMinutes": {
       "reference": 40,

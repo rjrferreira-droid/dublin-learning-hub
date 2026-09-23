@@ -22,6 +22,8 @@ const MODULE_LABELS:Record<string,{code:string;label:string}>={
  'acca-fr-employability-technology':{code:'E',label:'Employability'},
  'english-everyday':{code:'E',label:'Everyday'},
  'english-professional':{code:'P',label:'Technical'},
+ 'english-viviane-everyday':{code:'E',label:'Everyday'},
+ 'english-viviane-people-operations':{code:'P',label:'Payroll & People Ops'},
 };
 const empty=():LocalStudyProgress=>({version:3,lastOpenedLessonIds:{},legacyLastOpenedLessonId:null,completed:{},reviews:{}});
 const validId=(value:unknown)=>typeof value==='string'&&/^[0-9a-z-]{8,80}$/i.test(value);
@@ -109,7 +111,7 @@ export function completeLocalReview(progress:LocalStudyProgress,lessonId:string,
 }
 
 export function summarizeLocalCourse(catalog:readonly CatalogLesson[],progress:LocalStudyProgress,track:CatalogTrack,now=new Date()):LocalCourseProgress{
- const lessons=catalog.filter(lesson=>lesson.origin==='local-model'&&lesson.track===track).sort((a,b)=>a.moduleSequence-b.moduleSequence||a.sequence-b.sequence||a.slug.localeCompare(b.slug));
+ const lessons=catalog.filter(lesson=>lesson.origin==='local-model'&&lesson.track===track).sort((a,b)=>a.sequence-b.sequence||a.moduleSequence-b.moduleSequence||a.slug.localeCompare(b.slug));
  const completedCount=lessons.filter(lesson=>progress.completed[lesson.id]).length;
  const resumeId=lastOpenedLocalLessonId(progress,track);
  const resumeLesson=lessons.find(lesson=>lesson.id===resumeId&&!progress.completed[lesson.id]);
@@ -132,7 +134,7 @@ export function buildLocalReviewSchedule(catalog:readonly CatalogLesson[],progre
 export function localLessonAfter(catalog:readonly CatalogLesson[],currentLessonId:string):CatalogLesson|null{
  const current=catalog.find(lesson=>lesson.origin==='local-model'&&lesson.id===currentLessonId);
  if(!current)return null;
- const lessons=catalog.filter(lesson=>lesson.origin==='local-model'&&lesson.track===current.track).sort((a,b)=>a.moduleSequence-b.moduleSequence||a.sequence-b.sequence||a.slug.localeCompare(b.slug));
+ const lessons=catalog.filter(lesson=>lesson.origin==='local-model'&&lesson.track===current.track).sort((a,b)=>a.sequence-b.sequence||a.moduleSequence-b.moduleSequence||a.slug.localeCompare(b.slug));
  const index=lessons.findIndex(lesson=>lesson.id===currentLessonId);
  return index>=0?lessons[index+1]??null:null;
 }

@@ -2,11 +2,14 @@ import type {LessonModule} from './lessonModules.ts';
 import type {P1Track} from './p1RuntimeRegistry.ts';
 import {localModelCodeFor} from './localModelLessonRegistry.ts';
 import {localEnglishCodeFor} from './localEnglishLessonRegistry.ts';
+import {localVivianeEnglishCodeFor} from './vivianeEnglishLessonRegistry.ts';
 import {loadP1ModuleFor} from './p1RuntimeModules.ts';
 /** Reviewed local content loader. It performs no publication, persistence or provider operation. */
 export async function loadReviewedRuntimeModuleFor(track:P1Track,lesson:{id:string;slug:string}):Promise<LessonModule|null>{
  const local=localModelCodeFor(track,lesson);
  const localEnglish=localEnglishCodeFor(track,lesson);
+ const localVivianeEnglish=localVivianeEnglishCodeFor(track,lesson);
+ if(localVivianeEnglish!==null){const {localVivianeEnglishLessonFor}=await import('./vivianeEnglishModules.ts');return localVivianeEnglishLessonFor(track,lesson);}
  if(localEnglish==='E1'||localEnglish==='E2'){const {localEnglishLessonFor}=await import('./localEnglishLessonModules.ts');return localEnglishLessonFor(track,lesson);}
  if(localEnglish==='E3'||localEnglish==='E4'){const {localEnglishEverydayExpansionFor}=await import('./localEnglishEverydayExpansion.ts');return localEnglishEverydayExpansionFor(track,lesson);}
  if(localEnglish==='E5'||localEnglish==='P5'){const {localEnglishBalancedExpansionFor}=await import('./localEnglishBalancedExpansion.ts');return localEnglishBalancedExpansionFor(track,lesson);}
