@@ -24,6 +24,12 @@ const MODULE_LABELS:Record<string,{code:string;label:string}>={
  'english-professional':{code:'P',label:'Technical'},
  'english-viviane-everyday':{code:'E',label:'Everyday'},
  'english-viviane-people-operations':{code:'P',label:'Payroll & People Ops'},
+ 'payroll-foundations':{code:'1',label:'Foundations'},
+ 'payroll-calculation':{code:'2',label:'Gross to net'},
+ 'payroll-controls':{code:'3',label:'Controls'},
+ 'payroll-lifecycle':{code:'4',label:'Lifecycle'},
+ 'payroll-employee-service':{code:'5',label:'Employee service'},
+ 'payroll-month-end':{code:'6',label:'Month end'},
 };
 const empty=():LocalStudyProgress=>({version:3,lastOpenedLessonIds:{},legacyLastOpenedLessonId:null,completed:{},reviews:{}});
 const validId=(value:unknown)=>typeof value==='string'&&/^[0-9a-z-]{8,80}$/i.test(value);

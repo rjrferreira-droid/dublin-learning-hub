@@ -47,7 +47,7 @@ test('local English identity matching is exact and fails closed',()=>{
  assert.equal(localEnglishCodeFor('english',{id:ENGLISH_E5_MODEL_ID,slug:ENGLISH_E5_MODEL_SLUG}),'E5');
  assert.equal(localEnglishCodeFor('english',{id:ENGLISH_P5_MODEL_ID,slug:ENGLISH_P5_MODEL_SLUG}),'P5');
  assert.equal(localEnglishCodeFor('english',{id:ENGLISH_E5_MODEL_ID,slug:ENGLISH_P5_MODEL_SLUG}),null);
- assert.deepEqual(LOCAL_ENGLISH_LESSONS.map(lesson=>localEnglishCodeFor('english',lesson)),['E1','E2','E3','E4','E5','E6','E7','E8','E9','E10','P1','P2','P3','P4','P5','P6','P7','P8','P9','P10']);
+ assert.deepEqual(LOCAL_ENGLISH_LESSONS.map(lesson=>localEnglishCodeFor('english',lesson)),ENGLISH_MONTH_PLAN.map(day=>day.lesson));
 });
 
 test('all five everyday modules have the complete written lesson contract',()=>{

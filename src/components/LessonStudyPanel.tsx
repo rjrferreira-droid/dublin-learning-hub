@@ -7,9 +7,11 @@ import {loadReviewedRuntimeModuleFor} from '../learning/loadReviewedRuntimeModul
 import {loadReviewedLesson,type WrittenLoadResult} from '../learning/loadReviewedLesson';
 import { STUDY_PACKS, type StudyTrack } from '../learning/teachingPacks';
 import type {LocalReviewCompletion,LocalReviewStage} from '../learning/localStudyProgress';
+import {localVivianeEnglishCodeFor} from '../learning/vivianeEnglishLessonRegistry';
+import {VIVIANE_ENGLISH_COMPANIONS} from '../learning/vivianeEnglishCompanions';
 import '../learning/lesson-study.css';
 
-const studyTabs=new Set(['Learn','English','Practice','Visual','Case','Test','Sources']);
+const studyTabs=new Set(['Learn','English','Grammar','Practice','Speaking','Visual','Case','Test','Sources']);
 type Props={track:StudyTrack;lessonId:string;lessonSlug?:string;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean;readerDisabled?:boolean;localCompletion?:{completedAt:string;correct:number;total:number};onCompleteLocal?:(correct:number,total:number)=>void;nextLessonTitle?:string;onOpenNextLesson?:()=>void;localReviewStage?:LocalReviewStage;localReviewCompletion?:LocalReviewCompletion};
 export function LessonStudyPanel({track,lessonId,lessonSlug,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled,readerDisabled,localCompletion,onCompleteLocal,nextLessonTitle,onOpenNextLesson,localReviewStage,localReviewCompletion}:Props){
  const staticModule=lessonModuleFor(track,lessonId);
@@ -29,15 +31,19 @@ export function LessonStudyPanel({track,lessonId,lessonSlug,activeTab,onTabChang
   <p role="status">{!lessonSlug||result?.status==='missing'?'No reviewed written module is available for this lesson yet.':result?.status==='unavailable'?'The written lesson could not be loaded. Check your connection and try again.':'Loading reviewed lesson…'}</p>
   {result?.status==='unavailable'?<button type="button" className="secondary-btn" onClick={()=>setAttempt(n=>n+1)}>Try loading again</button>:null}
  </div>:null;
- return <>{(activeTab==='Learn'||activeTab==='Audio')&&<BrowserLessonReader key={module.lessonId+activeTab} module={module} disabled={readerDisabled}/>}<StudyContent key={module.lessonId} module={module} activeTab={activeTab} onTabChange={onTabChange} onPrepareWorkshop={onPrepareWorkshop} handoffDisabled={handoffDisabled} localCompletion={localCompletion} onCompleteLocal={onCompleteLocal} nextLessonTitle={nextLessonTitle} onOpenNextLesson={onOpenNextLesson} localReviewStage={localReviewStage} localReviewCompletion={localReviewCompletion}/></>;
+ return <>{(activeTab==='Learn'||activeTab==='Audio')&&<BrowserLessonReader key={module.lessonId+activeTab} module={module} disabled={readerDisabled}/>}<StudyContent key={module.lessonId} module={module} lessonSlug={lessonSlug} activeTab={activeTab} onTabChange={onTabChange} onPrepareWorkshop={onPrepareWorkshop} handoffDisabled={handoffDisabled} localCompletion={localCompletion} onCompleteLocal={onCompleteLocal} nextLessonTitle={nextLessonTitle} onOpenNextLesson={onOpenNextLesson} localReviewStage={localReviewStage} localReviewCompletion={localReviewCompletion}/></>;
 }
-function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled,localCompletion,onCompleteLocal,nextLessonTitle,onOpenNextLesson,localReviewStage,localReviewCompletion}:{module:LessonModule;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean;localCompletion?:{completedAt:string;correct:number;total:number};onCompleteLocal?:(correct:number,total:number)=>void;nextLessonTitle?:string;onOpenNextLesson?:()=>void;localReviewStage?:LocalReviewStage;localReviewCompletion?:LocalReviewCompletion}){
+function StudyContent({module,lessonSlug,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled,localCompletion,onCompleteLocal,nextLessonTitle,onOpenNextLesson,localReviewStage,localReviewCompletion}:{module:LessonModule;lessonSlug?:string;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean;localCompletion?:{completedAt:string;correct:number;total:number};onCompleteLocal?:(correct:number,total:number)=>void;nextLessonTitle?:string;onOpenNextLesson?:()=>void;localReviewStage?:LocalReviewStage;localReviewCompletion?:LocalReviewCompletion}){
  const pack=STUDY_PACKS[module.track];
  const exercises=module.practiceExercises??pack.exercises;
  const [drafts,setDrafts]=useState<Record<string,string>>({});
- const [hints,setHints]=useState<Record<string,number>>({});
  const [revealed,setRevealed]=useState<Record<string,boolean>>({});
+ const [practiceAttempts,setPracticeAttempts]=useState<Record<string,number>>({});
  const [answers,setAnswers]=useState<Record<string,{selected?:number;checked?:boolean}>>({});
+ const [grammarChoice,setGrammarChoice]=useState<number|undefined>();
+ const [grammarChoiceAttempts,setGrammarChoiceAttempts]=useState(0);
+ const [grammarDraft,setGrammarDraft]=useState('');
+ const [grammarDraftAttempts,setGrammarDraftAttempts]=useState(0);
  const [reviewTarget,setReviewTarget]=useState<string|null>(null);
  const visible=studyTabs.has(activeTab);
  const checked=module.checkpoint.filter(q=>answers[q.id]?.checked);
@@ -49,6 +55,10 @@ function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDis
  },[activeTab,reviewTarget]);
  function review(section:string){setReviewTarget(section);onTabChange('Learn');}
  const feedbackFor=(id:string)=>module.checkpoint.find(q=>q.id===id);
+ const vivianeCode=lessonSlug?localVivianeEnglishCodeFor(module.track,{id:module.lessonId,slug:lessonSlug}):null;
+ const companion=vivianeCode?VIVIANE_ENGLISH_COMPANIONS[vivianeCode]:null;
+ const grammarTarget=companion?.grammarTarget??grammarTargetFor(module);
+ const pronunciationTarget=companion?.pronunciationTarget??pronunciationTargetFor(module);
  return <div className="lesson-study-panel" data-testid="lesson-study-panel" data-track={module.track} hidden={!visible}>
   <div className="lesson-study-banner"><strong>Written lesson · self-study</strong><span>No AI call · drafts and checks stay only in this open lesson</span></div>
   <section className="lesson-study-section" hidden={activeTab!=='Learn'} data-testid="lesson-reading">
@@ -67,16 +77,26 @@ function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDis
    <dl className="lesson-term-list">{module.terms.map(t=><div key={t.term}><dt>{t.term}<small lang="pt-BR">{t.pt}</small></dt><dd>{t.meaning}<p className="lesson-term-example">{t.example}</p></dd></div>)}</dl>
    <p className="lesson-study-note">No microphone is opened here; reading an example is not a pronunciation or fluency result.</p>
   </section>
+  <section className="lesson-study-section" hidden={activeTab!=='Grammar'} data-testid="lesson-grammar">
+   <div className="lesson-section-kicker">GRAMMAR · GUIDED PRACTICE</div><h2>Use the form inside a real situation</h2>
+   <div className="grammar-target"><strong>Today’s target</strong><p>{grammarTarget}</p></div>
+   {module.checkpoint[0]?<fieldset className="lesson-check-question grammar-choice"><legend>1. Choose the strongest answer for this situation</legend>{module.checkpoint[0].options.map((option,index)=><label key={option}><input type="radio" name={`grammar-${module.lessonId}`} checked={grammarChoice===index} onChange={()=>setGrammarChoice(index)}/><span>{option}</span></label>)}<button type="button" disabled={grammarChoice===undefined||grammarChoiceAttempts>=2} onClick={()=>setGrammarChoiceAttempts(attempts=>attempts+1)}>{grammarChoiceAttempts===0?'Check answer':'Try again'}</button>{grammarChoiceAttempts>0?<div className={`lesson-answer-feedback ${checkLocalChoice(module.checkpoint[0],grammarChoice)==='correct'?'correct':''}`} role="status"><strong>{checkLocalChoice(module.checkpoint[0],grammarChoice)==='correct'?'Correct — the form fits the context':grammarChoiceAttempts<2?'Not yet — use the target above and try once more':'Two attempts completed'}</strong>{checkLocalChoice(module.checkpoint[0],grammarChoice)==='correct'||grammarChoiceAttempts>=2?<p>{module.checkpoint[0].explanation}</p>:<p>Look for the option that preserves both meaning and register.</p>}</div>:null}</fieldset>:null}
+   <div className="grammar-production"><h3>2. Write your own version</h3><p>Write two or three sentences that use today’s target naturally in the lesson scenario.</p><textarea value={grammarDraft} onChange={event=>setGrammarDraft(event.target.value)} maxLength={1200} placeholder="Write your answer in English…"/><div className="lesson-inline-actions"><button type="button" disabled={grammarDraft.trim().length<20||grammarDraftAttempts>=2} onClick={()=>setGrammarDraftAttempts(attempts=>attempts+1)}>{grammarDraftAttempts===0?'Check my response':'Check my revision'}</button></div>{grammarDraftAttempts===1?<div className="lesson-hint"><strong>Revision checklist</strong><p>Check the target form, the time reference and whether the sentence sounds natural in this situation. Revise once before comparing.</p></div>:null}{grammarDraftAttempts>=2?<div className="lesson-worked-response"><strong>Useful model from this lesson</strong><p>{module.terms[0]?.example??module.practiceExercises?.[0]?.answer}</p><p>Compare the structure and meaning; your wording does not need to match exactly.</p><small>Not added to Error Bank · this local draft is not an evaluated learner error.</small></div>:null}</div>
+  </section>
   <section className="lesson-study-section" hidden={activeTab!=='Practice'} data-testid="lesson-practice">
    {module.lessonId===pack.lessonId&&<AppliedPracticePanel key={module.track} track={module.track} onPrepare={onPrepareWorkshop} handoffDisabled={handoffDisabled}/>}
    <h2>Retrieve, then compare</h2><p>Try each question before opening help. Drafts remain while you switch tabs, but disappear when this lesson closes, the page reloads or the account signs out. Avoid confidential information.</p>
    {exercises.map((q,i)=><section className="lesson-exercise" key={q.id} data-testid={'written-practice-'+i}>
     <h3>{i+1}. {q.question}</h3><label htmlFor={'draft-'+q.id}>Your practice draft {i+1}</label>
     <textarea id={'draft-'+q.id} maxLength={6000} value={drafts[q.id]??''} onChange={e=>setDrafts(x=>({...x,[q.id]:e.target.value}))} placeholder="Try explaining it in your own words…"/>
-    <div className="lesson-inline-actions"><button type="button" disabled={(hints[q.id]??0)>=2} onClick={()=>setHints(x=>({...x,[q.id]:Math.min(2,(x[q.id]??0)+1)}))}>Reveal a hint</button><button type="button" aria-expanded={revealed[q.id]===true} onClick={()=>setRevealed(x=>({...x,[q.id]:!x[q.id]}))}>{revealed[q.id]?'Hide worked response':'Compare with worked response'}</button></div>
-    {q.hints.slice(0,hints[q.id]??0).map((h,n)=><p className="lesson-hint" key={n}>Hint {n+1}: {h}</p>)}
-    {revealed[q.id]&&<div className="lesson-worked-response"><strong>One worked response</strong><p>{q.answer}</p><p>{q.explanation}</p><small>Your written draft has not been automatically graded.</small></div>}
+    <div className="lesson-inline-actions"><button type="button" disabled={(drafts[q.id]?.trim().length??0)<20||(practiceAttempts[q.id]??0)>=2} onClick={()=>setPracticeAttempts(attempts=>({...attempts,[q.id]:Math.min(2,(attempts[q.id]??0)+1)}))}>{(practiceAttempts[q.id]??0)===0?'Check my response':'Check my revision'}</button><button type="button" disabled={(practiceAttempts[q.id]??0)<2} aria-expanded={revealed[q.id]===true} onClick={()=>setRevealed(x=>({...x,[q.id]:!x[q.id]}))}>{revealed[q.id]?'Hide worked response':'Compare with worked response'}</button></div>
+    {(practiceAttempts[q.id]??0)===1?<p className="lesson-hint"><strong>One focused hint:</strong> {q.hints[0]} Revise the answer once before opening the model.</p>:null}
+    {(practiceAttempts[q.id]??0)>=2&&!revealed[q.id]?<p className="lesson-local-result" role="status">Two attempts completed. The worked response is now available for comparison.</p>:null}
+    {revealed[q.id]&&<div className="lesson-worked-response"><strong>One worked response</strong><p>{q.answer}</p><p>{q.explanation}</p><small>Not added to Error Bank · your draft has not been automatically graded.</small></div>}
    </section>)}
+  </section>
+  <section className="lesson-study-section" hidden={activeTab!=='Speaking'} data-testid="lesson-speaking">
+   <SpeakingPractice module={module} pronunciationTarget={pronunciationTarget} />
   </section>
   <section className="lesson-study-section" hidden={activeTab!=='Visual'} data-testid="lesson-visual">
    <h2>{module.visual.title}</h2><p>{module.visual.note}</p>
@@ -111,4 +131,56 @@ function StudyContent({module,activeTab,onTabChange,onPrepareWorkshop,handoffDis
    <p className="lesson-study-note">Local drafts and quiz results are not sent as learner evidence. Live voice use, persisted assessment and complete curriculum coverage remain separate work.</p>
   </section>
  </div>;
+}
+
+function grammarTargetFor(module:LessonModule){
+ const title=module.title.toLowerCase();
+ if(/story|past|experience/.test(title))return 'Past simple for completed events, past continuous for background, and clear sequencing connectors.';
+ if(/plan|appointment|meeting|request/.test(title))return 'Indirect questions, modal softening and future forms that make the next step precise.';
+ if(/problem|repair|query|correction/.test(title))return 'Present perfect for a current result, evidence-safe language and clear ownership of the next action.';
+ if(/interview|status|report|explain/.test(title))return 'Present perfect for experience or status, past simple for a finished example, and calibrated certainty.';
+ return 'Sentence structure, tense choice and professional register inside the situation from this lesson.';
+}
+
+function pronunciationTargetFor(module:LessonModule){
+ const terms=module.terms.slice(0,3).map(term=>term.term).join(', ');
+ return `Clear sentence stress, natural pauses and accurate delivery of the key terms: ${terms}.`;
+}
+
+function SpeakingPractice({module,pronunciationTarget}:{module:LessonModule;pronunciationTarget:string}){
+ const phrase=module.terms[0]?.example??module.caseStudy.transfer;
+ const [listening,setListening]=useState(false);
+ const [attempts,setAttempts]=useState(0);
+ const [transcript,setTranscript]=useState('');
+ const [match,setMatch]=useState<number|null>(null);
+ const [error,setError]=useState('');
+ const recognitionSupported=typeof window!=='undefined'&&Boolean((window as any).SpeechRecognition||(window as any).webkitSpeechRecognition);
+ const start=()=>{
+  if(!recognitionSupported||listening||attempts>=3)return;
+  const Constructor=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;
+  const recognition=new Constructor();
+  recognition.lang='en-IE';recognition.interimResults=false;recognition.continuous=false;recognition.maxAlternatives=1;
+  setError('');setTranscript('');setMatch(null);setListening(true);
+  recognition.onresult=(event:any)=>{const heard=String(event.results?.[0]?.[0]?.transcript??'');setTranscript(heard);setMatch(wordMatch(phrase,heard));setAttempts(value=>value+1);};
+  recognition.onerror=()=>{setError('The browser could not capture this attempt. Check microphone permission and try again.');};
+  recognition.onend=()=>setListening(false);
+  recognition.start();
+ };
+ return <div className="speaking-practice">
+  <div className="lesson-section-kicker">SPEAKING · 3 GUIDED ATTEMPTS</div><h2>Say it naturally, then transfer the skill</h2>
+  <div className="speaking-target"><span>PHRASE TO REPEAT</span><blockquote>{phrase}</blockquote><button type="button" onClick={()=>{if('speechSynthesis'in window){window.speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(phrase);utterance.lang='en-IE';window.speechSynthesis.speak(utterance);}}}>Listen to the phrase</button></div>
+  <div className="speaking-coach-grid"><article><strong>Pronunciation focus</strong><p>{pronunciationTarget}</p></article><article><strong>Transfer challenge</strong><p>{module.caseStudy.transfer}</p></article></div>
+  <div className="speaking-recorder"><div><strong>{listening?'Listening…':attempts?`Attempt ${attempts} captured`:'Ready when you are'}</strong><span>{attempts}/3 attempts used</span></div><button type="button" className="lesson-speaking-button" disabled={!recognitionSupported||listening||attempts>=3} onClick={start}>{listening?'Listening…':'● Start speaking'}</button><small>Audio is not saved to Learning Hub history. The transcript disappears when this lesson closes.</small></div>
+  {!recognitionSupported?<p className="lesson-hint">Voice recognition is unavailable in this browser. You can still listen, repeat aloud and use the Professor tab for the live speaking path.</p>:null}
+  {error?<p className="lesson-hint" role="status">{error}</p>:null}
+  {transcript?<div className="speaking-feedback" role="status"><div><span>WORDS CAPTURED</span><strong>{match}% match</strong></div><p>“{transcript}”</p><p>{match!==null&&match>=85?'Clear capture. Repeat once with natural rhythm, or continue to the transfer challenge.':match!==null&&match>=60?'Most key words were captured. Slow down slightly and stress the content words.':'Try shorter chunks, then reconnect them with one natural pause.'}</p><small>This is transcript matching, not a clinical accent or acoustic-pronunciation score.</small></div>:null}
+ </div>;
+}
+
+function wordMatch(target:string,heard:string){
+ const words=(value:string)=>value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9' ]/g,' ').split(/\s+/).filter(Boolean);
+ const expected=words(target),captured=words(heard);if(!expected.length)return 0;
+ const remaining=[...captured];let hits=0;
+ for(const word of expected){const index=remaining.indexOf(word);if(index>=0){hits++;remaining.splice(index,1);}}
+ return Math.round(hits/expected.length*100);
 }

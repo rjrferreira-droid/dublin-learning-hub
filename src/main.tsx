@@ -20,6 +20,7 @@ import './auth.css';
 import './little-english.css';
 import './adult-mobile-utilities.css';
 import './mock-exam.css';
+import './course-shell.css';
 
 const manuzinhaMode = new URLSearchParams(window.location.search).get('manuzinha') === '1';
 document.documentElement.dataset.curriculumPreview = curriculumPreviewRuntimeEnabled ? 'enabled' : 'disabled';

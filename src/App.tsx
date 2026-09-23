@@ -11,6 +11,7 @@ import {lessonsForTrack,chooseNextPublishedLesson} from './learning/curriculumCa
 import {LOCAL_MODEL_LESSONS} from './learning/localModelLessonRegistry';
 import {curriculumPreviewRuntimeEnabled} from './config/curriculumPreview';
 import {localEnglishLessonsForLearner} from './learning/localEnglishCatalogForLearner';
+import {LOCAL_PAYROLL_LESSONS} from './learning/localPayrollLessonRegistry';
 import {buildLocalReviewSchedule,completeLocalLesson,completeLocalReview,lastOpenedLocalLessonId,localLessonAfter,mergeLocalStudyProgress,parseLocalStudyProgress,readLocalStudyProgress,recordLocalLessonOpened,summarizeLocalCourse,writeLocalStudyProgress,type LocalReviewItem,type LocalReviewStage,type LocalStudyProgress} from './learning/localStudyProgress';
 import {isSequence3Slug} from './learning/sequence3Registry';
 import {p1SlugFor} from './learning/p1RuntimeModules';
@@ -33,7 +34,7 @@ import {
 } from './services/learningMemory';
 import { supabase } from './services/supabase';
 import {ACCOUNT_STUDY_NAMESPACES,loadAccountStudyState,saveAccountStudyState} from './services/accountStudyState';
-import { isTrackVisible, primaryVisibleTrack } from './config/presentation';
+import { primaryVisibleTrack } from './config/presentation';
 
 type TrackKey = 'finance' | 'payroll' | 'english';
 type ViewKey = 'dashboard' | 'learn' | 'mock-exams' | 'revision' | 'performance' | 'professor' | 'error-bank' | 'english-academy';
@@ -54,8 +55,8 @@ type Track = {
 const tracks: Track[] = [
   {
     key: 'finance',
-    name: 'Finance Ireland',
-    subtitle: 'Corporate Finance • ACCA • Dublin',
+    name: 'ACCA Financial Reporting',
+    subtitle: 'Exam syllabus • Practice • Revision',
     learner: 'Rafael',
     accent: 'FINANCE',
     lesson: 'IFRS 18, Group Reporting & Irish Statutory Accounts',
@@ -65,8 +66,8 @@ const tracks: Track[] = [
   },
   {
     key: 'payroll',
-    name: 'Irish Payroll',
-    subtitle: 'PAYE • USC • PRSI • Revenue',
+    name: 'Payroll Academy',
+    subtitle: 'Irish Payroll • Controls • Employee service',
     learner: 'Viviane',
     accent: 'PAYROLL',
     lesson: 'Gross-to-Net: RPN, PAYE, USC & PRSI',
@@ -87,8 +88,9 @@ const tracks: Track[] = [
   },
 ];
 
-const lessonTabs = ['Learn', 'Audio', 'English', 'Practice', 'Visual', 'Case', 'Test', 'Sources', 'Professor'];
-const visibleTracks = tracks.filter(track => isTrackVisible(track.key));
+const tracksForLearner=(learner:LearnerKey)=>tracks.filter(track=>track.key==='english'||(learner==='rafael'?track.key==='finance':track.key==='payroll'));
+// Retained by the legacy dashboard component while the course-first home owns the active route.
+const visibleTracks=tracks;
 const reviewIntervals = new Set(['D+1', 'D+7', 'D+30', 'D+90']);
 const errorDomains = new Set(['technical', 'grammar', 'vocabulary', 'pronunciation', 'fluency', 'register']);
 
@@ -187,14 +189,17 @@ function App() {
   const [activeLocalReview,setActiveLocalReview]=useState<{lessonId:string;stage:LocalReviewStage}|null>(null);
 
   const profile = useMemo(() => getLearnerProfile(learnerKey), [learnerKey]);
+  const learnerTracks=useMemo(()=>tracksForLearner(learnerKey),[learnerKey]);
+  const learnerTrackKeys=useMemo(()=>new Set(learnerTracks.map(track=>track.key)),[learnerTracks]);
   const curriculumPreview=curriculumPreviewRuntimeEnabled;
   const supportedCatalog=useMemo(()=>{
-    const published=catalog.filter((lesson)=>{const base=tracks.find(t=>t.key===lesson.track);return !!base&&(lesson.id===base.lessonId||lesson.slug===p1SlugFor(lesson.track)||isSequence3Slug(lesson.track,lesson.slug)||isSequence4Slug(lesson.track,lesson.slug)||isRemainingWrittenSlug(lesson.track,lesson.slug));});
+    const published=catalog.filter((lesson)=>{const base=tracks.find(t=>t.key===lesson.track);return learnerTrackKeys.has(lesson.track)&&!!base&&(lesson.id===base.lessonId||lesson.slug===p1SlugFor(lesson.track)||isSequence3Slug(lesson.track,lesson.slug)||isSequence4Slug(lesson.track,lesson.slug)||isRemainingWrittenSlug(lesson.track,lesson.slug));});
     if(!curriculumPreview)return published;
-    const local=[...LOCAL_MODEL_LESSONS,...localEnglishLessonsForLearner(learnerKey)];
+    const technical=learnerKey==='rafael'?LOCAL_MODEL_LESSONS:LOCAL_PAYROLL_LESSONS;
+    const local=[...technical,...localEnglishLessonsForLearner(learnerKey)];
     const localKeys=new Set(local.map(lesson=>`${lesson.track}:${lesson.slug}`));
     return [...local,...published.filter(lesson=>!localKeys.has(`${lesson.track}:${lesson.slug}`))];
-  },[catalog,curriculumPreview,learnerKey]);
+  },[catalog,curriculumPreview,learnerKey,learnerTrackKeys]);
   const activeTrack = useMemo(() => {
     const base=tracks.find((t)=>t.key===trackKey)??tracks[0];
     const selected=selectedCatalogLesson?.track===trackKey?selectedCatalogLesson:null;
@@ -288,6 +293,9 @@ function App() {
   const currentReviewCompletion=activeLocalReview?.lessonId===activeTrack.lessonId?localProgress.reviews[activeTrack.lessonId]?.[activeLocalReview.stage]:undefined;
   const localCompletion=localProgress.completed[activeTrack.lessonId];
   const canSaveLocalAttempt=activeTrack.origin==='local-model'&&(!localCompletion||(activeLocalReview&&!currentReviewCompletion));
+  const selectCourse=(key:TrackKey)=>{
+    setTrackKey(key);setSelectedCatalogLesson(null);setActiveLocalReview(null);setLessonOpen(false);setView('dashboard');
+  };
 
   return (
     <div className="app-frame">
@@ -316,27 +324,14 @@ function App() {
         {!privateDataVisible && <div className="priority-note" role="status" data-testid="account-preview-notice">
           <strong>Profile preview only</strong><span>You are still signed in as {getLearnerProfile(accountLearnerKey).displayName}. Voice and personalised audio actions are unavailable for this preview. Sign out to change accounts.</span>
         </div>}
-        <nav className="nav-stack">
-          <NavButton label="Dashboard" icon="⌂" active={view === 'dashboard'} onClick={() => { setView('dashboard'); setLessonOpen(false); }} />
-          <NavButton label="Learning" icon="▤" active={view === 'learn'} onClick={() => { setView('learn'); setLessonOpen(false); }} />
-          <NavButton label="Mock exams" icon="✓" active={view === 'mock-exams'} onClick={() => { setView('mock-exams'); setLessonOpen(false); }} />
-          <NavButton label="English Academy" icon="EN" active={view === 'english-academy'} onClick={() => { setView('english-academy'); setLessonOpen(false); }} />
+        <NavButton label="Dashboard" icon="⌂" active={view === 'dashboard'&&!lessonOpen} onClick={() => { setView('dashboard'); setLessonOpen(false); }} />
+        <div className="side-divider" />
+        <div className="side-caption">MY COURSES</div>
+        <CourseTree learnerKey={learnerKey} tracks={learnerTracks} catalog={supportedCatalog} activeTrack={trackKey} activeLessonId={lessonOpen?activeTrack.lessonId:null} localProgress={localProgress} onSelectCourse={selectCourse} onSelectLesson={openLesson}/>
+        <nav className="nav-stack utility-nav" aria-label="Learning tools">
           <NavButton label="Revision" icon="↻" active={view === 'revision'} onClick={() => { setView('revision'); setLessonOpen(false); }} />
-          <NavButton label="Error Bank" icon="!" active={view === 'error-bank'} onClick={() => { setView('error-bank'); setLessonOpen(false); }} />
-          <NavButton label="Performance" icon="◫" active={view === 'performance'} onClick={() => { setView('performance'); setLessonOpen(false); }} />
           <NavButton label="Professor" icon="◉" active={view === 'professor'} onClick={() => { setView('professor'); setLessonOpen(false); }} />
         </nav>
-
-        <div className="side-divider" />
-        <div className="side-caption">LEARNING TRACKS</div>
-        <div className="track-mini-list">
-          {visibleTracks.map((track) => (
-            <button key={track.key} className={`track-mini ${trackKey === track.key ? 'selected' : ''}`} onClick={() => setTrackKey(track.key)}>
-              <span className={`track-dot ${track.key}`} />
-              <span>{track.name}</span>
-            </button>
-          ))}
-        </div>
 
         <div className="side-footer">
           <div className="environment-pill">V2 BUILD • PREVIEW</div>
@@ -351,8 +346,8 @@ function App() {
         <header className="topbar">
           <div>
             <div className="eyebrow">{profile.displayName.toUpperCase()} • DUBLIN 2028/29</div>
-            <h1>{lessonOpen ? activeTrack.lesson : titleForView(view)}</h1>
-            <p>{lessonOpen ? activeTrack.focus : subtitleForView(view, profile)}</p>
+            <h1>{lessonOpen ? activeTrack.lesson : titleForCourseView(view,activeTrack)}</h1>
+            <p>{lessonOpen ? activeTrack.focus : subtitleForCourseView(view,profile,activeTrack)}</p>
           </div>
           <div className="top-actions">
             {curriculumPreview?<span className="cefr-pill" data-testid="account-study-sync">{studySyncStatus==='synced'?'Progress synced':studySyncStatus==='saving'?'Saving progress…':studySyncStatus==='loading'?'Loading progress…':'Saved on this device'}</span>:null}
@@ -362,12 +357,14 @@ function App() {
           </div>
         </header>
 
+        {view!=='revision'&&view!=='professor'?<CourseTabs track={trackKey} view={view} lessonOpen={lessonOpen} onOpen={(next)=>{setLessonOpen(false);setView(next);}}/>:null}
+
         {lessonOpen ? (
           <LessonView key={account.userId+':'+learnerKey+':'+activeTrack.lessonId} track={activeTrack} learnerKey={learnerKey} memory={visibleMemory} activeTab={lessonTab} setActiveTab={setLessonTab} close={() => { setLessonOpen(false); setActiveLocalReview(null); setView('dashboard'); }} localCompletion={localCompletion} onCompleteLocal={canSaveLocalAttempt?completeCurrentLocalLesson:undefined} nextLocalLesson={activeLocalReview?null:nextLocalLesson} onOpenNextLocal={!activeLocalReview&&nextLocalLesson?()=>openLesson(nextLocalLesson.track,nextLocalLesson):undefined} localReviewStage={activeLocalReview?.lessonId===activeTrack.lessonId?activeLocalReview.stage:undefined} localReviewCompletion={currentReviewCompletion} />
         ) : view === 'dashboard' ? (
-          <Dashboard learnerKey={learnerKey} profile={profile} memory={visibleMemory} memoryStatus={memoryStatus} openLesson={openLesson} openView={setView} catalog={supportedCatalog} localProgress={localProgress} />
+          <CourseHome trackKey={trackKey} learnerKey={learnerKey} profile={profile} memory={visibleMemory} memoryStatus={memoryStatus} openLesson={openLesson} openView={setView} catalog={supportedCatalog} localProgress={localProgress} />
         ) : view === 'learn' ? (
-          <LearningLibrary learnerKey={learnerKey} catalog={supportedCatalog} catalogUnavailable={catalogUnavailable} openLesson={openLesson} localProgress={localProgress} />
+          <LearningLibrary learnerKey={learnerKey} trackKey={trackKey} catalog={supportedCatalog} catalogUnavailable={catalogUnavailable} openLesson={openLesson} localProgress={localProgress} />
         ) : view === 'mock-exams' ? (
           <LocalMockExamView scope={account.userId} />
         ) : view === 'english-academy' ? (
@@ -375,9 +372,9 @@ function App() {
         ) : view === 'revision' ? (
           <RevisionView memory={visibleMemory} memoryStatus={memoryStatus} catalog={supportedCatalog} localProgress={localProgress} openLocalReview={(item)=>openLesson(item.lesson.track,item.lesson,{tab:'Test',reviewStage:item.stage})} />
         ) : view === 'error-bank' ? (
-          <ErrorBankView memory={visibleMemory} memoryStatus={memoryStatus} />
+          <ErrorBankView trackKey={trackKey} memory={visibleMemory} memoryStatus={memoryStatus} />
         ) : view === 'performance' ? (
-          <PerformanceView memory={visibleMemory} memoryStatus={memoryStatus} />
+          <PerformanceView trackKey={trackKey} catalog={supportedCatalog} localProgress={localProgress} memory={visibleMemory} memoryStatus={memoryStatus} />
         ) : (
           <ProfessorView learnerKey={learnerKey} profile={profile} openLesson={openLesson} />
         )}
@@ -414,6 +411,91 @@ function EmptyEvidence({ status }: { status: MemoryStatus }) {
       <span className="action-chip">REAL DATA ONLY</span>
     </article>
   );
+}
+
+function CourseTree({learnerKey,tracks:learnerTracks,catalog,activeTrack,activeLessonId,localProgress,onSelectCourse,onSelectLesson}:{
+ learnerKey:LearnerKey;tracks:Track[];catalog:CatalogLesson[];activeTrack:TrackKey;activeLessonId:string|null;localProgress:LocalStudyProgress;onSelectCourse:(track:TrackKey)=>void;onSelectLesson:(track:TrackKey,lesson?:CatalogLesson)=>void;
+}){
+ const [expanded,setExpanded]=useState<Set<TrackKey>>(()=>new Set([primaryVisibleTrack(learnerKey)]));
+ const [expandedParts,setExpandedParts]=useState<Set<string>>(()=>new Set(['finance:1']));
+ useEffect(()=>{setExpanded(new Set([primaryVisibleTrack(learnerKey)]));setExpandedParts(new Set(['finance:1']));},[learnerKey]);
+ const courseLabel=(key:TrackKey)=>key==='finance'?'ACCA':key==='payroll'?'PAYROLL':'ENGLISH';
+ const partLabel=(sequence:number)=>`Part ${String.fromCharCode(64+sequence)}`;
+ const toggleCourse=(key:TrackKey)=>{
+  setExpanded(current=>{const next=new Set(current);if(next.has(key))next.delete(key);else next.add(key);return next;});
+  onSelectCourse(key);
+ };
+ const togglePart=(key:string)=>setExpandedParts(current=>{const next=new Set(current);if(next.has(key))next.delete(key);else next.add(key);return next;});
+ return <div className="course-tree" data-testid="course-tree">
+  {learnerTracks.map(track=>{
+   const lessons=catalog.filter(lesson=>lesson.track===track.key).sort((a,b)=>a.sequence-b.sequence);
+   const open=expanded.has(track.key);
+   const groups=track.key==='finance'?[...new Set(lessons.map(lesson=>lesson.moduleSequence))]:[];
+   return <section className={`course-tree-course ${activeTrack===track.key?'active':''}`} key={track.key}>
+    <button className="course-tree-heading" aria-expanded={open} onClick={()=>toggleCourse(track.key)}><span className={`course-tree-icon ${track.key}`}>{track.key==='finance'?'A':track.key==='payroll'?'P':'EN'}</span><strong>{courseLabel(track.key)}</strong><span className="course-tree-chevron">{open?'⌃':'⌄'}</span></button>
+    {open?<div className="course-tree-children">
+     {track.key==='finance'?groups.map(sequence=>{const key=`${track.key}:${sequence}`,partOpen=expandedParts.has(key);return <div className="course-part" key={key}>
+      <button className="course-part-heading" aria-expanded={partOpen} onClick={()=>togglePart(key)}><span>{partLabel(sequence)}</span><small>{partOpen?'−':'+'}</small></button>
+      {partOpen?<div className="course-lesson-list">{lessons.filter(lesson=>lesson.moduleSequence===sequence).map(lesson=><CourseLessonButton key={lesson.id} lesson={lesson} active={activeLessonId===lesson.id} completed={!!localProgress.completed[lesson.id]} onClick={()=>onSelectLesson(track.key,lesson)}/>)}</div>:null}
+     </div>}):<div className="course-lesson-list direct">{lessons.map((lesson,index)=><CourseLessonButton key={lesson.id} lesson={lesson} active={activeLessonId===lesson.id} completed={!!localProgress.completed[lesson.id]} prefix={`Unit ${index+1}`} onClick={()=>onSelectLesson(track.key,lesson)}/>)}</div>}
+    </div>:null}
+   </section>;
+  })}
+ </div>;
+}
+
+function CourseLessonButton({lesson,active,completed,prefix,onClick}:{lesson:CatalogLesson;active:boolean;completed:boolean;prefix?:string;onClick:()=>void}){
+ const concise=lesson.title.replace(/^ACCA FR\s+/,'').replace(/^Unit \d+\s+·\s+/,'');
+ const code=lesson.title.match(/ACCA FR ([A-E]\d*)/)?.[1];
+ return <button className={`course-lesson-button ${active?'active':''}`} onClick={onClick} title={lesson.title}>
+  <span>{completed?'✓':code??prefix}</span><strong>{concise}</strong>
+ </button>;
+}
+
+function CourseTabs({track,view,lessonOpen,onOpen}:{track:TrackKey;view:ViewKey;lessonOpen:boolean;onOpen:(view:ViewKey)=>void}){
+ const tabs:{label:string;view:ViewKey}[]=[
+  {label:'Home',view:'dashboard'},
+  {label:'Curriculum',view:'learn'},
+  {label:'Error Bank',view:'error-bank'},
+  {label:'Performance',view:'performance'},
+  ...(track==='finance'?[{label:'Mock Exams',view:'mock-exams' as ViewKey}]:[]),
+ ];
+ return <nav className="course-tabs" aria-label="Course navigation">{tabs.map(tab=><button key={tab.view} className={(!lessonOpen&&view===tab.view)||(lessonOpen&&tab.view==='learn')?'active':''} onClick={()=>onOpen(tab.view)}>{tab.label}</button>)}</nav>;
+}
+
+function CourseHome({trackKey,learnerKey,profile,memory,memoryStatus,openLesson,openView,catalog,localProgress}:{
+ trackKey:TrackKey;learnerKey:LearnerKey;profile:LearningProfile;memory:LearningMemorySnapshot|null;memoryStatus:MemoryStatus;openLesson:(key:TrackKey,lesson?:CatalogLesson)=>void;openView:(view:ViewKey)=>void;catalog:CatalogLesson[];localProgress:LocalStudyProgress;
+}){
+ const course=useMemo(()=>summarizeLocalCourse(catalog,localProgress,trackKey),[catalog,localProgress,trackKey]);
+ const reviews=useMemo(()=>buildLocalReviewSchedule(catalog,localProgress,new Date(),trackKey),[catalog,localProgress,trackKey]);
+ const due=reviews.filter(item=>item.status==='due').length;
+ const trackLessons=useMemo(()=>catalog.filter(lesson=>lesson.track===trackKey).sort((a,b)=>a.sequence-b.sequence),[catalog,trackKey]);
+ const measuredIds=useMemo(()=>new Set(memory?.history.map(session=>session.lessonId)??[]),[memory]);
+ const completedCount=course.total?course.completedCount:trackLessons.filter(lesson=>measuredIds.has(lesson.id)).length;
+ const total=course.total||trackLessons.length;
+ const percent=total?Math.round(completedCount/total*100):0;
+ const next=course.nextLesson??chooseNextPublishedLesson(trackLessons,trackKey,measuredIds);
+ const courseName=trackKey==='finance'?'ACCA Financial Reporting':trackKey==='payroll'?'Payroll Academy':'English Academy';
+ const description=trackKey==='finance'?'The complete written FR pathway, organised by the public ACCA syllabus and supported by exam practice.':trackKey==='payroll'?'A practical Irish Payroll pathway that transfers Viviane’s DP experience into Revenue workflows, controls and employee communication.':learnerKey==='viviane'?'One English course with alternating everyday and Payroll/People Operations situations in an 80/20 balance.':'One English course combining everyday fluency and technical communication in a 50/50 balance.';
+ const filteredErrors=(memory?.errors??[]).filter(error=>trackKey==='english'?error.domain!=='technical':error.domain==='technical');
+ const recent=trackLessons.filter(lesson=>!localProgress.completed[lesson.id]&&!measuredIds.has(lesson.id)).slice(0,3);
+ const actionLabel=trackKey==='finance'?'Continue Finance':trackKey==='payroll'?'Continue Payroll':'Start English practice';
+ const remainingMinutes=course.total?course.remainingMinutes:trackLessons.filter(lesson=>!measuredIds.has(lesson.id)).reduce((sum,lesson)=>sum+lesson.estimatedMinutes,0);
+ return <section className="page-stack course-home" data-testid={`course-home-${trackKey}`}>
+  <div className={`course-overview-panel ${trackKey}`}>
+   <div><div className="eyebrow light">{courseName.toUpperCase()} · {profile.displayName.toUpperCase()}</div><h2>{next?.title??`${courseName} ready for review`}</h2><p>{description}</p><div className="hero-actions"><button className="primary-btn" onClick={()=>next?openLesson(trackKey,next):openView('learn')}>{next?actionLabel:'Open curriculum'}</button><button className="secondary-dark-btn" onClick={()=>openView('learn')}>View all units</button></div></div>
+   <div className="course-progress-summary"><strong>{percent}%</strong><span>{completedCount} of {total} units complete</span><div className="progress-track"><span style={{width:`${percent}%`}}/></div></div>
+  </div>
+  <div className="course-summary-grid">
+   <article><span>PROGRESS</span><strong>{completedCount}/{total}</strong><small>units completed</small></article>
+   <article><span>REVIEW</span><strong>{due}</strong><small>retrievals due</small></article>
+   <article><span>ERROR BANK</span><strong>{filteredErrors.length}</strong><small>{memoryStatus==='ready'?'measured patterns':'awaiting measured evidence'}</small></article>
+   <article><span>TIME REMAINING</span><strong>{Math.round(remainingMinutes/6)/10}h</strong><small>estimated written study</small></article>
+  </div>
+  <section className="course-next-panel"><div className="section-heading"><div><div className="eyebrow">NEXT IN YOUR COURSE</div><h2>A clear path, one unit at a time</h2></div><button className="secondary-btn" onClick={()=>openView('learn')}>Full curriculum</button></div>
+   <div className="course-next-list">{recent.length?recent.map((lesson,index)=><button key={lesson.id} onClick={()=>openLesson(trackKey,lesson)}><span>{String(index+1).padStart(2,'0')}</span><div><strong>{lesson.title}</strong><small>{lesson.estimatedMinutes} min · {lesson.subtitle}</small></div><b>→</b></button>):<p className="priority-note local-progress-note"><strong>Written pathway complete</strong><span>Use Revision, Error Bank and Performance to decide what returns next.</span></p>}</div>
+  </section>
+ </section>;
 }
 
 function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, openView, catalog, localProgress }: {
@@ -572,22 +654,27 @@ function PriorityCard({ priority, rank }: { priority: AdaptivePriority; rank: nu
   );
 }
 
-function LearningLibrary({ learnerKey, catalog, catalogUnavailable, openLesson,localProgress }: { learnerKey: LearnerKey; catalog: CatalogLesson[]; catalogUnavailable:boolean; openLesson: (key: TrackKey,lesson?:CatalogLesson) => void;localProgress:LocalStudyProgress }) {
-  const primaryTrack=primaryVisibleTrack(learnerKey);
-  const available=catalog.filter(lesson=>isTrackVisible(lesson.track));
-  const accaCourse=summarizeLocalCourse(catalog,localProgress,'finance');
-  const englishCourse=summarizeLocalCourse(catalog,localProgress,'english');
+function LearningLibrary({ learnerKey,trackKey,catalog, catalogUnavailable, openLesson,localProgress }: { learnerKey: LearnerKey;trackKey:TrackKey; catalog: CatalogLesson[]; catalogUnavailable:boolean; openLesson: (key: TrackKey,lesson?:CatalogLesson) => void;localProgress:LocalStudyProgress }) {
+  const available=catalog.filter(lesson=>lesson.track===trackKey).sort((a,b)=>a.sequence-b.sequence);
+  const course=summarizeLocalCourse(catalog,localProgress,trackKey);
+  const courseName=trackKey==='finance'?'ACCA Financial Reporting':trackKey==='payroll'?'Payroll Academy':'English Academy';
+  const fallbackTrack=tracks.find(track=>track.key===trackKey)!;
   return <section className="page-stack" data-testid="learning-library">
-    <div className="section-heading"><div><div className="eyebrow">LEARNING LIBRARY</div><h2>Published lessons with reviewed runtime content</h2></div><span>{available.length||visibleTracks.length} available now</span></div>
-    {available.some(lesson=>lesson.origin==='local-model')&&<p role="status" className="priority-note" data-testid="local-curriculum-preview"><strong>Local curriculum preview · ACCA {accaCourse.completedCount}/{accaCourse.total} · English {englishCourse.completedCount}/{englishCourse.total}</strong><span>Model lessons are not published and do not enable Professor or Audio. Completion and checkpoint totals stay only in this browser; drafts and individual answers are not stored.</span></p>}
+    <div className="section-heading"><div><div className="eyebrow">{courseName.toUpperCase()} · CURRICULUM</div><h2>{trackKey==='finance'?'Parts and syllabus units':trackKey==='payroll'?'Irish Payroll learning pathway':'One alternating sequence of English units'}</h2></div><span>{available.length} units available</span></div>
+    {available.some(lesson=>lesson.origin==='local-model')&&<p role="status" className="priority-note" data-testid="local-curriculum-preview"><strong>Account-synced curriculum · {course.completedCount}/{course.total} complete</strong><span>Written units are available now. Draft answers are not stored; completion and checkpoint totals sync only to the matching learner account.</span></p>}
     {catalogUnavailable&&<p role="status" className="priority-note"><strong>Catalog temporarily unavailable</strong><span>Verified Golden Lessons from your visible tracks remain available as a safe fallback.</span></p>}
     <div className="library-grid">
-      {available.length?available.map((lesson,index)=>{const base=tracks.find(t=>t.key===lesson.track)!;const completion=localProgress.completed[lesson.id];const isResume=lastOpenedLocalLessonId(localProgress,lesson.track)===lesson.id&&!completion;return <article className={`lesson-library-card ${lesson.track===primaryTrack?'primary-track-card':''} ${completion?'lesson-locally-complete':''}`} key={lesson.id} data-testid={`catalog-lesson-${lesson.slug}`}>
+      {available.length?available.map((lesson,index)=>{const base=tracks.find(t=>t.key===lesson.track)!;const completion=localProgress.completed[lesson.id];const isResume=lastOpenedLocalLessonId(localProgress,lesson.track)===lesson.id&&!completion;return <article className={`lesson-library-card primary-track-card ${completion?'lesson-locally-complete':''}`} key={lesson.id} data-testid={`catalog-lesson-${lesson.slug}`}>
         <div className="lesson-index">{String(index+1).padStart(2,'0')}</div><span className={`track-badge ${lesson.track}`}>{base.accent}</span><h3>{lesson.title}</h3><p>{lesson.subtitle??base.focus}</p><div className="lesson-meta"><span>{lesson.estimatedMinutes} min</span><span>{base.name}</span><span>{completion?`Finished · ${completion.correct}/${completion.total}`:lesson.origin==='local-model'?'Reviewed self-study':lesson.id===base.lessonId?'Professor':'Written ready'}</span></div><button className="primary-btn" onClick={()=>openLesson(lesson.track,lesson)}>{completion?'Review lesson':isResume?'Resume lesson':'Open lesson'}</button>
-      </article>}):visibleTracks.map((track,index)=><article className={`lesson-library-card ${track.key===primaryTrack?'primary-track-card':''}`} key={track.key}><div className="lesson-index">0{index+1}</div><span className={`track-badge ${track.key}`}>{track.accent}</span><h3>{track.lesson}</h3><p>{track.focus}</p><div className="lesson-meta"><span>10–15 min</span><span>Verified fallback</span><span>Professor</span></div><button className="primary-btn" onClick={()=>openLesson(track.key)}>Open Golden Lesson</button></article>)}
+      </article>}):<article className="lesson-library-card primary-track-card"><div className="lesson-index">01</div><span className={`track-badge ${fallbackTrack.key}`}>{fallbackTrack.accent}</span><h3>{fallbackTrack.lesson}</h3><p>{fallbackTrack.focus}</p><div className="lesson-meta"><span>10–15 min</span><span>Verified fallback</span><span>Professor</span></div><button className="primary-btn" onClick={()=>openLesson(fallbackTrack.key)}>Open Golden Lesson</button></article>}
     </div>
   </section>;
 }
+
+const lessonTabsFor=(track:TrackKey):readonly {label:string;key:string}[]=>track==='english'?
+ [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Grammar',key:'Grammar'},{label:'Practice',key:'Practice'},{label:'Speaking',key:'Speaking'},{label:'Visual',key:'Visual'},{label:'Case',key:'Case'},{label:'Test',key:'Test'},{label:'Sources',key:'Sources'},{label:'Professor',key:'Professor'}]:track==='payroll'?
+ [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Calculation',key:'Visual'},{label:'Practice',key:'Practice'},{label:'Speaking',key:'Speaking'},{label:'Case',key:'Case'},{label:'Test',key:'Test'},{label:'Sources',key:'Sources'},{label:'Professor',key:'Professor'}]:
+ [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Practice',key:'Practice'},{label:'Visual',key:'Visual'},{label:'Case',key:'Case'},{label:'Test',key:'Test'},{label:'Sources',key:'Sources'},{label:'Professor',key:'Professor'}];
 
 function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,localCompletion,onCompleteLocal,nextLocalLesson,onOpenNextLocal,localReviewStage,localReviewCompletion }: {
   track: Track;
@@ -610,6 +697,7 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,
   const measuredScores = measuredSession ? scorePairs(measuredSession) : [];
   const [conversationBusy,setConversationBusy]=useState(false);
   const [workshopId,setWorkshopId]=useState<string|undefined>();
+  const tabs=lessonTabsFor(track.key);
   const prepareWorkshop=(id:string)=>{
     if(conversationBusy||!canUseActions||!interactiveLessonSupported||!WORKSHOP_CASES[track.key].some(c=>c.id===id))return;
     setWorkshopId(id);setActiveTab('Professor');
@@ -623,8 +711,8 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,
         <div className="lesson-progress"><span>{track.origin==='local-model'?'Reviewed self-study lesson':interactiveLessonSupported?'Golden Lesson':'Reviewed written lesson'}</span><b>{measuredSession ? `Last evaluated ${shortDate(measuredSession.completedAt ?? measuredSession.startedAt)}` : 'Baseline not measured yet'}</b></div>
       </div>
       <div className="lesson-tabs" role="tablist">
-        {lessonTabs.map((tab) => (
-          <button key={tab} role="tab" aria-selected={activeTab === tab} className={activeTab === tab ? 'active' : ''} onClick={() => setActiveTab(tab)}>{tab}</button>
+        {tabs.map((tab) => (
+          <button key={tab.label} role="tab" aria-selected={activeTab === tab.key} className={activeTab === tab.key ? 'active' : ''} onClick={() => setActiveTab(tab.key)}>{tab.label}</button>
         ))}
       </div>
       <div className="lesson-layout">
@@ -759,21 +847,25 @@ function RevisionView({ memory, memoryStatus, catalog, localProgress, openLocalR
   );
 }
 
-function ErrorBankView({ memory, memoryStatus }: { memory: LearningMemorySnapshot | null; memoryStatus: MemoryStatus }) {
-  const errors = memory?.errors ?? [];
+function ErrorBankView({trackKey,memory, memoryStatus }: {trackKey:TrackKey;memory: LearningMemorySnapshot | null; memoryStatus: MemoryStatus }) {
+  const errors = (memory?.errors ?? []).filter(error=>trackKey==='english'?error.domain!=='technical':error.domain==='technical');
+  const pending=errors.filter(error=>error.frequency<=1).length;
+  const active=errors.filter(error=>error.frequency>1).length;
+  const courseName=trackKey==='finance'?'ACCA':trackKey==='payroll'?'Payroll':'English';
   return (
     <section className="page-stack" data-testid="error-bank-view">
-      <div className="section-heading"><div><div className="eyebrow">ERROR BANK</div><h2>Recurring mistakes become future curriculum</h2></div><span>{errors.length} active measured patterns</span></div>
-      <div className="error-bank-summary"><strong>Mastery rule</strong><span>An error is shown here only after it has been recorded from learner evidence. No sample errors are inserted to make the screen look populated.</span></div>
+      <div className="section-heading"><div><div className="eyebrow">{courseName.toUpperCase()} · ERROR BANK</div><h2>Only repeated mistakes become active priorities</h2></div><span>{errors.length} measured pattern{errors.length===1?'':'s'}</span></div>
+      <div className="error-state-strip"><span><b>{pending}</b> To confirm</span><span><b>{active}</b> Active</span><span><b>0</b> Resolved</span></div>
+      <div className="error-bank-summary"><strong>Automatic entry rule</strong><span>A first isolated mistake stays “To confirm”. It becomes Active only after repetition or strong evaluated evidence. A successful spaced retrieval can move it to Resolved.</span></div>
       {errors.length === 0 ? <div className="adaptive-priority-stack"><EmptyEvidence status={memoryStatus} /></div> : (
         <div className="error-bank-grid">
           {errors.map((error) => (
             <article className="error-bank-card" key={error.id}>
-              <div className="error-bank-head"><span className={`error-domain ${error.domain}`}>{error.domain}</span><b>{Math.round(error.confidence)}% confidence</b></div>
+              <div className="error-bank-head"><span className={`error-domain ${error.domain}`}>{error.domain}</span><b className={error.frequency>1?'state-active':'state-confirm'}>{error.frequency>1?'Active':'To confirm'}</b></div>
               <h3>{error.pattern}</h3>
               <div className="confidence-track"><span style={{ width: `${Math.max(0, Math.min(100, error.confidence))}%` }} /></div>
-              <div className="error-meta"><span>Last seen {shortDate(error.lastSeenAt)}</span><span>Next retrieval {shortDate(error.nextReviewAt)}</span></div>
-              <button className="secondary-btn" disabled>{error.frequency > 1 ? `${error.frequency} occurrences • queued` : 'Retrieval queued'}</button>
+              <div className="error-meta"><span>{error.frequency} occurrence{error.frequency===1?'':'s'}</span><span>Next retrieval {shortDate(error.nextReviewAt)}</span></div>
+              <button className="secondary-btn" disabled>{error.frequency>1?'Practice scheduled':'Waiting for confirmation'}</button>
             </article>
           ))}
         </div>
@@ -782,8 +874,9 @@ function ErrorBankView({ memory, memoryStatus }: { memory: LearningMemorySnapsho
   );
 }
 
-function PerformanceView({ memory, memoryStatus }: { memory: LearningMemorySnapshot | null; memoryStatus: MemoryStatus }) {
-  const competencyValues = (memory?.competencies ?? []).map((item) => ({
+function PerformanceView({trackKey,catalog,localProgress,memory, memoryStatus }: {trackKey:TrackKey;catalog:CatalogLesson[];localProgress:LocalStudyProgress;memory: LearningMemorySnapshot | null; memoryStatus: MemoryStatus }) {
+  const languageLabels=/english|grammar|vocabulary|fluency|pronunciation|communication|register/i;
+  const competencyValues = (memory?.competencies ?? []).filter(item=>trackKey==='english'?languageLabels.test(`${item.name} ${item.category}`):!languageLabels.test(`${item.name} ${item.category}`)).map((item) => ({
     label: item.name,
     value: item.score,
     detail: `${item.evidenceCount} evidence • ${Math.round(item.confidence)}% confidence`,
@@ -792,10 +885,13 @@ function PerformanceView({ memory, memoryStatus }: { memory: LearningMemorySnaps
     ? scorePairs(memory.latest).map(([label, value]) => ({ label, value, detail: 'Latest evaluated Professor session' }))
     : [];
   const values = competencyValues.length > 0 ? competencyValues : latestValues;
+  const course=summarizeLocalCourse(catalog,localProgress,trackKey);
+  const courseName=trackKey==='finance'?'ACCA':trackKey==='payroll'?'Payroll':'English';
 
   return (
     <section className="page-stack">
-      <div className="section-heading"><div><div className="eyebrow">PERFORMANCE</div><h2>Readiness by capability, not course completion</h2></div><span>{memory?.history.length ?? 0} evaluated session{(memory?.history.length ?? 0) === 1 ? '' : 's'}</span></div>
+      <div className="section-heading"><div><div className="eyebrow">{courseName.toUpperCase()} · PERFORMANCE</div><h2>Progress and measured capability, kept separate</h2></div><span>{memory?.history.length ?? 0} evaluated session{(memory?.history.length ?? 0) === 1 ? '' : 's'}</span></div>
+      <div className="course-summary-grid performance-summary"><article><span>CURRICULUM</span><strong>{course.percent}%</strong><small>{course.completedCount}/{course.total} units completed</small></article><article><span>CHECKPOINTS</span><strong>{Object.values(localProgress.completed).filter(Boolean).length}</strong><small>saved lesson attempts</small></article><article><span>MEASURED SESSIONS</span><strong>{memory?.history.length??0}</strong><small>Professor evaluations</small></article><article><span>EVIDENCE STATUS</span><strong>{values.length}</strong><small>capabilities with a score</small></article></div>
       {values.length === 0 ? <div className="adaptive-priority-stack"><EmptyEvidence status={memoryStatus} /></div> : (
         <div className="performance-grid">
           {values.map(({ label, value, detail }) => (
@@ -808,7 +904,7 @@ function PerformanceView({ memory, memoryStatus }: { memory: LearningMemorySnaps
           ))}
         </div>
       )}
-      <div className="error-bank-summary"><strong>Interpretation</strong><span>These are measured learning signals, not a validated external employability or exam-readiness benchmark. A formal benchmark layer has not been built yet.</span></div>
+      <div className="error-bank-summary"><strong>Interpretation</strong><span>Course completion records study progress. Capability scores require evaluated evidence. Neither is presented as an external employability or exam-readiness guarantee.</span></div>
     </section>
   );
 }
@@ -836,26 +932,24 @@ function ProfessorView({ learnerKey, profile, openLesson }: { learnerKey: Learne
   );
 }
 
-function titleForView(view: ViewKey) {
-  if (view === 'dashboard') return 'Your learning command centre';
-  if (view === 'learn') return 'Learning library';
-  if (view === 'mock-exams') return 'ACCA FR Mock Engine';
-  if (view === 'english-academy') return 'English Academy';
-  if (view === 'revision') return 'Revision queue';
-  if (view === 'error-bank') return 'Error Bank';
-  if (view === 'performance') return 'Performance & readiness';
-  return 'Professor';
+function titleForCourseView(view:ViewKey,track:Track){
+ if(view==='revision')return 'Revision queue';
+ if(view==='professor')return 'Professor';
+ if(view==='mock-exams')return 'ACCA FR Mock Engine';
+ if(view==='error-bank')return `${track.key==='finance'?'ACCA':track.key==='payroll'?'Payroll':'English'} Error Bank`;
+ if(view==='performance')return `${track.key==='finance'?'ACCA':track.key==='payroll'?'Payroll':'English'} Performance`;
+ if(view==='learn')return `${track.name} Curriculum`;
+ return track.name;
 }
 
-function subtitleForView(view: ViewKey, profile: LearningProfile) {
-  if (view === 'dashboard') return `One adaptive system tuned for ${profile.displayName}, with measured learning evidence kept private to the signed-in account.`;
-  if (view === 'learn') return 'Explore Finance and English at your own pace.';
-  if (view === 'mock-exams') return 'Timed, provider-free exam practice with transparent local marking and spaced debriefs.';
-  if (view === 'english-academy') return 'General English, professional communication and real-world Dublin exposure in one adaptive programme.';
-  if (view === 'revision') return 'Only scheduled reviews from real evaluated sessions appear here.';
-  if (view === 'error-bank') return 'Only recurring technical and language mistakes recorded from learner evidence appear here.';
-  if (view === 'performance') return 'Measured scores are shown without inventing an external readiness benchmark.';
-  return 'Premium live tutoring on the deployed LiveKit + OpenAI Realtime path.';
+function subtitleForCourseView(view:ViewKey,profile:LearningProfile,track:Track){
+ if(view==='revision')return 'Scheduled retrieval across your courses, based on saved completion and measured evidence.';
+ if(view==='professor')return 'Live tutoring remains available while its next quality upgrade is planned.';
+ if(view==='mock-exams')return 'Timed exam practice with transparent local marking and debriefs.';
+ if(view==='error-bank')return 'This course keeps its own confirmed patterns, review state and recovery path.';
+ if(view==='performance')return 'Study progress and evaluated capability are shown separately.';
+ if(view==='learn')return `All ${track.name} units in one clear sequence.`;
+ return `${profile.displayName}'s next action, progress and review status for this course.`;
 }
 
 export default App;

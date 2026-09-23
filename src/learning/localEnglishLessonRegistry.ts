@@ -43,7 +43,7 @@ export const ENGLISH_P9_MODEL_SLUG='treasury-cash-forecast-liquidity-controls';
 export const ENGLISH_P10_MODEL_ID='e2a00000-2026-4e2a-8e14-000000000020';
 export const ENGLISH_P10_MODEL_SLUG='contracts-obligations-risks-compliance';
 
-export const LOCAL_ENGLISH_LESSONS:readonly CatalogLesson[]=[
+const LOCAL_ENGLISH_SOURCE:readonly CatalogLesson[]=[
  {id:ENGLISH_E1_MODEL_ID,slug:ENGLISH_E1_MODEL_SLUG,title:'Tell a story naturally: past forms, rhythm & follow-up questions',subtitle:'Everyday English · tell a clear story and keep the conversation moving',sequence:1,moduleSequence:1,estimatedMinutes:45,track:'english',moduleSlug:'english-everyday',courseSlug:'english-balanced-local',origin:'local-model'},
  {id:ENGLISH_E2_MODEL_ID,slug:ENGLISH_E2_MODEL_SLUG,title:'Everyday Dublin: weather, plans and natural small talk',subtitle:'Everyday English · react naturally, adjust plans and ask useful follow-up questions',sequence:2,moduleSequence:1,estimatedMinutes:45,track:'english',moduleSlug:'english-everyday',courseSlug:'english-balanced-local',origin:'local-model'},
  {id:ENGLISH_E3_MODEL_ID,slug:ENGLISH_E3_MODEL_SLUG,title:'Appointments: confirm, reschedule and clarify by phone',subtitle:'Everyday English · manage times, spell details and repair misunderstandings',sequence:3,moduleSequence:1,estimatedMinutes:45,track:'english',moduleSlug:'english-everyday',courseSlug:'english-balanced-local',origin:'local-model'},
@@ -65,6 +65,19 @@ export const LOCAL_ENGLISH_LESSONS:readonly CatalogLesson[]=[
  {id:ENGLISH_P9_MODEL_ID,slug:ENGLISH_P9_MODEL_SLUG,title:'Treasury: communicate cash, forecasts and liquidity risk',subtitle:'Technical English · distinguish balance, forecast, availability, exposure and action',sequence:19,moduleSequence:2,estimatedMinutes:55,track:'english',moduleSlug:'english-professional',courseSlug:'english-balanced-local',origin:'local-model'},
  {id:ENGLISH_P10_MODEL_ID,slug:ENGLISH_P10_MODEL_SLUG,title:'Contracts and compliance: identify obligations and escalate risk',subtitle:'Technical English · read clauses carefully, separate interpretation from advice and assign follow-up',sequence:20,moduleSequence:2,estimatedMinutes:55,track:'english',moduleSlug:'english-professional',courseSlug:'english-balanced-local',origin:'local-model'},
 ];
+
+const ALTERNATING_MONTH_IDS=[
+ ENGLISH_E1_MODEL_ID,ENGLISH_P1_MODEL_ID,ENGLISH_E2_MODEL_ID,ENGLISH_P2_MODEL_ID,ENGLISH_E3_MODEL_ID,
+ ENGLISH_P3_MODEL_ID,ENGLISH_E4_MODEL_ID,ENGLISH_P4_MODEL_ID,ENGLISH_E5_MODEL_ID,ENGLISH_P5_MODEL_ID,
+ ENGLISH_E6_MODEL_ID,ENGLISH_P6_MODEL_ID,ENGLISH_E7_MODEL_ID,ENGLISH_P7_MODEL_ID,ENGLISH_E8_MODEL_ID,
+ ENGLISH_P8_MODEL_ID,ENGLISH_E9_MODEL_ID,ENGLISH_P9_MODEL_ID,ENGLISH_E10_MODEL_ID,ENGLISH_P10_MODEL_ID,
+] as const;
+const alternatingSequence=new Map<string,number>(ALTERNATING_MONTH_IDS.map((id,index)=>[id,index+1]));
+
+/** One unified course: an everyday unit is followed by a technical unit across the month. */
+export const LOCAL_ENGLISH_LESSONS:readonly CatalogLesson[]=LOCAL_ENGLISH_SOURCE
+ .map(lesson=>({...lesson,sequence:alternatingSequence.get(lesson.id)??lesson.sequence}))
+ .sort((a,b)=>a.sequence-b.sequence);
 
 export function localEnglishCodeFor(track:P1Track,lesson:{id:string;slug:string}):LocalEnglishCode|null{
  if(track!=='english')return null;
