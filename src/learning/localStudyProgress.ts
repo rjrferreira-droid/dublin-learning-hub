@@ -21,7 +21,7 @@ const MODULE_LABELS:Record<string,{code:string;label:string}>={
  'acca-fr-financial-statements':{code:'D',label:'Statements'},
  'acca-fr-employability-technology':{code:'E',label:'Employability'},
  'english-everyday':{code:'E',label:'Everyday'},
- 'english-professional':{code:'P',label:'Professional'},
+ 'english-professional':{code:'P',label:'Technical'},
 };
 const empty=():LocalStudyProgress=>({version:3,lastOpenedLessonIds:{},legacyLastOpenedLessonId:null,completed:{},reviews:{}});
 const validId=(value:unknown)=>typeof value==='string'&&/^[0-9a-z-]{8,80}$/i.test(value);
