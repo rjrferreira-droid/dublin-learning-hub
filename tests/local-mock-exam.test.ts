@@ -1,20 +1,28 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {ACCA_FR_MOCK_1,buildLocalMockReviewSchedule,completeLocalMockReview,gradeMockObjectives,mergeLocalMockProgress,mockProgressKey,parseLocalMockProgress,readLocalMockProgress,recordLocalMockAttempt,writeLocalMockProgress} from '../src/learning/localMockExam.ts';
+import {ACCA_FR_MOCK_1,ACCA_FR_MOCK_2,LOCAL_ACCA_FR_MOCKS,buildLocalMockReviewSchedule,completeLocalMockReview,gradeMockObjectives,mergeLocalMockProgress,mockProgressKey,parseLocalMockProgress,readLocalMockProgress,recordLocalMockAttempt,writeLocalMockProgress} from '../src/learning/localMockExam.ts';
 
 const blank={version:1 as const,attempts:{},reviews:{}};
 const attempt={id:'11111111-1111-4111-8111-111111111111',submittedAt:'2026-09-22T12:00:00.000Z',objectiveCorrect:5,objectiveTotal:6,constructedMarks:6,totalMarks:16,elapsedSeconds:1400};
 
-test('first ACCA FR mock has a bounded 20-mark, 30-minute original practice contract',()=>{
- const mock=ACCA_FR_MOCK_1;
- assert.equal(mock.durationMinutes,30);assert.equal(mock.objectiveMarks,12);assert.equal(mock.constructedMarks,8);assert.equal(mock.objectiveMarks+mock.constructedMarks,20);
- assert.equal(mock.objectiveQuestions.length,6);assert.equal(mock.constructed.markingGuide.length,8);assert.equal(mock.constructed.markingGuide.reduce((sum,item)=>sum+item.marks,0),8);
- for(const question of mock.objectiveQuestions){assert.equal(question.options.length,4);assert.ok(question.correctIndex>=0&&question.correctIndex<4);assert.ok(question.explanation.length>40);}
+test('two complementary ACCA FR mocks have bounded 20-mark, 30-minute original practice contracts',()=>{
+ assert.equal(LOCAL_ACCA_FR_MOCKS.length,2);assert.deepEqual(LOCAL_ACCA_FR_MOCKS.map(mock=>mock.id),['acca-fr-mini-mock-01','acca-fr-mini-mock-02']);assert.equal(new Set(LOCAL_ACCA_FR_MOCKS.flatMap(mock=>mock.objectiveQuestions.map(question=>question.id))).size,12);
+ for(const mock of LOCAL_ACCA_FR_MOCKS){
+  assert.equal(mock.durationMinutes,30);assert.equal(mock.objectiveMarks,12);assert.equal(mock.constructedMarks,8);assert.equal(mock.objectiveMarks+mock.constructedMarks,20);assert.equal(mock.objectiveMarks%mock.objectiveQuestions.length,0);
+  assert.equal(mock.objectiveQuestions.length,6);assert.equal(mock.constructed.markingGuide.length,8);assert.equal(mock.constructed.markingGuide.reduce((sum,item)=>sum+item.marks,0),8);assert.equal(mock.focusAreas.length,4);
+  for(const question of mock.objectiveQuestions){assert.equal(question.options.length,4);assert.ok(question.correctIndex>=0&&question.correctIndex<4);assert.ok(question.explanation.length>40);}
+ }
 });
 
 test('objective grading uses the fixed answer key and treats missing choices as incorrect',()=>{
  const answers=Object.fromEntries(ACCA_FR_MOCK_1.objectiveQuestions.slice(0,5).map(question=>[question.id,question.correctIndex]));
  assert.equal(gradeMockObjectives(ACCA_FR_MOCK_1,answers),5);assert.equal(gradeMockObjectives(ACCA_FR_MOCK_1,{}),0);
+ const secondAnswers=Object.fromEntries(ACCA_FR_MOCK_2.objectiveQuestions.map(question=>[question.id,question.correctIndex]));assert.equal(gradeMockObjectives(ACCA_FR_MOCK_2,secondAnswers),6);
+});
+
+test('second mock covers a different syllabus mix and its constructed answer reconciles to the fixed key',()=>{
+ assert.match(ACCA_FR_MOCK_2.subtitle,/foreign currency.*cash-flow/i);assert.deepEqual(ACCA_FR_MOCK_2.objectiveQuestions.map(question=>question.topic),['IAS 2 · Inventories','IAS 21 · Foreign currency','IFRS 9 · Financial assets','IFRS 16 · Leases','IAS 7 · Cash flows','IAS 33 · Earnings per share']);
+ assert.match(ACCA_FR_MOCK_2.constructed.markingGuide[0].guidance,/€1\.8m \+ €0\.6m \+ €0\.1m − €0\.7m \+ €0\.2m − €0\.3m = €1\.7m/);assert.match(ACCA_FR_MOCK_2.constructed.markingGuide[4].guidance,/0\.66/);
 });
 
 test('mock progress fails closed, stores bounded attempt summaries and never includes written responses',()=>{
