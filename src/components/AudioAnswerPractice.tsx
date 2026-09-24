@@ -132,7 +132,7 @@ export function AudioAnswerPractice({lessonId,questions,active,canRecord,preview
 
  return <section className="audio-answer-practice" aria-label="Listening questions">
   <div className="audio-answer-heading"><h3>Answer in your own words</h3><span>{questions.length} questions · up to 1 min each</span></div>
-  <p>{canRecord?'Answer each question in English. You can replay the episode or open the transcript at any time.':previewAllowed?'Preview mode: all five questions are available while the episode is being prepared. You can record answers, but they will not be graded as listening comprehension.':'The questions are below. Finish listening to the episode to enable recording.'}</p>
+  <p>{canRecord?'Answer each question in English. You can replay the episode or open the transcript at any time.':previewAllowed?'All five questions are ready. Listen to the full episode before recording answers for assessment. You may practise now, but those early recordings will need to be replaced after listening.':'The questions are below. Finish listening to the episode to enable recording.'}</p>
   <div className="audio-answer-list">
    {questions.map((question,questionIndex)=>{
     const answer=answers[questionIndex];
