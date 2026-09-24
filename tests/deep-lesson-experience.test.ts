@@ -29,7 +29,7 @@ test('deep Learn exposes prerequisites, objectives, honest workload and authored
 
 test('deep Audio renders only its independent authored episode and a no-generation state',()=>{
  assert.ok(deepExperience.includes('AUDIO · DISTINCT AUTHORED EPISODE'));
- assert.ok(deepExperience.includes("'Authored script · no generated player attached'"));
+ assert.ok(deepExperience.includes("'Authored episode · player availability shown below'"));
  assert.ok(deepExperience.includes("'Editorial outline · not generated or playable'"));
  assert.ok(deepExperience.includes('the written lesson is never substituted as Audio'));
  assert.ok(!deepExperience.includes("(activeTab==='Learn'||activeTab==='Audio')"));

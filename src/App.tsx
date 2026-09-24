@@ -747,7 +747,7 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,
       </div>
       <div className="lesson-layout">
         <article className="lesson-content-card">
-          <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">{track.origin==='local-model'?'Account-synced · no providers':'Premium lesson'}</span></div>
+          <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">{track.origin==='local-model'?'Account-synced · reviewed unit':'Premium lesson'}</span></div>
           <div className="eyebrow">{activeTab.toUpperCase()}</div>
           {lessonProfessorEnabled?<LessonProfessorWorkspace track={track.key} lessonId={professorProviderLessonId!} learnerKey={learnerKey} activeTab={activeTab} onTabChange={setActiveTab} onActivityChange={setConversationBusy} workshopId={workshopId} onClearWorkshop={clearWorkshop}/>:null}
           <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} lessonSlug={track.lessonSlug} activeTab={activeTab} onTabChange={setActiveTab} onPrepareWorkshop={track.key==='english'?prepareWorkshop:undefined} handoffDisabled={conversationBusy||!canUseActions||!lessonProfessorEnabled} readerDisabled={conversationBusy||!canUseActions} localCompletion={localCompletion} onCompleteLocal={onCompleteLocal} nextLessonTitle={nextLocalLesson?.title} onOpenNextLesson={onOpenNextLocal} localReviewStage={localReviewStage} localReviewCompletion={localReviewCompletion} />

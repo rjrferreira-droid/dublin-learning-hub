@@ -127,10 +127,10 @@ for(const model of reviewedLocalModels)for(const viewport of [{name:'desktop',wi
  await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await page.getByRole('navigation',{name:'Course navigation'}).getByRole('button',{name:'Curriculum',exact:true}).click();
  const library=page.getByTestId('learning-library');await expect(library.getByTestId('local-curriculum-preview')).toBeVisible();
  const card=library.getByTestId('catalog-lesson-'+model.slug);await expect(card).toContainText('Deep-reviewed self-study');await card.getByRole('button',{name:/^(Open|Resume|Review) lesson$/}).click();
- await expect(page.getByText('Reviewed self-study lesson',{exact:true})).toBeVisible();await expect(page.getByText('Account-synced · no providers',{exact:true})).toBeVisible();const panel=page.getByTestId('lesson-study-panel');await expect(panel.getByRole('heading',{name:model.title,exact:true})).toBeVisible();
+ await expect(page.getByText('Reviewed self-study lesson',{exact:true})).toBeVisible();await expect(page.getByText('Account-synced · reviewed unit',{exact:true})).toBeVisible();const panel=page.getByTestId('lesson-study-panel');await expect(panel.getByRole('heading',{name:model.title,exact:true})).toBeVisible();
  await expect(panel.locator('.lesson-teaching-block')).toHaveCount(6);
  await page.getByRole('tab',{name:'Practice',exact:true}).click();await expect(panel.getByTestId('deep-practice-item-0')).toBeVisible();await expect(panel.getByTestId('applied-practice')).toHaveCount(0);
- await page.getByRole('tab',{name:'Audio',exact:true}).click();await expect(panel.getByTestId('deep-lesson-audio')).toContainText('Authored script · no generated player attached');await expect(page.getByTestId('p1-interactive-gate')).toHaveCount(0);
+ await page.getByRole('tab',{name:'Audio',exact:true}).click();await expect(panel.getByTestId('deep-lesson-audio')).toContainText('Authored episode · player availability shown below');await expect(page.getByTestId('p1-interactive-gate')).toHaveCount(0);
  await expect(page.getByRole('tab',{name:'Professor',exact:true})).toHaveCount(0);expect(requests()).toBe(0);
 });
 
