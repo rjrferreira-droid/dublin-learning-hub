@@ -31,7 +31,7 @@ test('local Preview cards distinguish deep-reviewed units from locked rebuilding
 test('an unavailable local Audio tab does not claim that duplicated read-aloud is ready',()=>{
  assert.match(app,/The independent Audio episode is not yet available for this unit\./);
  assert.match(app,/!deepLocal && \(activeTab === 'Audio' \|\| activeTab === 'Professor'\)/);
- assert.match(app,/Professor preserved, not started/);
+ assert.match(app,/deepProfessorProviderLessonId/);
  assert.doesNotMatch(app,/Browser read-aloud is ready above\./);
 });
 

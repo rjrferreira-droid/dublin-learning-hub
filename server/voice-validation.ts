@@ -1,4 +1,4 @@
-export const VALIDATION_MAX_SESSION_SECONDS = 300;
+export const VALIDATION_MAX_SESSION_SECONDS = 180;
 /** Use the persisted startup result, including a server-side validation flag, not only browser intent. */
 export function voiceValidationPlan(startup: {validationMode:boolean;roomName:string;budget:{maxSessionSeconds:number}}) {
  const roomIsValidation = startup.roomName.startsWith('validation:');

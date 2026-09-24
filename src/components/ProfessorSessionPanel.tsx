@@ -132,7 +132,7 @@ export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payrol
   <WorkshopSessionReference track={track} selection={busy?sessionWorkshop:pickedWorkshop?{version:1,id:pickedWorkshop.id}:null} busy={busy} onClear={onClearWorkshop}/>
   {accountMatches&&!busy&&!compact&&<SessionPreparationPanel value={sessionPreparation} onChange={setSessionPreparation}/>}
   {requestedValidation&&!busy&&!compact&&<div className="professor-validation-card" data-testid="voice-validation-consent">
-   <strong>Short validation · up to 5 minutes</strong>
+   <strong>Short validation · up to 3 minutes</strong>
    <p>This is a paid voice session, not a free simulation. Transcript, evaluation and cost records are retained. Your learning profile, Error Bank and spaced reviews are not updated.</p>
    <label><input type="checkbox" checked={validationConsent} onChange={e=>setValidationConsent(e.target.checked)}/> I understand the usage cost and validation recording scope.</label>
   </div>}

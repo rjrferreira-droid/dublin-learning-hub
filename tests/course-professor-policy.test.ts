@@ -8,7 +8,7 @@ test('English keeps an in-unit Professor while ACCA and Payroll use optional cou
  assert.match(tabs,/track==='english'.*Professor/s);
  assert.equal((tabs.match(/Professor/g)??[]).length,4,'both deep-local and legacy English tab sets keep the in-unit Professor entry');
  assert.match(source,/label="Ask the Professor"/);
- assert.match(source,/lessonProfessorEnabled=track\.key==='english'/);
+ assert.match(source,/lessonProfessorEnabled=professorProviderLessonId!==null/);
  assert.match(source,/onPrepareWorkshop=\{track\.key==='english'\?prepareWorkshop:undefined\}/);
 });
 

@@ -36,6 +36,7 @@ import {
 import { supabase } from './services/supabase';
 import {ACCOUNT_STUDY_NAMESPACES,loadAccountStudyState,saveAccountStudyState} from './services/accountStudyState';
 import { primaryVisibleTrack } from './config/presentation';
+import {deepInteractiveAudioLesson,deepProfessorProviderLessonId} from './learning/deepInteractiveRegistry';
 
 type TrackKey = 'finance' | 'payroll' | 'english';
 type ViewKey = 'dashboard' | 'learn' | 'mock-exams' | 'revision' | 'performance' | 'professor' | 'error-bank' | 'english-academy';
@@ -724,7 +725,9 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,
   const [workshopId,setWorkshopId]=useState<string|undefined>();
   const deepLocal=track.origin==='local-model';
   const tabs=lessonTabsFor(track.key,deepLocal);
-  const lessonProfessorEnabled=track.key==='english'&&interactiveLessonSupported;
+  const professorProviderLessonId=track.key==='english'?(deepProfessorProviderLessonId(track.lessonId)??(interactiveLessonSupported?track.lessonId:null)):null;
+  const lessonProfessorEnabled=professorProviderLessonId!==null;
+  const lessonAudioEnabled=interactiveLessonSupported||deepInteractiveAudioLesson(track.lessonId);
   const prepareWorkshop=(id:string)=>{
     if(conversationBusy||!canUseActions||!lessonProfessorEnabled||!WORKSHOP_CASES[track.key].some(c=>c.id===id))return;
     setWorkshopId(id);setActiveTab('Professor');
@@ -746,12 +749,11 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,
         <article className="lesson-content-card">
           <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">{track.origin==='local-model'?'Account-synced · no providers':'Premium lesson'}</span></div>
           <div className="eyebrow">{activeTab.toUpperCase()}</div>
-          {lessonProfessorEnabled?<LessonProfessorWorkspace track={track.key} lessonId={track.lessonId} learnerKey={learnerKey} activeTab={activeTab} onTabChange={setActiveTab} onActivityChange={setConversationBusy} workshopId={workshopId} onClearWorkshop={clearWorkshop}/>:null}
+          {lessonProfessorEnabled?<LessonProfessorWorkspace track={track.key} lessonId={professorProviderLessonId!} learnerKey={learnerKey} activeTab={activeTab} onTabChange={setActiveTab} onActivityChange={setConversationBusy} workshopId={workshopId} onClearWorkshop={clearWorkshop}/>:null}
           <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} lessonSlug={track.lessonSlug} activeTab={activeTab} onTabChange={setActiveTab} onPrepareWorkshop={track.key==='english'?prepareWorkshop:undefined} handoffDisabled={conversationBusy||!canUseActions||!lessonProfessorEnabled} readerDisabled={conversationBusy||!canUseActions} localCompletion={localCompletion} onCompleteLocal={onCompleteLocal} nextLessonTitle={nextLocalLesson?.title} onOpenNextLesson={onOpenNextLocal} localReviewStage={localReviewStage} localReviewCompletion={localReviewCompletion} />
           {!interactiveLessonSupported && !deepLocal && (activeTab === 'Audio' || activeTab === 'Professor') ? <p role="status" data-testid="p1-interactive-gate">{activeTab==='Audio'&&track.key!=='payroll'&&isP1Slug(track.key,track.lessonSlug)?'Verify this lesson below to access its Premium Audio controls.':activeTab==='Audio'?'The independent Audio episode is not yet available for this unit.':'The written English unit is ready. Its live Professor session will appear here after the published lesson is activated.'}</p> : null}
           {!interactiveLessonSupported && !deepLocal && canUseActions && isP1Slug(track.key,track.lessonSlug) && (activeTab === 'Audio' || activeTab === 'Professor') ? <LessonReadinessCheck key={[account.userId,track.key,track.lessonId,track.lessonSlug].join(':')} userId={account.userId} lessonId={track.lessonId} lessonSlug={track.lessonSlug} lessonTitle={track.lesson} track={track.key} activeTab={activeTab}/> : null}
-          {deepLocal&&track.key==='english'&&activeTab==='Professor'?<p role="status" className="priority-note" data-testid="deep-professor-preserved"><strong>Professor preserved, not started</strong><span>This unit already contains its complete Learn, Grammar, Practice and Speaking path. The live Professor remains an optional English extension and will be activated only after its reviewed server handoff; opening this tab makes no paid call.</span></p>:null}
-          {interactiveLessonSupported && (conversationBusy && activeTab === 'Audio' ? <p role="status" data-testid="audio-conversation-guard">End the Professor session before playing lesson audio. Written tabs remain available.</p> : <>{activeTab === 'Audio' && (canUseActions ? <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} /> : <p role="status" data-testid="audio-account-mismatch">Audio actions require the matching signed-in learner account.</p>)}</>)}
+          {lessonAudioEnabled && (conversationBusy && activeTab === 'Audio' ? <p role="status" data-testid="audio-conversation-guard">End the Professor session before playing lesson audio. Written tabs remain available.</p> : <>{activeTab === 'Audio' && (canUseActions ? <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} /> : <p role="status" data-testid="audio-account-mismatch">Audio actions require the matching signed-in learner account.</p>)}</>)}
           {/* Interactive providers are mounted only for lessons with a reviewed server handoff. */}
         </article>
         <aside className="lesson-side-card">

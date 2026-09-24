@@ -13,6 +13,7 @@ import {createPremiumAudioSourceContract,resolvePremiumAudioRenderRecipe} from '
 import {createHash} from 'node:crypto';
 import {goldenAudioTrack} from '../../../src/learning/goldenAudioRegistry.ts';
 import {lessonModuleFor} from '../../../src/learning/lessonModules.ts';
+import {deepAudioSource} from '../../../src/learning/deepInteractiveRegistry.ts';
 
 type AudioFailurePhase='transport'|'http'|'media_type'|'media_validation';
 /** Metadata only. Never retain provider bodies, credentials or narrated text. */
@@ -219,20 +220,22 @@ Deno.serve(async(req:Request)=>{
   const isP1=[p1SlugFor('finance'),p1SlugFor('payroll'),p1SlugFor('english')].includes(lesson.slug);
   const originalTrack=goldenAudioTrack({lessonId:lesson.id,lessonSlug:lesson.slug,
     requestedTrack:course.learner_track,sequence:lesson.sequence});
+  const deepSource=deepAudioSource(lessonId);
   const p1Input={profileTrack:profile.learner_track,requestedTrack:course.learner_track,requestedLessonId:lessonId,resolvedLesson:{id:lesson.id,slug:lesson.slug,learnerTrack:course.learner_track,isPublished:lesson.is_published,contentVersion:lesson.content_version}};
   if(isP1){
     // Deliberately unset in the real backend. Requires a separately reviewed isolated backend deployment.
     if(audioRuntimeStage!=='isolated-preview-atomic-v2'&&audioRuntimeStage!=='isolated-preview-authored-v3')return json({error:'p1_audio_runtime_unavailable'},403);
     try{p1AudioIdentity(p1Input);}catch{return json({error:'forbidden'},403);}
   }else if(audioRuntimeStage==='isolated-preview-authored-v3'){
-    if(!originalTrack||!['rafael_finance','viviane_payroll'].includes(profile.learner_track)
-      ||(originalTrack!=='english'&&course.learner_track!==profile.learner_track))return json({error:'forbidden'},403);
+    const reviewedDeep=deepSource&&profile.learner_track==='rafael_finance'&&course.learner_track===deepSource.track;
+    if(!reviewedDeep&&(!originalTrack||!['rafael_finance','viviane_payroll'].includes(profile.learner_track)
+      ||(originalTrack!=='english'&&course.learner_track!==profile.learner_track)))return json({error:'forbidden'},403);
   }else{
     const goldenIds:Record<string,string>={rafael_finance:'b3639582-3c32-4147-a4b3-84237d11a66e',viviane_payroll:'6ffda415-3b18-46ab-afaa-414f81a7eb31'};
     if(course.learner_track!==profile.learner_track||goldenIds[course.learner_track]!==lessonId)return json({error:"forbidden"},403);
   }
 
-  if(audioRuntimeStage==='isolated-preview-authored-v3'){
+  if(audioRuntimeStage==='isolated-preview-authored-v3'&&!deepSource){
     const exactKeys=(value:unknown,keys:readonly string[])=>value!==null&&typeof value==='object'&&!Array.isArray(value)
       &&Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
     const exactCacheHit=(value:unknown,path:string,expectedAttemptId?:string)=>{
@@ -457,14 +460,14 @@ Deno.serve(async(req:Request)=>{
   // Authored-v3 activates only the exact P1 contract. Existing Golden audio may
   // still be served privately, but a cache miss must not reopen the revoked v2
   // admission RPCs or fall through to the legacy claim/provider path.
-  if(!isP1&&audioRuntimeStage==='isolated-preview-authored-v3')
+  if(!isP1&&!deepSource&&audioRuntimeStage==='isolated-preview-authored-v3')
     return json({error:'audio_v3_admission_closed'},503);
 
   if(!openaiKey)return json({error:"openai_not_configured"},503);
 
-  let script=String(lesson.manager_commentary_pt||lesson.technical_brief_pt||"").trim();
+  let script=deepSource?.script.trim()??String(lesson.manager_commentary_pt||lesson.technical_brief_pt||"").trim();
   if(!script)return json({error:"audio_script_missing"},404);
-  if(script.length>4000)script=script.slice(0,4000).replace(/\s+\S*$/,"")+".";
+  if(!deepSource&&script.length>4000)script=script.slice(0,4000).replace(/\s+\S*$/,"")+".";
 
   const words=script.split(/\s+/).filter(Boolean).length;
   const estimatedMinutes=Math.max(0.35,words/145);
@@ -515,9 +518,17 @@ Deno.serve(async(req:Request)=>{
           if(objects?.some((object:any)=>object.name===fileName))throw new Error('audio_reconciliation_required');
         },
         generate:async()=>{
-          const response=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',signal:AbortSignal.timeout(90000),headers:{Authorization:`Bearer ${openaiKey}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini-tts',voice:'marin',input:script,instructions:course.learner_track==='english_academy'?'Speak in clear natural English as a patient teacher.':'Speak in natural Brazilian Portuguese as a calm expert teacher. Keep technical English terms in English.',response_format:'mp3',speed:0.98})});
-          if(!response.ok){await response.body?.cancel().catch(()=>undefined);throw new Error('tts_failed');}
-          return new Uint8Array(await response.arrayBuffer());
+          const chunks=deepSource?.chunks??[script];const rendered:Uint8Array[]=[];let total=0;
+          for(const input of chunks){
+            const response=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',signal:AbortSignal.timeout(90000),headers:{Authorization:`Bearer ${openaiKey}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini-tts',voice:'marin',input,instructions:course.learner_track==='english_academy'?'Speak in clear natural English as a patient teacher.':'Speak in natural Brazilian Portuguese as a calm expert teacher. Keep technical English terms in English.',response_format:'mp3',speed:0.98})});
+            if(!response.ok){await response.body?.cancel().catch(()=>undefined);throw new Error('tts_failed');}
+            const bytes=await readBoundedPremiumMp3(response);total+=bytes.byteLength;
+            if(total>MAX_PREMIUM_AUDIO_BYTES)throw new Error('tts_failed');
+            rendered.push(bytes);
+          }
+          const complete=new Uint8Array(total);let offset=0;
+          for(const bytes of rendered){complete.set(bytes,offset);offset+=bytes.byteLength;}
+          return complete;
         },
         store:async(bytes,identity)=>{
           const {error:uploadError}=await admin.storage.from('lesson-audio').upload(identity.storagePath,bytes,{contentType:'audio/mpeg',upsert:false,cacheControl:'31536000'});
@@ -531,7 +542,8 @@ Deno.serve(async(req:Request)=>{
     }catch(cause){
       if(racedCache)return audioReply(expectedPath,{cached:true,voice:racedCache.voice??'marin'});
       const raw=cause instanceof Error?cause.message:'';
-      const allowed=new Set(['global_ai_budget_reached','premium_audio_budget_reached','audio_generation_in_progress','audio_source_changed','audio_cache_unavailable','audio_reconciliation_required','audio_receipt_unconfirmed','audio_asset_record_failed','audio_upload_failed','tts_failed']);
+      const allowed=new Set(['global_ai_budget_reached','premium_audio_budget_reached','audio_generation_in_progress','audio_source_changed','audio_cache_unavailable','audio_reconciliation_required','audio_receipt_unconfirmed','audio_asset_record_failed','audio_upload_failed','tts_failed',
+        'invalid_audio_attempt','audio_admission_unavailable','audio_admission_invalid','audio_attempt_replayed','audio_submission_unconfirmed','audio_asset_identity_mismatch']);
       const code=allowed.has(raw)?raw:'audio_attempt_unavailable';
       return json({error:code},code.endsWith('budget_reached')?429:code==='audio_generation_in_progress'||code==='audio_source_changed'||code==='audio_reconciliation_required'?409:503);
     }
