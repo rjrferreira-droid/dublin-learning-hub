@@ -9,6 +9,7 @@ import {
 import type {LessonModule} from '../learning/lessonModules';
 import {BrowserLessonReader} from './BrowserLessonReader';
 import {AudioAnswerPractice} from './AudioAnswerPractice';
+import {CompactEnglishLearn} from './CompactEnglishLearn';
 import {audioQuestionsFor} from '../learning/audioQuestions';
 import {curriculumPreviewRuntimeEnabled} from '../config/curriculumPreview';
 import '../learning/deep-lesson-experience.css';
@@ -112,7 +113,7 @@ export function DeepLessonExperience({module,activeTab,readerDisabled,audioPlaye
  };
 
  return <div className="deep-lesson-experience" hidden={!visible} data-testid="deep-lesson-experience">
-  <section className="lesson-study-section deep-learn" hidden={activeTab!=='Learn'} data-testid="deep-lesson-learn">
+  {module.track==='english'?activeTab==='Learn'?<CompactEnglishLearn module={module} onContinue={()=>{onLearnReviewed();onTabChange('Grammar');}}/>:null:<section className="lesson-study-section deep-learn" hidden={activeTab!=='Learn'} data-testid="deep-lesson-learn">
    <div className="deep-title-row"><div><div className="lesson-section-kicker">DEEP LESSON · {editorialLabel(deep.editorial.status)}</div><h2>{module.title}</h2></div><span className="deep-version">Depth {deep.editorial.depthVersion}</span></div>
    <p className="lesson-study-lead">{module.goal}</p>
    <div className="deep-summary-grid">
@@ -139,7 +140,7 @@ export function DeepLessonExperience({module,activeTab,readerDisabled,audioPlaye
    </article>)}</section>
    <section className="deep-misconceptions"><h3>Common misconceptions</h3>{deep.misconceptions.map(item=><article key={item.id}><strong>{item.misconception}</strong><p>{item.correction}</p><small>Diagnostic: {item.diagnosticPrompt}</small></article>)}</section>
    <div className="lesson-phase-confirmation"><strong>Close Learn deliberately</strong><p>Review the objectives and examples before retrieval. This records engagement only; it is not a mastery score.</p><button type="button" onClick={()=>{onLearnReviewed();onTabChange('Practice');}}>Mark Learn reviewed &amp; continue</button></div>
-  </section>
+  </section>}
 
   <section className="lesson-study-section deep-audio" hidden={activeTab!=='Audio'} data-testid="deep-lesson-audio">
    <div className="lesson-section-kicker">AUDIO</div><h2>{deep.audioEpisode.title}</h2>

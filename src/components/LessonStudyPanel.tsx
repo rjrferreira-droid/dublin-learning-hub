@@ -71,7 +71,7 @@ function StudyContent({module,lessonSlug,activeTab,onTabChange,onPrepareWorkshop
  const pronunciationTarget=companion?.pronunciationTarget??pronunciationTargetFor(module);
  const deepHandled=module.deepLesson?deepLessonHandlesTab(module.deepLesson,activeTab):false;
  return <div className="lesson-study-panel" data-testid="lesson-study-panel" data-track={module.track} data-active-tab={activeTab} hidden={!visible}>
-  {activeTab!=='Audio'?<div className="lesson-study-banner"><strong>Written lesson · self-study</strong><span>No AI call · drafts and checks stay only in this open lesson</span></div>:null}
+  {activeTab!=='Audio'&&!(activeTab==='Learn'&&module.track==='english'&&module.deepLesson)?<div className="lesson-study-banner"><strong>Written lesson · self-study</strong><span>No AI call · drafts and checks stay only in this open lesson</span></div>:null}
   {module.deepLesson?<DeepLessonExperience module={module} activeTab={activeTab} readerDisabled={readerDisabled} audioPlayer={audioPlayer} audioListened={audioListened} onTabChange={onTabChange} onLearnReviewed={()=>setLearnConfirmed(true)} onGrammarEngaged={()=>setDeepEngagement(current=>({...current,grammar:true}))} onPracticeEngaged={()=>setDeepEngagement(current=>({...current,practice:true}))}/>:null}
   <section className="lesson-study-section" hidden={activeTab!=='Learn'||deepHandled} data-testid="lesson-reading">
    <h2>{module.title}</h2><p className="lesson-study-lead">{module.goal}</p>
