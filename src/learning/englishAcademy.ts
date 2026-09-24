@@ -1,4 +1,6 @@
 import { DEFAULT_LANGUAGE_EXPOSURE } from './adaptiveEngine';
+export {ENGLISH_MONTH_DIRECTION,ENGLISH_MONTH_PLAN} from './englishMonthPlan';
+export type {MonthlyEnglishStudyDay} from './englishMonthPlan';
 
 export type CefrBand = 'A2' | 'A2+' | 'B1' | 'B1+' | 'B2' | 'B2+' | 'C1' | 'C1+';
 export type EnglishSkill =

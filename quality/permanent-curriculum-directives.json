@@ -1,0 +1,103 @@
+{
+  "version": "permanent-curriculum-2026-09-23-v3",
+  "status": "approved_structure_not_database_published",
+  "supersedes": [
+    {
+      "file": "quality/core-curriculum-roadmap.json",
+      "rule": "Do not add ACCA in this phase",
+      "replacement": "ACCA Financial Reporting is now an active priority alongside English."
+    },
+    {
+      "scope": "language expansion",
+      "replacement": "Spanish remains outside the current delivery. Payroll is now an active Viviane course using the reviewed seven-unit local pathway."
+    }
+  ],
+  "activePriorities": [
+    "english",
+    "acca-fr",
+    "irish-payroll",
+    "professor-quality"
+  ],
+  "preservedCapabilities": [
+    "premium-audio",
+    "existing-payroll",
+    "manuzinha-isolation",
+    "learner-history"
+  ],
+  "english": {
+    "balance": {
+      "rafael": {
+        "everyday": 50,
+        "professional": 50,
+        "professionalDomains": ["finance", "accounting", "tax", "payroll", "treasury", "contracts and compliance"]
+      },
+      "viviane": {
+        "everyday": 80,
+        "professional": 20,
+        "professionalDomains": ["payroll", "Departamento Pessoal", "People Operations", "benefits", "onboarding and offboarding", "employee service"],
+        "excludedCentres": ["finance", "accounting", "tax", "treasury", "financial reporting"]
+      },
+      "measurement": "curriculum-wide by learner profile; Viviane also keeps a weekly 4:1 lesson pattern"
+    },
+    "dailyMinutes": {
+      "reference": 40,
+      "range": [
+        30,
+        70
+      ],
+      "hardLimit": false
+    },
+    "components": [
+      "contextual grammar",
+      "vocabulary",
+      "listening",
+      "reading/writing",
+      "Professor interaction",
+      "evaluation",
+      "spaced review"
+    ],
+    "professorMinutes": {
+      "reference": 10,
+      "hardLimit": false
+    }
+  },
+  "accaFr": {
+    "studyMinutes": {
+      "reference": 120,
+      "range": [
+        90,
+        180
+      ],
+      "hardLimit": false
+    },
+    "authority": "ACCA sitting-specific syllabus and study guide",
+    "organisationReference": "aCOWtancy public FR structure",
+    "completionRule": "Verify every selected sitting outcome plus practice, revision and exam preparation; lesson count alone is not completion."
+  },
+  "payroll": {
+    "learner": "viviane",
+    "course": "irish-payroll-viviane-local",
+    "currentUnits": 7,
+    "focus": ["Revenue workflow", "gross-to-net controls", "benefits", "corrections", "employee lifecycle", "employee queries", "month-end handoff"],
+    "contentRule": "Transfer existing Departamento Pessoal experience into Irish Payroll operations without presenting time-sensitive rates as permanent facts."
+  },
+  "premiumAudio": {
+    "role": "core contextual podcast in English and ACCA FR",
+    "contentRule": "Original explanation, examples and retrieval prompts; never merely a verbatim lesson reading.",
+    "accountingRule": "Included inside estimated workload.",
+    "preservationRule": "Do not modify, replace or regenerate existing Premium Audio assets, cache, budget controls or runtime while expanding curriculum."
+  },
+  "evidence": [
+    "Authored answers are not learner evidence.",
+    "Local completion is not persisted mastery.",
+    "Text cannot establish pronunciation or acoustic fluency.",
+    "A conversation score is not an ACCA mock-exam mark."
+  ],
+  "release": {
+    "databasePublication": false,
+    "supabaseMutation": false,
+    "deployment": false,
+    "paidProviderCalls": false,
+    "requiresSeparateDecision": true
+  }
+}

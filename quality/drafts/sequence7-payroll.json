@@ -1,0 +1,293 @@
+{
+  "version": "core-written-foundation-1",
+  "status": "full_draft_not_published_to_database",
+  "track": "payroll",
+  "roadmapSequence": 7,
+  "slug": "employee-queries-net-pay-evidence",
+  "reviewedOn": "2026-09-14",
+  "module": {
+    "track": "payroll",
+    "title": "Employee queries: explain a net-pay change",
+    "goal": "Write a clear, private and evidence-based reply about a supplied pay difference.",
+    "scope": "Original communication and reconciliation practice in an Irish payroll context. No actual employee data, live rates or individual tax advice. The linked Revenue pages support payroll input/correction context; the communication workflow is authored guidance.",
+    "sections": [
+      {
+        "id": "payroll7-s1",
+        "title": "1. Start with the question",
+        "paragraphs": [
+          "Original employee message: “My net pay is lower—has my tax code changed?” Do not accept the proposed cause without checking. Confirm the relevant periods and what the employee is comparing, then obtain the authorised payslip and input records through the appropriate private channel.",
+          "Avoid requesting a whole team payroll file for one query. Ask for the minimum relevant records and verify the recipient before sharing an explanation. This is a practical privacy control, not a claim that a particular legal compliance review has been completed."
+        ],
+        "supportPt": "Confirme períodos e dados necessários. A hipótese do funcionário ainda não é a causa.",
+        "sourceIds": [
+          "rpn"
+        ]
+      },
+      {
+        "id": "payroll7-s2",
+        "title": "2. Build the numerical bridge",
+        "paragraphs": [
+          "Original supplied figures: prior cash gross 3,000, statutory deductions 500 and other deductions 100 give net 2,400. Current cash gross remains 3,000, statutory deductions rise to 540 and other deductions to 120, giving net 2,340. The net decrease is 60.",
+          "The arithmetic explains 40 from the statutory-deduction total and 20 from other deductions. It does not explain why either changed. Do not state that a new RPN, pension election or benefit caused the movement when those records have not been supplied."
+        ],
+        "supportPt": "A ponte explica 60: 40 e 20. Ela ainda não explica a origem dos descontos.",
+        "sourceIds": [
+          "rpn"
+        ]
+      },
+      {
+        "id": "payroll7-s3",
+        "title": "3. Separate fact and next check",
+        "paragraphs": [
+          "Original reply: your net payment decreased by 60 with gross unchanged; the supplied breakdown shows 40 more statutory deductions and 20 more other deductions. We are checking the underlying payroll inputs before confirming why. I will update you after that review.",
+          "Ask for the current and previous calculation/input records, then route a confirmed error through the correction workflow. Do not promise a refund before confirming an error, and do not call a difference correct merely because the software produced it."
+        ],
+        "supportPt": "Diga fato, limite e checagem. Não prometa devolução sem confirmar erro.",
+        "sourceIds": [
+          "corrections"
+        ]
+      },
+      {
+        "id": "payroll7-s4",
+        "title": "4. Close with a useful record",
+        "paragraphs": [
+          "Original case log: employee query, compared periods, confirmed bridge, unresolved cause, assigned reviewer and agreed update time. When evidence arrives, record the conclusion and any approved correction. If the review remains open, say so clearly.",
+          "Use plain English and offer to explain an unfamiliar payslip term. A short accurate response is better than a detailed guess. Keep employee communication separate from technical sign-off: a reassuring message does not replace the payroll review."
+        ],
+        "supportPt": "Mensagem clara não substitui revisão técnica. Registre conclusão e pendências.",
+        "sourceIds": [
+          "corrections"
+        ]
+      }
+    ],
+    "terms": [
+      {
+        "term": "Net pay",
+        "meaning": "Cash payable after relevant employee deductions.",
+        "pt": "salário líquido",
+        "example": "Current net pay is 2,340."
+      },
+      {
+        "term": "Comparison period",
+        "meaning": "Period used as the reference.",
+        "pt": "período comparativo",
+        "example": "Confirm both comparison periods."
+      },
+      {
+        "term": "Confirmed fact",
+        "meaning": "Detail supported by the supplied record.",
+        "pt": "fato confirmado",
+        "example": "Gross pay is unchanged."
+      },
+      {
+        "term": "Hypothesis",
+        "meaning": "Possible explanation awaiting evidence.",
+        "pt": "hipótese",
+        "example": "An RPN change is still a hypothesis."
+      },
+      {
+        "term": "Escalation",
+        "meaning": "Passing an issue to the responsible reviewer.",
+        "pt": "encaminhamento",
+        "example": "Escalate the unexplained deduction."
+      },
+      {
+        "term": "Update time",
+        "meaning": "Agreed time for reporting progress or outcome.",
+        "pt": "prazo de retorno",
+        "example": "Agree an update time without promising a refund."
+      }
+    ],
+    "visual": {
+      "title": "Employee queries: explain a net-pay change — decision map",
+      "note": "Original fictional exercise; not a live calculation or measured learner result.",
+      "headers": [
+        "Item",
+        "Supplied detail",
+        "Interpretation"
+      ],
+      "rows": [
+        [
+          "Prior net",
+          "3,000 - 500 - 100 = 2,400",
+          "Supplied"
+        ],
+        [
+          "Current net",
+          "3,000 - 540 - 120 = 2,340",
+          "Supplied"
+        ],
+        [
+          "Difference",
+          "-60",
+          "-40 statutory; -20 other"
+        ],
+        [
+          "Cause",
+          "Not supplied",
+          "Requires input review"
+        ]
+      ],
+      "question": "Can the bridge prove a tax-code change?",
+      "answer": "No. It establishes amounts, not the underlying cause."
+    },
+    "caseStudy": {
+      "title": "Employee queries: explain a net-pay change — applied case",
+      "scenario": [
+        "Prior gross 3,000, statutory deductions 500, other deductions 100.",
+        "Current gross 3,000, statutory deductions 540, other deductions 120.",
+        "Employee suspects a changed RPN; neither period’s RPN/input details are supplied."
+      ],
+      "task": "Write a brief employee response with the bridge and a next check, without promising a refund.",
+      "hints": [
+        "Compute both nets.",
+        "Distinguish an amount explanation from a cause."
+      ],
+      "modelAnswer": "Your net pay changed from 2,400 to 2,340, a decrease of 60, while cash gross stayed at 3,000. The supplied breakdown shows statutory deductions up 40 and other deductions up 20. We need to review the underlying inputs and calculation records before confirming the cause; this information alone does not establish an RPN change or a refund.",
+      "reviewChecks": [
+        "Both net figures and 60 decrease.",
+        "40/20 breakdown.",
+        "Cause remains unconfirmed.",
+        "Private, concrete next review without a refund promise."
+      ],
+      "transfer": "Apply the same structure to a net-pay increase; a favourable movement can also require explanation."
+    },
+    "checkpoint": [
+      {
+        "id": "payroll7-q1",
+        "prompt": "Current net is:",
+        "options": [
+          "2,340",
+          "2,400",
+          "2,460"
+        ],
+        "correctIndex": 0,
+        "explanation": "3,000 - 540 - 120 = 2,340.",
+        "reviewSection": "payroll7-s2"
+      },
+      {
+        "id": "payroll7-q2",
+        "prompt": "The decrease is explained arithmetically by:",
+        "options": [
+          "60 tax-code change",
+          "40 statutory and 20 other deductions",
+          "60 gross reduction"
+        ],
+        "correctIndex": 1,
+        "explanation": "Gross is unchanged; the components sum to 60.",
+        "reviewSection": "payroll7-s2"
+      },
+      {
+        "id": "payroll7-q3",
+        "prompt": "The cause is:",
+        "options": [
+          "Confirmed as RPN",
+          "Confirmed as pension",
+          "Not established by supplied records"
+        ],
+        "correctIndex": 2,
+        "explanation": "Inputs are absent.",
+        "reviewSection": "payroll7-s3"
+      },
+      {
+        "id": "payroll7-q4",
+        "prompt": "For one employee query request:",
+        "options": [
+          "The whole team file",
+          "Minimum relevant authorised records",
+          "Any colleague’s payslip"
+        ],
+        "correctIndex": 1,
+        "explanation": "Use relevant records through a private channel.",
+        "reviewSection": "payroll7-s1"
+      },
+      {
+        "id": "payroll7-q5",
+        "prompt": "An incomplete review supports a guaranteed refund:",
+        "options": [
+          "True",
+          "False",
+          "If the employee is upset"
+        ],
+        "correctIndex": 1,
+        "explanation": "A promise requires evidence and the approved process.",
+        "reviewSection": "payroll7-s4"
+      }
+    ],
+    "practiceExercises": [
+      {
+        "id": "payroll7-p1",
+        "question": "Net goes from 1,850 to 1,815. State the change without inventing its cause.",
+        "hints": [
+          "Subtract current from prior.",
+          "Name the comparison."
+        ],
+        "answer": "Net pay decreased by 35 versus the prior period; the cause is not supplied.",
+        "explanation": "An amount is not a diagnosis."
+      },
+      {
+        "id": "payroll7-p2",
+        "question": "An employee sends a colleague’s payslip as comparison. How should you respond?",
+        "hints": [
+          "Their record is not this employee’s evidence.",
+          "Use the private authorised channel."
+        ],
+        "answer": "Ask for the employee’s own relevant periods and avoid using or redistributing the colleague’s details.",
+        "explanation": "The query needs the correct person’s records."
+      },
+      {
+        "id": "payroll7-p3",
+        "question": "Rewrite “The system is correct, so no refund is due” when review is incomplete.",
+        "hints": [
+          "Do not assume system output proves correctness.",
+          "State the open review."
+        ],
+        "answer": "We are reviewing the inputs and calculation before confirming whether any correction is needed.",
+        "explanation": "Neither correctness nor refund eligibility is established yet."
+      }
+    ],
+    "sources": [
+      {
+        "id": "rpn",
+        "label": "Revenue — Requesting an RPN for 2026",
+        "url": "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/transitional-arrangements/requesting-rpn.aspx",
+        "supports": "Current RPN request guidance. Does not establish any fictional employee tax rate.",
+        "reviewedOn": "2026-09-14"
+      },
+      {
+        "id": "corrections",
+        "label": "Revenue — Payroll corrections",
+        "url": "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/corrections.aspx",
+        "supports": "Distinguishes over/underpayment adjustments from incorrect submitted details. No source example or tax amount is reused.",
+        "reviewedOn": "2026-09-14"
+      }
+    ]
+  },
+  "professorGuide": {
+    "status": "offline_authored_guide_not_live",
+    "opening": "Ask the learner to separate the employee’s question from its proposed explanation.",
+    "whenCorrect": "Ask for a one-sentence explanation to a non-technical employee after the numeric bridge.",
+    "whenUncertain": "Ask which supplied fact is missing or unclear. Offer the first case hint, then invite another attempt.",
+    "whenMisconception": "If they assert an RPN change, ask them to identify the supporting record; it is absent.",
+    "whenSelfCorrected": "Use the corrected answer, not the abandoned phrase, as the current response. Ask one transfer question.",
+    "whenAskedForAnswer": "Provide a concise explanation and one worked step; invite an optional fresh attempt without claiming independent mastery.",
+    "evidenceBoundary": "Use only actual session evidence if this guide is separately integrated. Never consume local drafts or checkpoint results. Do not infer pronunciation/acoustic fluency from text, technical mastery from a phrase, or a CEFR level from one task."
+  },
+  "assessmentBoundaries": [
+    "Authored answer keys and guide branches are expectations, not model results or learner evidence.",
+    "Accept supported alternatives and self-correction.",
+    "No local drafts or answers may enter Professor/evaluator payloads.",
+    "No paid provider or database publication is authorized by this draft."
+  ],
+  "publicationGate": "Content QA, server-owned reference integration, exact identity acceptance and separate publication decision remain required.",
+  "fictionalCalculation": {
+    "gross": 3000,
+    "priorStatutory": 500,
+    "priorOther": 100,
+    "priorNet": 2400,
+    "currentStatutory": 540,
+    "currentOther": 120,
+    "currentNet": 2340,
+    "decrease": 60
+  }
+}

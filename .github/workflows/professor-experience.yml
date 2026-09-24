@@ -1,0 +1,85 @@
+name: Parallel Professor experience and pedagogy checks
+on:
+  push:
+    branches: [feat/professor-experience-2026-09-13]
+concurrency:
+  group: learning-experience-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  companion-and-quality:
+    if: github.ref == 'refs/heads/feat/professor-experience-2026-09-13'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VITE_SUPABASE_URL: https://lh-ui.invalid
+      VITE_SUPABASE_PUBLISHABLE_KEY: fictional-companion-fixture-not-a-key
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Preserve runtime, deployment configuration, database and identity boundaries
+        run: |
+          git diff --exit-code 3d292fe7f913135fd4b461487cc5dffde74bc7e1 HEAD -- professor-agent ':!professor-agent/src/evaluation.ts' ':!professor-agent/src/evaluationEvidence.ts' ':!professor-agent/src/callbackDelivery.ts' ':!professor-agent/src/index.ts' supabase ':!supabase/migrations/20260923003415_user_study_state.sql' ':!supabase/functions/professor-session-receipt/**' ':!supabase/functions/_shared/session-receipt-contract.ts' ':!supabase/functions/premium-lesson-audio/index.ts' ':!supabase/functions/premium-lesson-audio/deno.json' ':!supabase/functions/premium-lesson-audio/deno.lock' ':!supabase/functions/_shared/premium-audio-budget.ts' ':!supabase/functions/_shared/p1-premium-audio-gate.ts' ':!supabase/functions/_shared/premium-audio-attempt-flow.ts' src/auth src/components/LittleEnglish.tsx src/little-english.css src/professor/voiceState.ts
+          # The one identity-boundary exception is exact-file pinned and also
+          # covered by profile-assignment-containment + account-boundary tests.
+          test "$(sha256sum src/components/AuthGate.tsx | cut -d ' ' -f1)" = '61fc88056aef215bd87587f6b41343104cad78318383dbe1ee8ef4beaa16a55b'
+          test "$(sha256sum src/auth.css | cut -d ' ' -f1)" = 'ef62e5051af7e261c0cc8fcb8597fcbf2884e49f448441ef29fb8caad9e8bf3a'
+          # Exact readiness/configuration diagnostics and admission additions; other runtime paths remain frozen.
+          git diff --exit-code 5d8e13f9751e9f87c0138b2c9031d08ccf29ff66 HEAD -- api ':!api/livekit-token.ts' ':!api/professor-readiness.ts' ':!api/professor-admission.ts' ':!api/premium-audio-readiness.ts' ':!api/preview-configuration.ts' server ':!server/preview-configuration.ts' ':!server/professor-readiness.ts' ':!server/premium-audio-readiness.ts' ':!server/professor-preview-identity.ts' ':!server/p1-preview-runtime.ts' ':!server/p1-professor-handoff.ts' ':!server/p1-written-lesson-context.ts' .github/workflows/livekit-professor-deploy.yml .github/workflows/livekit-reviewed-worker-update.yml
+          git diff --exit-code fd58ac40a8c9c4fe54782b9b4d9be6aa32aad7e4 HEAD -- .github/workflows/livekit-evaluator-reviewed-update.yml
+      - name: Compile committed application and worker candidates with locked dependencies
+        run: npm ci && npm run build && npm --prefix professor-agent ci && npm --prefix professor-agent run typecheck
+      - name: Measure initial JavaScript against the unchanged baseline
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/lh-payload-baseline" d3818cc656f0afa820922eb7c6675a30a5dbdd7a
+          ln -s "$GITHUB_WORKSPACE/node_modules" "$RUNNER_TEMP/lh-payload-baseline/node_modules"
+          (cd "$RUNNER_TEMP/lh-payload-baseline" && "$GITHUB_WORKSPACE/node_modules/.bin/vite" build --manifest --outDir "$RUNNER_TEMP/lh-baseline-dist")
+          node scripts/bundle-metrics.mjs "$RUNNER_TEMP/lh-baseline-dist"
+      - name: Evidence grounding, session receipt, callback delivery, Premium Audio budget and all previous contracts
+        run: node --experimental-strip-types --test tests/*.test.ts
+      - name: Bundle candidate handler, evaluator and client for isolated execution
+        run: |
+          npx --no-install esbuild api/livekit-token.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-api.mjs
+          npx --no-install esbuild professor-agent/src/evaluation.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/written-bridge-evaluator.mjs
+          node scripts/bundle-client-boundaries.mjs
+          node scripts/bundle-p1-audio-runtime.mjs
+      - name: Real request assembly with fictional services only
+        run: node --experimental-test-module-mocks --test tests/written-bridge.integration.mjs tests/workspace-client.integration.mjs tests/evaluator-evidence.integration.mjs tests/p1-preview-runtime.integration.mjs tests/p1-audio-runtime.integration.mjs tests/written-reference-evaluator.integration.mjs
+      - name: Same P1 request assembly against the exact published evaluator source, without deploying it
+        run: |
+          mkdir -p .test-runtime/published-worker
+          git show 07d770b53a4f3d6b77c8316541ea8dff6dcf7faf:professor-agent/src/evaluation.ts > .test-runtime/published-worker/evaluation.ts
+          git show 07d770b53a4f3d6b77c8316541ea8dff6dcf7faf:professor-agent/src/evaluationEvidence.ts > .test-runtime/published-worker/evaluationEvidence.ts
+          npx --no-install esbuild .test-runtime/published-worker/evaluation.ts --bundle --platform=node --format=esm --packages=external --outfile=.test-runtime/published-evaluator.mjs
+          P1_EVALUATOR_BUNDLE=published node --experimental-test-module-mocks --test tests/p1-preview-runtime.integration.mjs tests/written-reference-evaluator.integration.mjs
+      - run: npx playwright install --with-deps chromium
+      - name: Full UI regression including stored examples, confidence distinction and escaped markup
+        # Preserve full Payroll regression coverage while it is visually hidden by default.
+        run: VITE_SHOW_PAYROLL=true npx playwright test --grep-invert 'authenticated Learning Hub shell|standby presentation' --retries=0
+      - name: Production-build lazy loading and recovery
+        run: npx playwright test --config playwright.production.config.ts
+      - name: Require feedback captures and aggregate metrics
+        run: |
+          test "$(find test-results -name 'evidence-*.png' | wc -l)" -eq 6
+          test -s quality-results/bundle-metrics.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-evidence-preview
+          path: |
+            test-results/**/evidence-*.png
+            test-results/**/p1-*.png
+            quality-results/bundle-metrics.json
+          retention-days: 7
+          if-no-files-found: error
+      - name: Default standby presentation on desktop and mobile
+        run: VITE_SHOW_PAYROLL=false npx playwright test tests/account-boundary.spec.ts --grep 'standby presentation' --retries=0
+      - name: Unchanged source and acceptance boundary
+        run: |
+          git diff --exit-code
+          echo 'Read-only verification of feature UI, account progress code and undeployed receipt/callback/evaluator/turn-taking/Premium-Audio budget candidates. This job performs no real account write, model/voice/TTS call, DB migration, Edge deploy, worker redeploy or pricing change.' >> "$GITHUB_STEP_SUMMARY"

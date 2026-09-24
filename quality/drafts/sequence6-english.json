@@ -1,0 +1,276 @@
+{
+  "version": "core-written-foundation-1",
+  "status": "full_draft_not_published_to_database",
+  "track": "english",
+  "roadmapSequence": 6,
+  "slug": "disagree-challenge-resolve-professionally",
+  "reviewedOn": "2026-09-14",
+  "module": {
+    "track": "english",
+    "title": "Disagree professionally and resolve the next step",
+    "goal": "Challenge an unsupported conclusion clearly while keeping the conversation constructive.",
+    "scope": "Original workplace-English cases. Disagreement is assessed for clarity, evidence and response to the other view, not for obedience, accent, personality or technical course mastery.",
+    "sections": [
+      {
+        "id": "english6-s1",
+        "title": "1. Identify the point of disagreement",
+        "paragraphs": [
+          "British Council practice shows language for challenging an idea and considering another viewpoint. In our original exercise, first identify the exact claim you question. “I disagree” alone gives the listener little to respond to.",
+          "Original claim: “Two late invoices prove the whole supplier process is broken.” A precise challenge is that the evidence is too limited for the conclusion, not that the speaker is incompetent. Name the claim and the missing wider evidence."
+        ],
+        "supportPt": "Questione a conclusão específica e sua evidência, sem atacar a pessoa.",
+        "sourceIds": [
+          "challenge"
+        ]
+      },
+      {
+        "id": "english6-s2",
+        "title": "2. Acknowledge without pretending agreement",
+        "paragraphs": [
+          "Original response: “The late invoices do need attention. I am not convinced they establish a failure across the whole process.” This acknowledges the valid concern while preserving the disagreement. It does not pretend that the wider conclusion is accepted.",
+          "Too much softening can make the position disappear. Compare “Maybe possibly there might be something” with “I would check the full period before drawing that conclusion.” Polite language can still be direct about the required evidence."
+        ],
+        "supportPt": "Reconhecer uma preocupação não exige concordar com toda a conclusão. Seja educado e claro.",
+        "sourceIds": [
+          "challenge"
+        ]
+      },
+      {
+        "id": "english6-s3",
+        "title": "3. Offer a testable next step",
+        "paragraphs": [
+          "Original proposal: review all invoices in the period, distinguish late approval from late receipt, and agree how to interpret the results. A practical next step moves the discussion beyond competing opinions.",
+          "When the other person supplies new evidence, reconsider. “That wider sample changes my view” is a useful response if it is true. Do not keep defending the first position merely to avoid appearing inconsistent."
+        ],
+        "supportPt": "Proponha uma checagem concreta e mude de opinião quando a evidência mudar.",
+        "sourceIds": [
+          "challenge"
+        ]
+      },
+      {
+        "id": "english6-s4",
+        "title": "4. Repair and confirm the outcome",
+        "paragraphs": [
+          "Original repair after a blunt phrase: “Let me put that more clearly: I am questioning the conclusion, not your effort.” Then state the evidence question. A repair can improve the interaction without erasing the substantive issue.",
+          "Close by checking the actual agreement: “So we will review the full period before deciding on a process change?” If no agreement exists, summarise the remaining difference. Do not write a decision as agreed just because nobody answered."
+        ],
+        "supportPt": "Reformule quando necessário e confirme o acordo real. Silêncio não prova concordância.",
+        "sourceIds": [
+          "challenge"
+        ]
+      }
+    ],
+    "terms": [
+      {
+        "term": "Claim",
+        "meaning": "Statement being proposed as true.",
+        "pt": "afirmação",
+        "example": "The claim concerns the whole process."
+      },
+      {
+        "term": "Concern",
+        "meaning": "Issue that deserves attention.",
+        "pt": "preocupação",
+        "example": "The two late invoices are a concern."
+      },
+      {
+        "term": "Evidence gap",
+        "meaning": "Missing support for a conclusion.",
+        "pt": "lacuna de evidência",
+        "example": "The wider sample is an evidence gap."
+      },
+      {
+        "term": "Challenge",
+        "meaning": "Question a claim or proposed action.",
+        "pt": "questionar",
+        "example": "Challenge the conclusion respectfully."
+      },
+      {
+        "term": "Repair",
+        "meaning": "Rephrase to correct a communication problem.",
+        "pt": "reformulação",
+        "example": "Use a repair after a blunt sentence."
+      },
+      {
+        "term": "Agreement",
+        "meaning": "Decision or understanding actually accepted.",
+        "pt": "acordo",
+        "example": "Confirm agreement explicitly."
+      }
+    ],
+    "visual": {
+      "title": "Disagree professionally and resolve the next step — decision map",
+      "note": "Original fictional exercise; not a live calculation or measured learner result.",
+      "headers": [
+        "Item",
+        "Supplied detail",
+        "Interpretation"
+      ],
+      "rows": [
+        [
+          "Known",
+          "Two late invoices",
+          "Needs attention"
+        ],
+        [
+          "Claim",
+          "Whole process broken",
+          "Not established"
+        ],
+        [
+          "Next check",
+          "Full-period sample and causes",
+          "Proposed"
+        ],
+        [
+          "Decision",
+          "Not yet agreed",
+          "Confirm explicitly"
+        ]
+      ],
+      "question": "Does acknowledging the late invoices mean accepting the whole-process conclusion?",
+      "answer": "No. You can accept the fact and question the inference."
+    },
+    "caseStudy": {
+      "title": "Disagree professionally and resolve the next step — applied case",
+      "scenario": [
+        "A colleague says two late invoices prove the whole supplier process is broken.",
+        "No full-period sample or cause analysis is supplied.",
+        "The colleague wants immediate replacement of the process; no decision has been agreed."
+      ],
+      "task": "Give a constructive challenge, propose a next check and confirm the decision status.",
+      "hints": [
+        "Acknowledge the real concern.",
+        "Question the scope of the conclusion."
+      ],
+      "modelAnswer": "The two late invoices need attention, but I am not convinced they establish a failure across the whole process. Could we review the full period and separate approval delays from receipt delays before deciding on a replacement? We have not agreed a process change yet; the proposed next step is an evidence review.",
+      "reviewChecks": [
+        "Specific concern acknowledged.",
+        "Unsupported generalisation challenged.",
+        "Concrete next check proposed.",
+        "No invented agreement or personal attack."
+      ],
+      "transfer": "If the colleague provides a wider validated sample, revise the conclusion to reflect it."
+    },
+    "checkpoint": [
+      {
+        "id": "english6-q1",
+        "prompt": "Best target of the challenge is:",
+        "options": [
+          "The speaker’s personality",
+          "The unsupported conclusion",
+          "Their accent"
+        ],
+        "correctIndex": 1,
+        "explanation": "Challenge the claim and evidence.",
+        "reviewSection": "english6-s1"
+      },
+      {
+        "id": "english6-q2",
+        "prompt": "Acknowledging a concern requires total agreement:",
+        "options": [
+          "True",
+          "False",
+          "Only in English"
+        ],
+        "correctIndex": 1,
+        "explanation": "Concern and inference can be separated.",
+        "reviewSection": "english6-s2"
+      },
+      {
+        "id": "english6-q3",
+        "prompt": "A useful next step is:",
+        "options": [
+          "Repeat disagreement",
+          "Review the wider evidence",
+          "Invent a failure rate"
+        ],
+        "correctIndex": 1,
+        "explanation": "A concrete check supports a decision.",
+        "reviewSection": "english6-s3"
+      },
+      {
+        "id": "english6-q4",
+        "prompt": "New contradictory evidence should be:",
+        "options": [
+          "Ignored",
+          "Hidden",
+          "Considered and used to update the view"
+        ],
+        "correctIndex": 2,
+        "explanation": "Reasoned disagreement remains open to evidence.",
+        "reviewSection": "english6-s3"
+      },
+      {
+        "id": "english6-q5",
+        "prompt": "Silence proves approval:",
+        "options": [
+          "Yes",
+          "No",
+          "If everyone is senior"
+        ],
+        "correctIndex": 1,
+        "explanation": "Confirm the actual decision.",
+        "reviewSection": "english6-s4"
+      }
+    ],
+    "practiceExercises": [
+      {
+        "id": "english6-p1",
+        "question": "Repair “That is a stupid idea” while keeping a concern about missing evidence.",
+        "hints": [
+          "Remove the personal insult.",
+          "State the evidence question."
+        ],
+        "answer": "I am concerned that we do not yet have enough evidence to support that change.",
+        "explanation": "Keep the substantive concern visible."
+      },
+      {
+        "id": "english6-p2",
+        "question": "Someone gives new data that contradicts your first view. Respond constructively.",
+        "hints": [
+          "Acknowledge the new evidence.",
+          "Update your view conditionally if needed."
+        ],
+        "answer": "That wider evidence changes the picture; I would review the proposed action in light of it.",
+        "explanation": "Changing a view with evidence is not a language failure."
+      },
+      {
+        "id": "english6-p3",
+        "question": "No one answers your proposal. Can your meeting note say “approved”?",
+        "hints": [
+          "Silence is ambiguous.",
+          "Ask for confirmation."
+        ],
+        "answer": "No. Record it as proposed and request an explicit decision.",
+        "explanation": "Do not invent consensus."
+      }
+    ],
+    "sources": [
+      {
+        "id": "challenge",
+        "label": "British Council — Challenging ideas",
+        "url": "https://learnenglish.britishcouncil.org/free-resources/speaking/b2/challenging-someones-ideas",
+        "supports": "Language practice for questioning an idea, acknowledging a viewpoint and suggesting a trial. Original workplace cases below are separate.",
+        "reviewedOn": "2026-09-14"
+      }
+    ]
+  },
+  "professorGuide": {
+    "status": "offline_authored_guide_not_live",
+    "opening": "Ask the learner which exact claim they want to challenge.",
+    "whenCorrect": "Supply new evidence and ask the learner to revise their position without penalty for changing it.",
+    "whenUncertain": "Ask which supplied fact is missing or unclear. Offer the first case hint, then invite another attempt.",
+    "whenMisconception": "If they attack the person or become too vague, help them restate the evidence gap in one direct sentence.",
+    "whenSelfCorrected": "Use the corrected answer, not the abandoned phrase, as the current response. Ask one transfer question.",
+    "whenAskedForAnswer": "Provide a concise explanation and one worked step; invite an optional fresh attempt without claiming independent mastery.",
+    "evidenceBoundary": "Use only actual session evidence if this guide is separately integrated. Never consume local drafts or checkpoint results. Do not infer pronunciation/acoustic fluency from text, technical mastery from a phrase, or a CEFR level from one task."
+  },
+  "assessmentBoundaries": [
+    "Authored answer keys and guide branches are expectations, not model results or learner evidence.",
+    "Accept supported alternatives and self-correction.",
+    "No local drafts or answers may enter Professor/evaluator payloads.",
+    "No paid provider or database publication is authorized by this draft."
+  ],
+  "publicationGate": "Content QA, server-owned reference integration, exact identity acceptance and separate publication decision remain required."
+}

@@ -1,0 +1,48 @@
+name: Isolated Preview foundation
+on:
+  push:
+    branches: [feat/professor-experience-2026-09-13]
+    paths:
+      - 'quality/preview-backend/**'
+      - 'quality/tests/preview-foundation*'
+      - 'quality/tests/preview-platform*'
+      - '.github/workflows/preview-foundation.yml'
+permissions:
+  contents: read
+jobs:
+  foundation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: fictional-preview-only
+          POSTGRES_DB: learning_hub_preview_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: fictional-preview-only
+      PGDATABASE: learning_hub_preview_test
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build package with no connected credentials
+        run: python3 quality/preview-backend/build-foundation-package.py /tmp/preview-foundation
+      - name: Install new baseline on disposable platform stand-ins
+        run: |
+          psql -v ON_ERROR_STOP=1 -f quality/tests/preview-platform-fixture.sql
+          psql -v ON_ERROR_STOP=1 -f /tmp/preview-foundation/install.sql
+      - name: Verify identity, publication, grants and zero-budget boundary
+        run: python3 quality/tests/preview-foundation-postgres.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: preview-foundation-candidate
+          path: /tmp/preview-foundation
+          retention-days: 7
+      - run: git diff --exit-code

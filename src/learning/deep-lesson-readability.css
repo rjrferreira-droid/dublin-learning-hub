@@ -1,0 +1,83 @@
+.deep-lesson-experience .lesson-section-kicker,
+.deep-version,
+.deep-mode-tag,
+.deep-summary-grid span,
+.deep-practice-mix span,
+.deep-two-column li small,
+.deep-card-heading,
+.deep-activity-meta>span{
+ font-size:12px;
+ line-height:1.45;
+}
+
+.deep-summary-grid small,
+.deep-phase-grid small,
+.deep-practice-mix small,
+.deep-audio-meta span,
+.deep-exam-requirements strong{
+ font-size:12px;
+ line-height:1.55;
+}
+
+.deep-stage-heading>span{
+ font-size:13px;
+ line-height:1.45;
+}
+
+.deep-lesson-experience small,
+.deep-lesson-experience .lesson-inline-sources,
+.deep-lesson-experience .lesson-study-note,
+.deep-lesson-experience .lesson-worked-response small{
+ font-size:12px;
+ line-height:1.55;
+}
+
+.deep-card-heading{
+ letter-spacing:.055em;
+}
+
+.deep-activity-meta>span{
+ padding:5px 9px;
+ letter-spacing:.035em;
+}
+
+.deep-audio-segments details{
+ margin:0;
+ background:#fbfcfe;
+}
+
+.deep-audio-segments summary{
+ display:grid;
+ grid-template-columns:1fr auto;
+ gap:12px;
+ align-items:center;
+ font-size:16px;
+}
+
+.deep-audio-segments summary small{
+ color:#60738a;
+ font-size:12px;
+ font-weight:650;
+}
+
+.deep-audio-segment-body{
+ border-top:1px solid #dfe7f0;
+ padding:10px 2px 6px;
+}
+
+.deep-audio-segment-body>p{
+ max-width:72ch;
+}
+
+.deep-practice-bucket{
+ margin:30px 0;
+ scroll-margin-top:18px;
+}
+
+.deep-practice-bucket>.deep-activity-card{
+ margin-left:10px;
+}
+
+@media(max-width:600px){
+ .deep-audio-segments summary{grid-template-columns:1fr;font-size:15px}
+}

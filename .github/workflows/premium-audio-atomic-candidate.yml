@@ -1,0 +1,387 @@
+name: Isolated Premium Audio atomic budget candidate
+on:
+  push:
+    branches: [feat/professor-experience-2026-09-13]
+    paths:
+      - 'quality/candidates/premium-audio-atomic.sql'
+      - 'quality/tests/audio-atomic-*'
+      - 'quality/preview-backend/**'
+      - 'quality/tests/preview-package*'
+      - 'quality/tests/audio-attempt-postgres.mjs'
+      - 'quality/candidates/premium-audio-attempt-flow.ts'
+      - 'supabase/tests/fixture-budget.sql'
+      - 'supabase/migrations/20260913153700_lh_professor_completion_integrity.sql'
+      - 'supabase/migrations/20260913154315_lh_serialize_learning_updates.sql'
+      - 'supabase/migrations/20260913155850_lh_usage_settlement_integrity.sql'
+      - 'supabase/migrations/20260913161005_lh_atomic_professor_start.sql'
+      - 'supabase/migrations/20260913165704_lh_reservation_lifecycle.sql'
+      - 'quality/candidates/premium-audio-source-binding.sql'
+      - 'quality/candidates/premium-audio-golden-v3.sql'
+      - 'quality/tests/premium-audio-golden-v3.py'
+      - 'src/learning/goldenAudioRegistry.ts'
+      - 'quality/candidates/premium-audio-service-access-v3.sql'
+      - 'quality/tests/premium-audio-service-access-v3.py'
+      - 'quality/candidates/profile-assignment-containment.sql'
+      - 'quality/candidates/private-premium-audio-storage.ts'
+      - 'quality/candidates/premium-audio-source-contract.ts'
+      - 'quality/candidates/written-audio-preview.ts'
+      - 'quality/tests/premium-audio-source-binding.py'
+      - 'quality/tests/premium-audio-v3-fixture.sql'
+      - 'quality/tests/profile-assignment-containment-fixture.sql'
+      - 'quality/tests/profile-assignment-containment.sql'
+      - 'supabase/functions/_shared/premium-audio-attempt-flow.ts'
+      - 'supabase/functions/premium-lesson-audio/index.ts'
+      - 'tests/premium-audio-attempt-flow-v3.test.ts'
+      - 'tests/premium-audio-source-contract.test.ts'
+      - 'tests/private-premium-audio-storage.test.ts'
+      - 'tests/profile-assignment-containment.test.ts'
+      - 'tests/p1-audio-runtime.integration.mjs'
+      - 'tests/account-boundary.spec.ts'
+      - 'src/components/AuthGate.tsx'
+      - 'src/auth.css'
+      - '.github/workflows/premium-audio-atomic-candidate.yml'
+permissions:
+  contents: read
+jobs:
+  real-postgres-concurrency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ephemeral-test-only
+          POSTGRES_DB: learning_hub_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGDATABASE: learning_hub_test
+      PGUSER: postgres
+      PGPASSWORD: ephemeral-test-only
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Construct disposable fictional fixture and candidate, without Supabase credentials
+        run: |
+          test "$PGHOST" = '127.0.0.1'
+          test "$PGDATABASE" = 'learning_hub_test'
+          psql -v ON_ERROR_STOP=1 -f supabase/tests/fixture-budget.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913153700_lh_professor_completion_integrity.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913154315_lh_serialize_learning_updates.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913155850_lh_usage_settlement_integrity.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913161005_lh_atomic_professor_start.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20260913165704_lh_reservation_lifecycle.sql
+          psql -v ON_ERROR_STOP=1 -f quality/tests/audio-atomic-fixture.sql
+          python3 quality/tests/preview-package.test.py
+          python3 quality/preview-backend/build-package.py /tmp/learning-hub-preview-package
+          python3 quality/tests/preview-package-postgres.py install /tmp/learning-hub-preview-package
+      - name: Verify concurrent admissions, submission fences, receipts, expiry and roles
+        run: python3 quality/tests/audio-atomic-concurrency.py
+      - name: Verify candidate orchestration against real SQL with fictional provider/storage
+        run: node --experimental-strip-types quality/tests/audio-attempt-postgres.mjs
+      - name: Reject v3 source binding without its exact v2 prerequisites
+        run: |
+          createdb learning_hub_v3_guard
+          trap 'dropdb --if-exists learning_hub_v3_guard' EXIT
+          if PGDATABASE=learning_hub_v3_guard psql -v ON_ERROR_STOP=1 -f quality/candidates/premium-audio-source-binding.sql > /tmp/audio-v3-guard.log 2>&1; then
+            echo 'v3 candidate unexpectedly installed without v2 prerequisites' >&2
+            exit 1
+          fi
+          grep -q 'premium_audio_v3_prerequisites_missing' /tmp/audio-v3-guard.log
+      - name: Verify profile assignment containment in a disposable database
+        run: |
+          createdb learning_hub_profile_guard
+          trap 'dropdb --if-exists learning_hub_profile_guard' EXIT
+          PGDATABASE=learning_hub_profile_guard psql -v ON_ERROR_STOP=1 -f quality/tests/profile-assignment-containment-fixture.sql
+          PGDATABASE=learning_hub_profile_guard psql -v ON_ERROR_STOP=1 -f quality/candidates/profile-assignment-containment.sql
+          PGDATABASE=learning_hub_profile_guard psql -v ON_ERROR_STOP=1 -f quality/tests/profile-assignment-containment.sql
+          node --test --experimental-strip-types tests/profile-assignment-containment.test.ts
+      - name: Verify closed fingerprint-bound v3 attempt, receipt and cache lifecycle
+        run: |
+          psql -v ON_ERROR_STOP=1 -f quality/tests/premium-audio-v3-fixture.sql
+          psql -v ON_ERROR_STOP=1 -f quality/candidates/profile-assignment-containment.sql
+          test "$(psql -XAtq -c "select count(*) from pg_trigger where tgrelid='auth.users'::regclass and not tgisinternal")" = 0
+          test "$(psql -XAtq -c "select count(*) from pg_policy where polrelid='public.profiles'::regclass")" = 2
+          test "$(psql -XAtq -c "select encode(extensions.digest(prosrc,'sha256'),'hex') from pg_proc where oid='lh_internal.enforce_profile_server_assignment_v1()'::regprocedure")" = '3a79818cfc6f2e819e8bf2c4414d5a6a02f6c390203bde01033ad34a7148cd72'
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          insert into auth.users(id,email,raw_user_meta_data) values(
+            '22222222-2222-4222-8222-222222222222',
+            'payroll@example.invalid','{}'::jsonb
+          );
+          insert into public.profiles(
+            id,display_name,learner_track,preferred_language,timezone
+          ) values(
+            '22222222-2222-4222-8222-222222222222',
+            'Fictional Payroll','viviane_payroll','pt-BR','Europe/Dublin'
+          );
+          truncate table lh_internal.premium_audio_attempts,
+            public.audio_assets,public.ai_usage_log,
+            public.ai_tutor_sessions,public.professor_budget_reservations
+            cascade;
+          SQL
+          audio_v3_candidate=/tmp/premium-audio-source-binding-fixture.sql
+          python3 - <<'PY'
+          from pathlib import Path
+
+          source = Path("quality/candidates/premium-audio-source-binding.sql").read_text()
+          replacements = {
+              "94029cb23911a6fc969a2c6a6c90352f7d77380e938c9a3ec384bfef4aa8ba13":
+                  "701f225a1d3041a7d352281b950399e08c79a8ff3be3343489ee8cd22f104089",
+              "e47a305d456a6b152df969c6f401a3c95e4d15430d96824149c8a9cbcc41bd82":
+                  "8b5f326a31040b68ebeb4f6201dd7bcd519641628b3ec6daffa5b0f9ff0913aa",
+              "f60b6d63cdc9fdb3ab2503fc5fc1afa15e464ff3ccb37283a36011e8fa9c214e":
+                  "a4a69940411b4e44964379ab675dd628729b1cb16981724e8942764fd6bedb42",
+          }
+          for approved, fixture in replacements.items():
+              if source.count(approved) != 1 or fixture in source:
+                  raise SystemExit("unexpected reviewed hash substitution surface")
+              source = source.replace(approved, fixture)
+          Path("/tmp/premium-audio-source-binding-fixture.sql").write_text(source)
+          PY
+          expect_audio_v3_guard_failure() {
+            guard_log="$1"
+            expected_error="$2"
+            if psql -v ON_ERROR_STOP=1 -f "$audio_v3_candidate" > "$guard_log" 2>&1; then
+              echo 'v3 candidate unexpectedly accepted prerequisite drift' >&2
+              exit 1
+            fi
+            grep -q "$expected_error" "$guard_log"
+            test "$(psql -XAtq -c "select to_regclass('lh_internal.premium_audio_attempt_bindings_v3') is null")" = t
+          }
+          test "$(psql -XAtq -c "select encode(extensions.digest(prosrc,'sha256'),'hex') from pg_proc where oid='public.start_professor_session_atomic(uuid,uuid,text,text,text,boolean)'::regprocedure")" = '701f225a1d3041a7d352281b950399e08c79a8ff3be3343489ee8cd22f104089'
+          psql -v ON_ERROR_STOP=1 -c "grant execute on function public.begin_premium_audio_attempt_v2(uuid,uuid,uuid,integer,numeric),public.mark_premium_audio_submitted_v2(uuid) to service_role"
+          if psql -v ON_ERROR_STOP=1 -f "$audio_v3_candidate" > /tmp/audio-v3-open-v2.log 2>&1; then
+            echo 'v3 candidate unexpectedly accepted open v2 paid admission' >&2
+            exit 1
+          fi
+          grep -q 'premium_audio_v3_prerequisites_missing' /tmp/audio-v3-open-v2.log
+          test "$(psql -XAtq -c "select to_regclass('lh_internal.premium_audio_attempt_bindings_v3') is null")" = t
+          psql -v ON_ERROR_STOP=1 -c "revoke execute on function public.begin_premium_audio_attempt_v2(uuid,uuid,uuid,integer,numeric),public.mark_premium_audio_submitted_v2(uuid) from service_role"
+          psql -v ON_ERROR_STOP=1 -c "alter table public.audio_assets alter column voice type varchar(32)"
+          if psql -v ON_ERROR_STOP=1 -f "$audio_v3_candidate" > /tmp/audio-v3-column-drift.log 2>&1; then
+            echo 'v3 candidate unexpectedly accepted prerequisite column type drift' >&2
+            exit 1
+          fi
+          grep -q 'premium_audio_v3_prerequisites_missing' /tmp/audio-v3-column-drift.log
+          test "$(psql -XAtq -c "select to_regclass('lh_internal.premium_audio_attempt_bindings_v3') is null")" = t
+          psql -v ON_ERROR_STOP=1 -c "alter table public.audio_assets alter column voice type text"
+          psql -v ON_ERROR_STOP=1 -c "alter table public.audio_assets drop column voice;alter table public.audio_assets add column voice text generated always as ('marin'::text) stored"
+          expect_audio_v3_guard_failure /tmp/audio-v3-generated-column.log premium_audio_v3_prerequisites_missing
+          psql -v ON_ERROR_STOP=1 -c "alter table public.audio_assets drop column voice;alter table public.audio_assets add column voice text"
+          psql -v ON_ERROR_STOP=1 -c "alter table public.audio_assets add column audio_v3_unreviewed_default text default 'unexpected'"
+          expect_audio_v3_guard_failure /tmp/audio-v3-extra-default.log premium_audio_v3_prerequisites_missing
+          psql -v ON_ERROR_STOP=1 -c "alter table public.audio_assets drop column audio_v3_unreviewed_default"
+          psql -v ON_ERROR_STOP=1 -c "update public.audio_assets set generated_at=clock_timestamp() where generated_at is null;alter table public.audio_assets alter column generated_at set not null"
+          expect_audio_v3_guard_failure /tmp/audio-v3-insertability-drift.log premium_audio_v3_prerequisites_missing
+          psql -v ON_ERROR_STOP=1 -c "alter table public.audio_assets alter column generated_at drop not null"
+          psql -v ON_ERROR_STOP=1 -c "create unique index audio_v3_extra_expression_mutant on public.audio_assets((coalesce(generation_request_id,'missing')))"
+          expect_audio_v3_guard_failure /tmp/audio-v3-extra-index.log premium_audio_v3_prerequisites_missing
+          psql -v ON_ERROR_STOP=1 -c "drop index public.audio_v3_extra_expression_mutant"
+          psql -v ON_ERROR_STOP=1 -c "update public.learning_hub_budget_settings set ai_hard_cap_usd='Infinity'::numeric,absolute_total_budget_usd='Infinity'::numeric where id=1"
+          expect_audio_v3_guard_failure /tmp/audio-v3-infinite-cap.log premium_audio_v3_prerequisites_missing
+          psql -v ON_ERROR_STOP=1 -c "update public.learning_hub_budget_settings set ai_hard_cap_usd=130,absolute_total_budget_usd=200 where id=1"
+          psql -v ON_ERROR_STOP=1 -c "alter table public.professor_budget_settings drop constraint audio_v3_fixture_budget_check_1"
+          expect_audio_v3_guard_failure /tmp/audio-v3-missing-budget-check.log premium_audio_v3_prerequisites_missing
+          psql -v ON_ERROR_STOP=1 -c "alter table public.professor_budget_settings add constraint audio_v3_fixture_budget_check_1 check(max_session_seconds >= 1 AND max_session_seconds <= 1800)"
+          expect_audio_v3_guard_failure /tmp/audio-v3-weakened-budget-check.log premium_audio_v3_prerequisites_missing
+          psql -v ON_ERROR_STOP=1 -c "alter table public.professor_budget_settings drop constraint audio_v3_fixture_budget_check_1;alter table public.professor_budget_settings add constraint audio_v3_fixture_budget_check_1 check(max_session_seconds >= 60 AND max_session_seconds <= 1800)"
+          psql -v ON_ERROR_STOP=1 -c "alter table public.audio_assets add constraint audio_v3_reject_request_mutant check(generation_request_id is null or generation_request_id not like 'premium-audio-v3:%')"
+          expect_audio_v3_guard_failure /tmp/audio-v3-extra-check.log premium_audio_v3_prerequisites_missing
+          psql -v ON_ERROR_STOP=1 -c "alter table public.audio_assets drop constraint audio_v3_reject_request_mutant"
+          psql -v ON_ERROR_STOP=1 -c "alter table public.ai_tutor_sessions disable trigger protect_atomic_professor_session"
+          expect_audio_v3_guard_failure /tmp/audio-v3-disabled-trigger.log premium_audio_v3_prerequisites_missing
+          psql -v ON_ERROR_STOP=1 -c "alter table public.ai_tutor_sessions enable trigger protect_atomic_professor_session"
+          psql -v ON_ERROR_STOP=1 -c "drop policy ai_usage_own_read on public.ai_usage_log"
+          expect_audio_v3_guard_failure /tmp/audio-v3-policy-drift.log premium_audio_v3_prerequisites_missing
+          psql -v ON_ERROR_STOP=1 -c "create policy ai_usage_own_read on public.ai_usage_log as permissive for select to authenticated using(user_id=auth.uid())"
+          psql -XAtq -c "select pg_get_indexdef('lh_internal.premium_audio_one_pending_lesson'::regclass)||';'" > /tmp/approved-audio-pending-index.sql
+          psql -v ON_ERROR_STOP=1 -c "drop index lh_internal.premium_audio_one_pending_lesson;create index premium_audio_one_pending_lesson on lh_internal.premium_audio_attempts(lesson_id) where state in ('reserved','submitted','uncertain')"
+          expect_audio_v3_guard_failure /tmp/audio-v3-mutex-drift.log premium_audio_v3_prerequisites_missing
+          psql -v ON_ERROR_STOP=1 -c "drop index lh_internal.premium_audio_one_pending_lesson"
+          psql -v ON_ERROR_STOP=1 -f /tmp/approved-audio-pending-index.sql
+          psql -XAtq -c "select pg_get_functiondef('public.begin_premium_audio_attempt_v2(uuid,uuid,uuid,integer,numeric)'::regprocedure)" > /tmp/approved-audio-v2-begin.sql
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          create or replace function public.begin_premium_audio_attempt_v2(
+            p_attempt_id uuid,
+            p_user_id uuid,
+            p_lesson_id uuid,
+            p_content_version integer,
+            p_reservation_usd numeric
+          ) returns jsonb
+          language plpgsql
+          security definer
+          set search_path=pg_catalog,public,lh_internal
+          as $mutant$
+          begin
+            /* Preserve every former sentinel while deleting its semantics:
+               from public.professor_budget_settings where feature='professor_livekit' for update
+               from public.learning_hub_budget_settings where id=1 for update
+               lh_internal.premium_audio_pending_usd() */
+            return jsonb_build_object('allowed',false,'reason','semantic_mutant');
+          end
+          $mutant$;
+          SQL
+          if psql -v ON_ERROR_STOP=1 -f "$audio_v3_candidate" > /tmp/audio-v3-semantic-drift.log 2>&1; then
+            echo 'v3 candidate unexpectedly accepted a semantic v2 function mutant' >&2
+            exit 1
+          fi
+          grep -q 'premium_audio_v3_prerequisites_missing' /tmp/audio-v3-semantic-drift.log
+          test "$(psql -XAtq -c "select to_regclass('lh_internal.premium_audio_attempt_bindings_v3') is null")" = t
+          psql -v ON_ERROR_STOP=1 -f /tmp/approved-audio-v2-begin.sql
+          test "$(psql -XAtq -c "select encode(extensions.digest(prosrc,'sha256'),'hex') from pg_proc where oid='public.begin_premium_audio_attempt_v2(uuid,uuid,uuid,integer,numeric)'::regprocedure")" = '0f58c6191b641ae0c6eec8c5596343ad8235c9981904647015b42ba1bf0b2f29'
+          psql -XAtq -c "select pg_get_functiondef('lh_internal.professor_reservation_exposure(timestamptz)'::regprocedure)" > /tmp/approved-professor-exposure.sql
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          create or replace function lh_internal.professor_reservation_exposure(
+            p_as_of timestamptz default now()
+          ) returns jsonb
+          language sql
+          stable
+          security invoker
+          set search_path=pg_catalog,public
+          as $mutant$
+            select jsonb_build_object(
+              'contractVersion',1,
+              'protectedReservationUsd',0,
+              'semanticMutant',true
+            )
+          $mutant$;
+          SQL
+          if psql -v ON_ERROR_STOP=1 -f "$audio_v3_candidate" > /tmp/audio-v3-exposure-drift.log 2>&1; then
+            echo 'v3 candidate unexpectedly accepted a zeroed Professor exposure helper' >&2
+            exit 1
+          fi
+          grep -q 'premium_audio_v3_prerequisites_missing' /tmp/audio-v3-exposure-drift.log
+          test "$(psql -XAtq -c "select to_regclass('lh_internal.premium_audio_attempt_bindings_v3') is null")" = t
+          psql -v ON_ERROR_STOP=1 -f /tmp/approved-professor-exposure.sql
+          test "$(psql -XAtq -c "select encode(extensions.digest(prosrc,'sha256'),'hex') from pg_proc where oid='lh_internal.professor_reservation_exposure(timestamptz)'::regprocedure")" = '1cf4d2b31083ce4dc012b65fdced56af7481f14f2c809be5db8d65b47e1d11a5'
+          psql -XAtq -c "select pg_get_functiondef('public.start_professor_session_atomic(uuid,uuid,text,text,text,boolean)'::regprocedure)" > /tmp/approved-professor-start.sql
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          do $mutate_professor_start$
+          declare definition text;
+          declare anchor text:='lh_internal.premium_audio_pending_usd()';
+          begin
+            select pg_get_functiondef(
+              'public.start_professor_session_atomic(uuid,uuid,text,text,text,boolean)'::regprocedure
+            ) into definition;
+            if (length(definition)-length(replace(definition,anchor,'')))<>
+               length(anchor) then
+              raise exception 'fixture_start_anchor_drift';
+            end if;
+            execute replace(definition,anchor,'0::numeric');
+          end
+          $mutate_professor_start$;
+          SQL
+          expect_audio_v3_guard_failure /tmp/audio-v3-start-drift.log premium_audio_v3_prerequisites_missing
+          psql -v ON_ERROR_STOP=1 -f /tmp/approved-professor-start.sql
+          test "$(psql -XAtq -c "select encode(extensions.digest(prosrc,'sha256'),'hex') from pg_proc where oid='public.start_professor_session_atomic(uuid,uuid,text,text,text,boolean)'::regprocedure")" = '701f225a1d3041a7d352281b950399e08c79a8ff3be3343489ee8cd22f104089'
+          psql -XAtq -c "select pg_get_functiondef('public.reserve_professor_budget(text)'::regprocedure)" > /tmp/approved-professor-reserve.sql
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          do $mutate_professor_reserve$
+          declare definition text;
+          declare anchor text:='lh_internal.premium_audio_pending_usd()';
+          begin
+            select pg_get_functiondef(
+              'public.reserve_professor_budget(text)'::regprocedure
+            ) into definition;
+            if (length(definition)-length(replace(definition,anchor,'')))<>
+               length(anchor) then
+              raise exception 'fixture_reserve_anchor_drift';
+            end if;
+            execute replace(definition,anchor,'0::numeric');
+          end
+          $mutate_professor_reserve$;
+          SQL
+          expect_audio_v3_guard_failure /tmp/audio-v3-reserve-drift.log premium_audio_v3_prerequisites_missing
+          psql -v ON_ERROR_STOP=1 -f /tmp/approved-professor-reserve.sql
+          test "$(psql -XAtq -c "select encode(extensions.digest(prosrc,'sha256'),'hex') from pg_proc where oid='public.reserve_professor_budget(text)'::regprocedure")" = 'a4a69940411b4e44964379ab675dd628729b1cb16981724e8942764fd6bedb42'
+          psql -XAtq -c "select pg_get_functiondef('public.settle_professor_usage_v2(uuid,text,jsonb)'::regprocedure)" > /tmp/approved-professor-settle.sql
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          do $mutate_professor_settle$
+          declare definition text;
+          declare anchor text:='perform 1 from public.learning_hub_budget_settings where id=1 for update;';
+          begin
+            select pg_get_functiondef(
+              'public.settle_professor_usage_v2(uuid,text,jsonb)'::regprocedure
+            ) into definition;
+            if (length(definition)-length(replace(definition,anchor,'')))<>
+               length(anchor) then
+              raise exception 'fixture_settle_lock_anchor_drift';
+            end if;
+            execute replace(
+              definition,anchor,
+              'perform 1 from public.learning_hub_budget_settings where id=1;'
+            );
+          end
+          $mutate_professor_settle$;
+          SQL
+          expect_audio_v3_guard_failure /tmp/audio-v3-professor-settle-drift.log premium_audio_v3_prerequisites_missing
+          psql -v ON_ERROR_STOP=1 -f /tmp/approved-professor-settle.sql
+          test "$(psql -XAtq -c "select encode(extensions.digest(prosrc,'sha256'),'hex') from pg_proc where oid='public.settle_professor_usage_v2(uuid,text,jsonb)'::regprocedure")" = '8b5f326a31040b68ebeb4f6201dd7bcd519641628b3ec6daffa5b0f9ff0913aa'
+          psql -v ON_ERROR_STOP=1 -c "grant execute on function public.reserve_professor_budget(text) to authenticated"
+          expect_audio_v3_guard_failure /tmp/audio-v3-reserve-acl-drift.log premium_audio_v3_prerequisites_missing
+          psql -v ON_ERROR_STOP=1 -c "revoke execute on function public.reserve_professor_budget(text) from authenticated"
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          insert into public.professor_budget_reservations(
+            id,user_id,feature,reserved_usd,max_session_seconds,status
+          ) select
+            '33333333-3333-4333-8333-333333333333',id,
+            'professor_livekit',1.50,1200,'active'
+          from public.profiles where learner_track='rafael_finance';
+          insert into public.ai_tutor_sessions(
+            id,user_id,lesson_id,budget_reservation_id
+          ) select
+            '44444444-4444-4444-8444-444444444444',profile.id,lesson.id,
+            '33333333-3333-4333-8333-333333333333'
+          from public.profiles profile
+          cross join lateral (
+            select l.id from public.lessons l limit 1
+          ) lesson
+          where profile.learner_track='rafael_finance';
+          insert into lh_internal.professor_settlement_receipts(
+            session_id,payload_hash,state
+          ) values(
+            '44444444-4444-4444-8444-444444444444','fictional-orphan','pending'
+          );
+          SQL
+          expect_audio_v3_guard_failure /tmp/audio-v3-orphan-receipt.log premium_audio_v3_identity_drift
+          psql -v ON_ERROR_STOP=1 -c "delete from lh_internal.professor_settlement_receipts where session_id='44444444-4444-4444-8444-444444444444';delete from public.ai_tutor_sessions where id='44444444-4444-4444-8444-444444444444';delete from public.professor_budget_reservations where id='33333333-3333-4333-8333-333333333333'"
+          psql -v ON_ERROR_STOP=1 <<'SQL'
+          insert into lh_internal.premium_audio_attempts(
+            id,user_id,lesson_id,content_version,reserved_usd,state,
+            lease_until,submitted_at
+          ) select
+            '55555555-5555-4555-8555-555555555555',profile.id,lesson.id,
+            lesson.content_version,0.10,'cancelled',
+            clock_timestamp()+interval '1 minute',clock_timestamp()
+          from public.profiles profile
+          cross join lateral (
+            select l.id,l.content_version from public.lessons l limit 1
+          ) lesson
+          where profile.learner_track='rafael_finance';
+          SQL
+          expect_audio_v3_guard_failure /tmp/audio-v3-cancelled-evidence.log premium_audio_v3_identity_drift
+          psql -v ON_ERROR_STOP=1 -c "delete from lh_internal.premium_audio_attempts where id='55555555-5555-4555-8555-555555555555'"
+          psql -v ON_ERROR_STOP=1 -f "$audio_v3_candidate"
+          python3 quality/tests/premium-audio-service-access-v3.py
+          python3 quality/tests/premium-audio-golden-v3.py
+          # The following legacy stop rehearsal predates closed v2 admission
+          # and invokes both RPCs as service_role. Restore them only inside this
+          # disposable CI database after the closed-v3 proof has completed.
+          psql -v ON_ERROR_STOP=1 -c "grant execute on function public.begin_premium_audio_attempt_v2(uuid,uuid,uuid,integer,numeric),public.mark_premium_audio_submitted_v2(uuid) to service_role"
+      - name: Verify nondestructive stop with pending obligations
+        run: python3 quality/tests/preview-package-postgres.py stop /tmp/learning-hub-preview-package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: isolated-backend-review-package
+          path: /tmp/learning-hub-preview-package
+          retention-days: 7
+          if-no-files-found: error
+      - name: Verify repository unchanged
+        run: git diff --exit-code

@@ -1,0 +1,7 @@
+# ACCA FR B11–B12 local curriculum — 22 September 2026
+
+B11 and B12 extend the explicit `?curriculumPreview=1` curriculum with two independently lazy-loaded written lessons. B11 applies IAS 20 to recognition, income-related grants, the deferred-income and net-asset presentations for asset grants, non-monetary grants, repayment and disclosure. B12 applies IAS 21 to functional and presentation currency, transaction-date recognition, reporting-date translation of monetary and non-monetary items, and settlement exchange differences. Full foreign-operation translation is outside this B12 lesson.
+
+Each lesson contains four teaching sections, six English/Portuguese terms, an original visual calculation, a worked case, three supported exercises, five local checkpoint questions, a Premium Audio outline and an offline Professor guide. Ten additional offline Professor scenarios cover correct reasoning, misconceptions, help requests, self-correction and requested worked support. ACCA’s September 2026–June 2027 syllabus landing page and the IFRS Foundation’s IAS 20 and IAS 21 pages are the authoritative sources. Exact selected-sitting outcome wording remains a publication gate.
+
+The lessons are authored local previews, not ACCA-approved tuition, treasury or legal advice, complete syllabus coverage, persisted assessment or evidence of exam readiness. Professor and podcast assets remain inactive outlines. No provider call, audio generation, database change, Supabase operation, deployment, publication, learner-progress write or paid service is included.

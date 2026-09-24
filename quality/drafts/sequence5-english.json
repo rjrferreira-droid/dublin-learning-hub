@@ -1,0 +1,283 @@
+{
+  "version": "core-written-foundation-1",
+  "status": "full_draft_not_published_to_database",
+  "track": "english",
+  "roadmapSequence": 5,
+  "slug": "recommendation-presentation-follow-up",
+  "reviewedOn": "2026-09-14",
+  "module": {
+    "track": "english",
+    "title": "Present a recommendation and handle questions",
+    "goal": "Give a concise recommendation with evidence, a limitation and a decision request.",
+    "scope": "Original professional-English practice. Figures are supplied fictional business inputs; this lesson does not assess technical investment, Finance or Payroll expertise, pronunciation or CEFR level.",
+    "sections": [
+      {
+        "id": "english5-s1",
+        "title": "1. Lead with the decision",
+        "paragraphs": [
+          "Original presentation scaffold: recommendation, two useful reasons, one material limitation and the decision needed. British Council presentation practice illustrates signposting and opening the discussion to questions. The scaffold here is a flexible aid, not a required script.",
+          "Original example: “I recommend a two-week pilot before we expand the review process.” This tells the listener where the argument is going. A long history of the spreadsheet can wait unless it changes the decision."
+        ],
+        "supportPt": "Comece pela recomendação e decisão desejada. A estrutura ajuda, mas não precisa virar roteiro rígido.",
+        "sourceIds": [
+          "present"
+        ]
+      },
+      {
+        "id": "english5-s2",
+        "title": "2. Connect evidence to the recommendation",
+        "paragraphs": [
+          "Fictional trial: processing time fell from 50 to 40 minutes in ten observed cases. That is ten minutes, or 20%, less time per case in this sample. It is not proof of a 20% reduction for every future case.",
+          "Original explanation: “In the ten cases reviewed, average processing time fell by ten minutes. The sample is small, so I suggest testing another team before expanding.” Keep units, comparison point and sample boundary visible."
+        ],
+        "supportPt": "Explique minutos, percentual e tamanho da amostra. Resultado do piloto não garante o futuro.",
+        "sourceIds": [
+          "present"
+        ]
+      },
+      {
+        "id": "english5-s3",
+        "title": "3. Answer the question actually asked",
+        "paragraphs": [
+          "Original stakeholder follow-up: “What would stop the rollout?” Answer the stopping condition first. “We would pause if the review identifies unresolved accuracy issues.” Do not repeat all your slides to avoid the question.",
+          "If the listener asks for a number that is not supplied, say what you know and what you would check. A specific uncertainty is more useful than an invented estimate. You can ask a clarifying question when the requested decision is ambiguous."
+        ],
+        "supportPt": "Responda à pergunta atual e indique a informação ausente, sem inventar número.",
+        "sourceIds": [
+          "present"
+        ]
+      },
+      {
+        "id": "english5-s4",
+        "title": "4. Close with ownership",
+        "paragraphs": [
+          "Original close: “Could you approve the pilot scope today? I will bring the results and exceptions to the next review.” Only promise actions you can support in the scenario. Do not say “the rollout is approved” when the listener has not decided.",
+          "A natural alternative may use different words or order. Review whether the message preserves evidence and decision status, not whether it matches the model phrase. Pauses in written rehearsal do not establish acoustic fluency."
+        ],
+        "supportPt": "Feche com pedido e responsável. Pedido de aprovação não é aprovação já concedida.",
+        "sourceIds": [
+          "present"
+        ]
+      }
+    ],
+    "terms": [
+      {
+        "term": "Recommendation",
+        "meaning": "Proposed action supported by reasoning.",
+        "pt": "recomendação",
+        "example": "I recommend a short pilot."
+      },
+      {
+        "term": "Pilot",
+        "meaning": "Limited trial before a wider decision.",
+        "pt": "projeto piloto",
+        "example": "The pilot covers one team."
+      },
+      {
+        "term": "Sample",
+        "meaning": "Observed subset behind a result.",
+        "pt": "amostra",
+        "example": "The sample contains ten cases."
+      },
+      {
+        "term": "Caveat",
+        "meaning": "Specific limitation on a conclusion.",
+        "pt": "ressalva",
+        "example": "The small sample is a caveat."
+      },
+      {
+        "term": "Rollout",
+        "meaning": "Wider implementation after a decision.",
+        "pt": "expansão",
+        "example": "The rollout is not approved yet."
+      },
+      {
+        "term": "Decision request",
+        "meaning": "Clear action asked of the listener.",
+        "pt": "pedido de decisão",
+        "example": "Could you approve the pilot scope?"
+      }
+    ],
+    "visual": {
+      "title": "Present a recommendation and handle questions — decision map",
+      "note": "Original fictional exercise; not a live calculation or measured learner result.",
+      "headers": [
+        "Item",
+        "Supplied detail",
+        "Interpretation"
+      ],
+      "rows": [
+        [
+          "Observed time",
+          "50 to 40 minutes",
+          "10 minutes less"
+        ],
+        [
+          "Relative change",
+          "20% reduction",
+          "10 / 50"
+        ],
+        [
+          "Evidence scope",
+          "Ten cases",
+          "Not a universal result"
+        ],
+        [
+          "Decision",
+          "Pilot approval requested",
+          "Not yet granted"
+        ]
+      ],
+      "question": "Can you promise the same saving everywhere?",
+      "answer": "No. Preserve the limited-sample caveat."
+    },
+    "caseStudy": {
+      "title": "Present a recommendation and handle questions — applied case",
+      "scenario": [
+        "Fictional sample of ten cases: average processing time 50 minutes before, 40 after.",
+        "Accuracy has not been independently reviewed. Expansion is not approved.",
+        "Propose a two-week pilot with another team and an accuracy review before any wider rollout."
+      ],
+      "task": "Give a short recommendation and answer: “Can we roll this out everywhere now?”",
+      "hints": [
+        "Lead with the limited pilot.",
+        "Keep time evidence separate from unreviewed accuracy."
+      ],
+      "modelAnswer": "I recommend a two-week pilot with another team before a wider rollout. In ten observed cases, average time fell by ten minutes, or 20%, but the sample is small and accuracy still needs review. Could you approve the pilot scope? On rollout now, I would wait for that evidence and resolve any accuracy issues before expanding.",
+      "reviewChecks": [
+        "Clear pilot recommendation.",
+        "Correct ten-minute/20% statement.",
+        "Small sample and unreviewed accuracy visible.",
+        "Rollout question answered without invented approval."
+      ],
+      "transfer": "If the follow-up asks about cost instead, state that cost evidence is absent and name the next check."
+    },
+    "checkpoint": [
+      {
+        "id": "english5-q1",
+        "prompt": "Best opening for the case:",
+        "options": [
+          "A long file history",
+          "I recommend a two-week pilot",
+          "Everything is solved"
+        ],
+        "correctIndex": 1,
+        "explanation": "It gives the proposed decision.",
+        "reviewSection": "english5-s1"
+      },
+      {
+        "id": "english5-q2",
+        "prompt": "The reduction from 50 to 40 is:",
+        "options": [
+          "10%",
+          "20%",
+          "40%"
+        ],
+        "correctIndex": 1,
+        "explanation": "10 divided by 50 is 20%.",
+        "reviewSection": "english5-s2"
+      },
+      {
+        "id": "english5-q3",
+        "prompt": "Accuracy is:",
+        "options": [
+          "Proven",
+          "Irrelevant",
+          "Still unreviewed"
+        ],
+        "correctIndex": 2,
+        "explanation": "The scenario says review is pending.",
+        "reviewSection": "english5-s2"
+      },
+      {
+        "id": "english5-q4",
+        "prompt": "A narrow question should receive:",
+        "options": [
+          "A direct answer with needed caveat",
+          "Every slide again",
+          "An invented number"
+        ],
+        "correctIndex": 0,
+        "explanation": "Respond to the current question.",
+        "reviewSection": "english5-s3"
+      },
+      {
+        "id": "english5-q5",
+        "prompt": "A request for approval means approval exists:",
+        "options": [
+          "True",
+          "False",
+          "If the wording is polite"
+        ],
+        "correctIndex": 1,
+        "explanation": "Decision status remains open.",
+        "reviewSection": "english5-s4"
+      }
+    ],
+    "practiceExercises": [
+      {
+        "id": "english5-p1",
+        "question": "Time moves from 30 to 24 minutes. Explain the change in one sentence.",
+        "hints": [
+          "Difference is six minutes.",
+          "Divide by the original 30."
+        ],
+        "answer": "Average time fell by six minutes, or 20%, in the supplied comparison.",
+        "explanation": "Keep the comparison and units clear."
+      },
+      {
+        "id": "english5-p2",
+        "question": "A stakeholder asks only “Who will review accuracy?” What should you do if no owner is assigned?",
+        "hints": [
+          "Answer that specific gap.",
+          "Do not invent a person."
+        ],
+        "answer": "An accuracy reviewer is not assigned yet; we need to agree that owner before the pilot starts.",
+        "explanation": "A missing owner should be explicit."
+      },
+      {
+        "id": "english5-p3",
+        "question": "Repair “The pilot proves we will always save 20%.”",
+        "hints": [
+          "The evidence is limited.",
+          "Keep observed result separate from forecast."
+        ],
+        "answer": "The pilot showed a 20% time reduction in the observed sample; wider results still need testing.",
+        "explanation": "Avoid universal claims from a small trial."
+      }
+    ],
+    "sources": [
+      {
+        "id": "present",
+        "label": "British Council — A design presentation",
+        "url": "https://learnenglish.britishcouncil.org/free-resources/listening/b2/design-presentation",
+        "supports": "Presentation signposting and question handling; the product dialogue and source exercises are not reproduced.",
+        "reviewedOn": "2026-09-14"
+      }
+    ]
+  },
+  "professorGuide": {
+    "status": "offline_authored_guide_not_live",
+    "opening": "Ask for the recommendation in one sentence before showing the full example.",
+    "whenCorrect": "Ask an unplanned cost or ownership follow-up and accept an honest evidence gap.",
+    "whenUncertain": "Ask which supplied fact is missing or unclear. Offer the first case hint, then invite another attempt.",
+    "whenMisconception": "If they promise universal savings, ask what the ten-case sample actually establishes.",
+    "whenSelfCorrected": "Use the corrected answer, not the abandoned phrase, as the current response. Ask one transfer question.",
+    "whenAskedForAnswer": "Provide a concise explanation and one worked step; invite an optional fresh attempt without claiming independent mastery.",
+    "evidenceBoundary": "Use only actual session evidence if this guide is separately integrated. Never consume local drafts or checkpoint results. Do not infer pronunciation/acoustic fluency from text, technical mastery from a phrase, or a CEFR level from one task."
+  },
+  "assessmentBoundaries": [
+    "Authored answer keys and guide branches are expectations, not model results or learner evidence.",
+    "Accept supported alternatives and self-correction.",
+    "No local drafts or answers may enter Professor/evaluator payloads.",
+    "No paid provider or database publication is authorized by this draft."
+  ],
+  "publicationGate": "Content QA, server-owned reference integration, exact identity acceptance and separate publication decision remain required.",
+  "fictionalCalculation": {
+    "before": 50,
+    "after": 40,
+    "saving": 10,
+    "reductionPct": 20,
+    "sample": 10
+  }
+}

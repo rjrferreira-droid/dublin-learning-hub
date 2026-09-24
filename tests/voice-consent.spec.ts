@@ -25,10 +25,9 @@ test('voice validation explains cost/retention and requires explicit acknowledge
  await page.getByLabel('E-mail').fill('voice-fixture@example.invalid');
  await page.getByLabel('Senha').fill('Fictional-voice-test-only-123');
  await page.getByRole('button',{name:'Entrar',exact:true}).click();
- await page.getByRole('button',{name:'Continue Finance',exact:true}).click();
- await page.getByRole('tab',{name:'Professor',exact:true}).click();
+ await page.getByRole('button',{name:'Ask the Professor',exact:true}).click();
  const consent=page.getByTestId('voice-validation-consent');
- await expect(consent).toContainText('up to 5 minutes');
+ await expect(consent).toContainText('up to 3 minutes');
  await expect(consent).toContainText('paid voice session');
  await expect(consent).toContainText('Transcript, evaluation and cost records are retained');
  const start=page.getByRole('button',{name:'Start validation session',exact:true});

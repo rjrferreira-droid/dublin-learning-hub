@@ -1,0 +1,91 @@
+{
+  "version":"core-curriculum-roadmap-2",
+  "status":"draft_not_published_to_database",
+  "deliveryFocus":{
+    "activeTracks":["finance","english"],
+    "standbyTracks":["payroll"],
+    "targetLessonsPerActiveTrack":8,
+    "targetActiveLessons":16,
+    "includesExistingReferenceLessons":true,
+    "standbyPolicy":"Preserve existing Payroll lessons, drafts, access and learner history. Defer new Payroll content and track-specific features; retain shared infrastructure compatibility.",
+    "acceptancePlan":"docs/FINANCE_ENGLISH_RELEASE_SCOPE_2026-09-19.md"
+  },
+  "verifiedCurrentBaseline":"Exactly one published lesson currently exists in each of the three active core tracks; this roadmap does not imply those future lessons exist in the app yet.",
+  "principles":[
+    "Prioritise Accounting/IFRS with a light Irish statutory layer and professional English for delivery. Preserve Irish Payroll in standby without deleting content or restricting existing access.",
+    "Build usable professional judgement and communication, not a catalogue of standards or tax rates.",
+    "Each future Golden Lesson should reuse the same architecture: written core, examples, local practice, case, fixed checkpoint, Professor reference, evaluator criteria, revision hooks and source scope.",
+    "Current-rate or date-sensitive payroll content must identify its source/review date and must not be inferred from fictional examples.",
+    "English lessons should train workplace comprehension and response, not claim a CEFR level from one exercise.",
+    "Do not add ACCA, Spanish or Brazilian Tax Reform to the active curriculum in this phase; keep the architecture adaptable for later expansion."
+  ],
+  "tracks":{
+    "finance":{
+      "courseIntent":"Manager-level Accounting/IFRS judgement with practical reporting, business-partnering and a light Ireland/FRS 102 bridge.",
+      "currentReference":{"sequence":1,"title":"IFRS 18, Group Reporting & Irish Statutory Accounts","status":"published_reference_lesson"},
+      "next":[
+        {"sequence":2,"title":"Revenue judgement: contracts, performance obligations & cut-off","core":"IFRS 15 five-step model, contract changes, timing and month-end evidence","irelandLayer":"Contrast high-level IFRS treatment with the 2026 FRS 102 revenue model only where the local reporting basis requires it","managerOutput":"Explain a revenue cut-off judgement and the evidence needed before close","priority":"P1"},
+        {"sequence":3,"title":"Leases: recognition, close controls & local-framework differences","core":"IFRS 16 lessee mechanics, modifications, judgement and close controls","irelandLayer":"FRS 102 Periodic Review 2024 lease changes effective principally from 1 January 2026 for applicable entities","managerOutput":"Reconcile lease movements and explain a reporting-basis difference without mixing frameworks","priority":"P1"},
+        {"sequence":4,"title":"Cash flow & working capital: from ledger movement to management story","core":"IAS 7 cash-flow classification, non-cash items and reconciliation logic","irelandLayer":"Keep statutory-format distinctions scoped to the entity's actual reporting basis","managerOutput":"Turn AR/AP/inventory movements into a defensible cash narrative","priority":"P1"},
+        {"sequence":5,"title":"Financial instruments & receivables: classification, ECL and evidence","core":"IFRS 9 classification concepts and expected-credit-loss judgement for receivables","irelandLayer":"Flag framework-specific simplifications/differences rather than copying IFRS into FRS 102 automatically","managerOutput":"Challenge an allowance movement and document the evidence supporting it","priority":"P2"},
+        {"sequence":6,"title":"Consolidation & group reporting: control, eliminations and package quality","core":"IFRS 10 control logic, group eliminations, intercompany mismatches and reporting-package controls","irelandLayer":"Separate group IFRS reporting from local statutory accounts and eligibility decisions","managerOutput":"Diagnose a consolidation mismatch and assign a controlled resolution","priority":"P2"},
+        {"sequence":7,"title":"Income tax accounting: current/deferred tax and reporting bridge","core":"IAS 12 current/deferred tax concepts, temporary differences and evidence","irelandLayer":"Use Irish statutory/tax facts only as sourced case inputs; never infer tax-law treatment from IAS 12","managerOutput":"Explain a deferred-tax movement to a CFO without confusing accounting with the tax return","priority":"P2"},
+        {"sequence":8,"title":"FRS 102 2026 bridge for an Irish finance manager","core":"Choose the reporting basis first; identify the major current FRS 102 changes and controls","irelandLayer":"Republic of Ireland application, Periodic Review 2024 and adapted-format changes where relevant","managerOutput":"Build a short IFRS-group vs local-statutory gap register","priority":"P1"}
+      ],
+      "officialSources":[
+        "https://www.ifrs.org/issued-standards/",
+        "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-15-revenue-from-contracts-with-customers/",
+        "https://www.ifrs.org/issued-standards/list-of-standards/ifrs-9-financial-instruments/",
+        "https://www.frc.org.uk/library/standards-codes-policy/accounting-and-reporting/uk-accounting-standards/frs-102/"
+      ]
+    },
+    "payroll":{
+      "courseIntent":"Operational Irish payroll competence: accurate inputs, submissions, controls, employee communication and evidence-based corrections.",
+      "currentReference":{"sequence":1,"title":"Gross-to-Net: RPN, PAYE, USC & PRSI","status":"published_reference_lesson"},
+      "next":[
+        {"sequence":2,"title":"RPN, pay date, Employment ID & payroll submission workflow","core":"Correct RPN, payment date, identifiers and submission sequence","managerOutput":"Trace a payroll from approved input to Revenue submission and identify the control point that failed","priority":"P1"},
+        {"sequence":3,"title":"Pay bases, pensions & statutory deductions without one-base thinking","core":"Gross pay, Income Tax pay, USC treatment, employee/employer contributions and pension distinctions","managerOutput":"Reconcile supplied bases and explain why one deduction base cannot be copied to every charge","priority":"P1"},
+        {"sequence":4,"title":"Benefits, notional pay & employer-paid items","core":"Taxable benefits, medical insurance, share remuneration and employer retirement contributions in payroll reporting","managerOutput":"Classify a benefit input and document what must be confirmed before payroll","priority":"P2"},
+        {"sequence":5,"title":"Corrections, overpayments & payroll reconciliation","core":"Correction workflow, overpayments, audit trail and difference analysis","managerOutput":"Separate the confirmed variance from its cause and prepare a reviewed correction plan","priority":"P1"},
+        {"sequence":6,"title":"Starters, leavers & post-cessation payments","core":"Commencement/cessation data, final submission, original Employment ID and post-cessation handling","managerOutput":"Process a leaver case without losing the employment identity or inventing tax treatment","priority":"P1"},
+        {"sequence":7,"title":"Employee queries: explain a net-pay change safely and clearly","core":"Evidence gathering, privacy, escalation and plain-English payroll communication","managerOutput":"Answer an employee while distinguishing known facts, working hypothesis and next check","priority":"P2"},
+        {"sequence":8,"title":"Payroll controls & month-end handoff to Finance","core":"Payroll register, payment file, Revenue submission, GL journal, exception review and sign-off","managerOutput":"Run a compact payroll-to-GL reconciliation and surface unresolved exceptions","priority":"P2"}
+      ],
+      "officialSources":[
+        "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/transitional-arrangements/requesting-rpn.aspx",
+        "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/index.aspx",
+        "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/what-employee-pay-details-do-you-include.aspx",
+        "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/what-benefit-information-do-you-provide.aspx",
+        "https://www.revenue.ie/en/employing-people/becoming-an-employer-and-ongoing-obligations/information-on-payroll-submission/corrections.aspx",
+        "https://www.revenue.ie/en/employing-people/when-an-employment-ends/when-employee-leaves-their-employment.aspx"
+      ]
+    },
+    "english":{
+      "courseIntent":"Professional English that supports real work, Dublin relocation and the technical courses, while preserving general conversational confidence.",
+      "currentReference":{"sequence":1,"title":"Tell a story naturally: past forms, rhythm & follow-up questions","status":"published_reference_lesson"},
+      "next":[
+        {"sequence":2,"title":"Clarify, check understanding & handle meetings","core":"Clarifying, paraphrasing, checking assumptions and entering/leaving a discussion naturally","workContext":"Finance/payroll meeting with incomplete information","priority":"P1"},
+        {"sequence":3,"title":"Explain numbers and variances to a stakeholder","core":"Structure: headline, driver, evidence, uncertainty, next action","workContext":"Monthly close / payroll variance explanation","priority":"P1"},
+        {"sequence":4,"title":"Professional emails: concise requests, explanations & follow-up","core":"Organisation, tone, enquiries, arrangements and proofreading","workContext":"Manager/colleague/vendor email without over-formality","priority":"P1"},
+        {"sequence":5,"title":"Present a recommendation and answer follow-up questions","core":"Signposting, concise recommendation, caveats and Q&A","workContext":"Short finance/payroll presentation","priority":"P2"},
+        {"sequence":6,"title":"Disagree, challenge and resolve conflict professionally","core":"Softening without vagueness, evidence-based disagreement, repair and agreement","workContext":"Challenge an assumption in a cross-functional meeting","priority":"P2"},
+        {"sequence":7,"title":"Job interview: experience, judgement and manager-level stories","core":"Structured examples, concise answers, follow-up questions and listening","workContext":"Ireland/Dublin-oriented professional interview without inventing local credentials","priority":"P1"},
+        {"sequence":8,"title":"Listening across workplace situations & Irish exposure","core":"Main idea, detail, uncertainty, response and accent tolerance","workContext":"Meetings, calls, presentations and interviews; Irish exposure is deliberate but not used to penalise other valid varieties","priority":"P1"}
+      ],
+      "officialSources":[
+        "https://learnenglish.britishcouncil.org/free-resources/business",
+        "https://learnenglish.britishcouncil.org/free-resources/business/english-emails",
+        "https://learnenglish.britishcouncil.org/free-resources/listening/b1",
+        "https://learnenglish.britishcouncil.org/free-resources/listening/b2",
+        "https://learnenglish.britishcouncil.org/free-resources/listening/c1",
+        "https://learnenglish.britishcouncil.org/free-resources/business/podcasts-professionals"
+      ]
+    }
+  },
+  "buildOrder":[
+    "Finish real acceptance of the Finance and English reference Golden Lessons before calling them end-to-end accepted; retain Payroll regression coverage.",
+    "In parallel, review Finance and English P1 lesson specifications and source maps without publishing them to the DB; preserve existing Payroll drafts.",
+    "Build the next Finance and English P1 written foundations, then attach local practice/evaluator references using the existing shared architecture.",
+    "Publish new lessons to the database only after content/source QA and a separate deployment decision."
+  ]
+}

@@ -1,0 +1,11 @@
+# Read-only Preview recovery UI
+
+Previous admission-client head d2d84e2 passed full CI 35245745081. Owner's earlier authenticated configuration success remains valid evidence for that diagnostic only.
+
+The admission adapter now accepts a synchronous checkpoint hook after exact preflight validation and before start. The journal stores only the validated public reference receipt, scoped to account in sessionStorage, and verifies read-back. Storage errors prevent start. Existing records cannot be overwritten with another attempt; corruption, foreign owners and extra fields fail closed. Records do not expire or disappear based on an uncertain response. Browser storage is untrusted and cannot authorize any server action. Closing the tab, clearing storage or using a different browser can lose this pointer; this is not durable server-side recovery or a cross-tab lock.
+
+The Preview diagnostic URL (?previewCheck=1) mounts a read-only recovery panel only when the current account has a stored record. It offers explicit status observation, no automatic RPC, no start, retry, release or record-deletion control. Auth changes and unmount dispose the controller. The existing recovery RPC checks fresh Auth before/after observation and rejects stale scope. Its controller now bounds stalled Auth/RPC to 15 seconds and promptly settles cancellation, disposal and supersession, discarding late results.
+
+614 Node tests and application/API build passed locally. Browser tests cover mobile/desktop reload, explicit observation, preserved uncertainty and another-account isolation using fictional network fixtures; CI is authoritative for their outcome. No connected RPC was executed by this work. The connected dispatch/observation SQL is not installed, so an actual record there would produce a controlled unavailable state until installation is reviewed.
+
+Important limits: the admission start UI remains unmounted and stage remains unset. The journal hook is not automatically called by existing voice sessions. The new panel is diagnostic-only, not full runtime voice integration. Safe next work is durable server lookup/recovery across lost local pointers and integrating the admission UI against disposable infrastructure before connected activation. No connected database writes, publication, worker deployment, provider call or production promotion.

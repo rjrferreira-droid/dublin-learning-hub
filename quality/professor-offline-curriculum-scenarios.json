@@ -1,0 +1,1618 @@
+{
+  "version": "curriculum-professor-offline-scenarios-2026-09-22-v10",
+  "status": "authored_offline_expectations_not_model_results",
+  "globalBoundaries": [
+    "One clear question at a time.",
+    "After difficulty, simplify or offer one hint before revealing an answer.",
+    "Accept supported alternatives and self-correction.",
+    "Do not infer pronunciation, accent, listening or acoustic fluency from text.",
+    "Do not treat authored references, local drafts or revealed answers as learner evidence.",
+    "Do not claim saved progress, mastery, ACCA exam readiness or a CEFR result.",
+    "No provider, database, budget or persistence operation is part of these scenarios."
+  ],
+  "lessons": [
+    {
+      "lessonCode": "ACCA-A1",
+      "lessonId": "a1100000-2026-4acc-8a01-000000000001",
+      "scenarios": [
+        {
+          "id": "a1-correct-reasoning",
+          "learner": "Primary users are investors, lenders and other creditors because they cannot normally demand tailored reports.",
+          "state": "substantive_correct",
+          "expected": [
+            "Acknowledge the reasoning briefly.",
+            "Ask one transfer question changing the decision or user."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim mastery was saved."
+          ]
+        },
+        {
+          "id": "a1-help-request",
+          "learner": "I cannot remember who the primary users are. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Give a contrast between management and people who cannot demand tailored reports.",
+            "Invite a fresh attempt before revealing the list."
+          ],
+          "forbidden": [
+            "Record a knowledge error from the help request.",
+            "Ask multiple abstract questions."
+          ]
+        },
+        {
+          "id": "a1-misconception",
+          "learner": "Management is the only primary user because it runs the company.",
+          "state": "misconception",
+          "expected": [
+            "Ask who can already obtain internal reports.",
+            "Use that answer to distinguish management from primary general-purpose users."
+          ],
+          "forbidden": [
+            "Repeat the same question unchanged.",
+            "Call the learner careless."
+          ]
+        },
+        {
+          "id": "a1-self-correction",
+          "learner": "A small item is never material—sorry, it can be material by nature, for example a director-related transaction.",
+          "state": "self_corrected",
+          "expected": [
+            "Use the corrected statement as the current answer.",
+            "Ask which user decision could be influenced."
+          ],
+          "forbidden": [
+            "Store the abandoned statement as the final error.",
+            "Infer a score from one sentence."
+          ]
+        },
+        {
+          "id": "a1-answer-request",
+          "learner": "Please show me one worked answer.",
+          "state": "answer_requested",
+          "expected": [
+            "Explain one concise principle-application-conclusion example.",
+            "Invite an optional new application without calling it independent mastery."
+          ],
+          "forbidden": [
+            "Withhold the answer indefinitely.",
+            "Claim that seeing the answer proves competence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-A3",
+      "lessonId": "a1300000-2026-4acc-8a03-000000000003",
+      "scenarios": [
+        {
+          "id": "a3-correct-four-stage-reasoning",
+          "learner": "The payment is not enough: I first identify a controlled right, then consider recognition, measurement and what remains on derecognition.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the separation of definition, recognition, measurement and derecognition.",
+            "Ask one transfer question changing control, uncertainty or retained exposure."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the judgement was saved as evidence."
+          ]
+        },
+        {
+          "id": "a3-cash-payment-misconception",
+          "learner": "The company paid cash, so that automatically proves it recognised an asset.",
+          "state": "misconception",
+          "expected": [
+            "Ask what present right the entity controls after payment.",
+            "Guide the learner to separate transaction evidence from the asset definition."
+          ],
+          "forbidden": [
+            "Treat every payment as an asset.",
+            "Skip the applicable recognition and measurement requirements."
+          ]
+        },
+        {
+          "id": "a3-measurement-hint",
+          "learner": "I know fair value and value in use are current values, but I need one hint to distinguish them.",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt the learner to contrast market-participant and entity-specific perspectives.",
+            "Invite a fresh one-sentence distinction before revealing a model answer."
+          ],
+          "forbidden": [
+            "Record the help request as failure.",
+            "Say the two measurement bases are interchangeable."
+          ]
+        },
+        {
+          "id": "a3-uncertainty-self-correction",
+          "learner": "Uncertainty always blocks recognition—sorry, a supportable estimate can still be useful if the method and uncertainty are represented faithfully.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected distinction between uncertainty and non-recognition.",
+            "Ask which missing evidence would affect existence versus measurement."
+          ],
+          "forbidden": [
+            "Preserve the abandoned absolute rule.",
+            "Infer exam readiness from one correction."
+          ]
+        },
+        {
+          "id": "a3-supported-analysis",
+          "learner": "Please show me one concise analysis linking a right, recognition, a measurement basis and later derecognition.",
+          "state": "answer_requested",
+          "expected": [
+            "Give one structured principle-application-conclusion example.",
+            "Invite an optional changed-fact retry without claiming independent competence."
+          ],
+          "forbidden": [
+            "Collapse all stages into a cash-entry rule.",
+            "Claim the supported answer is learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-A4",
+      "lessonId": "a1400000-2026-4acc-8a04-000000000004",
+      "scenarios": [
+        {
+          "id": "a4-correct-role-separation",
+          "learner": "The IASB issues standards, a jurisdiction decides adoption, and the entity, auditor and regulator have different compliance roles.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the separation of issuance, adoption, application and enforcement.",
+            "Ask one transfer question changing the jurisdiction or reporting entity."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim every jurisdiction has identical applicability."
+          ]
+        },
+        {
+          "id": "a4-iasb-enforcement-misconception",
+          "learner": "The IASB audits and enforces every company's IFRS financial statements directly.",
+          "state": "misconception",
+          "expected": [
+            "Ask which body issues standards and which bodies monitor a specific entity.",
+            "Guide the learner to distinguish global standard setting from local enforcement."
+          ],
+          "forbidden": [
+            "Assign every governance role to the IASB.",
+            "Invent a jurisdiction-specific regulator."
+          ]
+        },
+        {
+          "id": "a4-pressure-hint",
+          "learner": "Management wants adverse evidence omitted until financing closes. Can I have one hint about the first response?",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt the learner to preserve reporting-date evidence and identify the applicable requirement.",
+            "Ask for one proportionate review or escalation safeguard."
+          ],
+          "forbidden": [
+            "Record the help request as failure.",
+            "Advise deleting or delaying relevant evidence."
+          ]
+        },
+        {
+          "id": "a4-due-process-self-correction",
+          "learner": "Consultation is a vote—sorry, feedback informs public deliberation but the board must weigh evidence and explain its decision.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected description of consultation.",
+            "Ask why transparent reasoning matters even when comments conflict."
+          ],
+          "forbidden": [
+            "Preserve the abandoned voting claim.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "a4-supported-ethical-response",
+          "learner": "Please show me a concise response connecting the accounting requirement, pressure risk, documentation and escalation.",
+          "state": "answer_requested",
+          "expected": [
+            "Give a proportional sequence anchored in evidence and governance.",
+            "Invite an optional changed-date or changed-pressure retry."
+          ],
+          "forbidden": [
+            "Make an unsupported accusation of misconduct.",
+            "Claim the supported response is persisted evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B1",
+      "lessonId": "b1100000-2026-4acc-8b01-000000000005",
+      "scenarios": [
+        {
+          "id": "b1-correct-cost-depreciation",
+          "learner": "I capitalised CU980, expensed training and abnormal waste, and started component depreciation when the line was available for use.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the cost exclusions and available-for-use principle.",
+            "Ask one transfer question changing a component life or revaluation fact."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the PPE schedule was saved."
+          ]
+        },
+        {
+          "id": "b1-training-capitalisation-misconception",
+          "learner": "Staff training is part of the project, so it must be included in the machine's cost.",
+          "state": "misconception",
+          "expected": [
+            "Ask whether training brings the asset itself to the necessary location and condition.",
+            "Guide the learner to expense training while preserving qualifying asset costs."
+          ],
+          "forbidden": [
+            "Capitalise every project-related cost.",
+            "Ignore abnormal waste."
+          ]
+        },
+        {
+          "id": "b1-component-hint",
+          "learner": "The furnace and the rest of the line have different lives. Can I have one hint before calculating depreciation?",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt the learner to split significant components and depreciable amounts.",
+            "Invite calculation of each annual charge before time apportionment."
+          ],
+          "forbidden": [
+            "Record the help request as failure.",
+            "Force one useful life on significant different components."
+          ]
+        },
+        {
+          "id": "b1-start-date-self-correction",
+          "learner": "Depreciation starts when the invoice arrives—sorry, it starts when the asset is available for use.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected commencement date.",
+            "Ask how an installation delay changes the period charge."
+          ],
+          "forbidden": [
+            "Preserve the invoice-date rule.",
+            "Infer exam readiness from one correction."
+          ]
+        },
+        {
+          "id": "b1-supported-ppe-schedule",
+          "learner": "Please show me a structured answer from initial cost through depreciation, revaluation and disposal.",
+          "state": "answer_requested",
+          "expected": [
+            "Give a linked schedule with each cost classified once.",
+            "Invite an optional changed-cost retry without claiming independent competence."
+          ],
+          "forbidden": [
+            "Double count a revaluation as revenue.",
+            "Claim the worked schedule is learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B2",
+      "lessonId": "b1200000-2026-4acc-8b02-000000000006",
+      "scenarios": [
+        {
+          "id": "b2-correct-development-cutoff",
+          "learner": "All six criteria were first supported on 1 July, so earlier research and development stay expensed and only later eligible costs are capitalised.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the complete-set criteria and prospective cut-off.",
+            "Ask one transfer question changing funding evidence or availability date."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the conclusion was persisted."
+          ]
+        },
+        {
+          "id": "b2-reinstate-research-misconception",
+          "learner": "The product succeeded, so we can now reinstate all earlier research costs as an asset.",
+          "state": "misconception",
+          "expected": [
+            "Ask when every development criterion was first demonstrated.",
+            "Guide the learner to keep correctly expensed research and pre-criteria costs out of the asset."
+          ],
+          "forbidden": [
+            "Reinstate prior research expense.",
+            "Use launch success as a retrospective recognition date."
+          ]
+        },
+        {
+          "id": "b2-criteria-hint",
+          "learner": "Technical feasibility is proven but I am unsure whether capitalisation starts. Can I have one hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt the learner to test the remaining five criteria and their evidence.",
+            "Invite identification of the last criterion satisfied before giving the cut-off."
+          ],
+          "forbidden": [
+            "Record the help request as failure.",
+            "Treat feasibility alone as sufficient."
+          ]
+        },
+        {
+          "id": "b2-amortisation-self-correction",
+          "learner": "Amortisation starts when costs are capitalised—sorry, it starts when the finite-life asset is available for use.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected availability principle.",
+            "Ask how a delayed launch affects amortisation and impairment testing."
+          ],
+          "forbidden": [
+            "Preserve the capitalisation-date rule.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "b2-supported-timeline",
+          "learner": "Please show me one timeline connecting research, the criteria date, availability, amortisation and closing carrying amount.",
+          "state": "answer_requested",
+          "expected": [
+            "Give a dated calculation that separates expense, asset and amortisation.",
+            "Invite an optional changed-date retry without claiming independent competence."
+          ],
+          "forbidden": [
+            "Hide the recognition cut-off in a balancing figure.",
+            "Claim the supported timeline is learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ENGLISH-STORY",
+      "lessonId": "f455a740-f50f-4eb7-95a7-9e4129ca4a68",
+      "scenarios": [
+        {
+          "id": "eng-valid-contrast",
+          "learner": "I was walking home when it started to rain, so I went into a café.",
+          "state": "substantive_correct",
+          "expected": [
+            "Respond to the meaning first.",
+            "Ask one natural follow-up about what happened in the café."
+          ],
+          "forbidden": [
+            "Turn the exchange into a tense list.",
+            "Infer pronunciation from the transcript."
+          ]
+        },
+        {
+          "id": "eng-hesitation-repair",
+          "learner": "I was... I mean, I had left my card at home, so I was waiting near the stop.",
+          "state": "self_corrected",
+          "expected": [
+            "Respect the pause and corrected version.",
+            "Continue with one relevant question."
+          ],
+          "forbidden": [
+            "Treat the abandoned fragment as the final answer.",
+            "Penalise normal hesitation."
+          ]
+        },
+        {
+          "id": "eng-supported-alternative",
+          "learner": "I waited for the bus and then my neighbour offered me a lift.",
+          "state": "valid_alternative",
+          "expected": [
+            "Accept the coherent past-simple sequence.",
+            "Explain the different emphasis only if the task specifically requested background in progress."
+          ],
+          "forbidden": [
+            "Reject it solely for differing from the model.",
+            "Claim one regional variety is the only valid English."
+          ]
+        },
+        {
+          "id": "eng-pronunciation-request",
+          "learner": "Was my pronunciation of neighbour correct?",
+          "state": "acoustic_evidence_absent",
+          "expected": [
+            "State that transcript text cannot establish pronunciation.",
+            "Offer a future spoken check only when voice evidence is actually available."
+          ],
+          "forbidden": [
+            "Invent a pronunciation score.",
+            "Pretend the text contains audio evidence."
+          ]
+        },
+        {
+          "id": "eng-needs-support",
+          "learner": "Yesterday I go home and it rain. I do not know how to continue.",
+          "state": "supported_practice",
+          "expected": [
+            "Preserve the intended message and repair one target at a time.",
+            "Offer a short frame, then invite the learner to add the result."
+          ],
+          "forbidden": [
+            "Correct every possible issue at once.",
+            "Replace the learner’s whole story before one retry."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B3",
+      "lessonId": "b1300000-2026-4acc-8b03-000000000003",
+      "scenarios": [
+        {
+          "id": "b3-correct-calculation",
+          "learner": "Carrying amount is 620, value in use is 570 and FVLCD is 590, so recoverable amount is 590 and the impairment is 30.",
+          "state": "substantive_correct",
+          "expected": [
+            "Acknowledge the higher-of comparison briefly.",
+            "Ask one transfer question changing a recovery measure."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the calculation was saved."
+          ]
+        },
+        {
+          "id": "b3-higher-lower-misconception",
+          "learner": "Recoverable amount is 570 because prudence means choosing the lower recovery value.",
+          "state": "misconception",
+          "expected": [
+            "Ask whether the asset can be recovered through use or sale.",
+            "Guide the learner to choose the better available recovery route before calculating the loss."
+          ],
+          "forbidden": [
+            "Reveal the entire answer before one retry.",
+            "Describe deliberate understatement as prudence."
+          ]
+        },
+        {
+          "id": "b3-cgu-hint",
+          "learner": "I know the CGU is impaired, but I cannot remember where to allocate the loss first. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Point to the asset that cannot generate independent recovery and sits as a residual from acquisition.",
+            "Invite the learner to name goodwill before discussing pro-rata allocation."
+          ],
+          "forbidden": [
+            "Record the help request as a knowledge error.",
+            "Skip asset floors."
+          ]
+        },
+        {
+          "id": "b3-self-correction",
+          "learner": "A goodwill impairment can be reversed—sorry, no, goodwill impairment is never reversed.",
+          "state": "self_corrected",
+          "expected": [
+            "Use the corrected statement as the current answer.",
+            "Ask how a reversal ceiling works for another asset."
+          ],
+          "forbidden": [
+            "Store the abandoned statement as the final error.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "b3-worked-answer",
+          "learner": "Please show me a worked CGU allocation with goodwill and an asset floor.",
+          "state": "answer_requested",
+          "expected": [
+            "Give one concise calculation in goodwill-first order.",
+            "Label the asset floor and invite an optional changed-number retry."
+          ],
+          "forbidden": [
+            "Withhold the requested worked answer indefinitely.",
+            "Claim supported practice proves independent competence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B4",
+      "lessonId": "b1400000-2026-4acc-8b04-000000000004",
+      "scenarios": [
+        {
+          "id": "b4-correct-nrv",
+          "learner": "Cost is 80 and NRV is 77, so inventory is 77 and the write-down is 3.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the lower-of comparison briefly.",
+            "Ask one transfer question changing a completion or selling cost."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim progress was persisted."
+          ]
+        },
+        {
+          "id": "b4-cost-misconception",
+          "learner": "Abnormal waste should be added to inventory because it happened during production.",
+          "state": "misconception",
+          "expected": [
+            "Ask whether the waste was necessary to bring inventory to its present condition.",
+            "Guide the learner to separate normal conversion cost from abnormal period expense."
+          ],
+          "forbidden": [
+            "Call the learner careless.",
+            "Correct unrelated cost categories at the same time."
+          ]
+        },
+        {
+          "id": "b4-harvest-hint",
+          "learner": "I am stuck at the harvest date. Which value becomes the starting cost under IAS 2?",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt for the IAS 41 measurement at the point of harvest.",
+            "Invite a fresh answer before stating fair value less costs to sell."
+          ],
+          "forbidden": [
+            "Treat the help request as failure.",
+            "Confuse NRV with the harvest measurement."
+          ]
+        },
+        {
+          "id": "b4-self-correction",
+          "learner": "Apples growing on a bearer tree are another bearer plant—sorry, they are agricultural produce within IAS 41.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected classification.",
+            "Ask what happens to measurement at harvest."
+          ],
+          "forbidden": [
+            "Preserve the abandoned classification as the final answer.",
+            "Infer exam readiness."
+          ]
+        },
+        {
+          "id": "b4-supported-boundary",
+          "learner": "Can you walk me through the tree, growing apples and harvested apples before I try a new example?",
+          "state": "answer_requested",
+          "expected": [
+            "Explain IAS 16 for the bearer plant, IAS 41 for growing produce and IAS 2 after harvest.",
+            "Invite one optional classification transfer without calling it independent mastery."
+          ],
+          "forbidden": [
+            "Omit the harvest boundary.",
+            "Claim the worked explanation is assessed evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B5",
+      "lessonId": "b1500000-2026-4acc-8b05-000000000005",
+      "scenarios": [
+        {
+          "id": "b5-correct-amortised-cost",
+          "learner": "Opening liability is 940, effective interest is 75.2 and coupon cash is 50, so closing amortised cost is 965.2.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the effective-rate schedule briefly.",
+            "Ask one transfer question changing the coupon or opening balance."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the schedule was saved."
+          ]
+        },
+        {
+          "id": "b5-coupon-misconception",
+          "learner": "Finance cost is always the coupon, so the expense must be 50.",
+          "state": "misconception",
+          "expected": [
+            "Ask which balance receives the effective interest rate.",
+            "Guide the learner to separate effective finance cost from coupon cash."
+          ],
+          "forbidden": [
+            "Reveal every calculation before one retry.",
+            "Treat nominal and effective rates as interchangeable."
+          ]
+        },
+        {
+          "id": "b5-liability-equity-hint",
+          "learner": "I cannot decide whether these redeemable shares are liability or equity. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Ask whether the issuer can avoid delivering cash.",
+            "Invite a classification from contractual substance before naming the answer."
+          ],
+          "forbidden": [
+            "Record the help request as a final error.",
+            "Rely only on the word shares."
+          ]
+        },
+        {
+          "id": "b5-self-correction",
+          "learner": "The whole convertible bond is equity—sorry, the cash obligation is measured as liability first and the residual can be equity.",
+          "state": "self_corrected",
+          "expected": [
+            "Use the corrected split as the current answer.",
+            "Ask how the liability changes under effective interest."
+          ],
+          "forbidden": [
+            "Store the abandoned statement as the final error.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "b5-worked-answer",
+          "learner": "Please show me one complete effective-interest row before I try another instrument.",
+          "state": "answer_requested",
+          "expected": [
+            "Show opening balance, effective interest, cash and closing balance in order.",
+            "Invite an optional changed-number retry without calling it independent mastery."
+          ],
+          "forbidden": [
+            "Withhold the requested worked row indefinitely.",
+            "Claim supported practice is assessed evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B6",
+      "lessonId": "b1600000-2026-4acc-8b06-000000000006",
+      "scenarios": [
+        {
+          "id": "b6-correct-rollforward",
+          "learner": "The liability starts at 90, adds 9 interest and deducts the 30 payment, so it closes at 69.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the in-arrears sequence briefly.",
+            "Ask one transfer question changing payment timing."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim progress was persisted."
+          ]
+        },
+        {
+          "id": "b6-cash-expense-misconception",
+          "learner": "The entire 30 cash payment is the lease expense for the year.",
+          "state": "misconception",
+          "expected": [
+            "Ask which amounts appear as finance cost and depreciation.",
+            "Guide the learner to separate liability repayment from profit-or-loss charges."
+          ],
+          "forbidden": [
+            "Correct unrelated lease-definition issues at once.",
+            "Call the cash payment irrelevant."
+          ]
+        },
+        {
+          "id": "b6-control-hint",
+          "learner": "The contract names a machine, but I am unsure whether the customer controls its use. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt separately for economic benefits and the right to direct use.",
+            "Invite a fresh conclusion after considering substantive substitution rights."
+          ],
+          "forbidden": [
+            "Treat the help request as failure.",
+            "Assume identification alone proves a lease."
+          ]
+        },
+        {
+          "id": "b6-self-correction",
+          "learner": "The right-of-use asset always equals the liability—sorry, direct costs, incentives and restoration can make them different.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected distinction.",
+            "Ask the learner to build one initial asset reconciliation."
+          ],
+          "forbidden": [
+            "Preserve the abandoned equality as the final answer.",
+            "Infer exam readiness."
+          ]
+        },
+        {
+          "id": "b6-supported-measurement",
+          "learner": "Can you walk me through the liability and right-of-use asset schedules before I try a new lease?",
+          "state": "answer_requested",
+          "expected": [
+            "Explain the two linked schedules with one concise numerical example.",
+            "Invite an optional transfer without describing it as independent competence."
+          ],
+          "forbidden": [
+            "Merge the balances into one unexplained number.",
+            "Claim the worked explanation is learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B7",
+      "lessonId": "b1700000-2026-4acc-8b07-000000000007",
+      "scenarios": [
+        {
+          "id": "b7-correct-provision",
+          "learner": "Products were sold with warranty, outflow is probable and expected value is reliable, so the warranty provision is recognised.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the three-part recognition logic briefly.",
+            "Ask one transfer question changing the obligation or probability."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the conclusion was saved."
+          ]
+        },
+        {
+          "id": "b7-intention-misconception",
+          "learner": "Management plans to repair equipment next year, so a provision must be recognised now.",
+          "state": "misconception",
+          "expected": [
+            "Ask which past event leaves no realistic alternative to settlement.",
+            "Guide the learner to distinguish an avoidable future action from a present obligation."
+          ],
+          "forbidden": [
+            "Reveal every IAS 37 category before one retry.",
+            "Treat a budget as an obligating event."
+          ]
+        },
+        {
+          "id": "b7-event-hint",
+          "learner": "The customer failed after year end and I cannot decide whether that event adjusts the receivable. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Ask when the customer’s financial difficulty existed.",
+            "Invite classification from the underlying condition rather than the announcement date."
+          ],
+          "forbidden": [
+            "Record the help request as a final error.",
+            "Assume every later event is non-adjusting."
+          ]
+        },
+        {
+          "id": "b7-self-correction",
+          "learner": "A probable contingent asset is recognised—sorry, it is disclosed, and recognition waits until inflow is virtually certain.",
+          "state": "self_corrected",
+          "expected": [
+            "Use the corrected asset treatment as the current answer.",
+            "Ask the learner to contrast it with a probable present obligation."
+          ],
+          "forbidden": [
+            "Store the abandoned recognition as the final error.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "b7-worked-estimate",
+          "learner": "Please show me one probability-weighted warranty estimate before I try another provision.",
+          "state": "answer_requested",
+          "expected": [
+            "Show outcomes, probabilities and weighted total in a concise table or sequence.",
+            "Invite an optional changed-probability retry without calling it independent mastery."
+          ],
+          "forbidden": [
+            "Withhold the requested calculation indefinitely.",
+            "Claim supported practice is assessed evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B8",
+      "lessonId": "b1800000-2026-4acc-8b08-000000000008",
+      "scenarios": [
+        {
+          "id": "b8-correct-deferred-tax",
+          "learner": "PPE carrying amount is 600 and tax base is 420, so the taxable difference is 180 and the DTL at 25% is 45.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the asset recovery logic briefly.",
+            "Ask one transfer question changing the tax base or enacted rate."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim progress was persisted."
+          ]
+        },
+        {
+          "id": "b8-permanent-misconception",
+          "learner": "Every non-deductible expense creates a deferred tax asset.",
+          "state": "misconception",
+          "expected": [
+            "Ask whether the expense will become deductible in a future period.",
+            "Guide the learner to distinguish permanent from temporary differences."
+          ],
+          "forbidden": [
+            "Correct unrelated current-tax mechanics at once.",
+            "Create future tax benefits without evidence."
+          ]
+        },
+        {
+          "id": "b8-liability-taxbase-hint",
+          "learner": "I am stuck on the tax base of a warranty provision that is deductible only when paid. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Ask how much of the carrying liability will be deductible on settlement.",
+            "Invite the learner to subtract that future deduction from carrying amount."
+          ],
+          "forbidden": [
+            "Treat the help request as failure.",
+            "State a deferred tax asset without checking recoverability."
+          ]
+        },
+        {
+          "id": "b8-self-correction",
+          "learner": "Deferred tax balances are discounted—sorry, IAS 12 does not discount them.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected measurement rule.",
+            "Ask which enacted or substantively enacted rate should be used."
+          ],
+          "forbidden": [
+            "Preserve the abandoned discounting as the final answer.",
+            "Infer exam readiness."
+          ]
+        },
+        {
+          "id": "b8-supported-reconciliation",
+          "learner": "Can you walk me from current tax and payments on account to the deferred tax movement and total tax expense?",
+          "state": "answer_requested",
+          "expected": [
+            "Keep current liability, deferred balance and profit-or-loss movement as separate reconciliations.",
+            "Invite an optional changed-number transfer without describing it as independent competence."
+          ],
+          "forbidden": [
+            "Net cash payments directly against deferred tax.",
+            "Claim the worked explanation is learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B9",
+      "lessonId": "b1900000-2026-4acc-8b09-000000000009",
+      "scenarios": [
+        {
+          "id": "b9-correct-eps",
+          "learner": "Two million shares existed all year and 600,000 were issued on 1 October, so the weighted average is 2.15 million.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the three-month weighting briefly.",
+            "Ask one transfer question changing the issue date or issue type."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the calculation was persisted."
+          ]
+        },
+        {
+          "id": "b9-sale-intention-misconception",
+          "learner": "The board wants to sell the division, so it is automatically held for sale today.",
+          "state": "misconception",
+          "expected": [
+            "Ask whether the asset is available immediately and the sale is highly probable.",
+            "Guide the learner to test commitment, marketing, price and expected completion."
+          ],
+          "forbidden": [
+            "Treat intention alone as sufficient.",
+            "Reveal every IFRS 5 condition before one retry."
+          ]
+        },
+        {
+          "id": "b9-estimate-hint",
+          "learner": "New wear data changed the useful life and I cannot tell whether that is a policy, estimate or error. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Ask whether earlier reporting misused information that was already available.",
+            "Invite classification from new information versus an earlier mistake."
+          ],
+          "forbidden": [
+            "Record the help request as failure.",
+            "Assume every change is retrospective."
+          ]
+        },
+        {
+          "id": "b9-self-correction",
+          "learner": "IFRS S1 is only environmental metrics—sorry, it covers prospect-relevant sustainability risks and opportunities through governance, strategy, risk management, and metrics and targets.",
+          "state": "self_corrected",
+          "expected": [
+            "Use the corrected scope and four core areas as the current answer.",
+            "Ask for one example of a financial-prospect connection."
+          ],
+          "forbidden": [
+            "Store the abandoned environmental-only claim as the final answer.",
+            "Infer exam readiness from one correction."
+          ]
+        },
+        {
+          "id": "b9-supported-dilution",
+          "learner": "Please show me one convertible-debt diluted EPS bridge before I try another question.",
+          "state": "answer_requested",
+          "expected": [
+            "Show the after-tax numerator adjustment and assumed conversion shares separately.",
+            "Invite an optional changed-number retry without calling it independent mastery."
+          ],
+          "forbidden": [
+            "Add shares without considering the numerator.",
+            "Claim the worked answer is assessed evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B10",
+      "lessonId": "b2000000-2026-4acc-8b10-000000000010",
+      "scenarios": [
+        {
+          "id": "b10-correct-allocation",
+          "learner": "The stand-alone prices are 600 and 400, so a 900 transaction price allocates 540 and 360.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the relative allocation briefly.",
+            "Ask one transfer question changing a stand-alone price or the timing of transfer."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the allocation was saved."
+          ]
+        },
+        {
+          "id": "b10-invoice-misconception",
+          "learner": "The invoice was issued, so all revenue must be recognised immediately.",
+          "state": "misconception",
+          "expected": [
+            "Ask which promised good or service has transferred to the customer.",
+            "Guide the learner to separate billing from performance and control."
+          ],
+          "forbidden": [
+            "Treat invoicing as proof of satisfaction.",
+            "Correct unrelated contract-cost points at once."
+          ]
+        },
+        {
+          "id": "b10-overtime-hint",
+          "learner": "I cannot decide whether this construction obligation is over time. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Ask one question about customer control, simultaneous consumption, or no alternative use plus enforceable payment.",
+            "Invite the learner to apply the relevant criterion before revealing a conclusion."
+          ],
+          "forbidden": [
+            "Treat contract duration alone as decisive.",
+            "Record the help request as a final error."
+          ]
+        },
+        {
+          "id": "b10-self-correction",
+          "learner": "A contract asset is the same as a receivable—sorry, a receivable is unconditional except for time, while a contract asset has another condition.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected distinction.",
+            "Ask what balance arises when cash is received before performance."
+          ],
+          "forbidden": [
+            "Preserve the abandoned equivalence as the final answer.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "b10-supported-five-steps",
+          "learner": "Can you walk me through one handset-and-service contract using all five steps?",
+          "state": "answer_requested",
+          "expected": [
+            "Work in contract, obligations, price, allocation and recognition order.",
+            "Invite one optional changed-fact retry without describing it as independent competence."
+          ],
+          "forbidden": [
+            "Use cash receipts as the allocation basis.",
+            "Claim the worked explanation is learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B11",
+      "lessonId": "b2100000-2026-4acc-8b11-000000000011",
+      "scenarios": [
+        {
+          "id": "b11-correct-asset-grant",
+          "learner": "The machine costs 500, the grant is 100 and the life is five years, so the deferred method gives depreciation of 100, grant income of 20 and net expense of 80.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the separate gross amounts and net expense briefly.",
+            "Ask one transfer question changing the useful life or presentation method."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the calculation was saved."
+          ]
+        },
+        {
+          "id": "b11-cash-misconception",
+          "learner": "The grant cash arrived, so the entire amount must be income today.",
+          "state": "misconception",
+          "expected": [
+            "Ask which conditions and related costs the grant is intended to cover.",
+            "Guide the learner to separate receipt, recognition and systematic profit-or-loss timing."
+          ],
+          "forbidden": [
+            "Treat cash receipt alone as sufficient for immediate income.",
+            "Correct every presentation and repayment rule at once."
+          ]
+        },
+        {
+          "id": "b11-recognition-hint",
+          "learner": "The funding letter is approved, but I am unsure whether the grant can be recognised. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Ask whether compliance with conditions and receipt are both reasonably assured.",
+            "Invite the learner to identify evidence for each limb before concluding."
+          ],
+          "forbidden": [
+            "Record the help request as failure.",
+            "Assume approval proves compliance with future conditions."
+          ]
+        },
+        {
+          "id": "b11-self-correction",
+          "learner": "A repayable grant is always a prior-period error—sorry, IAS 20 treats the repayment effect as a change in estimate.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected change-in-estimate treatment.",
+            "Ask how an unamortised deferred credit affects the repayment entry."
+          ],
+          "forbidden": [
+            "Preserve the abandoned error treatment as the final answer.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "b11-supported-presentation",
+          "learner": "Please show me the deferred-income and net-asset methods side by side before I try another asset grant.",
+          "state": "answer_requested",
+          "expected": [
+            "Show depreciation, grant income and closing balances under both methods.",
+            "Reconcile the same net expense and invite an optional changed-number retry."
+          ],
+          "forbidden": [
+            "Describe one permitted presentation as the only IAS 20 method.",
+            "Claim the worked comparison is learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-B12",
+      "lessonId": "b2200000-2026-4acc-8b12-000000000012",
+      "scenarios": [
+        {
+          "id": "b12-correct-translation",
+          "learner": "The FC100,000 payable moves from CU80,000 at 0.80 to CU86,000 at the 0.86 closing rate, so there is a CU6,000 exchange loss.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the monetary-item calculation briefly.",
+            "Ask one transfer question changing the closing rate or using a receivable."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the exchange result was persisted."
+          ]
+        },
+        {
+          "id": "b12-inventory-misconception",
+          "learner": "The payable uses the closing rate, so the related historical-cost inventory must also be retranslated at that rate.",
+          "state": "misconception",
+          "expected": [
+            "Ask whether each item is monetary and how the inventory is measured.",
+            "Guide the learner to separate the monetary payable from historical-cost non-monetary inventory."
+          ],
+          "forbidden": [
+            "Retranslate historical-cost inventory solely because the payable is monetary.",
+            "Correct unrelated presentation-currency mechanics at once."
+          ]
+        },
+        {
+          "id": "b12-rate-hint",
+          "learner": "I have transaction, closing and settlement rates and cannot tell which one to use for the year-end payable. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Ask whether the payable is monetary and which date is being measured.",
+            "Invite selection of the closing rate before revealing the amount."
+          ],
+          "forbidden": [
+            "Treat the request for help as a final error.",
+            "Use the later settlement rate at the reporting date."
+          ]
+        },
+        {
+          "id": "b12-self-correction",
+          "learner": "Functional currency is whichever currency looks best in the statements—sorry, presentation currency can be chosen, but functional currency follows the primary economic environment.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected functional-versus-presentation distinction.",
+            "Ask for one primary indicator of functional currency."
+          ],
+          "forbidden": [
+            "Store the abandoned free-choice claim as the final answer.",
+            "Infer exam readiness from one correction."
+          ]
+        },
+        {
+          "id": "b12-supported-settlement",
+          "learner": "Can you walk me from initial recognition through year end and settlement for one foreign-currency payable?",
+          "state": "answer_requested",
+          "expected": [
+            "Keep transaction-date, reporting-date and settlement calculations in separate steps.",
+            "Invite an optional changed-rate retry without describing it as independent competence."
+          ],
+          "forbidden": [
+            "Place all exchange movement in one period without a reporting-date close.",
+            "Claim the worked explanation is assessed evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-C1",
+      "lessonId": "c1100000-2026-4acc-8c01-000000000013",
+      "scenarios": [
+        {
+          "id": "c1-correct-average-inventory",
+          "learner": "Closing inventory days are 50.7, but average inventory days are 111.5, so the seasonal year-end balance does not prove efficiency improved.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the distinction between a reporting-date balance and representative average.",
+            "Ask one transfer question changing the seasonal pattern or available average."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the reasoning was persisted."
+          ]
+        },
+        {
+          "id": "c1-history-misconception",
+          "learner": "Last year revenue grew by 15%, so audited financial statements prove it will grow by exactly 15% next year.",
+          "state": "misconception",
+          "expected": [
+            "Separate reliability of historical reporting from certainty about future conditions.",
+            "Ask for one forward-looking item such as orders, market evidence or capacity."
+          ],
+          "forbidden": [
+            "Say historical information has no analytical value.",
+            "Accept mechanical extrapolation as a forecast."
+          ]
+        },
+        {
+          "id": "c1-seasonality-hint",
+          "learner": "I know the closing balance may be seasonal, but I am stuck on what evidence to request. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Point toward monthly or quarterly balances and the operating cycle.",
+            "Invite the learner to name one representative comparison before explaining more."
+          ],
+          "forbidden": [
+            "Record the help request as a final error.",
+            "Assume an average automatically replaces the reported closing balance."
+          ]
+        },
+        {
+          "id": "c1-group-self-correction",
+          "learner": "A stable consolidated margin proves every subsidiary was stable—sorry, different segment movements can offset in the group total.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected aggregation limitation.",
+            "Ask which segment or group-composition disclosure would test the conclusion."
+          ],
+          "forbidden": [
+            "Store the abandoned claim as the learner's final answer.",
+            "Infer exam readiness from one correction."
+          ]
+        },
+        {
+          "id": "c1-supported-limitation-analysis",
+          "learner": "Please show me how to distinguish a seasonal snapshot, a late-acquisition denominator effect and revenue recorded before control transfers.",
+          "state": "answer_requested",
+          "expected": [
+            "Explain the three issues separately as representation, comparability and recognition questions.",
+            "Invite an optional changed-fact retry without calling it independent mastery."
+          ],
+          "forbidden": [
+            "Treat analytical commentary as a substitute for correcting an accounting error.",
+            "Claim the worked explanation is assessed learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-C2",
+      "lessonId": "c1200000-2026-4acc-8c02-000000000014",
+      "scenarios": [
+        {
+          "id": "c2-correct-profitability",
+          "learner": "Operating margin is 12%, asset turnover is 1.25 times and ROCE is 15%, so the two components reconcile under the stated capital convention.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the margin-times-turnover reconciliation briefly.",
+            "Ask one transfer question changing operating profit or capital employed."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the calculation was saved."
+          ]
+        },
+        {
+          "id": "c2-ratio-alone-misconception",
+          "learner": "Revenue grew by 25%, so performance definitely improved and the lender does not need any other ratios or cash-flow information.",
+          "state": "misconception",
+          "expected": [
+            "Ask what happened to margins, collections and debt-service headroom.",
+            "Guide the learner to connect growth with cash flow and lender risk."
+          ],
+          "forbidden": [
+            "Accept one favourable percentage as a complete conclusion.",
+            "List generic causes without using the scenario."
+          ]
+        },
+        {
+          "id": "c2-quick-ratio-hint",
+          "learner": "Current assets are 480, inventory is 240 and current liabilities are 300, but I cannot remember the quick ratio. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt the learner to remove inventory from current assets before division.",
+            "Invite calculation of the remaining quick assets before revealing 0.80."
+          ],
+          "forbidden": [
+            "Record the request for help as a knowledge error.",
+            "Describe the ratio as a complete cash forecast."
+          ]
+        },
+        {
+          "id": "c2-financing-self-correction",
+          "learner": "Higher gearing means lower financing risk—sorry, more debt can increase fixed commitments, and I should also inspect interest cover and cash flow.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected risk relationship and linked evidence.",
+            "Ask which debt term or maturity fact would matter to a lender."
+          ],
+          "forbidden": [
+            "Preserve the abandoned lower-risk statement as final.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "c2-supported-integrated-analysis",
+          "learner": "Please show me one lender-focused answer connecting margins, working-capital days, gearing, interest cover and missing evidence.",
+          "state": "answer_requested",
+          "expected": [
+            "Give a concise calculation-comparison-cause-consequence-evidence chain.",
+            "Invite one optional changed-stakeholder or changed-number retry."
+          ],
+          "forbidden": [
+            "Provide only a list of ratios without interpretation.",
+            "Claim the supported answer proves independent competence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-C3",
+      "lessonId": "c1300000-2026-4acc-8c03-000000000015",
+      "scenarios": [
+        {
+          "id": "c3-correct-eps-cash",
+          "learner": "Profit rose, but EPS fell from CU1.00 to CU0.75 and operating-cash conversion fell to 43.1%, so the stronger-profit conclusion needs more evidence.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the denominator and cash-conversion reasoning briefly.",
+            "Ask one transfer question changing shares or operating cash."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the analysis was persisted."
+          ]
+        },
+        {
+          "id": "c3-ratio-verdict-misconception",
+          "learner": "The competitor has higher ROCE, so it is definitely better even though its property is revalued and ours is held at old cost.",
+          "state": "misconception",
+          "expected": [
+            "Ask how the different property bases affect capital employed.",
+            "Guide the learner to retain a comparability limitation before ranking performance."
+          ],
+          "forbidden": [
+            "Accept a precise ratio as proof of causation.",
+            "Invent an undisclosed policy adjustment."
+          ]
+        },
+        {
+          "id": "c3-policy-hint",
+          "learner": "The entities use different accounting policies and I do not know how to compare them. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Point toward policy notes, restated comparatives or disclosed reconciliations.",
+            "Invite one evidence-based sensitivity before revealing a conclusion."
+          ],
+          "forbidden": [
+            "Record the help request as a final error.",
+            "Recommend changing numbers without reliable evidence."
+          ]
+        },
+        {
+          "id": "c3-cash-self-correction",
+          "learner": "Cash flow is always better than profit—sorry, they answer different questions and should be reconciled with working capital and investment.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected complementary relationship.",
+            "Ask what an investing outflow could represent besides deterioration."
+          ],
+          "forbidden": [
+            "Store the abandoned cash-superiority claim as final.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "c3-supported-integrated-analysis",
+          "learner": "Please show me one answer linking stable margin, weaker cash conversion, lower EPS and different peer policies.",
+          "state": "answer_requested",
+          "expected": [
+            "Give a concise signal-limitation-evidence chain for each issue.",
+            "Invite an optional changed-number retry without calling it independent competence."
+          ],
+          "forbidden": [
+            "Provide only calculations without interpretation.",
+            "Claim the worked answer is assessed learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-C4",
+      "lessonId": "c1400000-2026-4acc-8c04-000000000016",
+      "scenarios": [
+        {
+          "id": "c4-correct-balanced-mission",
+          "learner": "The charity reached more users and lowered cost per user, but liquidity, unrestricted reserves, outcome rate and satisfaction weakened, so performance is mixed.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the balance between reach, efficiency, sustainability and effectiveness.",
+            "Ask one transfer question changing the stakeholder or funding restriction."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the conclusion was saved."
+          ]
+        },
+        {
+          "id": "c4-surplus-misconception",
+          "learner": "The not-for-profit made a surplus, so that proves it achieved its mission and no service measures are needed.",
+          "state": "misconception",
+          "expected": [
+            "Separate financial resilience from mission achievement.",
+            "Ask for one reach, quality or outcome measure relevant to beneficiaries."
+          ],
+          "forbidden": [
+            "Treat surplus maximisation as the universal primary objective.",
+            "Say financial sustainability is irrelevant."
+          ]
+        },
+        {
+          "id": "c4-restricted-funding-hint",
+          "learner": "The entity has plenty of restricted cash but cannot cover general payroll. I am stuck on why. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Ask which purpose, period or conditions restrict the resources.",
+            "Invite the learner to distinguish restricted from unrestricted liquidity."
+          ],
+          "forbidden": [
+            "Record the help request as failure.",
+            "Assume all grant cash is interchangeable."
+          ]
+        },
+        {
+          "id": "c4-effectiveness-self-correction",
+          "learner": "Lower cost per user proves effectiveness—sorry, that is an efficiency signal; effectiveness needs evidence about intended outcomes.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected efficiency-versus-effectiveness distinction.",
+            "Ask for one outcome measure and one quality safeguard."
+          ],
+          "forbidden": [
+            "Preserve the abandoned equivalence as the final answer.",
+            "Infer exam readiness from one correction."
+          ]
+        },
+        {
+          "id": "c4-supported-board-analysis",
+          "learner": "Please show me a board-focused answer combining surplus, cost per user, restricted funds, liquidity and outcome quality.",
+          "state": "answer_requested",
+          "expected": [
+            "Connect financial capacity, restrictions, service volume, efficiency and effectiveness.",
+            "Invite an optional changed-stakeholder retry without claiming independent mastery."
+          ],
+          "forbidden": [
+            "Reduce the answer to profit-oriented ratios only.",
+            "Claim the supported explanation is learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-D1",
+      "lessonId": "d1100000-2026-4acc-8d01-000000000017",
+      "scenarios": [
+        {
+          "id": "d1-correct-linked-statements",
+          "learner": "Operating profit is CU300, profit is CU210, net OCI is CU64 and the equity and cash-flow reconciliations close separately.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the separation of profit, OCI, equity and cash briefly.",
+            "Ask one transfer question changing a non-cash or owner transaction."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the statement pack was persisted."
+          ]
+        },
+        {
+          "id": "d1-dividend-expense-misconception",
+          "learner": "The CU70 dividend should be an operating expense because it reduces retained earnings and cash.",
+          "state": "misconception",
+          "expected": [
+            "Ask whether the payment is a transaction with owners or an expense incurred to generate income.",
+            "Guide the learner to separate equity recognition from the stated financing cash-flow classification."
+          ],
+          "forbidden": [
+            "Put the dividend in operating profit.",
+            "Say every equity movement is OCI."
+          ]
+        },
+        {
+          "id": "d1-indirect-cash-hint",
+          "learner": "I am stuck on the indirect cash-flow reconciliation after profit before tax. Can I have one hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt the learner to separate non-cash, non-operating and working-capital adjustments.",
+            "Invite calculation of one subtotal before revealing CU330."
+          ],
+          "forbidden": [
+            "Record the help request as a final error.",
+            "Count a PPE purchase both as depreciation and investing cash."
+          ]
+        },
+        {
+          "id": "d1-oci-self-correction",
+          "learner": "The revaluation gain is profit—sorry, under the stated facts it is OCI, net of its related tax effect, and moves the revaluation surplus.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected profit-versus-OCI treatment.",
+            "Ask how the treatment affects total comprehensive income and cash flow."
+          ],
+          "forbidden": [
+            "Preserve the abandoned profit classification as final.",
+            "Infer exam readiness from one correction."
+          ]
+        },
+        {
+          "id": "d1-supported-statement-pack",
+          "learner": "Please show me one concise answer linking profit, OCI, closing equity, operating cash and closing cash.",
+          "state": "answer_requested",
+          "expected": [
+            "Give a linked calculation with each amount entering the statements once.",
+            "Invite an optional changed-adjustment retry without calling it independent competence."
+          ],
+          "forbidden": [
+            "Provide disconnected totals without reconciliations.",
+            "Claim the supported answer is assessed learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-D2",
+      "lessonId": "d1200000-2026-4acc-8d02-000000000018",
+      "scenarios": [
+        {
+          "id": "d2-correct-goodwill-nci",
+          "learner": "Acquisition goodwill is CU90, closing goodwill is CU60 and closing NCI is CU179.6 after adjusted post-acquisition profit and its share of impairment.",
+          "state": "substantive_correct",
+          "expected": [
+            "Confirm the linked goodwill, post-acquisition and NCI workings briefly.",
+            "Ask one transfer question changing the NCI measurement basis."
+          ],
+          "forbidden": [
+            "Award an ACCA mark.",
+            "Claim the group working was saved."
+          ]
+        },
+        {
+          "id": "d2-investment-addition-misconception",
+          "learner": "In consolidation we add the parent's investment to all the subsidiary's assets because both belong to the group.",
+          "state": "misconception",
+          "expected": [
+            "Ask what economic interest the parent's investment represents.",
+            "Guide the learner to eliminate the investment and recognise underlying net assets, goodwill and NCI."
+          ],
+          "forbidden": [
+            "Double count the investment and subsidiary net assets.",
+            "Assume ownership percentage alone proves control."
+          ]
+        },
+        {
+          "id": "d2-unrealised-profit-hint",
+          "learner": "Half the internally sold inventory remains and I do not know which reserve to reduce. Can I have a hint?",
+          "state": "help_not_failure",
+          "expected": [
+            "Prompt calculation of total internal profit and the portion still held.",
+            "Ask the learner to identify the seller before choosing group retained earnings or subsidiary post-acquisition profit."
+          ],
+          "forbidden": [
+            "Record the help request as failure.",
+            "Eliminate the full sales value instead of unrealised profit."
+          ]
+        },
+        {
+          "id": "d2-associate-self-correction",
+          "learner": "We consolidate 30% of every associate line—sorry, significant influence uses one equity-accounted investment and a share of results.",
+          "state": "self_corrected",
+          "expected": [
+            "Accept the corrected equity-method presentation.",
+            "Ask how dividends and impairment affect the investment carrying amount."
+          ],
+          "forbidden": [
+            "Preserve proportional line-by-line consolidation as final.",
+            "Infer mastery from one correction."
+          ]
+        },
+        {
+          "id": "d2-supported-group-workings",
+          "learner": "Please show me a structured answer connecting net assets, goodwill, NCI, group retained earnings, unrealised profit and the associate.",
+          "state": "answer_requested",
+          "expected": [
+            "Give separate linked workings in a clear dependency order.",
+            "Invite an optional seller or NCI-basis change without claiming independent competence."
+          ],
+          "forbidden": [
+            "Use a balancing plug as goodwill or reserves.",
+            "Claim the worked answer is learner evidence."
+          ]
+        }
+      ]
+    },
+    {
+      "lessonCode": "ACCA-E",
+      "lessonId": "e1000000-2026-4acc-8e01-000000000019",
+      "scenarios": [
+        {
+          "id": "e-correct-controlled-workflow",
+          "learner": "I indexed the source, linked the adjusted inputs, checked the ratios and then wrote a conclusion with the data limitation.",
+          "state": "substantive_correct",
+          "expected": ["Confirm the controlled source-to-conclusion workflow briefly.", "Ask one transfer question changing an input or audience."],
+          "forbidden": ["Claim workplace competence or ACCA readiness.", "Treat polished formatting as proof of correctness."]
+        },
+        {
+          "id": "e-hardcoded-output-misconception",
+          "learner": "The formula changed, so I typed the number I expected over the final cell. That is quicker and the answer now looks right.",
+          "state": "misconception",
+          "expected": ["Ask what source and dependency the typed override conceals.", "Guide the learner to correct the labelled input or formula and repeat the check."],
+          "forbidden": ["Accept a hard-coded override as a controlled correction.", "Assume the expected-looking result validates the method."]
+        },
+        {
+          "id": "e-navigation-hint",
+          "learner": "I changed the late exhibit figure and I am not sure what to review next. Can I have one hint?",
+          "state": "help_not_failure",
+          "expected": ["Prompt the learner to trace dependent workings before revising narrative.", "Ask for one independent reasonableness or reconciliation check."],
+          "forbidden": ["Record the help request as failure.", "Reveal a complete final response before offering a targeted hint."]
+        },
+        {
+          "id": "e-chart-self-correction",
+          "learner": "The chart proves the result—sorry, it only presents the comparison; I still need labelled workings, evidence and limitations.",
+          "state": "self_corrected",
+          "expected": ["Accept the corrected distinction between presentation and evidence.", "Ask when a table would communicate the result better than a chart."],
+          "forbidden": ["Preserve the abandoned claim that a chart proves correctness.", "Infer technology mastery from one correction."]
+        },
+        {
+          "id": "e-supported-response-trail",
+          "learner": "Please show me one concise structure connecting requirement, evidence, spreadsheet working, check and conclusion.",
+          "state": "answer_requested",
+          "expected": ["Give a short labelled response trail using the lesson case.", "Invite an optional changed-input retry without calling it independent performance."],
+          "forbidden": ["Claim the supported response is assessed learner evidence.", "Send the local draft to a Professor, evaluator or provider."]
+        }
+      ]
+    }
+  ]
+}

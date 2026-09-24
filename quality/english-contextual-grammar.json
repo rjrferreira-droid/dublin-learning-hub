@@ -1,0 +1,154 @@
+{
+  "version": "english-contextual-grammar-2026-09-21-v1",
+  "status": "authored_local_curriculum_not_database_published",
+  "contract": {
+    "sequence": [
+      "notice in context",
+      "short rule",
+      "contrast",
+      "supported practice",
+      "independent production",
+      "spoken transfer",
+      "spaced retrieval"
+    ],
+    "freeText": "Accept multiple defensible forms; authored models are examples, not exact-match grading.",
+    "externalPractice": "Grammar in Use may be suggested by topic only until the learner's edition is verified; it is optional and ungraded.",
+    "professor": "Ask one clear question, allow hesitation and self-correction, correct the target selectively, then transfer it to a new situation."
+  },
+  "units": [
+    {
+      "id": "eng-g1",
+      "context": "everyday",
+      "lesson": "Tell a story naturally",
+      "target": "past simple vs past continuous; sequencing",
+      "notice": [
+        "I was walking home when it started to rain.",
+        "I called a taxi and arrived ten minutes later."
+      ],
+      "rule": "Use past continuous for an action in progress/background and past simple for the event or completed sequence.",
+      "contrast": [
+        "I cooked when she arrived = the cooking may start after arrival.",
+        "I was cooking when she arrived = cooking was already in progress."
+      ],
+      "supported": [
+        {
+          "prompt": "Complete: I ___ (wait) for the bus when Marta ___ (call).",
+          "answer": "was waiting; called",
+          "why": "Background action plus interrupting event."
+        },
+        {
+          "prompt": "Choose: We discussed / were discussing three points and then agreed the plan.",
+          "answer": "discussed",
+          "why": "Completed sequence."
+        }
+      ],
+      "production": "Write four sentences about a small surprise last weekend, including background, event and result.",
+      "spokenTransfer": "Tell the Professor the story; answer one natural follow-up without restarting.",
+      "retrieval": [
+        "Re-use the contrast in eng-g4."
+      ]
+    },
+    {
+      "id": "eng-g2",
+      "context": "professional",
+      "lesson": "Clarify in meetings",
+      "target": "indirect questions and modal softening",
+      "notice": [
+        "Could you clarify which balance you mean?",
+        "Would you mind explaining how the estimate was prepared?"
+      ],
+      "rule": "After an indirect-question opener, keep statement word order; use modals to make a precise request collaborative, not vague.",
+      "contrast": [
+        "Could you tell me where is the file? → where the file is.",
+        "Why did it change? is direct; Could you explain why it changed? is softened."
+      ],
+      "supported": [
+        {
+          "prompt": "Repair: Could you tell me when was the journal posted?",
+          "answer": "Could you tell me when the journal was posted?",
+          "why": "Indirect clause uses statement order."
+        },
+        {
+          "prompt": "Make collaborative: Explain this difference.",
+          "answer": "Could you explain this difference?",
+          "why": "Modal softening preserves the request."
+        }
+      ],
+      "production": "Write one clarification, one understanding check and one polite interruption for a close meeting.",
+      "spokenTransfer": "Interrupt naturally, clarify one ambiguous number and paraphrase the answer.",
+      "retrieval": [
+        "Return to indirect order in eng-g6."
+      ]
+    },
+    {
+      "id": "eng-g3",
+      "context": "professional",
+      "lesson": "Explain a variance",
+      "target": "cause, evidence and calibrated certainty",
+      "notice": [
+        "The increase was mainly driven by freight costs.",
+        "It may also reflect timing, but that has not been confirmed."
+      ],
+      "rule": "Use because/because of/driven by for supported causes; use may/might/appears to for an explicitly unresolved interpretation.",
+      "contrast": [
+        "because + clause; because of + noun phrase.",
+        "It was caused by X states a conclusion; it may reflect X marks uncertainty."
+      ],
+      "supported": [
+        {
+          "prompt": "Complete: Costs rose ___ higher freight invoices.",
+          "answer": "because of",
+          "why": "A noun phrase follows."
+        },
+        {
+          "prompt": "Make evidence-safe: Timing caused the full variance.",
+          "answer": "Timing may explain part of the variance; it still needs confirmation.",
+          "why": "Do not promote a hypothesis to fact."
+        }
+      ],
+      "production": "Write a four-line variance update: headline, confirmed driver, open uncertainty, next action.",
+      "spokenTransfer": "Give the update, then answer a follow-up about the missing evidence.",
+      "retrieval": [
+        "Reuse certainty language in recommendations."
+      ]
+    },
+    {
+      "id": "eng-g4",
+      "context": "everyday",
+      "lesson": "Recent experience and finished time",
+      "target": "present perfect vs past simple",
+      "notice": [
+        "I've visited Dublin twice.",
+        "I visited Dublin in 2024."
+      ],
+      "rule": "Use present perfect for life experience or an unfinished/relevant period without a finished-time marker; use past simple with a finished time.",
+      "contrast": [
+        "I've seen it yesterday is not standard; I saw it yesterday.",
+        "Have you ever...? asks experience; When did you...? asks finished detail."
+      ],
+      "supported": [
+        {
+          "prompt": "Choose: I have moved / moved here last year.",
+          "answer": "moved",
+          "why": "Last year is finished time."
+        },
+        {
+          "prompt": "Complete: We ___ never ___ (try) that restaurant.",
+          "answer": "have; tried",
+          "why": "Life experience without finished time."
+        }
+      ],
+      "production": "Write two experiences and two follow-up details with finished dates.",
+      "spokenTransfer": "Discuss one experience; switch naturally from Have you ever...? to When did...?",
+      "retrieval": [
+        "Retell one answer using eng-g1 past sequencing."
+      ]
+    }
+  ],
+  "assessmentBoundaries": [
+    "Fixed transformations may be checked locally.",
+    "Free production requires explanation-based review, not exact matching.",
+    "Help requests and self-correction are not deficits.",
+    "Valid UK, Irish and US variants are accepted when they fit the task."
+  ]
+}

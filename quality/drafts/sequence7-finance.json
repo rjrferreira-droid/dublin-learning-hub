@@ -1,0 +1,288 @@
+{
+  "version": "core-written-foundation-1",
+  "status": "full_draft_not_published_to_database",
+  "track": "finance",
+  "roadmapSequence": 7,
+  "slug": "income-tax-current-deferred-reporting",
+  "reviewedOn": "2026-09-14",
+  "module": {
+    "track": "finance",
+    "title": "Income tax accounting: current and deferred tax",
+    "goal": "Explain a temporary-difference movement without confusing expense, liability and payment.",
+    "scope": "IAS 12 foundation with fictional rate and tax bases supplied. Not an Irish tax return, a legal deductibility decision or a complete deferred-tax recognition model. Exceptions, recoverability, OCI/equity allocation and Pillar Two require separate review.",
+    "sections": [
+      {
+        "id": "finance7-s1",
+        "title": "1. Separate the questions",
+        "paragraphs": [
+          "IAS 12 distinguishes current tax from deferred tax. Current tax reflects the amount payable or recoverable for taxable profit under applicable enacted or substantively enacted law. A tax expense in the accounts is not necessarily the cash paid during the period.",
+          "Original close exercise: use three records—tax calculation, accounting movement and payment record. When a manager points to a bank transfer and asks why it differs from expense, trace each record instead of assuming one is wrong. Timing and prior-period balances can explain differences."
+        ],
+        "supportPt": "Separe cálculo fiscal, despesa contábil e pagamento. Os valores não precisam coincidir.",
+        "sourceIds": [
+          "ias12"
+        ]
+      },
+      {
+        "id": "finance7-s2",
+        "title": "2. Build the temporary difference",
+        "paragraphs": [
+          "IAS 12 describes temporary differences as differences between carrying amounts and tax bases, with recognition conditions and exceptions. A tax base is not simply the original invoice cost. Confirm it from the reviewed tax schedule.",
+          "Original asset case: carrying amount 500 and supplied tax base 350 create a taxable temporary difference of 150. Assume recognition is required with no applicable exception and an approved fictional reversal rate of 20%. The deferred tax liability is 30. This is not an Irish rate claim."
+        ],
+        "supportPt": "A diferença é 150; com taxa fictícia de 20%, o passivo é 30. A base fiscal foi fornecida, não inferida.",
+        "sourceIds": [
+          "ias12"
+        ]
+      },
+      {
+        "id": "finance7-s3",
+        "title": "3. Reconcile movement and cash",
+        "paragraphs": [
+          "Original case: the deferred tax liability was 24 and is now 30. Assume its entire movement belongs in profit or loss and there are no other deferred-tax items. Deferred expense is 6. With supplied current tax expense of 44, total tax expense is 50.",
+          "Opening current tax payable 10 plus current tax expense 44 less cash paid 40 gives closing current payable 14. Do not subtract cash paid from the deferred liability, or use total expense 50 in the current-payable bridge. Each bridge has its own contents."
+        ],
+        "supportPt": "Despesa total 50; passivo corrente final 14; passivo diferido 30. Não misture as pontes.",
+        "sourceIds": [
+          "ias12"
+        ]
+      },
+      {
+        "id": "finance7-s4",
+        "title": "4. Challenge unsupported assets",
+        "paragraphs": [
+          "Original challenge: a colleague wants to recognise a deferred tax asset for every forecast loss because it improves net assets. Ask for the applicable recognition assessment and supporting evidence; a favourable accounting outcome is not evidence of recoverability.",
+          "Present the CFO with confirmed balances, assumptions and open judgements. If a tax-law treatment or rate is not supplied, obtain a reviewed source rather than deriving it from the accounting standard. Keep local tax compliance separate from group reporting entries."
+        ],
+        "supportPt": "Benefício contábil não comprova recuperabilidade. Confirme a evidência e a regra antes do reconhecimento.",
+        "sourceIds": [
+          "ias12"
+        ]
+      }
+    ],
+    "terms": [
+      {
+        "term": "Tax base",
+        "meaning": "Amount attributed for tax purposes.",
+        "pt": "base fiscal",
+        "example": "The supplied tax base is 350."
+      },
+      {
+        "term": "Carrying amount",
+        "meaning": "Recognised accounting amount of an asset or liability.",
+        "pt": "valor contábil",
+        "example": "The asset carrying amount is 500."
+      },
+      {
+        "term": "Temporary difference",
+        "meaning": "Difference between carrying amount and tax base.",
+        "pt": "diferença temporária",
+        "example": "The case difference is 150."
+      },
+      {
+        "term": "Current tax",
+        "meaning": "Tax payable or recoverable on taxable profit for the relevant period.",
+        "pt": "tributo corrente",
+        "example": "Current expense is supplied as 44."
+      },
+      {
+        "term": "Deferred tax",
+        "meaning": "Accounting for qualifying future tax effects.",
+        "pt": "tributo diferido",
+        "example": "The liability rises to 30."
+      },
+      {
+        "term": "Recoverability",
+        "meaning": "Support for using a recognised future tax benefit.",
+        "pt": "recuperabilidade",
+        "example": "Forecast losses alone do not prove recoverability."
+      }
+    ],
+    "visual": {
+      "title": "Income tax accounting: current and deferred tax — decision map",
+      "note": "Original fictional exercise; not a live calculation or measured learner result.",
+      "headers": [
+        "Item",
+        "Supplied detail",
+        "Interpretation"
+      ],
+      "rows": [
+        [
+          "Taxable difference",
+          "500 - 350 = 150",
+          "Supplied tax base"
+        ],
+        [
+          "Deferred liability",
+          "150 × 20% = 30",
+          "Fictional rate"
+        ],
+        [
+          "Total tax expense",
+          "44 + 6 = 50",
+          "Current plus deferred"
+        ],
+        [
+          "Current payable",
+          "10 + 44 - 40 = 14",
+          "Separate cash bridge"
+        ]
+      ],
+      "question": "Is the total expense of 50 the cash payment?",
+      "answer": "No. Supplied cash paid is 40; the expense includes a deferred movement."
+    },
+    "caseStudy": {
+      "title": "Income tax accounting: current and deferred tax — applied case",
+      "scenario": [
+        "Asset carrying amount 500; tax base 350; fictional approved reversal rate 20%; no recognition exception in this case.",
+        "Deferred liability opening 24, closing calculated; all movement in profit or loss.",
+        "Current expense 44; opening current payable 10; current tax cash payment 40. No other movements."
+      ],
+      "task": "Reconcile deferred liability, total expense and current payable. Explain why cash paid differs.",
+      "hints": [
+        "First compute the taxable difference and closing deferred liability.",
+        "Keep current and deferred bridges separate."
+      ],
+      "modelAnswer": "Deferred liability is (500 - 350) × 20% = 30. Its increase from 24 is deferred expense 6; total tax expense is 44 + 6 = 50. Current payable closes at 10 + 44 - 40 = 14. Cash paid is 40, not 50; the case includes a deferred expense and a current-payable timing difference.",
+      "reviewChecks": [
+        "Deferred liability 30 and movement 6.",
+        "Total expense 50.",
+        "Current payable 14.",
+        "Fictional rate and recognition assumptions stated."
+      ],
+      "transfer": "If a later case places a movement in OCI or has a recognition exception, do not reuse the all-profit-or-loss assumption."
+    },
+    "checkpoint": [
+      {
+        "id": "finance7-q1",
+        "prompt": "The taxable temporary difference is:",
+        "options": [
+          "150",
+          "500",
+          "350"
+        ],
+        "correctIndex": 0,
+        "explanation": "500 less 350 is 150.",
+        "reviewSection": "finance7-s2"
+      },
+      {
+        "id": "finance7-q2",
+        "prompt": "Total expense in the case is:",
+        "options": [
+          "40",
+          "44",
+          "50"
+        ],
+        "correctIndex": 2,
+        "explanation": "Current 44 plus deferred 6 equals 50.",
+        "reviewSection": "finance7-s3"
+      },
+      {
+        "id": "finance7-q3",
+        "prompt": "Closing current payable is:",
+        "options": [
+          "30",
+          "14",
+          "50"
+        ],
+        "correctIndex": 1,
+        "explanation": "10 + 44 - 40 = 14.",
+        "reviewSection": "finance7-s3"
+      },
+      {
+        "id": "finance7-q4",
+        "prompt": "Is 20% an Irish tax rate asserted here?",
+        "options": [
+          "Yes",
+          "No, it is fictional",
+          "Only for payroll"
+        ],
+        "correctIndex": 1,
+        "explanation": "The case supplies a teaching assumption.",
+        "reviewSection": "finance7-s2"
+      },
+      {
+        "id": "finance7-q5",
+        "prompt": "A forecast loss automatically supports a deferred tax asset:",
+        "options": [
+          "True",
+          "False; recognition conditions and evidence matter",
+          "Only if large"
+        ],
+        "correctIndex": 1,
+        "explanation": "A favourable result is not sufficient evidence.",
+        "reviewSection": "finance7-s4"
+      }
+    ],
+    "practiceExercises": [
+      {
+        "id": "finance7-p1",
+        "question": "Carrying amount 300; supplied tax base 200; fictional rate 15%; assume liability recognition. Calculate it.",
+        "hints": [
+          "Find the difference.",
+          "Apply the supplied rate."
+        ],
+        "answer": "15 = (300 - 200) × 15%.",
+        "explanation": "The input rate is not a jurisdictional tax rule."
+      },
+      {
+        "id": "finance7-p2",
+        "question": "Opening current payable 8; current expense 22; cash paid 19. Find closing payable.",
+        "hints": [
+          "Use only current items.",
+          "Opening + expense - cash."
+        ],
+        "answer": "11 = 8 + 22 - 19.",
+        "explanation": "Deferred tax does not enter this current bridge."
+      },
+      {
+        "id": "finance7-p3",
+        "question": "A forecast loss is used to justify an asset with no supporting recognition review. What is missing?",
+        "hints": [
+          "An attractive result is not support.",
+          "Ask for applicable conditions and evidence."
+        ],
+        "answer": "A documented recognition and recoverability assessment under the applicable rules.",
+        "explanation": "The exercise does not authorise automatic recognition."
+      }
+    ],
+    "sources": [
+      {
+        "id": "ias12",
+        "label": "IFRS Foundation — IAS 12",
+        "url": "https://www.ifrs.org/issued-standards/list-of-standards/ias-12-income-taxes/",
+        "supports": "Current tax, temporary differences, conditional deferred-tax recognition and exceptions. Fictional rates are not Irish tax-law claims.",
+        "reviewedOn": "2026-09-14"
+      }
+    ]
+  },
+  "professorGuide": {
+    "status": "offline_authored_guide_not_live",
+    "opening": "Ask whether tax expense must equal the bank payment.",
+    "whenCorrect": "Ask what additional facts would be needed if the movement belonged partly in OCI.",
+    "whenUncertain": "Ask which supplied fact is missing or unclear. Offer the first case hint, then invite another attempt.",
+    "whenMisconception": "If they use total expense in the current bridge, ask which part is deferred and rebuild the current-only reconciliation.",
+    "whenSelfCorrected": "Use the corrected answer, not the abandoned phrase, as the current response. Ask one transfer question.",
+    "whenAskedForAnswer": "Provide a concise explanation and one worked step; invite an optional fresh attempt without claiming independent mastery.",
+    "evidenceBoundary": "Use only actual session evidence if this guide is separately integrated. Never consume local drafts or checkpoint results. Do not infer pronunciation/acoustic fluency from text, technical mastery from a phrase, or a CEFR level from one task."
+  },
+  "assessmentBoundaries": [
+    "Authored answer keys and guide branches are expectations, not model results or learner evidence.",
+    "Accept supported alternatives and self-correction.",
+    "No local drafts or answers may enter Professor/evaluator payloads.",
+    "No paid provider or database publication is authorized by this draft."
+  ],
+  "publicationGate": "Content QA, server-owned reference integration, exact identity acceptance and separate publication decision remain required.",
+  "fictionalCalculation": {
+    "carrying": 500,
+    "taxBase": 350,
+    "rate": 0.2,
+    "deferredOpening": 24,
+    "deferredClosing": 30,
+    "currentExpense": 44,
+    "totalExpense": 50,
+    "currentOpening": 10,
+    "cash": 40,
+    "currentClosing": 14
+  }
+}

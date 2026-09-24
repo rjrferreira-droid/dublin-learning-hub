@@ -1,0 +1,24 @@
+# Local Professor worker-job wiring — 15 September 2026
+
+Continues green 39672a9981f6cf869fe0e49eca979a127c430279 (full CI 35028919463; disposable platform CI 35028919460). This connects the existing candidate admission to immutable final worker metadata and the durable dispatch fence. Active endpoints, SQL and worker sources are unchanged.
+
+The server-owned admission envelope now includes the actual reservation amount. The local job assembler validates its exact acknowledgement, callback and positive amount, and preserves the complete authored LessonContext under the published worker's field names. It supplies explicit professor profile/track, lesson ID, mode, premium tier, duration, reservation and persistence callback fields, avoiding worker profile fallback. No learner drafts, arbitrary context fields, inferred evidence or session capability are added.
+
+Final worker metadata and its callback destination are captured inside the bytes hashed by the one-shot dispatch claim. Mutating getter results cannot alter those bytes. Secrets are available only through server getters and omitted from ordinary JSON serialization. A payload over 32 KiB fails before claim. This bound assembled payload remains distinct from actual provider delivery.
+
+Only http://127.0.0.1:54321 or http://localhost:54321 with a root path can be a callback origin. Connected projects, nonlocal destinations, credentials, queries and alternative ports are rejected. The local legacy key must structurally declare anon, never service_role; this is a configuration check, not JWT signature authentication. Hosted destination approval and configuration remain separate. No SDK is imported and no LiveKit agent is started.
+
+Verification locally: 520 Node contracts passed. Twenty-one new cases pass exact authored P1 and sequences 3–8 for all three tracks through pure metadata/profile/lesson-guidance functions extracted directly from published source 07d770b53a4f3d6b77c8316541ea8dff6dcf7faf. Two additional cases reject unsafe destinations, privileged keys, invalid private data and oversized metadata. Extraction does not import the worker entry point, read credentials or connect providers; it is selected-function compatibility evidence, not complete live worker acceptance.
+
+The existing written-reference evaluator integration now receives the assembled worker metadata for all 18 later lessons. Its deliberately fictional model output remains unable to invent technical, pronunciation or fluency evidence from a help-only learner turn. All 19 tests in that file passed locally against the exact published evaluator bundle. Existing P1 handler/evaluator checks are retained.
+
+Disposable platform CI sends the same immutable job through real authenticated admission and the service-only durable claim, with one fake submission and real receipt/observation. It checks exact callback origin, session, budget and context, preserving concurrent dedup and lost-response recovery. Matching feature-head full/platform CI are authoritative remote results. All connected writes/provider calls remain zero; fictional budgets and rows are reset before browser checks.
+
+Remaining: reviewed hosted destination/backend and active endpoint mounting, complete live worker/provider acceptance, and real voice/listening quality. PR #3 stays DRAFT, P1 unpublished in connected Supabase, main/V2 excluded, LiveKit nb67ioJmoKBN unchanged.
+
+
+## Additional actual browser recovery acceptance
+
+The same disposable gate now builds a separate browser-only acceptance bundle after the normal application build. It is not imported by the product and is absent from normal Vercel builds. Server-side preparation writes only two public reference receipts to a private temporary file; service keys and callback closures never enter the browser bundle or receipts.
+
+New desktop/mobile browser cases use real disposable Auth and the read-only observation RPC for both accounts. They check owner observation, other-account rejection before data access, late response discard after an epoch change, and logout rejection. The browser blocks nonlocal traffic, provider routes and every Data API operation except the exact observation RPC. Existing authenticated product/catalog/draft-isolation browser cases remain separate and unchanged. This verifies real browser execution of recovery without claiming that recovery is mounted in the hosted product UI.

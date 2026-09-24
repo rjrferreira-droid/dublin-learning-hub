@@ -7,7 +7,7 @@ test('unrelated remote participant is not interpreted as a Professor',()=>assert
 for(const state of ['initializing','idle','listening','thinking','speaking'] as const)test(`display SDK-reported ${state} rather than inventing a state`,()=>assert.equal(observedProfessorState([{attributes:{'lk.agent.state':state}}]),state));
 test('unrecognized state and multiple agents do not falsely claim listening',()=>{assert.equal(observedProfessorState([{attributes:{'lk.agent.state':'future_state'}}]),'state_unavailable');assert.equal(observedProfessorState([{attributes:{'lk.agent.state':'listening'}},{attributes:{'lk.agent.state':'speaking'}}]),'state_unavailable');});
 test('thinking is only a visible response-preparation label',()=>assert.equal(professorVoiceLabel('thinking'),'PREPARING A RESPONSE'));
-test('validation uses at most five minutes; no price or free-use claim',()=>assert.deepEqual(plan(true),{validationMode:true,maxSessionSeconds:300}));
+test('validation uses at most three minutes; no price or free-use claim',()=>assert.deepEqual(plan(true),{validationMode:true,maxSessionSeconds:180}));
 test('validation never exceeds a shorter configured allowance',()=>assert.equal(plan(true,120).maxSessionSeconds,120));
 test('normal sessions preserve existing duration policy',()=>assert.deepEqual(plan(false),{validationMode:false,maxSessionSeconds:1200}));
 test('persisted room and validation flag must agree',()=>assert.throws(()=>voiceValidationPlan({validationMode:false,roomName:'validation:lh-test',budget:{maxSessionSeconds:1200}}),/mismatch/));
