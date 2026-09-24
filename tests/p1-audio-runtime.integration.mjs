@@ -1,5 +1,8 @@
 import test,{mock} from 'node:test';
 import assert from 'node:assert/strict';
+import {silentMp3} from '../supabase/functions/_shared/silent-mp3.ts';
+import {englishEpisodeSource} from '../supabase/functions/_shared/english-episode-source.ts';
+import {createHash} from 'node:crypto';
 const id='11111111-1111-4111-8111-111111111111';
 const moduleId='22222222-2222-4222-8222-222222222222';
 const courseId='33333333-3333-4333-8333-333333333333';
@@ -10,6 +13,7 @@ let state,handler;
 function reset(track='finance',extra={}){
  const month=new Date().toISOString().slice(0,7)+'-01';
  state={track,enabled:true,events:[],tts:[],writes:[],cache:null,claim:'claimed',observe:'miss',
+ storageFiles:new Map(),episodeCueHits:new Map(),
  profile:track==='payroll'?'viviane_payroll':'rafael_finance',
  lesson:{id,module_id:moduleId,slug:slugs[track],is_published:true,title:'Fictional P1',content_version:2,sequence:2,
   manager_commentary_pt:'PRIVATE_MANAGER_COMMENTARY_SENTINEL',technical_brief_pt:'PRIVATE_TECHNICAL_BRIEF_SENTINEL'},
@@ -44,6 +48,53 @@ function query(table){
 }
 const db={auth:{getUser:async()=>({data:{user:{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'}}})},from:query,rpc:async(name,args)=>{
  state.events.push(name);
+ if(name==='english_episode_generation_allowed_v1'){
+  assert.equal(args.p_user_id,'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
+  return {data:state.episodeGenerationEnabled===true,error:state.episodeGateError?{message:'fictional'}:null};
+ }
+ if(name==='observe_english_episode_cache_v1'){
+  state.episodePath=args.p_storage_path;
+  if(state.episodeObserveError)return {data:null,error:{message:'fictional'}};
+  if(state.episodeFinalized||state.episodeObserve==='hit')return {data:{status:'hit',attemptId:state.episodeJobId??attemptId,storagePath:args.p_storage_path},error:null};
+  return {data:{status:state.episodeObserve??'miss'},error:null};
+ }
+ if(name==='start_english_episode_job_v1'){
+  state.episodeJobId=args.p_job_id;state.episodeJob=args;
+  return {data:{allowed:true,state:'staging',jobId:args.p_job_id},error:null};
+ }
+ if(name==='observe_english_episode_cue_v1'){
+  const hit=state.episodeCueHits.get(args.p_cue_index);
+  if(hit)return {data:{status:'hit',attemptId:hit.attemptId,storagePath:hit.storagePath,mediaSha256:hit.mediaSha256},error:null};
+  if(state.episodeUncertain)return {data:{status:'reconciliation_required'},error:null};
+  return {data:{status:'miss'},error:null};
+ }
+ if(name==='begin_english_episode_cue_v1'){
+  if(state.episodeBeginReason)return {data:{allowed:false,reason:state.episodeBeginReason},error:null};
+  state.episodeBegin=args;state.episodeAttemptId=args.p_attempt_id;state.episodeAttemptState='reserved';
+  return {data:{allowed:true,attemptId:args.p_attempt_id,state:'reserved',reservationUsd:args.p_reservation_usd},error:null};
+ }
+ if(name==='mark_english_episode_cue_submitted_v1'){
+  state.episodeAttemptState='submitted';return {data:{allowed:true,state:'submitted'},error:null};
+ }
+ if(name==='settle_english_episode_cue_v1'){
+  assert.match(args.p_media_sha256,/^[a-f0-9]{64}$/);
+  assert.ok(state.storageFiles.has(args.p_storage_path));
+  state.episodeAttemptState='settled';state.episodeReceipt=args;
+  state.episodeCueHits.set(args.p_cue_index,{attemptId:args.p_attempt_id,storagePath:args.p_storage_path,mediaSha256:args.p_media_sha256});
+  return {data:{settled:true,state:'settled',receiptRequestId:`english-episode-cue-v1:${args.p_attempt_id}`},error:null};
+ }
+ if(name==='close_english_episode_cue_attempt_v1'){
+  state.episodeAttemptState=state.episodeAttemptState==='reserved'?'cancelled':'uncertain';
+  state.episodeUncertain=state.episodeAttemptState==='uncertain';
+  return {data:state.episodeAttemptState,error:null};
+ }
+ if(name==='finalize_english_episode_v1'){
+  assert.equal(args.p_storage_path,state.episodePath);assert.match(args.p_media_sha256,/^[a-f0-9]{64}$/);
+  assert.ok(state.storageFiles.has(args.p_storage_path));
+  if(state.episodeFinalizeError)return {data:null,error:{message:'fictional lost final receipt acknowledgement'}};
+  state.episodeFinalized=true;state.episodeFinalReceipt=args;
+  return {data:{settled:true,state:'settled',receiptRequestId:`english-episode-v1:${state.episodeJobId}`},error:null};
+ }
  if(name==='observe_premium_audio_cache_v3'){
   state.observeCalls=(state.observeCalls??0)+1;
   state.v3Binding={sourceFingerprint:args.p_source_fingerprint,storagePath:args.p_storage_path,renderRevision:args.p_render_revision,
@@ -99,7 +150,7 @@ const db={auth:{getUser:async()=>({data:{user:{id:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaa
  if(name==='claim_premium_audio_generation_v1')return {data:state.claim,error:state.claimError?{message:'fictional'}:null};
  if(name==='release_premium_audio_generation_v1')return {data:null,error:null};
  throw new Error('Unexpected RPC');
-},storage:{getBucket:async bucketId=>{state.events.push('storage_bucket');assert.equal(bucketId,'lesson-audio');return {data:state.bucket,error:state.bucketError?{message:'fictional'}:null};},from:()=>({createSignedUrl:async(path,ttl)=>{state.events.push('sign');assert.equal(ttl,3600);return {data:state.signError?null:{signedUrl:'https://fictional.invalid/signed/'+path},error:state.signError?{message:'fictional'}:null};},getPublicUrl:path=>({data:{publicUrl:'https://fictional.invalid/'+path}}),list:async(_folder,options)=>({data:Object.hasOwn(state,'storageListData')?state.storageListData:state.orphan?[{name:options?.search??'commentary-v2.mp3'}]:[],error:state.storageListError?{message:'fictional'}:null}),upload:async(path,_bytes,options)=>{state.events.push('upload');state.uploadPath=path;state.uploadOptions=options;const exact={id:'77777777-7777-4777-8777-777777777777',path,fullPath:`lesson-audio/${path}`};return {data:state.uploadAckPartial?{path}:state.uploadAckMismatch?{...exact,fullPath:'lesson-audio/divergent.mp3'}:state.uploadAckExtra?{...exact,unexpected:true}:exact,error:state.uploadError?{message:'fictional'}:null};}})}};
+},storage:{getBucket:async bucketId=>{state.events.push('storage_bucket');assert.equal(bucketId,'lesson-audio');return {data:state.bucket,error:state.bucketError?{message:'fictional'}:null};},from:()=>({createSignedUrl:async(path,ttl)=>{state.events.push('sign');assert.equal(ttl,3600);return {data:state.signError?null:{signedUrl:'https://fictional.invalid/signed/'+path},error:state.signError?{message:'fictional'}:null};},getPublicUrl:path=>({data:{publicUrl:'https://fictional.invalid/'+path}}),list:async(_folder,options)=>({data:Object.hasOwn(state,'storageListData')?state.storageListData:state.orphan?[{name:options?.search??'commentary-v2.mp3'}]:state.storageFiles.has(_folder+'/'+options?.search)?[{name:options.search}]:[],error:state.storageListError?{message:'fictional'}:null}),download:async(path)=>({data:state.storageFiles.has(path)?new Blob([state.storageFiles.get(path)]):null,error:state.storageFiles.has(path)?null:{message:'fictional object missing'}}),upload:async(path,_bytes,options)=>{state.events.push('upload');state.uploadPath=path;state.uploadBytes=_bytes;state.uploadOptions=options;if(!state.uploadError)state.storageFiles.set(path,_bytes);const exact={id:'77777777-7777-4777-8777-777777777777',path,fullPath:`lesson-audio/${path}`};return {data:state.uploadAckPartial?{path}:state.uploadAckMismatch?{...exact,fullPath:'lesson-audio/divergent.mp3'}:state.uploadAckExtra?{...exact,unexpected:true}:exact,error:state.uploadError?{message:'fictional'}:null};}})}};
 mock.module('@supabase/supabase-js',{namedExports:{createClient:()=>db}});
 globalThis.Deno={env:{get:key=>key==='P1_AUDIO_RUNTIME_STAGE'?(state.stage??(state.enabled?'isolated-preview-atomic-v2':undefined)):key==='SUPABASE_URL'?(state.supabaseUrl??'fictional'):key==='OPENAI_API_KEY'?(state.keyValue??'fictional'):'fictional'},serve:fn=>handler=fn};
 const originalFetch=globalThis.fetch;
@@ -120,6 +171,7 @@ globalThis.fetch=async(url,opts)=>{
  if(state.providerTruncatedId3)return new Response(new Uint8Array([0x49,0x44,0x33,0x04]),{headers:{'Content-Type':'audio/mpeg'}});
  if(state.providerSingleFrame){const truncated=new Uint8Array(4096);truncated.set([0xff,0xfb,0x90,0x64]);return new Response(truncated,{headers:{'Content-Type':'audio/mpeg'}});}
  if(state.providerOversizedHeader)return new Response(new Uint8Array([0x49,0x44,0x33,0x04]),{headers:{'Content-Type':'audio/mpeg','Content-Length':'15728641'}});
+ if(state.track==='english'&&state.requestLessonId?.startsWith('e'))return new Response(silentMp3(1200),{headers:{'Content-Type':'audio/mpeg'}});
  const mp3=new Uint8Array(4096);mp3.set([0x49,0x44,0x33,0x04,0,0,0,0,0,0,0xff,0xfb,0x90,0x64]);mp3.set([0xff,0xfb,0x90,0x64],427);
  return new Response(mp3,{headers:{'Content-Type':'audio/mpeg'}});
 };
@@ -405,22 +457,164 @@ test('authored v3 requires an exact post-settlement binding before signing and n
   assert.equal(state.tts.length,1);assert.equal(state.events.filter(event=>event==='tts').length,1);assert.ok(!state.events.includes('sign'));
  }
 });
-test('reviewed English deep episode sends distinct voices and no production labels to fictional TTS',async()=>{
- const deepId='e1100000-2026-4e11-8e01-000000000001';
- resetV3('english',{requestLessonId:deepId,lesson:{id:deepId,module_id:moduleId,slug:'story-past-forms-rhythm-follow-up',is_published:true,title:'The wrong Riverside',content_version:3,sequence:1}});
- const result=await invoke();assert.equal(result.status,200,JSON.stringify(result.body));
- assert.equal(state.attemptState,'settled');assert.ok(state.tts.length>20);
- assert.ok(state.tts.some(request=>request.voice==='marin'));
- assert.ok(state.tts.some(request=>request.voice==='coral'));
- assert.ok(state.tts.some(request=>request.voice==='onyx'));
- assert.ok(state.tts.every(request=>!/^\s*(?:HOST:|NORA:|SAM:|\[?pause\s+\d+)/i.test(request.input)));
- assert.equal(state.writes.find(write=>write.table==='audio_assets')?.upsert?.voice,'multi-voice-v1');
+const reviewedEnglish={
+ e1:{id:'e1100000-2026-4e11-8e01-000000000001',slug:'preview-deep-story-past-forms-rhythm-follow-up',sequence:101},
+ p1:{id:'e2100000-2026-4e21-8e03-000000000003',slug:'preview-deep-clarify-check-understanding-handle-meetings',sequence:102},
+};
+function resetEnglishEpisode(key='e1',extra={}){
+ const lesson=reviewedEnglish[key];
+ resetV3('english',{supabaseUrl:'https://aazfyosqqeujureksqjs.supabase.co',requestLessonId:lesson.id,lesson:{id:lesson.id,module_id:moduleId,slug:lesson.slug,
+  is_published:true,title:'Fictional reviewed episode',content_version:2,sequence:lesson.sequence},...extra});
+}
+test('reviewed English ordinary playback is cache-only, independent from old single-voice commentary',async()=>{
+ for(const key of Object.keys(reviewedEnglish)){
+  const lesson=reviewedEnglish[key];
+  resetEnglishEpisode(key,{cache:{id:'old-asset',storage_path:`lessons/${lesson.id}/commentary-v2.mp3`,voice:'marin'}});
+  let result=await invoke();assert.equal(result.status,404);assert.equal(result.body.error,'audio_not_generated');
+  assert.equal(state.tts.length,0);assert.ok(!state.events.includes('learning_hub_budget_settings'));
+  assert.ok(!state.events.includes('english_episode_generation_allowed_v1'));
+  assert.ok(!state.events.includes('begin_english_episode_attempt_v1'));assert.ok(!state.events.includes('sign'));
+  resetEnglishEpisode(key,{episodeObserve:'hit',cache:{id:'old-asset',storage_path:`lessons/${lesson.id}/commentary-v2.mp3`,voice:'marin'}});
+  result=await invoke();assert.equal(result.status,200,JSON.stringify(result.body));
+  assert.equal(result.body.cached,true);assert.equal(result.body.voice,'multi-voice-v1');
+  assert.ok(result.body.audio_url.endsWith(state.episodePath));
+  assert.match(state.episodePath,new RegExp(`^lessons/${lesson.id}/episode-v2-[a-f0-9]{64}-r1\\.mp3$`));
+  assert.equal(state.tts.length,0);assert.ok(!state.events.includes('learning_hub_budget_settings'));
+ }
 });
-test('older single-voice English cache is withheld without spending or signing',async()=>{
- const deepId='e1100000-2026-4e11-8e01-000000000001';
- resetV3('english',{requestLessonId:deepId,lesson:{id:deepId,module_id:moduleId,slug:'story-past-forms-rhythm-follow-up',is_published:true,title:'The wrong Riverside',content_version:2,sequence:1},
-  cache:{id:'55555555-5555-4555-8555-555555555555',storage_path:`lessons/${deepId}/commentary-v2.mp3`,voice:'marin'}});
- const result=await invoke();assert.equal(result.status,409);assert.equal(result.body.error,'audio_render_outdated');
- assert.equal(state.tts.length,0);assert.ok(!state.events.includes('sign'));assert.ok(!state.events.includes('begin_premium_audio_attempt_v2'));
+test('reviewed English plan is read-only and a cue cannot spend unless the DB gate opens',async()=>{
+ resetEnglishEpisode();
+ const plan=await invoke({action:'review_english_episode_plan'});
+ assert.equal(plan.status,200);assert.equal(plan.body.status,'plan');assert.equal(plan.body.total,32);
+ assert.equal(state.tts.length,0);assert.ok(!state.events.includes('english_episode_generation_allowed_v1'));
+ const result=await invoke({action:'generate_reviewed_english_cue',cue_index:plan.body.next_cue_index});
+ assert.equal(result.status,403);assert.equal(result.body.error,'english_episode_generation_closed');
+ assert.equal(state.tts.length,0);assert.ok(!state.events.includes('learning_hub_budget_settings'));
+ assert.ok(state.events.includes('english_episode_generation_allowed_v1'));
+ const obsolete=await invoke({action:'generate_reviewed_english_episode'});
+ assert.equal(obsolete.status,404);assert.equal(state.tts.length,0);
+});
+const authoredEpisode=key=>{const lesson=reviewedEnglish[key];return englishEpisodeSource({lessonId:lesson.id,lessonSlug:lesson.slug,
+ sequence:lesson.sequence,contentVersion:2,moduleId,courseId,profileTrack:'rafael_finance',courseTrack:'english_academy'});};
+test('one reviewed English action pays at most one character turn and persists a source-bound cue receipt',async()=>{
+ for(const key of Object.keys(reviewedEnglish)){
+  resetEnglishEpisode(key,{episodeGenerationEnabled:true});
+  const source=authoredEpisode(key);
+  const first=source.cuePlan[0];
+  const result=await invoke({action:'generate_reviewed_english_cue',cue_index:first.cueIndex});
+  assert.equal(result.status,200,JSON.stringify(result.body));
+  assert.equal(result.body.status,'cue_complete');assert.equal(result.body.total,source.cuePlan.length);
+  assert.equal(result.body.next_cue_index,source.cuePlan[1].cueIndex);
+  assert.equal(state.episodeAttemptState,'settled');assert.equal(state.tts.length,1);
+  assert.equal(state.tts[0].voice,source.renderCues[first.cueIndex].voice);
+  assert.ok(!/(?:\bhost\b|\bpause\b|^\s*[A-Z]+\s*:)/i.test(state.tts[0].input));
+  assert.equal(state.episodeJob.p_source_fingerprint,source.sourceFingerprint);
+  assert.equal(state.episodeBegin.p_storage_path,first.cuePath);
+  assert.ok(state.episodeBegin.p_reservation_usd>=state.episodeReceipt.p_estimated_cost_usd);
+  assert.equal(state.episodeReceipt.p_media_sha256.length,64);
+  assert.equal(state.writes.length,0);
+  assert.ok(state.events.indexOf('mark_english_episode_cue_submitted_v1')<state.events.indexOf('tts'));
+  assert.ok(state.events.indexOf('tts')<state.events.indexOf('settle_english_episode_cue_v1'));
+  const replay=await invoke({action:'generate_reviewed_english_cue',cue_index:first.cueIndex});
+  assert.equal(replay.status,200);assert.equal(replay.body.cached,true);assert.equal(state.tts.length,1);
+ }
+});
+test('the private activation cap stops a cue before provider submission',async()=>{
+ resetEnglishEpisode('e1',{episodeGenerationEnabled:true,episodeBeginReason:'english_episode_activation_cap_reached'});
+ const cueIndex=authoredEpisode('e1').cuePlan[0].cueIndex;
+ const result=await invoke({action:'generate_reviewed_english_cue',cue_index:cueIndex});
+ assert.equal(result.status,429);assert.equal(result.body.error,'english_episode_activation_cap_reached');
+ assert.equal(state.tts.length,0);assert.ok(!state.events.includes('mark_english_episode_cue_submitted_v1'));
+});
+test('all settled English cues compose distinct voices and real pauses, then become a signed cache hit',async()=>{
+ for(const key of Object.keys(reviewedEnglish)){
+  resetEnglishEpisode(key,{episodeGenerationEnabled:true});const source=authoredEpisode(key);
+  let next=source.cuePlan[0].cueIndex;
+  while(next!==null){
+   const prior=state.tts.length;
+   const result=await invoke({action:'generate_reviewed_english_cue',cue_index:next});
+   assert.equal(result.status,200,JSON.stringify(result.body));
+   assert.equal(state.tts.length,prior+1);
+   next=result.body.next_cue_index;
+  }
+  assert.equal(state.tts.length,source.cuePlan.length);
+  assert.ok(state.tts.some(request=>request.voice==='marin'));
+  assert.ok(state.tts.some(request=>request.voice==='coral'));
+  assert.ok(state.tts.some(request=>request.voice==='onyx'));
+  assert.equal(state.episodeCueHits.size,source.cuePlan.length);
+  let playback=await invoke();assert.equal(playback.status,404);
+  const result=await invoke({action:'finalize_reviewed_english_episode'});
+  assert.equal(result.status,200,JSON.stringify(result.body));assert.equal(result.body.status,'finalized');
+  assert.match(result.body.audio_url,/\/signed\//);
+  assert.match(state.uploadPath,new RegExp(`^lessons/${reviewedEnglish[key].id}/episode-v2-[a-f0-9]{64}-r1\\.mp3$`));
+  assert.equal(state.episodeFinalReceipt.p_media_sha256,createHash('sha256').update(state.uploadBytes).digest('hex'));
+  assert.equal(state.writes.length,0);assert.equal(state.tts.length,source.cuePlan.length);
+  playback=await invoke();assert.equal(playback.status,200);assert.equal(playback.body.cached,true);
+  assert.equal(state.tts.length,source.cuePlan.length);
+ }
+});
+test('finalization resumes after immutable object upload and verifies exact bytes',async()=>{
+ resetEnglishEpisode('p1',{episodeGenerationEnabled:true});const source=authoredEpisode('p1');
+ for(const cue of source.cuePlan){const result=await invoke({action:'generate_reviewed_english_cue',cue_index:cue.cueIndex});assert.equal(result.status,200,JSON.stringify(result.body));}
+ state.episodeFinalizeError=true;
+ let result=await invoke({action:'finalize_reviewed_english_episode'});
+ assert.equal(result.status,409);assert.equal(state.episodeFinalized,undefined);
+ const paid=state.tts.length,uploaded=state.storageFiles.get(source.storagePath);
+ state.episodeFinalizeError=false;
+ result=await invoke({action:'finalize_reviewed_english_episode'});
+ assert.equal(result.status,200,JSON.stringify(result.body));assert.equal(state.tts.length,paid);
+ assert.deepEqual(state.storageFiles.get(source.storagePath),uploaded);
+});
+test('changed final object bytes fail reconciliation without overwriting or paying again',async()=>{
+ resetEnglishEpisode('p1',{episodeGenerationEnabled:true});const source=authoredEpisode('p1');
+ for(const cue of source.cuePlan){const result=await invoke({action:'generate_reviewed_english_cue',cue_index:cue.cueIndex});assert.equal(result.status,200);}
+ state.episodeFinalizeError=true;
+ await invoke({action:'finalize_reviewed_english_episode'});
+ const modified=state.storageFiles.get(source.storagePath).slice();modified[modified.length-1]^=1;
+ state.storageFiles.set(source.storagePath,modified);state.episodeFinalizeError=false;
+ const paid=state.tts.length;
+ const result=await invoke({action:'finalize_reviewed_english_episode'});
+ assert.equal(result.status,409);assert.equal(result.body.error,'audio_reconciliation_required');
+ assert.equal(state.tts.length,paid);assert.equal(state.episodeFinalized,undefined);
+ assert.deepEqual(state.storageFiles.get(source.storagePath),modified);
+});
+test('uncertain paid cue cannot be rerun and finalization requires all receipts',async()=>{
+ resetEnglishEpisode('e1',{episodeGenerationEnabled:true,providerError:true});const source=authoredEpisode('e1');
+ const first=source.cuePlan[0];
+ const records=[];const logger=mock.method(console,'error',record=>records.push(record));
+ try{
+  const result=await invoke({action:'generate_reviewed_english_cue',cue_index:first.cueIndex});
+  assert.equal(result.status,503);assert.equal(result.body.error,'tts_failed');
+  assert.equal(state.episodeAttemptState,'uncertain');assert.equal(state.tts.length,1);
+  assert.equal(records.length,1);assert.ok(!records[0].includes(first.cuePath));
+  state.providerError=false;
+  const retry=await invoke({action:'generate_reviewed_english_cue',cue_index:first.cueIndex});
+  assert.equal(retry.status,409);assert.equal(retry.body.error,'audio_reconciliation_required');
+  assert.equal(state.tts.length,1);
+  const final=await invoke({action:'finalize_reviewed_english_episode'});
+  assert.equal(final.status,503);assert.equal(final.body.error,'english_episode_cues_incomplete');
+ }finally{logger.mock.restore();}
+});
+test('deep English never falls into legacy v2 generation or old commentary cache',async()=>{
+ resetEnglishEpisode('e1',{stage:'isolated-preview-atomic-v2',cache:{id:'old',storage_path:`lessons/${reviewedEnglish.e1.id}/commentary-v2.mp3`,voice:'marin'}});
+ const result=await invoke();assert.equal(result.status,404);assert.equal(result.body.error,'audio_not_generated');
+ assert.equal(state.tts.length,0);assert.ok(!state.events.includes('begin_premium_audio_attempt_v2'));
+});
+test('unknown nonclosed legacy stage still serves reviewed private cache and cannot pay without the DB gate',async()=>{
+ resetEnglishEpisode('e1',{stage:'other',episodeObserve:'hit'});
+ let result=await invoke();assert.equal(result.status,200);assert.match(result.body.audio_url,/\/signed\//);
+ assert.equal(state.tts.length,0);assert.ok(!state.events.includes('english_episode_generation_allowed_v1'));
+ resetEnglishEpisode('e1',{stage:'other'});
+ result=await invoke({action:'generate_reviewed_english_cue',cue_index:0});
+ assert.equal(result.status,403);assert.equal(result.body.error,'english_episode_generation_closed');
+ assert.equal(state.tts.length,0);
+});
+test('reviewed English cannot read cache outside isolated Preview or explicit closed runtime',async()=>{
+ resetEnglishEpisode('e1',{supabaseUrl:'https://production.invalid',episodeObserve:'hit'});
+ let result=await invoke();assert.equal(result.status,403);assert.equal(result.body.error,'english_episode_preview_only');
+ assert.equal(state.tts.length,0);assert.ok(!state.events.includes('storage_bucket'));
+ resetEnglishEpisode('e1',{stage:'closed',episodeObserve:'hit'});
+ result=await invoke();assert.equal(result.status,503);assert.equal(result.body.error,'audio_runtime_closed');
+ assert.equal(state.tts.length,0);assert.ok(!state.events.includes('storage_bucket'));
 });
 test.after(()=>{globalThis.fetch=originalFetch;delete globalThis.Deno;mock.restoreAll();});

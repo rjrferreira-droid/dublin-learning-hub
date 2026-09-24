@@ -14,7 +14,8 @@ import {createHash} from 'node:crypto';
 import {goldenAudioTrack} from '../../../src/learning/goldenAudioRegistry.ts';
 import {lessonModuleFor} from '../../../src/learning/lessonModules.ts';
 import {deepAudioSource} from '../../../src/learning/deepInteractiveRegistry.ts';
-import {silentMp3} from '../_shared/silent-mp3.ts';
+import {englishEpisodeSource} from '../_shared/english-episode-source.ts';
+import {serveEnglishEpisodeAction} from '../_shared/english-episode-flow.ts';
 
 type AudioFailurePhase='transport'|'http'|'media_type'|'media_validation';
 /** Metadata only. Never retain provider bodies, credentials or narrated text. */
@@ -172,14 +173,18 @@ Deno.serve(async(req:Request)=>{
   }
   const lessonId=String(body.lesson_id??"");
   if(!lessonId)return json({error:"lesson_id_required"},400);
+  const deepSource=deepAudioSource(lessonId);
+  const reviewedEnglish=deepSource?.track==='english_academy'&&!!deepSource.cues?.length;
   // Explicit deployment stop: authenticated requests cannot touch data, Storage,
   // reservations or providers while the initial closed artifact is validated.
   if(audioRuntimeStage==='closed')return json({error:'audio_runtime_closed'},503);
+  if(reviewedEnglish&&supabaseUrl!=='https://aazfyosqqeujureksqjs.supabase.co')
+    return json({error:'english_episode_preview_only'},403);
   const admin=createClient(supabaseUrl,serviceKey);
   // Authored v3 must never generate or sign while the bucket still has public
   // object delivery. This supported Admin API check is fresh on every request
   // and happens before cache, budget, reservation or provider work.
-  if(audioRuntimeStage==='isolated-preview-authored-v3'){
+  if(audioRuntimeStage==='isolated-preview-authored-v3'||reviewedEnglish){
     try{
       const bucket=await admin.storage.getBucket('lesson-audio');
       if(bucket.error||!isExactPrivatePremiumAudioBucket(bucket.data))
@@ -187,7 +192,7 @@ Deno.serve(async(req:Request)=>{
     }catch{return json({error:'audio_v3_storage_not_private'},503);}
   }
   const audioReply=async(path:string,payload:Record<string,unknown>)=>{
-    if(audioRuntimeStage==='isolated-preview-atomic-v2'||audioRuntimeStage==='isolated-preview-authored-v3'){
+    if(reviewedEnglish||audioRuntimeStage==='isolated-preview-atomic-v2'||audioRuntimeStage==='isolated-preview-authored-v3'){
       try{
         const expiresAt=Date.now()+3600_000;
         const {data,error}=await admin.storage.from('lesson-audio').createSignedUrl(path,3600);
@@ -210,7 +215,7 @@ Deno.serve(async(req:Request)=>{
 
   const {data:profile}=await admin.from("profiles").select("learner_track").eq("id",user.id).single();
   // A dynamic projection is validated below before any admission or provider work.
-  const lessonSelection:string=audioRuntimeStage==='isolated-preview-authored-v3'
+  const lessonSelection:string=audioRuntimeStage==='isolated-preview-authored-v3'||reviewedEnglish
     ?'id,module_id,slug,is_published,title,content_version,sequence'
     :'id,module_id,slug,is_published,title,manager_commentary_pt,technical_brief_pt,content_version';
   const {data:lesson}=await admin.from("lessons").select(lessonSelection).eq("id",lessonId).eq("is_published",true).single<AudioLessonRow>();
@@ -221,19 +226,51 @@ Deno.serve(async(req:Request)=>{
   const isP1=[p1SlugFor('finance'),p1SlugFor('payroll'),p1SlugFor('english')].includes(lesson.slug);
   const originalTrack=goldenAudioTrack({lessonId:lesson.id,lessonSlug:lesson.slug,
     requestedTrack:course.learner_track,sequence:lesson.sequence});
-  const deepSource=deepAudioSource(lessonId);
   const p1Input={profileTrack:profile.learner_track,requestedTrack:course.learner_track,requestedLessonId:lessonId,resolvedLesson:{id:lesson.id,slug:lesson.slug,learnerTrack:course.learner_track,isPublished:lesson.is_published,contentVersion:lesson.content_version}};
   if(isP1){
     // Deliberately unset in the real backend. Requires a separately reviewed isolated backend deployment.
     if(audioRuntimeStage!=='isolated-preview-atomic-v2'&&audioRuntimeStage!=='isolated-preview-authored-v3')return json({error:'p1_audio_runtime_unavailable'},403);
     try{p1AudioIdentity(p1Input);}catch{return json({error:'forbidden'},403);}
-  }else if(audioRuntimeStage==='isolated-preview-authored-v3'){
+  }else if(audioRuntimeStage==='isolated-preview-authored-v3'||reviewedEnglish){
     const reviewedDeep=deepSource&&profile.learner_track==='rafael_finance'&&course.learner_track===deepSource.track;
     if(!reviewedDeep&&(!originalTrack||!['rafael_finance','viviane_payroll'].includes(profile.learner_track)
       ||(originalTrack!=='english'&&course.learner_track!==profile.learner_track)))return json({error:'forbidden'},403);
   }else{
     const goldenIds:Record<string,string>={rafael_finance:'b3639582-3c32-4147-a4b3-84237d11a66e',viviane_payroll:'6ffda415-3b18-46ab-afaa-414f81a7eb31'};
     if(course.learner_track!==profile.learner_track||goldenIds[course.learner_track]!==lessonId)return json({error:"forbidden"},403);
+  }
+
+  // The two reviewed English episodes have their own immutable asset and
+  // source-bound admission. A normal Load audio call can only play a settled
+  // cache; it can never dispatch the many paid character turns on a miss.
+  if(reviewedEnglish&&deepSource?.cues?.length){
+    let authored;
+    try{authored=englishEpisodeSource({lessonId,lessonSlug:lesson.slug,sequence:Number(lesson.sequence),
+      contentVersion:lesson.content_version,moduleId:mod.id,courseId:course.id,
+      profileTrack:profile.learner_track,courseTrack:course.learner_track});}
+    catch{return json({error:'english_episode_source_invalid'},409);}
+    const exactKeys=(value:unknown,keys:readonly string[])=>value!==null&&typeof value==='object'&&!Array.isArray(value)
+      &&Object.keys(value).length===keys.length&&keys.every(key=>Object.hasOwn(value,key));
+    const observerArgs={p_user_id:user.id,p_lesson_id:lessonId,p_content_version:authored.identity.contentVersion,
+      p_source_fingerprint:authored.sourceFingerprint,p_render_revision:authored.renderRevision,
+      p_storage_path:authored.storagePath,p_lesson_identity:authored.identity};
+    const exactHit=(value:unknown,attemptId?:string)=>exactKeys(value,['status','attemptId','storagePath'])
+      &&(value as any).status==='hit'&&(value as any).storagePath===authored.storagePath
+      &&typeof (value as any).attemptId==='string'
+      &&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test((value as any).attemptId)
+      &&(!attemptId||(value as any).attemptId===attemptId);
+    const observe=async()=>admin.rpc('observe_english_episode_cache_v1',observerArgs);
+    const observed=await observe();
+    if(observed.error)return json({error:'english_episode_cache_unavailable'},503);
+    if((observed.data as any)?.status==='hit'){
+      if(!exactHit(observed.data))return json({error:'audio_reconciliation_required'},409);
+      return audioReply(authored.storagePath,{cached:true,voice:'multi-voice-v1',source_fingerprint:authored.sourceFingerprint,
+        render_revision:authored.renderRevision,purpose:'english-listening-episode'});
+    }
+    if(exactKeys(observed.data,['status'])&&(observed.data as any).status==='in_progress')return json({error:'audio_generation_in_progress'},409);
+    if(!exactKeys(observed.data,['status'])||(observed.data as any).status!=='miss')return json({error:'audio_reconciliation_required'},409);
+    return serveEnglishEpisodeAction({admin,body,userId:user.id,lessonId,source:authored,openaiKey,
+      maxBytes:MAX_PREMIUM_AUDIO_BYTES,json,audioReply,readMp3:readBoundedPremiumMp3});
   }
 
   if(audioRuntimeStage==='isolated-preview-authored-v3'&&!deepSource){
@@ -440,6 +477,11 @@ Deno.serve(async(req:Request)=>{
     }
   }
 
+  // Legacy v2 has no immutable per-cue fingerprint and can collide with the
+  // existing single-voice commentary asset. Never render E1/P1 through it.
+  if(deepSource?.track==='english_academy'&&deepSource.cues?.length)
+    return json({error:'english_episode_v3_required'},503);
+
   const version=Number(lesson.content_version??1);
   if(!Number.isSafeInteger(version)||version<1||version>100000)return json({error:'audio_source_changed'},409);
   const expectedPath=`lessons/${lessonId}/commentary-v${version}.mp3`;
@@ -528,18 +570,16 @@ Deno.serve(async(req:Request)=>{
             const workers=Array.from({length:Math.min(3,cues.filter(cue=>cue.kind==='speech').length)},async()=>{
               while(next<cues.length){
                 const position=next++,cue=cues[position];
-                if(cue.kind==='silence'){rendered[position]=silentMp3(cue.durationMs);continue;}
+                if(cue.kind==='silence'){rendered[position]=new Uint8Array();continue;}
                 const response=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',signal:AbortSignal.timeout(90000),headers:{Authorization:`Bearer ${openaiKey}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini-tts',voice:cue.voice,input:cue.text,instructions:'Speak naturally in English. Follow the authored character and meaning without reading labels or production directions.',response_format:'mp3',speed:0.98})});
                 if(!response.ok){await response.body?.cancel().catch(()=>undefined);throw new Error('tts_failed');}
                 rendered[position]=await readBoundedPremiumMp3(response,512);
               }
             });
             await Promise.all(workers);
-            const total=rendered.reduce((sum,bytes)=>sum+bytes.byteLength,0);
-            if(total>MAX_PREMIUM_AUDIO_BYTES)throw new Error('tts_failed');
-            const complete=new Uint8Array(total);let offset=0;
-            for(const bytes of rendered){complete.set(bytes,offset);offset+=bytes.byteLength;}
-            return complete;
+            return composeMp3Cues(cues.map((cue,index)=>cue.kind==='silence'
+              ?{kind:'silence',durationMs:cue.durationMs}
+              :{kind:'speech',bytes:rendered[index]}),MAX_PREMIUM_AUDIO_BYTES);
           }
           const chunks=deepSource?.chunks??[script];const rendered:Uint8Array[]=[];let total=0;
           for(const input of chunks){

@@ -23,6 +23,11 @@
 .audio-record-actions audio{max-width:100%;height:38px}
 .audio-record-time{margin-left:auto;color:#667890;font-size:13px}
 .audio-answer-error{color:#a7253d;font-size:13px;margin:10px 0 0}
+.audio-question-feedback{margin-top:14px;border-top:1px solid #dce6f3;padding-top:13px;color:#315071;font-size:13px;line-height:1.55}
+.audio-question-feedback>strong{color:#173859}
+.audio-question-feedback p{margin:6px 0}
+.audio-question-feedback details{background:#fff;border:1px solid #dce6f3;border-radius:9px;margin-top:10px;padding:10px 12px}
+.audio-question-feedback summary{cursor:pointer;color:#245393;font-weight:700}
 .audio-answer-review{background:#f3f7fc;border:1px solid #d5e3f5;border-radius:15px;padding:23px;margin-top:24px}
 .audio-summary-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .audio-summary-kicker{color:#b3213c;font-size:11px;font-weight:800;letter-spacing:.08em}
@@ -32,6 +37,10 @@
 .audio-skill{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #dce6f3;padding:8px 0;color:#23456c;font-size:13px}
 .audio-skill strong{white-space:nowrap;color:#60738a;font-weight:600}
 .audio-answer-review .audio-summary-note{font-size:12px;margin:18px 0 0;color:#60738a}
+.audio-assessment-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:18px}
+.lesson-study-panel .audio-assessment-actions button{border:0;border-radius:9px;background:#183d72;color:#fff;padding:11px 16px;font-size:13px;font-weight:750;cursor:pointer}
+.lesson-study-panel .audio-assessment-actions button:disabled{background:#dce5f2;color:#526982;cursor:not-allowed}
+.audio-assessment-actions small{color:#60738a;line-height:1.5}
 .audio-answer-review details{border:1px solid #dce6f3;border-radius:10px;background:white;margin:16px 0 0}
 .audio-answer-review summary{padding:14px;color:#245393;font-weight:700;cursor:pointer}
 .audio-answer-review article{padding:12px 16px;border-top:1px solid #e5ebf3}

@@ -99,13 +99,13 @@ test('unbound Error Bank positions are concrete diagnostic substitutes, never dy
 
 test('Speaking covers chunks, stress, linking, shadowing and transfer without a fake acoustic score',()=>{
  assert.equal(DEEP_ENGLISH_UNIT_1.speaking.attemptsPerPrompt,3);
- assert.equal(DEEP_ENGLISH_UNIT_1.speaking.recordingPolicy.audio,'discard-after-feedback');
+ assert.equal(DEEP_ENGLISH_UNIT_1.speaking.recordingPolicy.audio,'local-until-lesson-close');
  assert.match(DEEP_ENGLISH_UNIT_1.speaking.recordingPolicy.transcript,/ephemeral/);
  assert.deepEqual(new Set(DEEP_ENGLISH_UNIT_1.speaking.activities.map(item=>item.kind)),new Set(['chunking','stress','connected-speech','shadowing','transfer']));
  assert.ok(DEEP_ENGLISH_UNIT_1.speaking.activities.every(item=>item.chunks.length&&item.stress.length&&item.coachChecks.length));
  assert.ok(DEEP_ENGLISH_UNIT_1.speaking.scorePolicy.prohibited.some(rule=>/pronunciation percentage/i.test(rule)));
  assert.equal(DEEP_ENGLISH_UNIT_1_CONTRACT.english?.speaking.acousticScore,false);
- assert.equal(DEEP_ENGLISH_UNIT_1_CONTRACT.english?.speaking.recordingRetention,'discard-after-feedback');
+ assert.equal(DEEP_ENGLISH_UNIT_1_CONTRACT.english?.speaking.recordingRetention,'local-until-lesson-close');
 });
 
 test('the shared deep quality gate substantiates the 55-minute model and item-level completion',()=>{

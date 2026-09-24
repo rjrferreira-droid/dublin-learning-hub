@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { isFeatureEnabled } from '../config/features';
 import {invokeEdge} from '../services/edge';
 import { normalizePremiumAudioError, premiumAudioService, type PremiumAudioError, type PremiumAudioResult } from '../services/premiumAudio';
@@ -18,6 +18,58 @@ export function PremiumAudioPanel({ lessonId, lessonTitle, reviewedVoicesPending
   const [error, setError] = useState<PremiumAudioError | null>(null);
   const [connection, setConnection] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
+  const [preparing, setPreparing] = useState(false);
+  const [preparationProgress, setPreparationProgress] = useState<string | null>(null);
+  const [preparationError, setPreparationError] = useState<string | null>(null);
+  const preparationRunning = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+
+  // Operator-only Preview control. Each request can pay for at most one cue;
+  // a fresh click reads the server's durable plan and resumes after a stop.
+  async function prepareReviewedEpisode() {
+    if (!lessonId || preparationRunning.current) return;
+    preparationRunning.current = true;
+    setPreparing(true); setPreparationError(null);
+    try {
+      type Plan = { status: 'plan'; total: number; next_cue_index: number | null };
+      type Step = { status: 'cue_complete'; cue_index: number; total: number; next_cue_index: number | null; cached: boolean };
+      const plan = await invokeEdge<Plan, { lesson_id: string; action: string }>('premium-lesson-audio',
+        { lesson_id: lessonId, action: 'review_english_episode_plan' });
+      if (plan.status !== 'plan' || !Number.isSafeInteger(plan.total) || plan.total < 1 || plan.total > 64)
+        throw new Error('The episode plan could not be verified.');
+      let next = plan.next_cue_index;
+      let completed = 0;
+      while (next !== null) {
+        if (!mounted.current) return;
+        if (!Number.isSafeInteger(next) || next < 0 || next > 128 || completed >= plan.total)
+          throw new Error('The episode cue sequence changed.');
+        setPreparationProgress(`Preparing voice cue ${completed + 1} of ${plan.total}…`);
+        const step = await invokeEdge<Step, { lesson_id: string; action: string; cue_index: number }>('premium-lesson-audio',
+          { lesson_id: lessonId, action: 'generate_reviewed_english_cue', cue_index: next });
+        if (step.status !== 'cue_complete' || step.cue_index !== next || step.total !== plan.total
+          || (step.next_cue_index !== null && (!Number.isSafeInteger(step.next_cue_index) || step.next_cue_index <= next)))
+          throw new Error('The cue receipt could not be verified.');
+        next = step.next_cue_index;
+        completed += 1;
+      }
+      if (!mounted.current) return;
+      setPreparationProgress('Joining the voices and pauses…');
+      const result = await invokeEdge<{status:'finalized';audio_url:string;cached?:boolean;estimated_cost_usd?:number;expires_at?:number}, { lesson_id: string; action: string }>('premium-lesson-audio',
+        { lesson_id: lessonId, action: 'finalize_reviewed_english_episode' });
+      if (!result.audio_url || result.status !== 'finalized') throw new Error('The final audio receipt could not be verified.');
+      if (mounted.current) {
+        setAudio({audioUrl: result.audio_url, cached: Boolean(result.cached), estimatedCostUsd: result.estimated_cost_usd,
+          expiresAt: result.expires_at});
+        setPreparationProgress('Reviewed episode ready. Play it below to check every voice and pause.');
+      }
+    } catch (cause) {
+      if (mounted.current) setPreparationError(cause instanceof Error ? cause.message : 'Preparation stopped. Check the last cue before resuming.');
+    } finally {
+      preparationRunning.current = false;
+      if (mounted.current) setPreparing(false);
+    }
+  }
 
   async function checkConnection(){
     if(checking)return;
@@ -92,6 +144,18 @@ export function PremiumAudioPanel({ lessonId, lessonTitle, reviewedVoicesPending
               {loading ? 'Loading…' : runtimeClosed ? 'Not activated yet' : 'Load audio'}
             </button>
           )}
+        </div>
+      )}
+
+      {reviewedVoicesPending && lessonId && new URLSearchParams(window.location.search).get('previewCheck') === '1' && (
+        <div className="callout" data-testid="english-episode-operator">
+          <strong>Preview audio review</strong>
+          <span>Each step prepares one character cue. If preparation stops, the next click reads the saved progress.</span>
+          <button className="secondary-btn" type="button" onClick={() => void prepareReviewedEpisode()} disabled={preparing}>
+            {preparing ? 'Preparing reviewed episode…' : 'Prepare or resume reviewed episode'}
+          </button>
+          {preparationProgress && <p role="status">{preparationProgress}</p>}
+          {preparationError && <p role="alert">{preparationError}</p>}
         </div>
       )}
 

@@ -117,7 +117,7 @@ export type DeepEnglishUnit={
  speaking:{
   goal:string;
   attemptsPerPrompt:3;
-  recordingPolicy:{audio:'discard-after-feedback';transcript:'ephemeral-unless-learner-explicitly-saves-text';retained:readonly string[]};
+  recordingPolicy:{audio:'local-until-lesson-close';transcript:'ephemeral-unless-learner-explicitly-saves-text';retained:readonly string[]};
   scorePolicy:{allowed:readonly string[];prohibited:readonly string[]};
   activities:readonly {
    id:string;kind:'chunking'|'stress'|'connected-speech'|'shadowing'|'transfer';
@@ -254,7 +254,7 @@ const audioSegments:DeepEnglishUnit['audio']['segments']=[
    {voice:'Nora',text:'Last Thursday evening, I was heading to a photography exhibition at a community centre I had never visited before. A colleague had sent me the poster earlier in the week, and I had saved the address on my phone. I left work with plenty of time, or at least I thought I did.'},
    {voice:'Nora',text:'When I got off the bus, the rain was getting heavier and my map seemed to be sending me down a quiet residential street. I kept walking because the blue dot was moving in the right general direction. After about five minutes, though, I reached a row of houses and realised there was no community centre anywhere nearby.'},
    {voice:'Nora',text:'I was standing under a tree, trying to keep the rain off my screen, when a man who was walking his dog asked if I needed help. I explained that I was looking for the Riverside Community Centre. He smiled and said, “You are close, but the river is behind you.” It turned out that I had selected Riverside Court, the housing estate, instead of Riverside Community Centre.'},
-   {voice:'Sam',text:'The man introduced himself as Sam. He had lived in the area for years, so he knew a shortcut through a small park. He was going in roughly the same direction and offered to show me the first part of the route. As we walked, he asked what was happening at the centre.'},
+   {voice:'Nora',text:'The man introduced himself as Sam. He had lived in the area for years, so he knew a shortcut through a small park. He was going in roughly the same direction and offered to show me the first part of the route. As we walked, he asked what was happening at the centre.'},
    {voice:'Nora',text:'I told him about the exhibition. It featured photographs taken by people who had recently moved to the city. Sam said his daughter was interested in photography, but they had not heard about the event. I sent him the public event link, and he said they might visit at the weekend.'},
    {voice:'Nora',text:'A few minutes later, we reached the park gate. Sam pointed to a building with a bright mural and told me to take the second entrance. I thanked him and hurried across the park. The talk had already started when I arrived, but I only missed the introduction.'},
    {voice:'Nora',text:'During the break, I mentioned the wrong turn to one of the organisers. She laughed and said that several visitors had made the same mistake because the two places had similar names. She added a clearer landmark to the event page while we were talking.'},
@@ -265,7 +265,7 @@ const audioSegments:DeepEnglishUnit['audio']['segments']=[
  {
   id:'e1-audio-comprehension',label:'Retrieval before the second listen',phase:'comprehension',lines:[
    {voice:'host',text:'Check the overall shape, not every detail. Nora was trying to reach a photography exhibition at Riverside Community Centre. She selected Riverside Court on her map and walked in the wrong direction. The error became useful because Sam learnt about the exhibition and an organiser improved the directions for future visitors.'},
-   {voice:'host',text:'Now answer four shorter questions. One: what was the weather doing after Nora left the bus? Two: why could Sam help? Three: what had happened by the time Nora reached the centre? Four: what did the organiser change? Pause after each question and answer aloud or in your notes.'},
+   {voice:'host',text:'Now answer four shorter questions aloud or in your notes. You will have time for each answer.'},
    {voice:'host',text:'Question one. What was the weather doing after Nora left the bus?',pauseMs:5000},
    {voice:'host',text:'Question two. Why could Sam help?',pauseMs:5000},
    {voice:'host',text:'Question three. What had happened by the time Nora reached the centre?',pauseMs:5000},
@@ -274,7 +274,7 @@ const audioSegments:DeepEnglishUnit['audio']['segments']=[
  },
  {
   id:'e1-audio-second-listen',label:'Second listen · follow the timeline',phase:'second-listen',lines:[
-   {voice:'host',text:'Listen again in shorter sections. This time, notice how the verb forms organise the timeline. You will hear a brief pause after each section.'},
+   {voice:'host',text:'Listen again in shorter sections. This time, notice how the verb forms organise the timeline.'},
    {voice:'Nora',text:'Last Thursday evening, I was heading to a photography exhibition at a community centre I had never visited before. A colleague had sent me the poster earlier in the week, and I had saved the address on my phone.'},
    {voice:'host',text:'The ongoing journey is “I was heading”. The poster and the saved address belong to an earlier layer: the colleague had sent it, and Nora had saved it. Those earlier facts explain why she believed she had the information she needed.',pauseMs:3000},
    {voice:'Nora',text:'When I got off the bus, the rain was getting heavier and my map seemed to be sending me down a quiet street. After about five minutes, I reached a row of houses and realised there was no community centre nearby.'},
@@ -306,7 +306,7 @@ const audioSegments:DeepEnglishUnit['audio']['segments']=[
    {voice:'Nora',text:'I was STANDING under a TREE / when SAM asked if I needed HELP.'},
    {voice:'host',text:'Repeat. Keep “was” light, stress standing, tree, Sam and help. Let “asked if” connect smoothly.',pauseMs:6000},
    {voice:'Nora',text:'It turned OUT / that I had selected the WRONG place.'},
-   {voice:'host',text:'Repeat. Pause after “out”. Stress wrong because it carries the correction.',pauseMs:6000},
+   {voice:'host',text:'Repeat in two groups: “It turned out” and “that I had selected the wrong place”. Stress wrong because it carries the correction.',pauseMs:6000},
    {voice:'Nora',text:'The TALK had already STARTED / when I arRIVED.'},
    {voice:'host',text:'Repeat. The strong beats are talk, started and the final syllable of arrived. The word had can stay short and unstressed.',pauseMs:6000},
    {voice:'host',text:'One more time, combine the three lines at a calm conversational pace. Clarity comes from grouping the message, not from rushing or forcing every sound.',pauseMs:10000},
@@ -451,7 +451,7 @@ export const DEEP_ENGLISH_UNIT_1:DeepEnglishUnit={
  },
  speaking:{
   goal:'Make a rehearsed short story intelligible through idea groups, contrastive stress and connected speech, then transfer the pattern to a new story.',attemptsPerPrompt:3,
-  recordingPolicy:{audio:'discard-after-feedback',transcript:'ephemeral-unless-learner-explicitly-saves-text',retained:['activity id','attempt count','learner self-checks','feedback categories','completion timestamp']},
+  recordingPolicy:{audio:'local-until-lesson-close',transcript:'ephemeral-unless-learner-explicitly-saves-text',retained:['activity id','attempt count','learner self-checks','feedback categories','completion timestamp']},
   scorePolicy:{
    allowed:['attempt completed','idea groups attempted','target stress self-checked','transcript available or unavailable','transfer prompt completed'],
    prohibited:['pronunciation percentage derived from word overlap','accent quality claim','phoneme accuracy without an acoustic evaluator','fluency or CEFR mastery from one recording'],
@@ -666,7 +666,7 @@ export const DEEP_ENGLISH_UNIT_1_CONTRACT:DeepLessonContract={
     model:activity.model,evidence:{objectiveIds:['e1-objective-spoken-clarity'],record:'item-result',errorBank:'confirmed-only'},
     estimatedMinutes:speakingMinutes[activity.id]??1,
    })),
-   attemptsPerTask:3,recordingRetention:'discard-after-feedback',acousticScore:false,
+   attemptsPerTask:3,recordingRetention:'local-until-lesson-close',acousticScore:false,
   },
  },
 };

@@ -148,7 +148,7 @@ export function DeepLessonExperience({module,activeTab,readerDisabled,audioPlaye
    <details className="audio-transcript"><summary>Follow along with the transcript</summary>
     {deep.audioEpisode.format==='authored-script'?deep.audioEpisode.segments.map(segment=><section key={segment.id}><h3>{segment.title}</h3>{splitScript(segment.script).map((paragraph,paragraphIndex)=><p key={paragraphIndex}>{paragraph.replace(/\s*\[Pause \d+ seconds?\.\]/gi,'')}</p>)}</section>):<p>The full episode is not published yet.</p>}
    </details>
-   {module.track==='english'?<AudioAnswerPractice key={module.lessonId} questions={audioQuestionsFor(module.lessonId)} active={activeTab==='Audio'} canRecord={Boolean(audioListened)} previewAllowed={curriculumPreviewRuntimeEnabled}/>:null}
+   {module.track==='english'?<AudioAnswerPractice key={module.lessonId} lessonId={module.lessonId} questions={audioQuestionsFor(module.lessonId)} active={activeTab==='Audio'} canRecord={Boolean(audioListened)} previewAllowed={curriculumPreviewRuntimeEnabled}/>:null}
   </section>
 
   {english?<section className="lesson-study-section deep-grammar" hidden={activeTab!=='Grammar'} data-testid="deep-lesson-grammar">

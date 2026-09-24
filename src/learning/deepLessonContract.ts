@@ -221,7 +221,7 @@ export type SpeakingPlan = {
     estimatedMinutes: number;
   }[];
   attemptsPerTask: number;
-  recordingRetention: 'discard-after-feedback' | 'learner-history';
+  recordingRetention: 'discard-after-feedback' | 'local-until-lesson-close' | 'learner-history';
   acousticScore: false;
 };
 
