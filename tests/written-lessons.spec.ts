@@ -144,9 +144,11 @@ test('English Audio uses one quiet column with player, optional transcript and f
  await expect(audio.getByTestId('premium-audio-panel')).toBeVisible();
  await expect(page.locator('.lesson-side-card')).toBeHidden();
  await expect(audio.locator('.audio-transcript')).not.toHaveAttribute('open','');
- await expect(audio.getByText('Ready when you finish listening')).toBeVisible();
- await expect(audio.getByRole('button',{name:'Start questions'})).toBeDisabled();
- await expect(audio.getByRole('button',{name:'Record answer'})).toHaveCount(0);
+ await expect(audio.getByText('Preview the questions')).toBeVisible();
+ await audio.getByRole('button',{name:'Preview questions'}).click();
+ await expect(audio.getByText('QUESTION 1 OF 5')).toBeVisible();
+ await expect(audio.getByRole('button',{name:'Record answer'})).toBeEnabled();
+ await expect(audio).toContainText('will not be graded as listening comprehension');
  await expect(audio).not.toContainText('Cost-safe and isolated by design');
  await audio.screenshot({path:info.outputPath('english-audio-desktop.png')});
  expect(requests()).toBe(0);
