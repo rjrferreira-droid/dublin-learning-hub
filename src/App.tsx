@@ -12,7 +12,8 @@ import {LOCAL_MODEL_LESSONS} from './learning/localModelLessonRegistry';
 import {curriculumPreviewRuntimeEnabled} from './config/curriculumPreview';
 import {localEnglishLessonsForLearner} from './learning/localEnglishCatalogForLearner';
 import {LOCAL_PAYROLL_LESSONS} from './learning/localPayrollLessonRegistry';
-import {buildLocalReviewSchedule,completeLocalLesson,completeLocalReview,lastOpenedLocalLessonId,localLessonAfter,mergeLocalStudyProgress,parseLocalStudyProgress,readLocalStudyProgress,recordLocalLessonOpened,summarizeLocalCourse,writeLocalStudyProgress,type LocalReviewItem,type LocalReviewStage,type LocalStudyProgress} from './learning/localStudyProgress';
+import {buildLocalReviewSchedule,completeLocalLesson,completeLocalReview,lastOpenedLocalLessonId,mergeLocalStudyProgress,parseLocalStudyProgress,readLocalStudyProgress,recordLocalLessonOpened,summarizeLocalCourse,writeLocalStudyProgress,type LocalReviewItem,type LocalReviewStage,type LocalStudyProgress} from './learning/localStudyProgress';
+import {isCurriculumUnitReady,readinessSummary,readyCurriculumUnits} from './learning/curriculumReadiness';
 import {isSequence3Slug} from './learning/sequence3Registry';
 import {p1SlugFor} from './learning/p1RuntimeModules';
 import { LessonStudyPanel } from './components/LessonStudyPanel';
@@ -93,6 +94,12 @@ const tracksForLearner=(learner:LearnerKey)=>tracks.filter(track=>track.key==='e
 const visibleTracks=tracks;
 const reviewIntervals = new Set(['D+1', 'D+7', 'D+30', 'D+90']);
 const errorDomains = new Set(['technical', 'grammar', 'vocabulary', 'pronunciation', 'fluency', 'register']);
+const LOCAL_DEPTH_REVIEW_LABEL='Depth review in progress';
+
+function lessonWorkloadLabel(lesson:CatalogLesson){
+  if(lesson.origin!=='local-model')return `${lesson.estimatedMinutes} min`;
+  return isCurriculumUnitReady(lesson)?'Deep-reviewed unit':'Rebuilding · not open yet';
+}
 
 type MemoryStatus = 'loading' | 'ready' | 'empty' | 'unavailable' | 'other-profile';
 type StudySyncStatus = 'loading' | 'synced' | 'saving' | 'local-fallback';
@@ -197,15 +204,23 @@ function App() {
     if(!curriculumPreview)return published;
     const technical=learnerKey==='rafael'?LOCAL_MODEL_LESSONS:LOCAL_PAYROLL_LESSONS;
     const local=[...technical,...localEnglishLessonsForLearner(learnerKey)];
-    const localKeys=new Set(local.map(lesson=>`${lesson.track}:${lesson.slug}`));
-    return [...local,...published.filter(lesson=>!localKeys.has(`${lesson.track}:${lesson.slug}`))];
+    // The isolated Preview is a canonical local curriculum, not a blend with the
+    // legacy published catalogue. Merging by slug left semantic duplicates with
+    // different identities interleaved in the same course tree.
+    return local;
   },[catalog,curriculumPreview,learnerKey,learnerTrackKeys]);
   const activeTrack = useMemo(() => {
     const base=tracks.find((t)=>t.key===trackKey)??tracks[0];
     const selected=selectedCatalogLesson?.track===trackKey?selectedCatalogLesson:null;
     return selected?{...base,lesson:selected.title,lessonId:selected.id,lessonSlug:selected.slug,focus:selected.subtitle??base.focus,origin:selected.origin}:base;
   },[trackKey,selectedCatalogLesson]);
-  const nextLocalLesson=useMemo(()=>selectedCatalogLesson?.origin==='local-model'?localLessonAfter(supportedCatalog,selectedCatalogLesson.id):null,[selectedCatalogLesson,supportedCatalog]);
+  const readyCatalog=useMemo(()=>readyCurriculumUnits(supportedCatalog),[supportedCatalog]);
+  const nextLocalLesson=useMemo(()=>{
+    if(selectedCatalogLesson?.origin!=='local-model')return null;
+    const lessons=readyCatalog.filter(lesson=>lesson.origin==='local-model'&&lesson.track===selectedCatalogLesson.track).sort((a,b)=>a.sequence-b.sequence);
+    const index=lessons.findIndex(lesson=>lesson.id===selectedCatalogLesson.id);
+    return index>=0?lessons[index+1]??null:null;
+  },[readyCatalog,selectedCatalogLesson]);
 
   const refreshMemory = useCallback(async () => {
     const revision = ++memoryRequest.current;
@@ -246,10 +261,12 @@ function App() {
   },[account.userId,curriculumPreview,persistStudyProgress]);
 
   useEffect(()=>{
-    const controller=new AbortController();setCatalogUnavailable(false);
+    setCatalogUnavailable(false);
+    if(curriculumPreview){setCatalog([]);return;}
+    const controller=new AbortController();
     void loadPublishedCurriculumCatalog(controller.signal).then(setCatalog).catch(()=>{if(!controller.signal.aborted){setCatalog([]);setCatalogUnavailable(true);}});
     return ()=>controller.abort();
-  },[account.userId]);
+  },[account.userId,curriculumPreview]);
 
   const privateDataVisible = learnerKey === accountLearnerKey;
   const visibleMemory = privateDataVisible ? memory : null;
@@ -265,7 +282,10 @@ function App() {
 
   const openLesson = (key: TrackKey,lesson?:CatalogLesson,options?:{tab?:string;reviewStage?:LocalReviewStage}) => {
     const measured=new Set([...(visibleMemory?.history??[]).map(x=>x.lessonId),...Object.keys(localProgress.completed)]);
-    const resolved=lesson??chooseNextPublishedLesson(supportedCatalog,key,measured);
+    const resolved=lesson??chooseNextPublishedLesson(readyCatalog,key,measured);
+    if(resolved?.origin==='local-model'&&!isCurriculumUnitReady(resolved)){
+      setTrackKey(key);setSelectedCatalogLesson(null);setActiveLocalReview(null);setLessonOpen(false);setView('learn');return;
+    }
     if(resolved?.origin==='local-model')persistStudyProgress(recordLocalLessonOpened(localProgressRef.current,resolved.id,resolved.track));
     setActiveLocalReview(resolved?.origin==='local-model'&&options?.reviewStage?{lessonId:resolved.id,stage:options.reviewStage}:null);
     setSelectedCatalogLesson(resolved??null);
@@ -436,7 +456,7 @@ function CourseTree({learnerKey,tracks:learnerTracks,catalog,activeTrack,activeL
     {open?<div className="course-tree-children">
      {track.key==='finance'?groups.map(sequence=>{const key=`${track.key}:${sequence}`,partOpen=expandedParts.has(key);return <div className="course-part" key={key}>
       <button className="course-part-heading" aria-expanded={partOpen} onClick={()=>togglePart(key)}><span>{partLabel(sequence)}</span><small>{partOpen?'−':'+'}</small></button>
-      {partOpen?<div className="course-lesson-list">{lessons.filter(lesson=>lesson.moduleSequence===sequence).map(lesson=><CourseLessonButton key={lesson.id} lesson={lesson} active={activeLessonId===lesson.id} completed={!!localProgress.completed[lesson.id]} onClick={()=>onSelectLesson(track.key,lesson)}/>)}</div>:null}
+      {partOpen?<div className="course-lesson-list">{lessons.filter(lesson=>lesson.moduleSequence===sequence).map(lesson=><CourseLessonButton key={lesson.id} lesson={lesson} active={activeLessonId===lesson.id} completed={!!localProgress.completed[lesson.id]} ready={isCurriculumUnitReady(lesson)} onClick={()=>onSelectLesson(track.key,lesson)}/>)}</div>:null}
      </div>}):<div className="course-lesson-list direct">{lessons.map((lesson,index)=><CourseLessonButton key={lesson.id} lesson={lesson} active={activeLessonId===lesson.id} completed={!!localProgress.completed[lesson.id]} prefix={`Unit ${index+1}`} onClick={()=>onSelectLesson(track.key,lesson)}/>)}</div>}
     </div>:null}
    </section>;
@@ -444,11 +464,11 @@ function CourseTree({learnerKey,tracks:learnerTracks,catalog,activeTrack,activeL
  </div>;
 }
 
-function CourseLessonButton({lesson,active,completed,prefix,onClick}:{lesson:CatalogLesson;active:boolean;completed:boolean;prefix?:string;onClick:()=>void}){
+function CourseLessonButton({lesson,active,completed,ready=isCurriculumUnitReady(lesson),prefix,onClick}:{lesson:CatalogLesson;active:boolean;completed:boolean;ready?:boolean;prefix?:string;onClick:()=>void}){
  const concise=lesson.title.replace(/^ACCA FR\s+/,'').replace(/^Unit \d+\s+·\s+/,'');
  const code=lesson.title.match(/ACCA FR ([A-E]\d*)/)?.[1];
- return <button className={`course-lesson-button ${active?'active':''}`} onClick={onClick} title={lesson.title}>
-  <span>{completed?'✓':code??prefix}</span><strong>{concise}</strong>
+ return <button className={`course-lesson-button ${active?'active':''} ${ready?'':'rebuilding'}`} onClick={onClick} title={ready?lesson.title:`${lesson.title} · rebuilding`} disabled={!ready} aria-label={ready?lesson.title:`${lesson.title} — rebuilding`}>
+  <span>{completed?'✓':ready?code??prefix:'•••'}</span><strong>{concise}{!ready?<small>Rebuilding</small>:null}</strong>
  </button>;
 }
 
@@ -466,34 +486,37 @@ function CourseTabs({track,view,lessonOpen,onOpen}:{track:TrackKey;view:ViewKey;
 function CourseHome({trackKey,learnerKey,profile,memory,memoryStatus,openLesson,openView,catalog,localProgress}:{
  trackKey:TrackKey;learnerKey:LearnerKey;profile:LearningProfile;memory:LearningMemorySnapshot|null;memoryStatus:MemoryStatus;openLesson:(key:TrackKey,lesson?:CatalogLesson)=>void;openView:(view:ViewKey)=>void;catalog:CatalogLesson[];localProgress:LocalStudyProgress;
 }){
- const course=useMemo(()=>summarizeLocalCourse(catalog,localProgress,trackKey),[catalog,localProgress,trackKey]);
- const reviews=useMemo(()=>buildLocalReviewSchedule(catalog,localProgress,new Date(),trackKey),[catalog,localProgress,trackKey]);
+ const readyCatalog=useMemo(()=>readyCurriculumUnits(catalog),[catalog]);
+ const readiness=useMemo(()=>readinessSummary(catalog,trackKey),[catalog,trackKey]);
+ const reviews=useMemo(()=>buildLocalReviewSchedule(readyCatalog,localProgress,new Date(),trackKey),[readyCatalog,localProgress,trackKey]);
  const due=reviews.filter(item=>item.status==='due').length;
  const trackLessons=useMemo(()=>catalog.filter(lesson=>lesson.track===trackKey).sort((a,b)=>a.sequence-b.sequence),[catalog,trackKey]);
+ const readyTrackLessons=useMemo(()=>trackLessons.filter(isCurriculumUnitReady),[trackLessons]);
  const measuredIds=useMemo(()=>new Set(memory?.history.map(session=>session.lessonId)??[]),[memory]);
- const completedCount=course.total?course.completedCount:trackLessons.filter(lesson=>measuredIds.has(lesson.id)).length;
- const total=course.total||trackLessons.length;
+ const completedCount=readyTrackLessons.filter(lesson=>localProgress.completed[lesson.id]||measuredIds.has(lesson.id)).length;
+ const total=trackLessons.length;
  const percent=total?Math.round(completedCount/total*100):0;
- const next=course.nextLesson??chooseNextPublishedLesson(trackLessons,trackKey,measuredIds);
+ const resumeId=lastOpenedLocalLessonId(localProgress,trackKey);
+ const next=readyTrackLessons.find(lesson=>lesson.id===resumeId&&!localProgress.completed[lesson.id]&&!measuredIds.has(lesson.id))??readyTrackLessons.find(lesson=>!localProgress.completed[lesson.id]&&!measuredIds.has(lesson.id))??null;
  const courseName=trackKey==='finance'?'ACCA Financial Reporting':trackKey==='payroll'?'Payroll Academy':'English Academy';
  const description=trackKey==='finance'?'The complete written FR pathway, organised by the public ACCA syllabus and supported by exam practice.':trackKey==='payroll'?'A practical Irish Payroll pathway that transfers Viviane’s DP experience into Revenue workflows, controls and employee communication.':learnerKey==='viviane'?'One English course with alternating everyday and Payroll/People Operations situations in an 80/20 balance.':'One English course combining everyday fluency and technical communication in a 50/50 balance.';
  const filteredErrors=(memory?.errors??[]).filter(error=>trackKey==='english'?error.domain!=='technical':error.domain==='technical');
- const recent=trackLessons.filter(lesson=>!localProgress.completed[lesson.id]&&!measuredIds.has(lesson.id)).slice(0,3);
+ const recent=readyTrackLessons.filter(lesson=>!localProgress.completed[lesson.id]&&!measuredIds.has(lesson.id)).slice(0,3);
  const actionLabel=trackKey==='finance'?'Continue Finance':trackKey==='payroll'?'Continue Payroll':'Start English practice';
- const remainingMinutes=course.total?course.remainingMinutes:trackLessons.filter(lesson=>!measuredIds.has(lesson.id)).reduce((sum,lesson)=>sum+lesson.estimatedMinutes,0);
  return <section className="page-stack course-home" data-testid={`course-home-${trackKey}`}>
   <div className={`course-overview-panel ${trackKey}`}>
-   <div><div className="eyebrow light">{courseName.toUpperCase()} · {profile.displayName.toUpperCase()}</div><h2>{next?.title??`${courseName} ready for review`}</h2><p>{description}</p><div className="hero-actions"><button className="primary-btn" onClick={()=>next?openLesson(trackKey,next):openView('learn')}>{next?actionLabel:'Open curriculum'}</button><button className="secondary-dark-btn" onClick={()=>openView('learn')}>View all units</button></div></div>
+   <div><div className="eyebrow light">{courseName.toUpperCase()} · {profile.displayName.toUpperCase()}</div><h2>{next?.title??(readiness.rebuilding?`Current reviewed batch complete`:`${courseName} ready for review`)}</h2><p>{description}</p><div className="hero-actions"><button className="primary-btn" onClick={()=>next?openLesson(trackKey,next):openView('learn')}>{next?actionLabel:'View curriculum status'}</button><button className="secondary-dark-btn" onClick={()=>openView('learn')}>View all units</button></div></div>
    <div className="course-progress-summary"><strong>{percent}%</strong><span>{completedCount} of {total} units complete</span><div className="progress-track"><span style={{width:`${percent}%`}}/></div></div>
   </div>
+  {readiness.rebuilding?<p role="status" className="priority-note curriculum-readiness-note"><strong>{readiness.ready} OF {readiness.planned} UNITS DEEP-REVIEWED</strong><span>The complete pathway remains visible. Units marked Rebuilding are intentionally locked until their teaching, practice, feedback, audio script and completion evidence pass the quality gate.</span></p>:null}
   <div className="course-summary-grid">
    <article><span>PROGRESS</span><strong>{completedCount}/{total}</strong><small>units completed</small></article>
    <article><span>REVIEW</span><strong>{due}</strong><small>retrievals due</small></article>
    <article><span>ERROR BANK</span><strong>{filteredErrors.length}</strong><small>{memoryStatus==='ready'?'measured patterns':'awaiting measured evidence'}</small></article>
-   <article><span>TIME REMAINING</span><strong>{Math.round(remainingMinutes/6)/10}h</strong><small>estimated written study</small></article>
+   <article><span>CONTENT READINESS</span><strong>{readiness.ready}/{readiness.planned}</strong><small>{readiness.rebuilding} planned units rebuilding</small></article>
   </div>
   <section className="course-next-panel"><div className="section-heading"><div><div className="eyebrow">NEXT IN YOUR COURSE</div><h2>A clear path, one unit at a time</h2></div><button className="secondary-btn" onClick={()=>openView('learn')}>Full curriculum</button></div>
-   <div className="course-next-list">{recent.length?recent.map((lesson,index)=><button key={lesson.id} onClick={()=>openLesson(trackKey,lesson)}><span>{String(index+1).padStart(2,'0')}</span><div><strong>{lesson.title}</strong><small>{lesson.estimatedMinutes} min · {lesson.subtitle}</small></div><b>→</b></button>):<p className="priority-note local-progress-note"><strong>Written pathway complete</strong><span>Use Revision, Error Bank and Performance to decide what returns next.</span></p>}</div>
+   <div className="course-next-list">{recent.length?recent.map((lesson,index)=><button key={lesson.id} onClick={()=>openLesson(trackKey,lesson)}><span>{String(index+1).padStart(2,'0')}</span><div><strong>{lesson.title}</strong><small>{lessonWorkloadLabel(lesson)} · {lesson.subtitle}</small></div><b>→</b></button>):<p className="priority-note local-progress-note"><strong>{readiness.rebuilding?'Reviewed batch complete':'Written pathway complete'}</strong><span>{readiness.rebuilding?`${readiness.rebuilding} planned units remain visible in the curriculum and will unlock only after deep review.`:'Use Revision, Error Bank and Performance to decide what returns next.'}</span></p>}</div>
   </section>
  </section>;
 }
@@ -522,20 +545,18 @@ function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, open
   const dailyCode=dailyLesson?.title.split(' · ')[0]??'ACCA FR';
   const dailyResuming=!localCourse.allCompleted&&!!dailyLesson&&lastOpenedLocalLessonId(localProgress,'finance')===dailyLesson.id;
   const dailyAction=localCourse.allCompleted?'Review final lesson':dailyResuming?'Resume '+dailyCode:'Start '+dailyCode;
-  const studyBlocks=dailyLesson?Math.ceil(dailyLesson.estimatedMinutes/30):0;
   const localReviews=useMemo(()=>buildLocalReviewSchedule(catalog,localProgress),[catalog,localProgress]);
   const dueLocalReviews=localReviews.filter(item=>item.status==='due');
   const englishReviews=useMemo(()=>buildLocalReviewSchedule(catalog,localProgress,new Date(),'english'),[catalog,localProgress]);
   const dueEnglishReviews=englishReviews.filter(item=>item.status==='due');
   const nextLocalReview=dueLocalReviews[0]??localReviews[0]??null;
-  const remainingHours=Math.round(localCourse.remainingMinutes/6)/10;
 
   return (
     <section className="content-grid dashboard-grid">
       <div className="hero-panel">
         <div className="hero-kicker">{showLocalCourse?`TODAY'S ACCA FOCUS • ${localCourse.completedCount}/${localCourse.total} FINISHED`:`TODAY'S FOCUS • ${profile.displayName.toUpperCase()}`}</div>
         <h2>{dailyLesson?.title??'Build capability, not just knowledge.'}</h2>
-        <p>{dailyLesson?`${dailyLesson.subtitle??'Local ACCA self-study lesson'}. Plan about ${dailyLesson.estimatedMinutes} minutes across ${studyBlocks} focused 30-minute block${studyBlocks===1?'':'s'}; your completion marker stays only in this browser.`:'Saved checkpoints and spaced reviews keep study moving. Optional evaluated sessions add capability evidence; when evidence is missing, the portal says so instead of filling the gap with demo scores.'}</p>
+        <p>{dailyLesson?`${dailyLesson.subtitle??'Local ACCA self-study lesson'}. ${LOCAL_DEPTH_REVIEW_LABEL}; the unit workload will be republished after the deeper content pass.`:'Saved checkpoints and spaced reviews keep study moving. Optional evaluated sessions add capability evidence; when evidence is missing, the portal says so instead of filling the gap with demo scores.'}</p>
         <div className="hero-actions">
           <button className="primary-btn" onClick={() => dailyLesson?openLesson('finance',dailyLesson):openLesson(primaryTrack)}>{dailyLesson?dailyAction:primaryLabel}</button>
           <button className="secondary-btn" onClick={() => dailyLesson?openView('learn'):openLesson('english')}>{dailyLesson?'View all 23 lessons':'Start English practice'}</button>
@@ -562,8 +583,8 @@ function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, open
       {showLocalCourse&&englishCourse.total>0?<section className="acca-study-board full-span" data-testid="today-study-plan">
         <div className="section-heading"><div><div className="eyebrow">WHAT TO STUDY TODAY</div><h2>One technical block, one English block, one retrieval block</h2></div><span>Simple local agenda · about 3 focused blocks</span></div>
         <div className="acca-agenda-grid">
-          <article className="acca-agenda-card"><span>1 · ACCA FR</span><strong>{dailyLesson?.title??'Review your latest ACCA lesson'}</strong><small>{dailyLesson?`${dailyLesson.estimatedMinutes} min available as a complete lesson; choose one focused block today.`:'Curriculum complete — use a marked lesson for retrieval.'}</small><button className="primary-btn" onClick={()=>dailyLesson?openLesson('finance',dailyLesson):openView('revision')}>{dailyLesson?dailyAction:'Open revision'}</button></article>
-          <article className="acca-agenda-card"><span>2 · ENGLISH</span><strong>{englishCourse.nextLesson?.title??'Review your latest English lesson'}</strong><small>{englishCourse.nextLesson?`${englishCourse.nextLesson.estimatedMinutes} min · keep the 50/50 everyday/professional sequence moving.`:'Eight-lesson local core complete.'}</small><button className="primary-btn" onClick={()=>englishCourse.nextLesson?openLesson('english',englishCourse.nextLesson):openView('english-academy')}>{englishCourse.nextLesson?'Open English block':'Open English Academy'}</button></article>
+          <article className="acca-agenda-card"><span>1 · ACCA FR</span><strong>{dailyLesson?.title??'Review your latest ACCA lesson'}</strong><small>{dailyLesson?`${LOCAL_DEPTH_REVIEW_LABEL}; choose one focused block today.`:'Curriculum complete — use a marked lesson for retrieval.'}</small><button className="primary-btn" onClick={()=>dailyLesson?openLesson('finance',dailyLesson):openView('revision')}>{dailyLesson?dailyAction:'Open revision'}</button></article>
+          <article className="acca-agenda-card"><span>2 · ENGLISH</span><strong>{englishCourse.nextLesson?.title??'Review your latest English lesson'}</strong><small>{englishCourse.nextLesson?`${LOCAL_DEPTH_REVIEW_LABEL} · keep the 50/50 everyday/professional sequence moving.`:'Eight-lesson local core complete.'}</small><button className="primary-btn" onClick={()=>englishCourse.nextLesson?openLesson('english',englishCourse.nextLesson):openView('english-academy')}>{englishCourse.nextLesson?'Open English block':'Open English Academy'}</button></article>
           <article className={`acca-agenda-card ${dueLocalReviews.length+dueEnglishReviews.length?'review-due':''}`}><span>3 · RETRIEVE OR TEST</span><strong>{dueLocalReviews.length+dueEnglishReviews.length?`${dueLocalReviews.length+dueEnglishReviews.length} spaced review${dueLocalReviews.length+dueEnglishReviews.length===1?'':'s'} due`:'ACCA FR Mini Mock series'}</strong><small>{dueLocalReviews.length+dueEnglishReviews.length?'Clear due D+1, D+7 or D+30 retrieval before adding more new material.':'No local review is due; choose one of two complementary 30-minute mocks.'}</small><button className="secondary-btn" onClick={()=>openView(dueLocalReviews.length+dueEnglishReviews.length?'revision':'mock-exams')}>{dueLocalReviews.length+dueEnglishReviews.length?'Open reviews':'Open mocks'}</button></article>
         </div>
       </section>:null}
@@ -571,11 +592,11 @@ function Dashboard({ learnerKey, profile, memory, memoryStatus, openLesson, open
       {showLocalCourse?<section className="acca-study-board full-span" data-testid="acca-study-board">
         <div className="section-heading"><div><div className="eyebrow">ACCA DAILY AGENDA</div><h2>Study, retrieve and keep the whole FR syllabus moving</h2></div><span>Local plan · no provider calls</span></div>
         <div className="acca-agenda-grid">
-          <article className="acca-agenda-card"><span>NEW LEARNING</span><strong>{dailyLesson?.title??'Curriculum completed'}</strong><small>{dailyLesson?`${dailyLesson.estimatedMinutes} min · ${studyBlocks} focused blocks`:'All 23 lessons are available for review.'}</small>{dailyLesson?<button className="primary-btn" onClick={()=>openLesson('finance',dailyLesson)}>{dailyAction}</button>:null}</article>
+          <article className="acca-agenda-card"><span>NEW LEARNING</span><strong>{dailyLesson?.title??'Curriculum completed'}</strong><small>{dailyLesson?LOCAL_DEPTH_REVIEW_LABEL:'All 23 lessons are available for review.'}</small>{dailyLesson?<button className="primary-btn" onClick={()=>openLesson('finance',dailyLesson)}>{dailyAction}</button>:null}</article>
           <article className={`acca-agenda-card ${dueLocalReviews.length?'review-due':''}`}><span>SPACED RETRIEVAL</span><strong>{dueLocalReviews.length?`${dueLocalReviews.length} review${dueLocalReviews.length===1?'':'s'} due`:nextLocalReview?`Next: ${nextLocalReview.stage} on ${shortDate(nextLocalReview.dueAt)}`:'Complete A1 to schedule reviews'}</strong><small>{nextLocalReview?nextLocalReview.lesson.title:'D+1, D+7 and D+30 appear automatically after completion.'}</small><button className="secondary-btn" onClick={()=>openView('revision')}>{dueLocalReviews.length?'Open due reviews':'View review plan'}</button></article>
-          <article className="acca-agenda-card"><span>WEEKLY PACE</span><strong>{localCourse.completedLast7Days}/{localCourse.weeklyTarget} lessons</strong><small>{remainingHours} estimated hours remain · about {localCourse.estimatedWeeksRemaining} week{localCourse.estimatedWeeksRemaining===1?'':'s'} at the suggested pace</small><div className="progress-track" aria-label={`${localCourse.completedLast7Days} of ${localCourse.weeklyTarget} weekly lessons`}><span style={{width:`${Math.min(100,localCourse.completedLast7Days/localCourse.weeklyTarget*100)}%`}} /></div></article>
+          <article className="acca-agenda-card"><span>WEEKLY PACE</span><strong>{localCourse.completedLast7Days}/{localCourse.weeklyTarget} lessons</strong><small>{LOCAL_DEPTH_REVIEW_LABEL} · about {localCourse.estimatedWeeksRemaining} week{localCourse.estimatedWeeksRemaining===1?'':'s'} at the suggested pace</small><div className="progress-track" aria-label={`${localCourse.completedLast7Days} of ${localCourse.weeklyTarget} weekly lessons`}><span style={{width:`${Math.min(100,localCourse.completedLast7Days/localCourse.weeklyTarget*100)}%`}} /></div></article>
         </div>
-        <div className="acca-module-grid" aria-label="ACCA progress by syllabus module">{localCourse.modules.map(module=><article key={module.code} className="acca-module-card"><div><b>{module.code}</b><span>{module.label}</span></div><strong>{module.completedCount}/{module.total}</strong><div className="progress-track"><span style={{width:`${module.percent}%`}} /></div><small>{module.remainingMinutes?`${Math.round(module.remainingMinutes/6)/10} h estimated remaining`:'Module completed'}</small></article>)}</div>
+        <div className="acca-module-grid" aria-label="ACCA progress by syllabus module">{localCourse.modules.map(module=><article key={module.code} className="acca-module-card"><div><b>{module.code}</b><span>{module.label}</span></div><strong>{module.completedCount}/{module.total}</strong><div className="progress-track"><span style={{width:`${module.percent}%`}} /></div><small>{module.remainingMinutes?LOCAL_DEPTH_REVIEW_LABEL:'Module completed'}</small></article>)}</div>
       </section>:null}
 
       <div className="section-heading full-span">
@@ -656,22 +677,26 @@ function PriorityCard({ priority, rank }: { priority: AdaptivePriority; rank: nu
 
 function LearningLibrary({ learnerKey,trackKey,catalog, catalogUnavailable, openLesson,localProgress }: { learnerKey: LearnerKey;trackKey:TrackKey; catalog: CatalogLesson[]; catalogUnavailable:boolean; openLesson: (key: TrackKey,lesson?:CatalogLesson) => void;localProgress:LocalStudyProgress }) {
   const available=catalog.filter(lesson=>lesson.track===trackKey).sort((a,b)=>a.sequence-b.sequence);
-  const course=summarizeLocalCourse(catalog,localProgress,trackKey);
+  const ready=available.filter(isCurriculumUnitReady);
+  const course=summarizeLocalCourse(ready,localProgress,trackKey);
+  const readiness=readinessSummary(catalog,trackKey);
   const courseName=trackKey==='finance'?'ACCA Financial Reporting':trackKey==='payroll'?'Payroll Academy':'English Academy';
   const fallbackTrack=tracks.find(track=>track.key===trackKey)!;
   return <section className="page-stack" data-testid="learning-library">
-    <div className="section-heading"><div><div className="eyebrow">{courseName.toUpperCase()} · CURRICULUM</div><h2>{trackKey==='finance'?'Parts and syllabus units':trackKey==='payroll'?'Irish Payroll learning pathway':'One alternating sequence of English units'}</h2></div><span>{available.length} units available</span></div>
-    {available.some(lesson=>lesson.origin==='local-model')&&<p role="status" className="priority-note" data-testid="local-curriculum-preview"><strong>Account-synced curriculum · {course.completedCount}/{course.total} complete</strong><span>Written units are available now. Draft answers are not stored; completion and checkpoint totals sync only to the matching learner account.</span></p>}
+    <div className="section-heading"><div><div className="eyebrow">{courseName.toUpperCase()} · CURRICULUM</div><h2>{trackKey==='finance'?'Parts and syllabus units':trackKey==='payroll'?'Irish Payroll learning pathway':'One alternating sequence of English units'}</h2></div><span>{readiness.ready} ready · {readiness.rebuilding} rebuilding</span></div>
+    {available.some(lesson=>lesson.origin==='local-model')&&<p role="status" className="priority-note curriculum-readiness-note" data-testid="local-curriculum-preview"><strong>Account-synced curriculum · {course.completedCount}/{readiness.planned} deep-reviewed units complete</strong><span>The complete course plan is visible. Only the {readiness.ready} unit{readiness.ready===1?'':'s'} with a passed deep-content gate can be opened; the others remain locked while being rebuilt. Draft written answers are not stored.</span></p>}
     {catalogUnavailable&&<p role="status" className="priority-note"><strong>Catalog temporarily unavailable</strong><span>Verified Golden Lessons from your visible tracks remain available as a safe fallback.</span></p>}
     <div className="library-grid">
-      {available.length?available.map((lesson,index)=>{const base=tracks.find(t=>t.key===lesson.track)!;const completion=localProgress.completed[lesson.id];const isResume=lastOpenedLocalLessonId(localProgress,lesson.track)===lesson.id&&!completion;return <article className={`lesson-library-card primary-track-card ${completion?'lesson-locally-complete':''}`} key={lesson.id} data-testid={`catalog-lesson-${lesson.slug}`}>
-        <div className="lesson-index">{String(index+1).padStart(2,'0')}</div><span className={`track-badge ${lesson.track}`}>{base.accent}</span><h3>{lesson.title}</h3><p>{lesson.subtitle??base.focus}</p><div className="lesson-meta"><span>{lesson.estimatedMinutes} min</span><span>{base.name}</span><span>{completion?`Finished · ${completion.correct}/${completion.total}`:lesson.origin==='local-model'?'Reviewed self-study':lesson.id===base.lessonId?'Professor':'Written ready'}</span></div><button className="primary-btn" onClick={()=>openLesson(lesson.track,lesson)}>{completion?'Review lesson':isResume?'Resume lesson':'Open lesson'}</button>
+      {available.length?available.map((lesson,index)=>{const base=tracks.find(t=>t.key===lesson.track)!;const unitReady=isCurriculumUnitReady(lesson);const completion=unitReady?localProgress.completed[lesson.id]:undefined;const isResume=unitReady&&lastOpenedLocalLessonId(localProgress,lesson.track)===lesson.id&&!completion;return <article className={`lesson-library-card primary-track-card ${completion?'lesson-locally-complete':''} ${unitReady?'':'lesson-rebuilding'}`} key={lesson.id} data-testid={`catalog-lesson-${lesson.slug}`}>
+        <div className="lesson-index">{String(index+1).padStart(2,'0')}</div><span className={`track-badge ${lesson.track}`}>{base.accent}</span><h3>{lesson.title}</h3><p>{lesson.subtitle??base.focus}</p><div className="lesson-meta"><span>{lessonWorkloadLabel(lesson)}</span><span>{base.name}</span><span>{completion?`Finished · ${completion.correct}/${completion.total}`:unitReady?'Deep-reviewed self-study':'Teaching, practice and audio under review'}</span></div><button className={unitReady?'primary-btn':'secondary-btn'} disabled={!unitReady} onClick={()=>openLesson(lesson.track,lesson)}>{unitReady?(completion?'Review lesson':isResume?'Resume lesson':'Open lesson'):'Rebuilding'}</button>
       </article>}):<article className="lesson-library-card primary-track-card"><div className="lesson-index">01</div><span className={`track-badge ${fallbackTrack.key}`}>{fallbackTrack.accent}</span><h3>{fallbackTrack.lesson}</h3><p>{fallbackTrack.focus}</p><div className="lesson-meta"><span>10–15 min</span><span>Verified fallback</span><span>Professor</span></div><button className="primary-btn" onClick={()=>openLesson(fallbackTrack.key)}>Open Golden Lesson</button></article>}
     </div>
   </section>;
 }
 
-const lessonTabsFor=(track:TrackKey):readonly {label:string;key:string}[]=>track==='english'?
+const lessonTabsFor=(track:TrackKey,deepLocal=false):readonly {label:string;key:string}[]=>deepLocal?track==='english'?
+ [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Grammar',key:'Grammar'},{label:'Practice',key:'Practice'},{label:'Speaking',key:'Speaking'},{label:'Sources',key:'Sources'},{label:'Professor',key:'Professor'}]:
+ [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Practice',key:'Practice'},{label:'Sources',key:'Sources'}]:track==='english'?
  [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Grammar',key:'Grammar'},{label:'Practice',key:'Practice'},{label:'Speaking',key:'Speaking'},{label:'Visual',key:'Visual'},{label:'Case',key:'Case'},{label:'Test',key:'Test'},{label:'Sources',key:'Sources'},{label:'Professor',key:'Professor'}]:track==='payroll'?
  [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Calculation',key:'Visual'},{label:'Practice',key:'Practice'},{label:'Speaking',key:'Speaking'},{label:'Case',key:'Case'},{label:'Test',key:'Test'},{label:'Sources',key:'Sources'}]:
  [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Practice',key:'Practice'},{label:'Visual',key:'Visual'},{label:'Case',key:'Case'},{label:'Test',key:'Test'},{label:'Sources',key:'Sources'}];
@@ -697,7 +722,8 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,
   const measuredScores = measuredSession ? scorePairs(measuredSession) : [];
   const [conversationBusy,setConversationBusy]=useState(false);
   const [workshopId,setWorkshopId]=useState<string|undefined>();
-  const tabs=lessonTabsFor(track.key);
+  const deepLocal=track.origin==='local-model';
+  const tabs=lessonTabsFor(track.key,deepLocal);
   const lessonProfessorEnabled=track.key==='english'&&interactiveLessonSupported;
   const prepareWorkshop=(id:string)=>{
     if(conversationBusy||!canUseActions||!lessonProfessorEnabled||!WORKSHOP_CASES[track.key].some(c=>c.id===id))return;
@@ -722,8 +748,9 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,
           <div className="eyebrow">{activeTab.toUpperCase()}</div>
           {lessonProfessorEnabled?<LessonProfessorWorkspace track={track.key} lessonId={track.lessonId} learnerKey={learnerKey} activeTab={activeTab} onTabChange={setActiveTab} onActivityChange={setConversationBusy} workshopId={workshopId} onClearWorkshop={clearWorkshop}/>:null}
           <LessonStudyPanel key={track.lessonId} track={track.key} lessonId={track.lessonId} lessonSlug={track.lessonSlug} activeTab={activeTab} onTabChange={setActiveTab} onPrepareWorkshop={track.key==='english'?prepareWorkshop:undefined} handoffDisabled={conversationBusy||!canUseActions||!lessonProfessorEnabled} readerDisabled={conversationBusy||!canUseActions} localCompletion={localCompletion} onCompleteLocal={onCompleteLocal} nextLessonTitle={nextLocalLesson?.title} onOpenNextLesson={onOpenNextLocal} localReviewStage={localReviewStage} localReviewCompletion={localReviewCompletion} />
-          {!interactiveLessonSupported && (activeTab === 'Audio' || activeTab === 'Professor') ? <p role="status" data-testid="p1-interactive-gate">{activeTab==='Audio'&&track.key!=='payroll'&&isP1Slug(track.key,track.lessonSlug)?'Verify this lesson below to access its Premium Audio controls.':activeTab==='Audio'?'Browser read-aloud is ready above. Premium Audio for this unit will appear here after the published lesson is activated.':'The written English unit is ready. Its live Professor session will appear here after the published lesson is activated.'}</p> : null}
-          {!interactiveLessonSupported && canUseActions && isP1Slug(track.key,track.lessonSlug) && (activeTab === 'Audio' || activeTab === 'Professor') ? <LessonReadinessCheck key={[account.userId,track.key,track.lessonId,track.lessonSlug].join(':')} userId={account.userId} lessonId={track.lessonId} lessonSlug={track.lessonSlug} lessonTitle={track.lesson} track={track.key} activeTab={activeTab}/> : null}
+          {!interactiveLessonSupported && !deepLocal && (activeTab === 'Audio' || activeTab === 'Professor') ? <p role="status" data-testid="p1-interactive-gate">{activeTab==='Audio'&&track.key!=='payroll'&&isP1Slug(track.key,track.lessonSlug)?'Verify this lesson below to access its Premium Audio controls.':activeTab==='Audio'?'The independent Audio episode is not yet available for this unit.':'The written English unit is ready. Its live Professor session will appear here after the published lesson is activated.'}</p> : null}
+          {!interactiveLessonSupported && !deepLocal && canUseActions && isP1Slug(track.key,track.lessonSlug) && (activeTab === 'Audio' || activeTab === 'Professor') ? <LessonReadinessCheck key={[account.userId,track.key,track.lessonId,track.lessonSlug].join(':')} userId={account.userId} lessonId={track.lessonId} lessonSlug={track.lessonSlug} lessonTitle={track.lesson} track={track.key} activeTab={activeTab}/> : null}
+          {deepLocal&&track.key==='english'&&activeTab==='Professor'?<p role="status" className="priority-note" data-testid="deep-professor-preserved"><strong>Professor preserved, not started</strong><span>This unit already contains its complete Learn, Grammar, Practice and Speaking path. The live Professor remains an optional English extension and will be activated only after its reviewed server handoff; opening this tab makes no paid call.</span></p>:null}
           {interactiveLessonSupported && (conversationBusy && activeTab === 'Audio' ? <p role="status" data-testid="audio-conversation-guard">End the Professor session before playing lesson audio. Written tabs remain available.</p> : <>{activeTab === 'Audio' && (canUseActions ? <PremiumAudioPanel lessonId={track.lessonId} lessonTitle={track.lesson} /> : <p role="status" data-testid="audio-account-mismatch">Audio actions require the matching signed-in learner account.</p>)}</>)}
           {/* Interactive providers are mounted only for lessons with a reviewed server handoff. */}
         </article>
@@ -746,11 +773,13 @@ function Signal({ label, value }: { label: string; value: number }) {
 }
 
 function EnglishAcademyView({ profile, learnerKey, catalog, localProgress, openLesson, openView }: { profile: LearningProfile; learnerKey: LearnerKey;catalog:CatalogLesson[];localProgress:LocalStudyProgress;openLesson:(key:TrackKey,lesson?:CatalogLesson)=>void;openView:(view:ViewKey)=>void }) {
-  const course=useMemo(()=>summarizeLocalCourse(catalog,localProgress,'english'),[catalog,localProgress]);
-  const nextLesson=course.nextLesson;
+  const readyCatalog=useMemo(()=>readyCurriculumUnits(catalog),[catalog]);
+  const course=useMemo(()=>summarizeLocalCourse(readyCatalog,localProgress,'english'),[readyCatalog,localProgress]);
+  const readiness=useMemo(()=>readinessSummary(catalog,'english'),[catalog]);
+  const nextLesson=course.lessons.find(lesson=>!localProgress.completed[lesson.id])??null;
   const resuming=!course.allCompleted&&!!nextLesson&&lastOpenedLocalLessonId(localProgress,'english')===nextLesson.id;
   const action=course.allCompleted?'Review final English lesson':resuming?'Resume English lesson':'Start English lesson';
-  const reviews=useMemo(()=>buildLocalReviewSchedule(catalog,localProgress,new Date(),'english'),[catalog,localProgress]);
+  const reviews=useMemo(()=>buildLocalReviewSchedule(readyCatalog,localProgress,new Date(),'english'),[readyCatalog,localProgress]);
   const dueReviews=reviews.filter(item=>item.status==='due').length;
   const everyday=course.modules.find(module=>module.code==='E');
   const professional=course.modules.find(module=>module.code==='P');
@@ -768,14 +797,16 @@ function EnglishAcademyView({ profile, learnerKey, catalog, localProgress, openL
         <div className="exposure-ring" aria-label="Language exposure mix"><strong>40 / 40 / 20</strong><span>UK • US • Ireland</span></div>
       </div>
 
+      {readiness.rebuilding?<p role="status" className="priority-note curriculum-readiness-note"><strong>{readiness.ready} OF {readiness.planned} ENGLISH UNITS DEEP-REVIEWED</strong><span>The everyday and technical sequence stays visible, but a unit unlocks only after Learn, Audio, Grammar, Practice, Speaking and completion evidence pass review.</span></p>:null}
+
       {course.total>0?<section className="acca-study-board english-study-board" data-testid="english-study-board">
         <div className="section-heading"><div><div className="eyebrow">ENGLISH DAILY AGENDA</div><h2>Build everyday fluency and professional confidence together</h2></div><span>{profile.english.curriculumMix.everydayPct}/{profile.english.curriculumMix.professionalPct} profile plan · no provider calls</span></div>
         <div className="acca-agenda-grid">
-          <article className="acca-agenda-card"><span>NEXT LESSON</span><strong>{nextLesson?.title??'Core completed'}</strong><small>{nextLesson?`${nextLesson.estimatedMinutes} min · progress syncs with your account`:'All eight lessons remain available for review.'}</small>{nextLesson?<button className="primary-btn" onClick={()=>openLesson('english',nextLesson)}>{action}</button>:null}</article>
+          <article className="acca-agenda-card"><span>NEXT LESSON</span><strong>{nextLesson?.title??'Core completed'}</strong><small>{nextLesson?`${lessonWorkloadLabel(nextLesson)} · progress syncs with your account`:'All lessons remain available for review.'}</small>{nextLesson?<button className="primary-btn" onClick={()=>openLesson('english',nextLesson)}>{action}</button>:null}</article>
           <article className="acca-agenda-card"><span>{profile.english.curriculumMix.everydayPct} / {profile.english.curriculumMix.professionalPct} BALANCE</span><strong>{everyday?.total??0} everyday · {professional?.total??0} {profile.english.curriculumMix.professionalLabel}</strong><small>{learnerKey==='viviane'?'Four everyday lessons and one Payroll/People Operations lesson per week.':'The monthly sequence keeps everyday and technical English equally represented.'}</small><button className="secondary-btn" onClick={()=>openView('learn')}>View English lessons</button></article>
           <article className={`acca-agenda-card ${dueReviews?'review-due':''}`}><span>SPACED RETRIEVAL</span><strong>{dueReviews?`${dueReviews} review${dueReviews===1?'':'s'} due`:'D+1 · D+7 · D+30'}</strong><small>{course.completedCount?`${course.completedCount}/${course.total} lessons finished`:'Finish the first lesson to start the review cycle.'}</small><button className="secondary-btn" onClick={()=>openView('revision')}>{dueReviews?'Open due reviews':'View review plan'}</button></article>
         </div>
-        <div className="acca-module-grid" aria-label="English progress by balance area">{course.modules.map(module=><article key={module.code} className="acca-module-card"><div><b>{module.code}</b><span>{module.label}</span></div><strong>{module.completedCount}/{module.total}</strong><div className="progress-track"><span style={{width:`${module.percent}%`}} /></div><small>{module.remainingMinutes?`${module.remainingMinutes} min estimated remaining`:'Area completed'}</small></article>)}</div>
+        <div className="acca-module-grid" aria-label="English progress by balance area">{course.modules.map(module=><article key={module.code} className="acca-module-card"><div><b>{module.code}</b><span>{module.label}</span></div><strong>{module.completedCount}/{module.total}</strong><div className="progress-track"><span style={{width:`${module.percent}%`}} /></div><small>{module.remainingMinutes?LOCAL_DEPTH_REVIEW_LABEL:'Area completed'}</small></article>)}</div>
       </section>:null}
 
       <div className="academy-grid">
@@ -785,7 +816,7 @@ function EnglishAcademyView({ profile, learnerKey, catalog, localProgress, openL
           <div className="academy-week">
             {(learnerKey==='viviane'?currentVivianeWeekLessons.map((lesson,index)=>({day:index+1,title:lesson.title,primarySkills:[lesson.moduleSequence===1?'everyday':'Payroll & People Ops'],minutes:lesson.estimatedMinutes,optional:false})):DEFAULT_WEEK).map((session) => (
               <div className="academy-session" key={session.day}>
-                <span>D{session.day}</span><div><strong>{session.title}</strong><small>{session.primarySkills.join(' • ')} • {session.minutes} min{session.optional ? ' • optional' : ''}</small></div>
+                <span>D{session.day}</span><div><strong>{session.title}</strong><small>{session.primarySkills.join(' • ')} • {course.total?LOCAL_DEPTH_REVIEW_LABEL:`${session.minutes} min`}{session.optional ? ' • optional' : ''}</small></div>
               </div>
             ))}
           </div>
@@ -812,8 +843,9 @@ function EnglishAcademyView({ profile, learnerKey, catalog, localProgress, openL
 }
 
 function LocalReviewSection({track,label,catalog,localProgress,openLocalReview}:{track:'finance'|'english';label:string;catalog:CatalogLesson[];localProgress:LocalStudyProgress;openLocalReview:(item:LocalReviewItem)=>void}){
-  const localCourse=useMemo(()=>summarizeLocalCourse(catalog,localProgress,track),[catalog,localProgress,track]);
-  const localReviews=useMemo(()=>buildLocalReviewSchedule(catalog,localProgress,new Date(),track),[catalog,localProgress,track]);
+  const readyCatalog=useMemo(()=>readyCurriculumUnits(catalog),[catalog]);
+  const localCourse=useMemo(()=>summarizeLocalCourse(readyCatalog,localProgress,track),[readyCatalog,localProgress,track]);
+  const localReviews=useMemo(()=>buildLocalReviewSchedule(readyCatalog,localProgress,new Date(),track),[readyCatalog,localProgress,track]);
   const dueLocalReviews=localReviews.filter(item=>item.status==='due');
   const visibleLocalReviews=[...dueLocalReviews,...localReviews.filter(item=>item.status==='scheduled').slice(0,Math.max(0,6-dueLocalReviews.length))];
   if(!localCourse.total)return null;

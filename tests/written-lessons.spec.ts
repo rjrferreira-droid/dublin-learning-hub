@@ -21,9 +21,7 @@ async function openFixture(page:Page,course:typeof courses[number],curriculumPre
  });
  await page.routeWebSocket('**/*',ws=>{const u=new URL(ws.url());if(['localhost','127.0.0.1'].includes(u.hostname))ws.connectToServer();else ws.close();});
  await page.goto(curriculumPreview?'/?curriculumPreview=1':'/?curriculumPreview=0');await page.getByLabel('E-mail').fill('written-fixture@example.invalid');await page.getByLabel('Senha').fill('Fictional-written-only-123');await page.getByRole('button',{name:'Entrar',exact:true}).click();
- const entryButton=curriculumPreview&&course.track==='finance'?'Start ACCA FR A1':course.button;
- if(curriculumPreview&&course.track==='finance')await page.getByTestId('acca-study-board').getByRole('button',{name:entryButton,exact:true}).click();
- else await page.getByRole('button',{name:entryButton,exact:true}).click();
+ await page.getByRole('button',{name:course.button,exact:true}).first().click();
  return ()=>sensitiveRequests;
 }
 for(const course of courses)for(const viewport of [{name:'desktop',width:1440,height:1000},{name:'mobile',width:390,height:844}])test(`${course.track} written lesson at ${viewport.name}: coherent tabs, retained drafts and local checkpoint`,async({page},info)=>{
@@ -32,7 +30,7 @@ for(const course of courses)for(const viewport of [{name:'desktop',width:1440,he
  await tab('Learn');await expect(panel).toHaveAttribute('data-track',course.track);await expect(panel.locator('.lesson-teaching-block')).toHaveCount(4);
  await panel.getByText('Resumo em português',{exact:true}).first().click();await expect(panel.locator('[lang="pt-BR"]').first()).toBeVisible();
  await tab('English');await expect(panel.locator('dt')).toHaveCount(6);
- await tab('Practice');const first=panel.getByTestId('written-practice-0');await first.getByRole('textbox').fill('FICTIONAL DRAFT ONLY');await first.getByRole('button',{name:'Reveal a hint',exact:true}).click();await expect(first.locator('.lesson-hint')).toHaveCount(1);await expect(first.locator('.lesson-worked-response')).toHaveCount(0);
+ await tab('Practice');const first=panel.getByTestId('written-practice-0');await first.getByRole('textbox').fill('FICTIONAL DRAFT ONLY');await first.getByRole('button',{name:'Open revision hint',exact:true}).click();await expect(first.locator('.lesson-hint')).toHaveCount(1);await expect(first.locator('.lesson-worked-response')).toHaveCount(0);await first.getByRole('textbox').fill('FICTIONAL REVISED DRAFT ONLY');await first.getByRole('button',{name:'Record revised draft',exact:true}).click();
  await first.getByRole('button',{name:'Compare with worked response',exact:true}).click();await expect(first.locator('.lesson-worked-response')).toContainText('has not been automatically graded');
  await tab('Case');await panel.getByLabel('Your case response',{exact:true}).fill('FICTIONAL CASE ONLY');
  await tab('Visual');await expect(panel.getByRole('table')).toBeVisible();await expect(panel.getByRole('table').locator('tbody tr')).not.toHaveCount(0);
@@ -55,40 +53,39 @@ test('checkpoint is keyboard usable and never claims persisted learning progress
  const requests=await openFixture(page,courses[0]);await page.getByRole('tab',{name:'Test',exact:true}).click();const q=page.getByTestId('checkpoint-question-0');await q.getByRole('radio').first().focus();await page.keyboard.press('ArrowDown');await expect(q.getByRole('radio').nth(1)).toBeChecked();await q.getByRole('button',{name:'Check answer',exact:true}).focus();await page.keyboard.press('Enter');await expect(page.getByTestId('local-checkpoint-result')).toContainText('not saved to your profile');expect(requests()).toBe(0);
 });
 
-test('ACCA study flow syncs completion to the account and advances to the next lesson',async({page})=>{
+test('deep ACCA A1 exposes only the reviewed contract and never falls through to the legacy checkpoint',async({page})=>{
  const requests=await openFixture(page,courses[0],true);const panel=page.getByTestId('lesson-study-panel');
  await expect(panel.getByRole('heading',{name:'ACCA FR A1 · Purpose and users of financial reporting',exact:true})).toBeVisible();
- await page.getByRole('tab',{name:'Test',exact:true}).click();
- await expect(panel.getByRole('button',{name:'Finish lesson',exact:true})).toBeDisabled();
- for(let i=0;i<5;i++){const q=panel.getByTestId('checkpoint-question-'+i);await q.getByRole('radio').first().check();await q.getByRole('button',{name:'Check answer',exact:true}).click();}
- await panel.getByRole('button',{name:'Finish lesson',exact:true}).click();await expect(panel.getByTestId('local-completion-saved')).toContainText('Completed and saved to your account');
- await expect(panel.getByRole('button',{name:'Continue to ACCA FR A2 · Qualitative characteristics and the cost constraint',exact:true})).toBeVisible();
- await panel.getByRole('button',{name:'Continue to ACCA FR A2 · Qualitative characteristics and the cost constraint',exact:true}).click();await expect(page.getByTestId('lesson-study-panel').getByRole('heading',{name:'ACCA FR A2 · Qualitative characteristics and the cost constraint',exact:true})).toBeVisible();
- await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await expect(page.getByText("TODAY'S ACCA FOCUS • 1/23 FINISHED",{exact:true})).toBeVisible();await expect(page.getByRole('heading',{name:'ACCA FR A2 · Qualitative characteristics and the cost constraint',exact:true})).toBeVisible();
- await expect(page.getByTestId('acca-study-board')).toContainText('1/3 lessons');await expect(page.getByTestId('acca-study-board')).toContainText('Framework');
- await page.locator('.nav-stack').getByRole('button',{name:/Revision/}).click();await expect(page.getByTestId('local-review-list')).toContainText('ACCA FR A1');await expect(page.getByTestId('local-review-list')).toContainText('D+1');await expect(page.getByTestId('local-review-list')).toContainText('Scheduled');
- await page.reload();await expect(page.getByRole('button',{name:'Resume ACCA FR A2',exact:true}).first()).toBeVisible();await page.getByRole('button',{name:'Resume ACCA FR A2',exact:true}).first().click();
- await expect(page.getByTestId('lesson-study-panel').getByRole('heading',{name:'ACCA FR A2 · Qualitative characteristics and the cost constraint',exact:true})).toBeVisible();
- await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await page.locator('.nav-stack').getByRole('button',{name:/Learning/}).click();
- await expect(page.getByTestId('local-curriculum-preview')).toContainText('ACCA 1/23 · English 0/8');await expect(page.getByTestId('catalog-lesson-acca-fr-a1-purpose-users-reporting')).toContainText(/Finished ·/);expect(requests()).toBe(0);
+ await expect(panel.getByTestId('deep-lesson-learn')).toContainText('A1a');
+ await panel.getByRole('button',{name:'Mark Learn reviewed & continue',exact:true}).click();
+ const practice=panel.getByTestId('deep-practice-item-0');
+ const practiceChoice=practice.getByRole('radio').first();
+ if(await practiceChoice.count())await practiceChoice.check();else await practice.getByRole('textbox').fill('FICTIONAL ACCA PRACTICE DRAFT');
+ await practice.getByRole('button',{name:'Submit first attempt',exact:true}).click();
+ await expect(page.getByRole('tab',{name:'Test',exact:true})).toHaveCount(0);
+ await expect(page.getByRole('tab',{name:'Visual',exact:true})).toHaveCount(0);
+ await expect(page.getByRole('tab',{name:'Case',exact:true})).toHaveCount(0);
+ await expect(panel.locator('.deep-completion-plan')).toContainText('Item-level evidence is required');
+ await expect(panel.getByTestId('local-completion-saved')).toHaveCount(0);expect(requests()).toBe(0);
 });
 
-test('balanced English course completes, advances and schedules account-synced review',async({page})=>{
+test('deep English Unit 1 exposes the reviewed Learn → Grammar → Practice → Speaking path only',async({page})=>{
  const requests=await openFixture(page,courses[0],true);const panel=page.getByTestId('lesson-study-panel');
- await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();const today=page.getByTestId('today-study-plan');await expect(today).toContainText('One technical block, one English block, one retrieval block');await expect(today).toContainText('Tell a story naturally');await expect(today).toContainText('ACCA FR Mini Mock series');await page.locator('.nav-stack').getByRole('button',{name:/English Academy/}).click();
- const board=page.getByTestId('english-study-board');await expect(board).toContainText('4 everyday · 4 professional');await expect(board).toContainText('D+1 · D+7 · D+30');
- await board.getByRole('button',{name:'Start English lesson',exact:true}).click();await expect(panel.getByRole('heading',{name:'Tell a story naturally: past forms, rhythm & follow-up questions',exact:true})).toBeVisible();
- await page.getByRole('tab',{name:'Test',exact:true}).click();for(let i=0;i<5;i++){const q=panel.getByTestId('checkpoint-question-'+i);await q.getByRole('radio').first().check();await q.getByRole('button',{name:'Check answer',exact:true}).click();}
- await panel.getByRole('button',{name:'Finish lesson',exact:true}).click();await expect(panel.getByTestId('local-completion-saved')).toContainText('Completed and saved to your account');
- await panel.getByRole('button',{name:'Continue to Everyday Dublin: weather, plans and natural small talk',exact:true}).click();await expect(panel.getByRole('heading',{name:'Everyday Dublin: weather, plans and natural small talk',exact:true})).toBeVisible();
- await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await page.locator('.nav-stack').getByRole('button',{name:/English Academy/}).click();
- await expect(page.getByTestId('english-study-board')).toContainText('1/8 lessons finished');await expect(page.getByTestId('english-study-board')).toContainText('Resume English lesson');
- await page.locator('.nav-stack').getByRole('button',{name:/Revision/}).click();await expect(page.getByTestId('local-english-review-list')).toContainText('Tell a story naturally');await expect(page.getByTestId('local-english-review-list')).toContainText('D+1');await expect(page.getByTestId('local-english-review-list')).toContainText('Scheduled');
- await page.reload();await page.locator('.nav-stack').getByRole('button',{name:/English Academy/}).click();await expect(page.getByTestId('english-study-board')).toContainText('Resume English lesson');expect(requests()).toBe(0);
+ await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await page.getByTestId('course-tree').getByRole('button',{name:'ENGLISH',exact:true}).click();
+ const home=page.getByTestId('course-home-english');await expect(home).toContainText('2 OF 20 UNITS DEEP-REVIEWED');await expect(home).toContainText('Tell a story naturally');
+ await home.getByRole('button',{name:'Start English practice',exact:true}).click();await expect(panel.getByRole('heading',{name:'Tell a story naturally: past forms, rhythm & follow-up questions',exact:true})).toBeVisible();
+ await panel.getByRole('button',{name:'Mark Learn reviewed & continue',exact:true}).click();await page.getByRole('tab',{name:'Grammar',exact:true}).click();
+ await expect(panel.getByTestId('deep-lesson-grammar').locator('.deep-activity-card')).toHaveCount(10);
+ const grammar=panel.getByTestId('deep-grammar-item-0');await grammar.getByRole('radio').first().check();await grammar.getByRole('button',{name:'Submit first attempt',exact:true}).click();
+ await expect(page.getByRole('tab',{name:'Speaking',exact:true})).toBeVisible();
+ await expect(page.getByRole('tab',{name:'Test',exact:true})).toHaveCount(0);
+ await expect(page.getByRole('tab',{name:'Visual',exact:true})).toHaveCount(0);
+ await expect(page.getByRole('tab',{name:'Case',exact:true})).toHaveCount(0);
+ await expect(panel.getByTestId('local-completion-saved')).toHaveCount(0);expect(requests()).toBe(0);
 });
 
 test('local ACCA mock runs, marks and schedules review without provider requests',async({page})=>{
- const requests=await openFixture(page,courses[0],true);await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await page.locator('.nav-stack').getByRole('button',{name:/Mock exams/}).click();
+ const requests=await openFixture(page,courses[0],true);await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await page.getByRole('navigation',{name:'Course navigation'}).getByRole('button',{name:'Mock Exams',exact:true}).click();
  const mock=page.getByTestId('local-mock-exam');await expect(mock.getByTestId('mock-set-acca-fr-mini-mock-01')).toContainText('PARTIAL 30-MINUTE DRILL');await expect(mock.getByTestId('mock-set-acca-fr-mini-mock-02')).toContainText('Inventory and FX');await expect(mock.getByTestId('mock-set-acca-fr-full-mock-01')).toContainText('FULL 3-HOUR SIMULATION');await mock.getByTestId('mock-set-acca-fr-mini-mock-02').click();await expect(mock.getByRole('heading',{name:'ACCA FR Mini Mock 02',exact:true})).toBeVisible();await expect(mock).toContainText('foreign currency, financial instruments, leases and cash-flow interpretation');await mock.getByTestId('mock-set-acca-fr-mini-mock-01').click();
  await expect(mock.getByRole('heading',{name:'ACCA FR Mini Mock 01',exact:true})).toBeVisible();await expect(mock).toContainText('not equivalent to the official 3-hour, 100-mark ACCA FR examination');await expect(mock).toContainText('Account-synced result');await mock.getByRole('button',{name:'Start 30-minute drill',exact:true}).click();
  const correct=[0,1,1,1,0,1];for(let i=0;i<correct.length;i++)await mock.getByTestId(`mock-question-${i}`).getByRole('radio').nth(correct[i]).check();
@@ -124,14 +121,25 @@ const localModels=[
  {slug:'acca-fr-d2-consolidated-financial-statements',title:'ACCA FR D2 · Consolidated financial statements'},
  {slug:'acca-fr-e-employability-technology-skills',title:'ACCA FR E · Employability and technology skills'},
 ] as const;
-for(const model of localModels)for(const viewport of [{name:'desktop',width:1440,height:1000},{name:'mobile',width:390,height:844}])test(`${model.title} at ${viewport.name} is provider-free`,async({page})=>{
+const reviewedLocalModels=localModels.slice(0,2);
+for(const model of reviewedLocalModels)for(const viewport of [{name:'desktop',width:1440,height:1000},{name:'mobile',width:390,height:844}])test(`${model.title} at ${viewport.name} is deep-reviewed and provider-free`,async({page})=>{
  await page.setViewportSize(viewport);const requests=await openFixture(page,courses[0],true);
- await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await page.locator('.nav-stack').getByRole('button',{name:/Learning/}).click();
+ await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await page.getByRole('navigation',{name:'Course navigation'}).getByRole('button',{name:'Curriculum',exact:true}).click();
  const library=page.getByTestId('learning-library');await expect(library.getByTestId('local-curriculum-preview')).toBeVisible();
- const card=library.getByTestId('catalog-lesson-'+model.slug);await expect(card).toContainText('Reviewed self-study');await card.getByRole('button',{name:/^(Open|Resume|Review) lesson$/}).click();
+ const card=library.getByTestId('catalog-lesson-'+model.slug);await expect(card).toContainText('Deep-reviewed self-study');await card.getByRole('button',{name:/^(Open|Resume|Review) lesson$/}).click();
  await expect(page.getByText('Reviewed self-study lesson',{exact:true})).toBeVisible();await expect(page.getByText('Account-synced · no providers',{exact:true})).toBeVisible();const panel=page.getByTestId('lesson-study-panel');await expect(panel.getByRole('heading',{name:model.title,exact:true})).toBeVisible();
- await expect(panel.locator('.lesson-teaching-block')).toHaveCount(4);
- await page.getByRole('tab',{name:'Practice',exact:true}).click();await expect(panel.getByTestId('written-practice-0')).toBeVisible();await expect(panel.getByTestId('applied-practice')).toHaveCount(0);
- await page.getByRole('tab',{name:'Audio',exact:true}).click();await expect(page.getByTestId('p1-interactive-gate')).toContainText('Premium Audio');
+ await expect(panel.locator('.lesson-teaching-block')).toHaveCount(6);
+ await page.getByRole('tab',{name:'Practice',exact:true}).click();await expect(panel.getByTestId('deep-practice-item-0')).toBeVisible();await expect(panel.getByTestId('applied-practice')).toHaveCount(0);
+ await page.getByRole('tab',{name:'Audio',exact:true}).click();await expect(panel.getByTestId('deep-lesson-audio')).toContainText('Authored script · no generated player attached');await expect(page.getByTestId('p1-interactive-gate')).toHaveCount(0);
  await expect(page.getByRole('tab',{name:'Professor',exact:true})).toHaveCount(0);expect(requests()).toBe(0);
+});
+
+test('the remaining ACCA plan stays visible but locked until deep review',async({page})=>{
+ const requests=await openFixture(page,courses[0],true);await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await page.getByRole('navigation',{name:'Course navigation'}).getByRole('button',{name:'Curriculum',exact:true}).click();
+ const library=page.getByTestId('learning-library');
+ await expect(library.locator('.lesson-library-card.lesson-rebuilding')).toHaveCount(21);
+ for(const model of localModels.slice(2)){
+  const card=library.getByTestId('catalog-lesson-'+model.slug);await expect(card).toContainText('Teaching, practice and audio under review');await expect(card.getByRole('button',{name:'Rebuilding',exact:true})).toBeDisabled();
+ }
+ expect(requests()).toBe(0);
 });

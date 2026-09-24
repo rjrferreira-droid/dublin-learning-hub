@@ -3,21 +3,30 @@ import type {P1Track} from './p1RuntimeRegistry.ts';
 import {localModelCodeFor} from './localModelLessonRegistry.ts';
 import {localEnglishCodeFor} from './localEnglishLessonRegistry.ts';
 import {localVivianeEnglishCodeFor} from './vivianeEnglishLessonRegistry.ts';
+import {localPayrollCodeFor} from './localPayrollLessonRegistry.ts';
 import {loadP1ModuleFor} from './p1RuntimeModules.ts';
+
+async function attachDeepRuntimeOverlay(track:P1Track,lesson:{id:string;slug:string},module:LessonModule|null):Promise<LessonModule|null>{
+ if(!module)return null;
+ const {deepRuntimeOverlayFor}=await import('./deepModelAdapters.ts');
+ const overlay=deepRuntimeOverlayFor(track,lesson.id);
+ return overlay?{...module,...overlay.module,track:module.track,lessonId:module.lessonId,deepLesson:overlay.deepLesson}:module;
+}
 /** Reviewed local content loader. It performs no publication, persistence or provider operation. */
 export async function loadReviewedRuntimeModuleFor(track:P1Track,lesson:{id:string;slug:string}):Promise<LessonModule|null>{
  const local=localModelCodeFor(track,lesson);
  const localEnglish=localEnglishCodeFor(track,lesson);
  const localVivianeEnglish=localVivianeEnglishCodeFor(track,lesson);
- if(localVivianeEnglish!==null){const {localVivianeEnglishLessonFor}=await import('./vivianeEnglishModules.ts');return localVivianeEnglishLessonFor(track,lesson);}
- if(localEnglish==='E1'||localEnglish==='E2'){const {localEnglishLessonFor}=await import('./localEnglishLessonModules.ts');return localEnglishLessonFor(track,lesson);}
+ const localPayroll=localPayrollCodeFor(track,lesson);
+ if(localVivianeEnglish!==null){const {localVivianeEnglishLessonFor}=await import('./vivianeEnglishModules.ts');const module=localVivianeEnglishLessonFor(track,lesson);return localVivianeEnglish==='VE1'||localVivianeEnglish==='VE2'?attachDeepRuntimeOverlay(track,lesson,module):module;}
+ if(localEnglish==='E1'||localEnglish==='E2'){const {localEnglishLessonFor}=await import('./localEnglishLessonModules.ts');const module=localEnglishLessonFor(track,lesson);return localEnglish==='E1'?attachDeepRuntimeOverlay(track,lesson,module):module;}
  if(localEnglish==='E3'||localEnglish==='E4'){const {localEnglishEverydayExpansionFor}=await import('./localEnglishEverydayExpansion.ts');return localEnglishEverydayExpansionFor(track,lesson);}
  if(localEnglish==='E5'||localEnglish==='P5'){const {localEnglishBalancedExpansionFor}=await import('./localEnglishBalancedExpansion.ts');return localEnglishBalancedExpansionFor(track,lesson);}
  if(localEnglish==='E6'||localEnglish==='E7'||localEnglish==='E8'||localEnglish==='E9'||localEnglish==='E10'){const {localEnglishEverydayMonthExpansionFor}=await import('./localEnglishEverydayMonthExpansion.ts');return localEnglishEverydayMonthExpansionFor(track,lesson);}
  if(localEnglish==='P6'||localEnglish==='P7'||localEnglish==='P8'||localEnglish==='P9'||localEnglish==='P10'){const {localEnglishTechnicalMonthExpansionFor}=await import('./localEnglishTechnicalMonthExpansion.ts');return localEnglishTechnicalMonthExpansionFor(track,lesson);}
- if(localEnglish!==null)return loadP1ModuleFor(track,lesson);
- if(local==='A1'){const {localModelLessonFor}=await import('./localModelLessonModules.ts');return localModelLessonFor(track,lesson);}
- if(local==='A2'){const {localModelA2For}=await import('./localModelLessonA2.ts');return localModelA2For(track,lesson);}
+ if(localEnglish!==null){const module=await loadP1ModuleFor(track,lesson);return localEnglish==='P1'?attachDeepRuntimeOverlay(track,lesson,module):module;}
+ if(local==='A1'){const {localModelLessonFor}=await import('./localModelLessonModules.ts');return attachDeepRuntimeOverlay(track,lesson,localModelLessonFor(track,lesson));}
+ if(local==='A2'){const {localModelA2For}=await import('./localModelLessonA2.ts');return attachDeepRuntimeOverlay(track,lesson,localModelA2For(track,lesson));}
  if(local==='A3'){const {localModelA3For}=await import('./localModelLessonA3.ts');return localModelA3For(track,lesson);}
  if(local==='A4'){const {localModelA4For}=await import('./localModelLessonA4.ts');return localModelA4For(track,lesson);}
  if(local==='B1'){const {localModelB1For}=await import('./localModelLessonB1.ts');return localModelB1For(track,lesson);}
@@ -39,5 +48,6 @@ export async function loadReviewedRuntimeModuleFor(track:P1Track,lesson:{id:stri
  if(local==='D1'){const {localModelD1For}=await import('./localModelLessonD1.ts');return localModelD1For(track,lesson);}
  if(local==='D2'){const {localModelD2For}=await import('./localModelLessonD2.ts');return localModelD2For(track,lesson);}
  if(local==='E'){const {localModelEFor}=await import('./localModelLessonE.ts');return localModelEFor(track,lesson);}
- return loadP1ModuleFor(track,lesson);
+ const module=await loadP1ModuleFor(track,lesson);
+ return localPayroll==='P1'||localPayroll==='P2'?attachDeepRuntimeOverlay(track,lesson,module):module;
 }

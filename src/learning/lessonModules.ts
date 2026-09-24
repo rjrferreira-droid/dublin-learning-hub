@@ -1,4 +1,7 @@
 import type { StudyTrack } from './teachingPacks.js';
+import type { DeepLessonContract } from './deepLessonContract.js';
+
+export type { DeepLessonContract } from './deepLessonContract.js';
 
 export type LessonSource={id:string;label:string;url:string;supports:string;reviewedOn:string};
 export type LessonSection={id:string;title:string;paragraphs:readonly string[];supportPt:string;sourceIds:readonly string[]};
@@ -11,6 +14,7 @@ export type LessonModule={
  caseStudy:{title:string;scenario:readonly string[];task:string;hints:readonly [string,string];modelAnswer:string;reviewChecks:readonly string[];transfer:string};
  checkpoint:readonly CheckpointQuestion[];sources:readonly LessonSource[];
  practiceExercises?:readonly LessonPracticeExercise[];
+ deepLesson?:DeepLessonContract;
 };
 const reviewedOn='2026-09-13';
 const source=(id:string,label:string,url:string,supports:string):LessonSource=>({id,label,url,supports,reviewedOn});

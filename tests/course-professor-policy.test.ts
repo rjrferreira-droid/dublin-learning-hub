@@ -6,7 +6,7 @@ test('English keeps an in-unit Professor while ACCA and Payroll use optional cou
  const source=fs.readFileSync('src/App.tsx','utf8');
  const tabs=source.slice(source.indexOf('const lessonTabsFor='),source.indexOf('function LessonView'));
  assert.match(tabs,/track==='english'.*Professor/s);
- assert.equal((tabs.match(/Professor/g)??[]).length,2);
+ assert.equal((tabs.match(/Professor/g)??[]).length,4,'both deep-local and legacy English tab sets keep the in-unit Professor entry');
  assert.match(source,/label="Ask the Professor"/);
  assert.match(source,/lessonProfessorEnabled=track\.key==='english'/);
  assert.match(source,/onPrepareWorkshop=\{track\.key==='english'\?prepareWorkshop:undefined\}/);

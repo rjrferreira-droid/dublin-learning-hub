@@ -76,7 +76,8 @@ test('standalone Manuzinha does not acquire adult utilities or adult layout',asy
 test('browser reader speaks reviewed text without paid requests and stops on tab changes',async({page})=>{
  await page.setViewportSize({width:390,height:844});await mockBrowserVoice(page);const sensitive=await login(page);
  await page.getByRole('button',{name:'Continue Finance',exact:true}).click();
- const reader=page.getByTestId('browser-lesson-reader');await expect(reader).toBeVisible();
+ const reader=page.getByTestId('browser-lesson-reader');await expect(reader).toBeHidden();
+ await page.getByText('Accessibility tool · read the Learn text aloud',{exact:true}).click();await expect(reader).toBeVisible();
  expect(await page.evaluate(()=>(window as any).__reader.spoken.length)).toBe(0);
  await reader.getByRole('button',{name:'Listen to section',exact:true}).click();
  await expect(reader.getByRole('status')).toContainText('Reading section 1');
@@ -84,6 +85,8 @@ test('browser reader speaks reviewed text without paid requests and stops on tab
  await page.getByRole('tab',{name:'Practice',exact:true}).click();
  expect(await page.evaluate(()=>(window as any).__reader.current)).toBeNull();
  await page.getByRole('tab',{name:'Audio',exact:true}).click();
+ await expect(page.getByTestId('lesson-audio-boundary')).toContainText('Audio is not a reading of Learn');await expect(reader).toBeHidden();
+ await page.getByRole('tab',{name:'Learn',exact:true}).click();await expect(reader).toBeVisible();
  await reader.getByLabel('Read aloud',{exact:true}).selectOption('pt-BR');
  await reader.getByLabel('Speed',{exact:true}).selectOption('0.85');
  await reader.getByRole('button',{name:'Listen to section',exact:true}).click();
@@ -97,6 +100,7 @@ test('browser reader speaks reviewed text without paid requests and stops on tab
 test('browser voice failure remains local and does not retry or fall back to paid audio',async({page})=>{
  await mockBrowserVoice(page);const sensitive=await login(page);
  await page.getByRole('button',{name:'Continue Finance',exact:true}).click();
+ await page.getByText('Accessibility tool · read the Learn text aloud',{exact:true}).click();
  const reader=page.getByTestId('browser-lesson-reader');
  await reader.getByRole('button',{name:'Listen to section',exact:true}).click();
  await page.evaluate(()=>(window as any).__reader.current.onerror({error:'synthesis-failed'}));
@@ -109,6 +113,7 @@ test('browser voice failure remains local and does not retry or fall back to pai
 test('unsupported browser keeps written lessons available',async({page})=>{
  await page.addInitScript(()=>{delete (window as any).speechSynthesis;delete (window as any).SpeechSynthesisUtterance;});
  await login(page);await page.getByRole('button',{name:'Continue Finance',exact:true}).click();
+ await page.getByText('Accessibility tool · read the Learn text aloud',{exact:true}).click();
  await expect(page.getByTestId('browser-lesson-reader')).toContainText('Read-aloud is unavailable');
  await expect(page.getByTestId('lesson-reading')).toBeVisible();
 });

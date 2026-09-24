@@ -40,7 +40,7 @@ export function BrowserLessonReader({module,disabled=false}:{module:LessonModule
   window.addEventListener('pagehide',media);
   return ()=>{cancel();document.removeEventListener('visibilitychange',leave);document.removeEventListener('play',media,true);window.removeEventListener('pagehide',media);};
  },[]);
- useEffect(()=>{if(disabled)stop();},[disabled]);
+ useEffect(()=>{if(disabled&&current.current)stop();},[disabled]);
  function start(){
   if(!supported||disabled||document.hidden)return;
   cancel();
@@ -67,8 +67,8 @@ export function BrowserLessonReader({module,disabled=false}:{module:LessonModule
   setPlaying(true);setStatus('Starting browser voice…');speak(0);
  }
  return <section className="browser-lesson-reader" aria-label="Browser lesson reader" data-testid="browser-lesson-reader">
-  <h3>Listen with your browser</h3>
-  <p>Read the written lesson aloud, or listen to its Portuguese summaries. No OpenAI generation or Learning Hub AI charge. Voice quality and internet requirements depend on your browser and device.</p>
+  <h3>Browser read-aloud controls</h3>
+  <p>This accessibility tool reads the Learn text or its Portuguese summaries. It is not the independent Audio lesson. No OpenAI generation or Learning Hub AI charge is used; voice quality and internet requirements depend on your browser and device.</p>
   {!supported?<p role="status">Read-aloud is unavailable in this browser. The written lesson remains available.</p>:<>
    <div className="browser-reader-options">
     <label>Section<select aria-label="Section" value={section} disabled={disabled} onChange={e=>{stop();setSection(Number(e.target.value));}}>{module.sections.map((s,i)=><option key={s.id} value={i}>{s.title}</option>)}</select></label>
