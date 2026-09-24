@@ -747,7 +747,7 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,
           <button key={tab.label} role="tab" aria-selected={activeTab === tab.key} className={activeTab === tab.key ? 'active' : ''} onClick={() => setActiveTab(tab.key)}>{tab.label}</button>
         ))}
       </div>
-      <div className={`lesson-layout ${activeTab==='Audio'?'lesson-layout-audio':''}`}>
+      <div className={`lesson-layout ${activeTab==='Audio'?'lesson-layout-audio':''} ${deepLocal&&track.key==='english'&&activeTab==='Learn'?'lesson-layout-focused':''}`}>
         <article className="lesson-content-card">
           <div className="track-card-head"><span className={`track-badge ${track.key}`}>{track.accent}</span><span className="readiness-pill">{track.origin==='local-model'?'Account-synced · reviewed unit':'Premium lesson'}</span></div>
           <div className="eyebrow">{activeTab.toUpperCase()}</div>
@@ -757,7 +757,7 @@ function LessonView({ track, learnerKey, memory, activeTab, setActiveTab, close,
           {!interactiveLessonSupported && !deepLocal && canUseActions && isP1Slug(track.key,track.lessonSlug) && (activeTab === 'Audio' || activeTab === 'Professor') ? <LessonReadinessCheck key={[account.userId,track.key,track.lessonId,track.lessonSlug].join(':')} userId={account.userId} lessonId={track.lessonId} lessonSlug={track.lessonSlug} lessonTitle={track.lesson} track={track.key} activeTab={activeTab}/> : null}
           {/* Interactive providers are mounted only for lessons with a reviewed server handoff. */}
         </article>
-        <aside className="lesson-side-card" hidden={activeTab==='Audio'}>
+        <aside className="lesson-side-card" hidden={activeTab==='Audio'||deepLocal&&track.key==='english'&&activeTab==='Learn'}>
           <div className="eyebrow">MEASURED LEARNING SIGNALS</div>
           <h3>{measuredSession ? 'Latest evaluated evidence' : 'Baseline pending'}</h3>
           {localCompletion?<div className="priority-note local-progress-note"><strong>Finished and saved to your account</strong><span>{localCompletion.correct}/{localCompletion.total} checkpoint answers correct in the saved attempt · practice completion only, not measured mastery.</span></div>:null}

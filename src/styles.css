@@ -133,6 +133,9 @@ button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px
 .lesson-layout-audio { grid-template-columns:minmax(0,1fr); }
 .lesson-side-card[hidden] { display:none; }
 .lesson-layout-audio .lesson-content-card { width:100%;max-width:980px;margin-inline:auto; }
+.lesson-layout-focused { grid-template-columns:minmax(0,1fr); }
+.lesson-layout-focused .lesson-content-card { width:100%;max-width:980px;min-height:0;margin-inline:auto;padding:20px; }
+.lesson-layout-focused .track-card-head,.lesson-layout-focused .lesson-content-card>.eyebrow { display:none; }
 .lesson-content-card, .lesson-side-card { background:#fff; border:1px solid #e1e7ef; border-radius:20px; padding:24px; box-shadow:0 9px 28px rgba(9,29,66,.045); }
 .lesson-content-card { min-height:520px; }
 .lesson-content-card > .eyebrow { margin-top:24px; }
