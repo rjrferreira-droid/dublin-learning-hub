@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {AppliedPracticePanel} from './AppliedPracticePanel';
 import {BrowserLessonReader} from './BrowserLessonReader';
 import { lessonModuleFor, type LessonModule } from '../learning/lessonModules';
@@ -13,8 +13,8 @@ import {DeepLessonExperience,deepLessonHandlesTab} from './DeepLessonExperience'
 import '../learning/lesson-study.css';
 
 const studyTabs=new Set(['Learn','Audio','English','Grammar','Practice','Speaking','Visual','Case','Test','Sources']);
-type Props={track:StudyTrack;lessonId:string;lessonSlug?:string;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean;readerDisabled?:boolean;localCompletion?:{completedAt:string;correct:number;total:number};onCompleteLocal?:(correct:number,total:number)=>void;nextLessonTitle?:string;onOpenNextLesson?:()=>void;localReviewStage?:LocalReviewStage;localReviewCompletion?:LocalReviewCompletion};
-export function LessonStudyPanel({track,lessonId,lessonSlug,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled,readerDisabled,localCompletion,onCompleteLocal,nextLessonTitle,onOpenNextLesson,localReviewStage,localReviewCompletion}:Props){
+type Props={track:StudyTrack;lessonId:string;lessonSlug?:string;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean;readerDisabled?:boolean;audioPlayer?:ReactNode;localCompletion?:{completedAt:string;correct:number;total:number};onCompleteLocal?:(correct:number,total:number)=>void;nextLessonTitle?:string;onOpenNextLesson?:()=>void;localReviewStage?:LocalReviewStage;localReviewCompletion?:LocalReviewCompletion};
+export function LessonStudyPanel({track,lessonId,lessonSlug,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled,readerDisabled,audioPlayer,localCompletion,onCompleteLocal,nextLessonTitle,onOpenNextLesson,localReviewStage,localReviewCompletion}:Props){
  const staticModule=lessonModuleFor(track,lessonId);
  const scope=JSON.stringify([track,lessonId,lessonSlug]);
  const [attempt,setAttempt]=useState(0);
@@ -32,9 +32,9 @@ export function LessonStudyPanel({track,lessonId,lessonSlug,activeTab,onTabChang
   <p role="status">{!lessonSlug||result?.status==='missing'?'No reviewed written module is available for this lesson yet.':result?.status==='unavailable'?'The written lesson could not be loaded. Check your connection and try again.':'Loading reviewed lesson…'}</p>
   {result?.status==='unavailable'?<button type="button" className="secondary-btn" onClick={()=>setAttempt(n=>n+1)}>Try loading again</button>:null}
  </div>:null;
- return <StudyContent key={module.lessonId} module={module} lessonSlug={lessonSlug} activeTab={activeTab} onTabChange={onTabChange} onPrepareWorkshop={onPrepareWorkshop} handoffDisabled={handoffDisabled} readerDisabled={readerDisabled} localCompletion={localCompletion} onCompleteLocal={onCompleteLocal} nextLessonTitle={nextLessonTitle} onOpenNextLesson={onOpenNextLesson} localReviewStage={localReviewStage} localReviewCompletion={localReviewCompletion}/>;
+ return <StudyContent key={module.lessonId} module={module} lessonSlug={lessonSlug} activeTab={activeTab} onTabChange={onTabChange} onPrepareWorkshop={onPrepareWorkshop} handoffDisabled={handoffDisabled} readerDisabled={readerDisabled} audioPlayer={audioPlayer} localCompletion={localCompletion} onCompleteLocal={onCompleteLocal} nextLessonTitle={nextLessonTitle} onOpenNextLesson={onOpenNextLesson} localReviewStage={localReviewStage} localReviewCompletion={localReviewCompletion}/>;
 }
-function StudyContent({module,lessonSlug,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled,readerDisabled,localCompletion,onCompleteLocal,nextLessonTitle,onOpenNextLesson,localReviewStage,localReviewCompletion}:{module:LessonModule;lessonSlug?:string;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean;readerDisabled?:boolean;localCompletion?:{completedAt:string;correct:number;total:number};onCompleteLocal?:(correct:number,total:number)=>void;nextLessonTitle?:string;onOpenNextLesson?:()=>void;localReviewStage?:LocalReviewStage;localReviewCompletion?:LocalReviewCompletion}){
+function StudyContent({module,lessonSlug,activeTab,onTabChange,onPrepareWorkshop,handoffDisabled,readerDisabled,audioPlayer,localCompletion,onCompleteLocal,nextLessonTitle,onOpenNextLesson,localReviewStage,localReviewCompletion}:{module:LessonModule;lessonSlug?:string;activeTab:string;onTabChange:(tab:string)=>void;onPrepareWorkshop?:(id:string)=>void;handoffDisabled?:boolean;readerDisabled?:boolean;audioPlayer?:ReactNode;localCompletion?:{completedAt:string;correct:number;total:number};onCompleteLocal?:(correct:number,total:number)=>void;nextLessonTitle?:string;onOpenNextLesson?:()=>void;localReviewStage?:LocalReviewStage;localReviewCompletion?:LocalReviewCompletion}){
  const pack=STUDY_PACKS[module.track];
  const exercises=module.practiceExercises??pack.exercises;
  const [drafts,setDrafts]=useState<Record<string,string>>({});
@@ -71,8 +71,8 @@ function StudyContent({module,lessonSlug,activeTab,onTabChange,onPrepareWorkshop
  const pronunciationTarget=companion?.pronunciationTarget??pronunciationTargetFor(module);
  const deepHandled=module.deepLesson?deepLessonHandlesTab(module.deepLesson,activeTab):false;
  return <div className="lesson-study-panel" data-testid="lesson-study-panel" data-track={module.track} data-active-tab={activeTab} hidden={!visible}>
-  <div className="lesson-study-banner"><strong>{activeTab==='Audio'?'Independent audio · separate from Learn':'Written lesson · self-study'}</strong><span>{activeTab==='Audio'?'No browser narration is presented as the lesson audio':'No AI call · drafts and checks stay only in this open lesson'}</span></div>
-  {module.deepLesson?<DeepLessonExperience module={module} activeTab={activeTab} readerDisabled={readerDisabled} onTabChange={onTabChange} onLearnReviewed={()=>setLearnConfirmed(true)} onGrammarEngaged={()=>setDeepEngagement(current=>({...current,grammar:true}))} onPracticeEngaged={()=>setDeepEngagement(current=>({...current,practice:true}))}/>:null}
+  {activeTab!=='Audio'?<div className="lesson-study-banner"><strong>Written lesson · self-study</strong><span>No AI call · drafts and checks stay only in this open lesson</span></div>:null}
+  {module.deepLesson?<DeepLessonExperience module={module} activeTab={activeTab} readerDisabled={readerDisabled} audioPlayer={audioPlayer} onTabChange={onTabChange} onLearnReviewed={()=>setLearnConfirmed(true)} onGrammarEngaged={()=>setDeepEngagement(current=>({...current,grammar:true}))} onPracticeEngaged={()=>setDeepEngagement(current=>({...current,practice:true}))}/>:null}
   <section className="lesson-study-section" hidden={activeTab!=='Learn'||deepHandled} data-testid="lesson-reading">
    <h2>{module.title}</h2><p className="lesson-study-lead">{module.goal}</p>
    <p className="lesson-study-note">Read the core in a short sitting; continue with practice at your own pace. Optional Portuguese support is available below each section.</p>
@@ -90,9 +90,9 @@ function StudyContent({module,lessonSlug,activeTab,onTabChange,onPrepareWorkshop
    <div className={`lesson-phase-confirmation ${learnConfirmed?'complete':''}`}><strong>{learnConfirmed?'Learn phase reviewed':'Close the Learn phase deliberately'}</strong><p>{learnConfirmed?'Your confirmation is kept only while this lesson remains open. Continue to Practice when ready.':'After working through the explanations and examples, confirm before moving to retrieval practice.'}</p><button type="button" onClick={()=>{setLearnConfirmed(true);onTabChange('Practice');}}>{learnConfirmed?'Continue to Practice':'Mark Learn reviewed & continue'}</button></div>
   </section>
   <div hidden={deepHandled}><section className="lesson-study-section lesson-audio-boundary" hidden={activeTab!=='Audio'} data-testid="lesson-audio-boundary">
-   <div className="lesson-section-kicker">AUDIO · INDEPENDENT EPISODE ONLY</div><h2>Audio is not a reading of Learn</h2>
-   <p>An Audio lesson must have its own teaching script, examples and listening sequence. The browser reader remains under Learn only as an optional accessibility tool.</p>
-   <div className="lesson-audio-state" role="status"><strong>Episode availability</strong><p>If a reviewed Premium Audio player is available for this unit, it appears below this notice. If no player appears, the independent episode is not ready yet; the Hub will not substitute the Learn text or imply that audio study was completed.</p></div>
+   <div className="lesson-section-kicker">AUDIO</div><h2>Listen to the lesson</h2>
+   <p>Listen for the main idea and the evidence that supports it.</p>
+   {audioPlayer??<p role="status">The audio for this lesson is being prepared.</p>}
   </section></div>
   <section className="lesson-study-section" hidden={activeTab!=='English'} data-testid="lesson-vocabulary">
    <h2>English you can use in this lesson</h2><p>Explain the idea, then use the term in your own sentence. Definitions and examples are for this lesson, not an audio assessment.</p>

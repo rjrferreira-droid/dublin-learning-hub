@@ -7,7 +7,6 @@ test('closed runtime explains activation and never encourages another request',(
  assert.match(policy.message,/not been activated/);assert.match(policy.message,/written lesson/);
  assert.ok(!policy.message.includes('audio_runtime_closed'));
  const panel=fs.readFileSync('src/components/PremiumAudioPanel.tsx','utf8');
- assert.match(panel,/disabled=\{loading \|\| runtimeClosed\}/);
  assert.match(panel,/disabled=\{!available \|\| loading \|\| runtimeClosed\}/);
  assert.match(panel,/if \(!lessonId \|\| loading \|\| runtimeClosed\) return/);
 });

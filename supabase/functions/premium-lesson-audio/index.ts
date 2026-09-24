@@ -14,6 +14,7 @@ import {createHash} from 'node:crypto';
 import {goldenAudioTrack} from '../../../src/learning/goldenAudioRegistry.ts';
 import {lessonModuleFor} from '../../../src/learning/lessonModules.ts';
 import {deepAudioSource} from '../../../src/learning/deepInteractiveRegistry.ts';
+import {silentMp3} from '../_shared/silent-mp3.ts';
 
 type AudioFailurePhase='transport'|'http'|'media_type'|'media_validation';
 /** Metadata only. Never retain provider bodies, credentials or narrated text. */
@@ -87,8 +88,8 @@ const hasMpegFrameHeader=(bytes:Uint8Array,offset:number)=>offset>=0&&offset+3<b
   &&(bytes[offset+1]&0x18)!==0x08&&(bytes[offset+1]&0x06)!==0
   &&(bytes[offset+2]&0xf0)!==0&&(bytes[offset+2]&0xf0)!==0xf0
   &&(bytes[offset+2]&0x0c)!==0x0c;
-const hasPlausibleMp3Frames=(bytes:Uint8Array)=>{
-  if(bytes.length<MIN_PREMIUM_AUDIO_BYTES)return false;
+const hasPlausibleMp3Frames=(bytes:Uint8Array,minBytes=MIN_PREMIUM_AUDIO_BYTES)=>{
+  if(bytes.length<minBytes)return false;
   let first=0;
   if(bytes[0]===0x49&&bytes[1]===0x44&&bytes[2]===0x33){
     if(bytes.length<10||bytes[3]<2||bytes[3]>4||[6,7,8,9].some(index=>(bytes[index]&0x80)!==0))return false;
@@ -103,7 +104,7 @@ const hasPlausibleMp3Frames=(bytes:Uint8Array)=>{
   for(let offset=first+24;offset<=scanEnd;offset++)if(hasMpegFrameHeader(bytes,offset))return true;
   return false;
 };
-const readBoundedPremiumMp3=async(response:Response)=>{
+const readBoundedPremiumMp3=async(response:Response,minBytes=MIN_PREMIUM_AUDIO_BYTES)=>{
   const declared=response.headers.get('content-length');
   if(declared!==null&&(!/^[0-9]+$/.test(declared)||!Number.isSafeInteger(Number(declared))||Number(declared)>MAX_PREMIUM_AUDIO_BYTES)){
     await response.body?.cancel().catch(()=>undefined);throw new Error('tts_failed');
@@ -121,7 +122,7 @@ const readBoundedPremiumMp3=async(response:Response)=>{
   }finally{reader.releaseLock();}
   const bytes=new Uint8Array(total);let offset=0;
   for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
-  if(!hasPlausibleMp3Frames(bytes))throw new Error('tts_failed');
+  if(!hasPlausibleMp3Frames(bytes,minBytes))throw new Error('tts_failed');
   return bytes;
 };
 
@@ -447,6 +448,7 @@ Deno.serve(async(req:Request)=>{
   const {data:existing}=await admin.from("audio_assets").select("id,storage_path,transcript_pt,voice,generated_at").eq("lesson_id",lessonId).eq("audio_type","commentary").eq("storage_path",expectedPath).maybeSingle();
   if(existing?.storage_path && existing.storage_path!==expectedPath)return json({error:"audio_source_changed"},409);
   if(existing?.storage_path){
+    if(deepSource?.cues?.length&&existing.voice!=='multi-voice-v1')return json({error:'audio_render_outdated'},409);
     // New receipt columns are queried separately so cached playback remains backwards-compatible before the reviewed migration exists.
     const {data:receiptMeta}=await admin.from("audio_assets").select("generation_request_id,estimated_cost_usd,transcript_pt").eq("id",existing.id).maybeSingle();
     if(receiptMeta?.generation_request_id&&receiptMeta.estimated_cost_usd!=null){
@@ -511,13 +513,34 @@ Deno.serve(async(req:Request)=>{
           if(error||!latest||latest.id!==lessonId||latest.slug!==lesson.slug||latest.module_id!==lesson.module_id||latest.is_published!==true||latest.content_version!==version)throw new Error('audio_source_changed');
           const {data:cache,error:cacheError}=await admin.from('audio_assets').select('id,storage_path,voice,generated_at').eq('lesson_id',lessonId).eq('audio_type','commentary').eq('storage_path',expectedPath).maybeSingle();
           if(cacheError)throw new Error('audio_cache_unavailable');
-          if(cache?.storage_path){if(cache.storage_path!==expectedPath)throw new Error('audio_source_changed');racedCache=cache;throw new Error('audio_cached_during_admission');}
+          if(cache?.storage_path){if(cache.storage_path!==expectedPath)throw new Error('audio_source_changed');if(deepSource?.cues?.length&&cache.voice!=='multi-voice-v1')throw new Error('audio_render_outdated');racedCache=cache;throw new Error('audio_cached_during_admission');}
           const {data:objects,error:objectsError}=await admin.storage.from('lesson-audio').list(folder,{limit:20,search:fileName});
           if(objectsError)throw new Error('audio_cache_unavailable');
           // An object without its attempt/receipt metadata is not evidence of a zero-cost generation.
           if(objects?.some((object:any)=>object.name===fileName))throw new Error('audio_reconciliation_required');
         },
         generate:async()=>{
+          // Multi-voice English episodes are rendered per authored turn. Labels and
+          // pause directions never enter the provider input; silence is encoded audio.
+          if(deepSource?.cues?.length){
+            const cues=deepSource.cues,rendered=new Array<Uint8Array>(cues.length);
+            let next=0;
+            const workers=Array.from({length:Math.min(3,cues.filter(cue=>cue.kind==='speech').length)},async()=>{
+              while(next<cues.length){
+                const position=next++,cue=cues[position];
+                if(cue.kind==='silence'){rendered[position]=silentMp3(cue.durationMs);continue;}
+                const response=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',signal:AbortSignal.timeout(90000),headers:{Authorization:`Bearer ${openaiKey}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini-tts',voice:cue.voice,input:cue.text,instructions:'Speak naturally in English. Follow the authored character and meaning without reading labels or production directions.',response_format:'mp3',speed:0.98})});
+                if(!response.ok){await response.body?.cancel().catch(()=>undefined);throw new Error('tts_failed');}
+                rendered[position]=await readBoundedPremiumMp3(response,512);
+              }
+            });
+            await Promise.all(workers);
+            const total=rendered.reduce((sum,bytes)=>sum+bytes.byteLength,0);
+            if(total>MAX_PREMIUM_AUDIO_BYTES)throw new Error('tts_failed');
+            const complete=new Uint8Array(total);let offset=0;
+            for(const bytes of rendered){complete.set(bytes,offset);offset+=bytes.byteLength;}
+            return complete;
+          }
           const chunks=deepSource?.chunks??[script];const rendered:Uint8Array[]=[];let total=0;
           for(const input of chunks){
             const response=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',signal:AbortSignal.timeout(90000),headers:{Authorization:`Bearer ${openaiKey}`,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini-tts',voice:'marin',input,instructions:course.learner_track==='english_academy'?'Speak in clear natural English as a patient teacher.':'Speak in natural Brazilian Portuguese as a calm expert teacher. Keep technical English terms in English.',response_format:'mp3',speed:0.98})});
@@ -533,16 +556,16 @@ Deno.serve(async(req:Request)=>{
         store:async(bytes,identity)=>{
           const {error:uploadError}=await admin.storage.from('lesson-audio').upload(identity.storagePath,bytes,{contentType:'audio/mpeg',upsert:false,cacheControl:'31536000'});
           if(uploadError)throw new Error('audio_upload_failed');
-          const {error:assetError}=await admin.from('audio_assets').upsert({lesson_id:lessonId,audio_type:'commentary',storage_path:identity.storagePath,transcript_pt:script,voice:'marin',generated_at:new Date().toISOString(),generation_request_id:`premium-audio-v2:${identity.attemptId}`,estimated_cost_usd:estimatedCost},{onConflict:'lesson_id,audio_type'});
+          const {error:assetError}=await admin.from('audio_assets').upsert({lesson_id:lessonId,audio_type:'commentary',storage_path:identity.storagePath,transcript_pt:script,voice:deepSource?.cues?.length?'multi-voice-v1':'marin',generated_at:new Date().toISOString(),generation_request_id:`premium-audio-v2:${identity.attemptId}`,estimated_cost_usd:estimatedCost},{onConflict:'lesson_id,audio_type'});
           if(assetError)throw new Error('audio_asset_record_failed');
           return identity;
         },
       });
-      return audioReply(expectedPath,{cached:false,voice:'marin',estimated_cost_usd:estimatedCost,cost_basis:'application_estimate_not_provider_invoice'});
+      return audioReply(expectedPath,{cached:false,voice:deepSource?.cues?.length?'multi-voice-v1':'marin',estimated_cost_usd:estimatedCost,cost_basis:'application_estimate_not_provider_invoice'});
     }catch(cause){
       if(racedCache)return audioReply(expectedPath,{cached:true,voice:racedCache.voice??'marin'});
       const raw=cause instanceof Error?cause.message:'';
-      const allowed=new Set(['global_ai_budget_reached','premium_audio_budget_reached','audio_generation_in_progress','audio_source_changed','audio_cache_unavailable','audio_reconciliation_required','audio_receipt_unconfirmed','audio_asset_record_failed','audio_upload_failed','tts_failed',
+      const allowed=new Set(['global_ai_budget_reached','premium_audio_budget_reached','audio_generation_in_progress','audio_source_changed','audio_render_outdated','audio_cache_unavailable','audio_reconciliation_required','audio_receipt_unconfirmed','audio_asset_record_failed','audio_upload_failed','tts_failed',
         'invalid_audio_attempt','audio_admission_unavailable','audio_admission_invalid','audio_attempt_replayed','audio_submission_unconfirmed','audio_asset_identity_mismatch']);
       const code=allowed.has(raw)?raw:'audio_attempt_unavailable';
       return json({error:code},code.endsWith('budget_reached')?429:code==='audio_generation_in_progress'||code==='audio_source_changed'||code==='audio_reconciliation_required'?409:503);

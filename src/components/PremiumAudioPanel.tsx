@@ -6,11 +6,12 @@ import { normalizePremiumAudioError, premiumAudioService, type PremiumAudioError
 type PremiumAudioPanelProps = {
   lessonId?: string;
   lessonTitle: string;
+  reviewedVoicesPending?: boolean;
 };
 
 type AudioState = PremiumAudioResult | null;
 
-export function PremiumAudioPanel({ lessonId, lessonTitle }: PremiumAudioPanelProps) {
+export function PremiumAudioPanel({ lessonId, lessonTitle, reviewedVoicesPending = false }: PremiumAudioPanelProps) {
   const [audio, setAudio] = useState<AudioState>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<PremiumAudioError | null>(null);
@@ -48,17 +49,15 @@ export function PremiumAudioPanel({ lessonId, lessonTitle }: PremiumAudioPanelPr
   }
 
   return (
-    <div className="reading-copy" data-testid="premium-audio-panel">
-      <h2>Premium Audio</h2>
-      <p className="lead">
-        A professor-style narration of this lesson, generated once and cached for future listening.
-      </p>
+    <div className="reading-copy audio-lesson-player" data-testid="premium-audio-panel">
       {new URLSearchParams(window.location.search).get('previewCheck')==='1'&&<div className="callout">
         <button className="secondary-btn" type="button" onClick={()=>void checkConnection()} disabled={checking}>{checking?'Checking audio connection…':'Check audio connection'}</button>
         {connection&&<p role="status" data-testid="audio-provider-connection">{connection}</p>}
       </div>}
 
-      {!enabled ? (
+      {reviewedVoicesPending ? (
+        <div className="audio-demo premium-audio-live" role="status"><span className="audio-play audio-play-icon" aria-hidden="true">♫</span><div className="premium-audio-copy"><strong>{lessonTitle}</strong><span>Audio being rebuilt with character voices and real pauses.</span></div></div>
+      ) : !enabled ? (
         <div className="callout">
           <strong>Audio temporarily disabled</strong>
           <span>The feature can be switched off independently without affecting the lesson.</span>
@@ -70,27 +69,17 @@ export function PremiumAudioPanel({ lessonId, lessonTitle }: PremiumAudioPanelPr
         </div>
       ) : (
         <div className="audio-demo premium-audio-live">
-          <button
-            className="audio-play"
-            type="button"
-            aria-label={audio ? 'Reload Premium Audio' : 'Load Premium Audio'}
-            onClick={loadAudio}
-            disabled={loading || runtimeClosed}
-          >
-            {loading ? '…' : audio ? '↻' : '▶'}
-          </button>
+          <span className="audio-play audio-play-icon" aria-hidden="true">♫</span>
 
           <div className="premium-audio-copy">
             <strong>{lessonTitle}</strong>
             <span>
               {loading
-                ? 'Preparing premium narration…'
+                ? 'Preparing your audio…'
                 : runtimeClosed
-                  ? 'Awaiting audio activation'
+                  ? 'Audio is being prepared'
                 : audio
-                  ? audio.cached
-                    ? 'Loaded from secure lesson cache'
-                    : 'New premium narration generated'
+                  ? 'Ready to listen'
                   : 'Ready to load on demand'}
             </span>
           </div>
@@ -127,10 +116,6 @@ export function PremiumAudioPanel({ lessonId, lessonTitle }: PremiumAudioPanelPr
         </div>
       )}
 
-      <div className="callout">
-        <strong>Cost-safe and isolated by design</strong>
-        <span>Concurrent requests for the same lesson are deduplicated. Cached audio bypasses new generation, and audio failure never changes the active lesson, tab or learner progress.</span>
-      </div>
     </div>
   );
 }

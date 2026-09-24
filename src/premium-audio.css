@@ -9,4 +9,8 @@
 .audio-error span{font-size:12px;line-height:1.5;}
 .audio-error .secondary-btn{width:max-content;}
 .audio-play:disabled,.secondary-dark-btn:disabled{cursor:wait;opacity:.65;}
+.audio-lesson-player{margin:18px 0 22px}
+.audio-lesson-player .audio-demo{margin:0}
+.audio-lesson-player .premium-audio-meta{display:none}
+.audio-play-icon{display:grid;place-items:center;flex:none;font-size:20px}
 @media(max-width:760px){.premium-audio-live{grid-template-columns:auto 1fr}.premium-audio-live .audio-wave{grid-column:1/-1}.premium-audio-live .secondary-dark-btn{grid-column:1/-1;width:100%}}

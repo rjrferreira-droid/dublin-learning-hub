@@ -130,8 +130,25 @@ for(const model of reviewedLocalModels)for(const viewport of [{name:'desktop',wi
  await expect(page.getByText('Reviewed self-study lesson',{exact:true})).toBeVisible();await expect(page.getByText('Account-synced · reviewed unit',{exact:true})).toBeVisible();const panel=page.getByTestId('lesson-study-panel');await expect(panel.getByRole('heading',{name:model.title,exact:true})).toBeVisible();
  await expect(panel.locator('.lesson-teaching-block')).toHaveCount(6);
  await page.getByRole('tab',{name:'Practice',exact:true}).click();await expect(panel.getByTestId('deep-practice-item-0')).toBeVisible();await expect(panel.getByTestId('applied-practice')).toHaveCount(0);
- await page.getByRole('tab',{name:'Audio',exact:true}).click();await expect(panel.getByTestId('deep-lesson-audio')).toContainText('Authored episode · player availability shown below');await expect(page.getByTestId('p1-interactive-gate')).toHaveCount(0);
+ await page.getByRole('tab',{name:'Audio',exact:true}).click();await expect(panel.getByTestId('deep-lesson-audio')).toContainText('Listen for the decision');await expect(page.getByTestId('p1-interactive-gate')).toHaveCount(0);
  await expect(page.getByRole('tab',{name:'Professor',exact:true})).toHaveCount(0);expect(requests()).toBe(0);
+});
+
+test('English Audio uses one quiet column with player, optional transcript and five spoken questions',async({page},info)=>{
+ await page.setViewportSize({width:1440,height:950});const requests=await openFixture(page,courses[0],true);
+ await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();
+ await page.getByTestId('course-tree').getByRole('button',{name:'ENGLISH',exact:true}).click();
+ await page.getByTestId('course-home-english').getByRole('button',{name:'Start English practice',exact:true}).click();
+ await page.getByRole('tab',{name:'Audio',exact:true}).click();
+ const audio=page.getByTestId('deep-lesson-audio');await expect(audio).toBeVisible();
+ await expect(audio.getByTestId('premium-audio-panel')).toBeVisible();
+ await expect(page.locator('.lesson-side-card')).toBeHidden();
+ await expect(audio.locator('.audio-transcript')).not.toHaveAttribute('open','');
+ await expect(audio.getByText('QUESTION 1 OF 5')).toBeVisible();
+ await expect(audio.getByRole('button',{name:'Record answer'})).toBeVisible();
+ await expect(audio).not.toContainText('Cost-safe and isolated by design');
+ await audio.screenshot({path:info.outputPath('english-audio-desktop.png')});
+ expect(requests()).toBe(0);
 });
 
 test('the remaining ACCA plan stays visible but locked until deep review',async({page})=>{

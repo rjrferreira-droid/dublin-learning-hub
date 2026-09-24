@@ -405,4 +405,22 @@ test('authored v3 requires an exact post-settlement binding before signing and n
   assert.equal(state.tts.length,1);assert.equal(state.events.filter(event=>event==='tts').length,1);assert.ok(!state.events.includes('sign'));
  }
 });
+test('reviewed English deep episode sends distinct voices and no production labels to fictional TTS',async()=>{
+ const deepId='e1100000-2026-4e11-8e01-000000000001';
+ resetV3('english',{requestLessonId:deepId,lesson:{id:deepId,module_id:moduleId,slug:'story-past-forms-rhythm-follow-up',is_published:true,title:'The wrong Riverside',content_version:3,sequence:1}});
+ const result=await invoke();assert.equal(result.status,200,JSON.stringify(result.body));
+ assert.equal(state.attemptState,'settled');assert.ok(state.tts.length>20);
+ assert.ok(state.tts.some(request=>request.voice==='marin'));
+ assert.ok(state.tts.some(request=>request.voice==='coral'));
+ assert.ok(state.tts.some(request=>request.voice==='onyx'));
+ assert.ok(state.tts.every(request=>!/^\s*(?:HOST:|NORA:|SAM:|\[?pause\s+\d+)/i.test(request.input)));
+ assert.equal(state.writes.find(write=>write.table==='audio_assets')?.upsert?.voice,'multi-voice-v1');
+});
+test('older single-voice English cache is withheld without spending or signing',async()=>{
+ const deepId='e1100000-2026-4e11-8e01-000000000001';
+ resetV3('english',{requestLessonId:deepId,lesson:{id:deepId,module_id:moduleId,slug:'story-past-forms-rhythm-follow-up',is_published:true,title:'The wrong Riverside',content_version:2,sequence:1},
+  cache:{id:'55555555-5555-4555-8555-555555555555',storage_path:`lessons/${deepId}/commentary-v2.mp3`,voice:'marin'}});
+ const result=await invoke();assert.equal(result.status,409);assert.equal(result.body.error,'audio_render_outdated');
+ assert.equal(state.tts.length,0);assert.ok(!state.events.includes('sign'));assert.ok(!state.events.includes('begin_premium_audio_attempt_v2'));
+});
 test.after(()=>{globalThis.fetch=originalFetch;delete globalThis.Deno;mock.restoreAll();});

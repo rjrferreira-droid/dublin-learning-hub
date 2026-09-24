@@ -1,4 +1,4 @@
-import {useMemo, useState} from 'react';
+import {useMemo, useState, type ReactNode} from 'react';
 import {
  type ActivityEvaluation,
  type DeepLessonContract,
@@ -8,8 +8,11 @@ import {
 } from '../learning/deepLessonContract';
 import type {LessonModule} from '../learning/lessonModules';
 import {BrowserLessonReader} from './BrowserLessonReader';
+import {AudioAnswerPractice} from './AudioAnswerPractice';
+import {audioQuestionsFor} from '../learning/audioQuestions';
 import '../learning/deep-lesson-experience.css';
 import '../learning/deep-lesson-readability.css';
+import '../learning/audio-lesson.css';
 
 const DEEP_ITEM_ATTEMPTS=2;
 const deepCoreTabs=new Set(['Learn','Audio','Practice']);
@@ -22,6 +25,7 @@ type Props={
  module:LessonModule;
  activeTab:string;
  readerDisabled?:boolean;
+ audioPlayer?:ReactNode;
  onTabChange:(tab:string)=>void;
  onLearnReviewed:()=>void;
  onGrammarEngaged:()=>void;
@@ -34,7 +38,7 @@ export function deepLessonHandlesTab(deep:DeepLessonContract,activeTab:string){
  return deepCoreTabs.has(activeTab)||(Boolean(deep.english)&&deepEnglishTabs.has(activeTab));
 }
 
-export function DeepLessonExperience({module,activeTab,readerDisabled,onTabChange,onLearnReviewed,onGrammarEngaged,onPracticeEngaged}:Props){
+export function DeepLessonExperience({module,activeTab,readerDisabled,audioPlayer,onTabChange,onLearnReviewed,onGrammarEngaged,onPracticeEngaged}:Props){
  const deep=module.deepLesson;
  const [responses,setResponses]=useState<ResponseMap>({});
  const [readerOpen,setReaderOpen]=useState(false);
@@ -136,12 +140,13 @@ export function DeepLessonExperience({module,activeTab,readerDisabled,onTabChang
   </section>
 
   <section className="lesson-study-section deep-audio" hidden={activeTab!=='Audio'} data-testid="deep-lesson-audio">
-   <div className="lesson-section-kicker">AUDIO · DISTINCT AUTHORED EPISODE</div><h2>{deep.audioEpisode.title}</h2><p className="lesson-study-lead">{deep.audioEpisode.editorialGoal}</p>
-   <div className="lesson-audio-state" role="status"><strong>{deep.audioEpisode.format==='authored-script'?'Authored episode · player availability shown below':'Editorial outline · not generated or playable'}</strong><p>This episode is independent from Learn: the written lesson is never substituted as Audio. Opening the tab makes no provider call. When a reviewed Premium Audio asset exists, its secure player appears below; otherwise the Hub keeps the script visible without pretending that listening was completed.</p></div>
-   <div className="deep-audio-meta"><span>{deep.audioEpisode.estimatedMinutes} min planned</span>{deep.audioEpisode.distinctiveElements.map(item=><span key={item}>{item}</span>)}</div>
-   <div className="deep-audio-segments">{deep.audioEpisode.format==='authored-script'
-    ?deep.audioEpisode.segments.map((segment,index)=><details key={segment.id} open={index===0}><summary><span>{index+1}. {segment.title}</span><small>Script preview · {segment.estimatedMinutes} min</small></summary><div className="deep-audio-segment-body"><div className="deep-activity-meta"><span>{segment.kind.replace('-', ' ')}</span></div>{splitScript(segment.script).map((paragraph,paragraphIndex)=><p key={paragraphIndex}>{paragraph}</p>)}</div></details>)
-    :deep.audioEpisode.segments.map((segment,index)=><details key={segment.id} open={index===0}><summary><span>{index+1}. {segment.title}</span><small>Editorial outline · {segment.estimatedMinutes} min</small></summary><div className="deep-audio-segment-body"><div className="deep-activity-meta"><span>{segment.kind.replace('-', ' ')}</span></div><ul>{segment.outline.map(point=><li key={point}>{point}</li>)}</ul></div></details>)}</div>
+   <div className="lesson-section-kicker">AUDIO</div><h2>{deep.audioEpisode.title}</h2>
+   <p className="lesson-study-lead">{module.track==='english'?'Listen for the main event, what changed, and why the ending matters.':'Listen for the decision, its supporting evidence, and what remains uncertain.'}</p>
+   {audioPlayer??<p role="status">The audio for this lesson is being prepared.</p>}
+   <details className="audio-transcript"><summary>Follow along with the transcript</summary>
+    {deep.audioEpisode.format==='authored-script'?deep.audioEpisode.segments.map(segment=><section key={segment.id}><h3>{segment.title}</h3>{splitScript(segment.script).map((paragraph,paragraphIndex)=><p key={paragraphIndex}>{paragraph.replace(/\s*\[Pause \d+ seconds?\.\]/gi,'')}</p>)}</section>):<p>The full episode is not published yet.</p>}
+   </details>
+   {module.track==='english'?<AudioAnswerPractice key={module.lessonId} questions={audioQuestionsFor(module.lessonId)} active={activeTab==='Audio'}/>:null}
   </section>
 
   {english?<section className="lesson-study-section deep-grammar" hidden={activeTab!=='Grammar'} data-testid="deep-lesson-grammar">

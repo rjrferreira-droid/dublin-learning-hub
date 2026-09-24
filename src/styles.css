@@ -130,6 +130,9 @@ button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 3px
 .lesson-tabs button { flex:0 0 auto; border:0; background:transparent; color:#6c7990; padding:9px 11px; border-radius:9px; font-size:10px; font-weight:800; }
 .lesson-tabs button.active { background:var(--navy-900); color:#fff; box-shadow:0 6px 14px rgba(7,27,61,.16); }
 .lesson-layout { display:grid; grid-template-columns:minmax(0,1fr) 275px; gap:18px; }
+.lesson-layout-audio { grid-template-columns:minmax(0,1fr); }
+.lesson-side-card[hidden] { display:none; }
+.lesson-layout-audio .lesson-content-card { width:100%;max-width:980px;margin-inline:auto; }
 .lesson-content-card, .lesson-side-card { background:#fff; border:1px solid #e1e7ef; border-radius:20px; padding:24px; box-shadow:0 9px 28px rgba(9,29,66,.045); }
 .lesson-content-card { min-height:520px; }
 .lesson-content-card > .eyebrow { margin-top:24px; }

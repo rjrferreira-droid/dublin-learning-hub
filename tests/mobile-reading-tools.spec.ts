@@ -85,7 +85,7 @@ test('browser reader speaks reviewed text without paid requests and stops on tab
  await page.getByRole('tab',{name:'Practice',exact:true}).click();
  expect(await page.evaluate(()=>(window as any).__reader.current)).toBeNull();
  await page.getByRole('tab',{name:'Audio',exact:true}).click();
- await expect(page.getByTestId('lesson-audio-boundary')).toContainText('Audio is not a reading of Learn');await expect(reader).toBeHidden();
+ await expect(page.getByTestId('lesson-audio-boundary')).toContainText('Listen to the lesson');await expect(reader).toBeHidden();
  await page.getByRole('tab',{name:'Learn',exact:true}).click();await expect(reader).toBeVisible();
  await reader.getByLabel('Read aloud',{exact:true}).selectOption('pt-BR');
  await reader.getByLabel('Speed',{exact:true}).selectOption('0.85');

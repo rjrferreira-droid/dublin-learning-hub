@@ -22,3 +22,19 @@ test('Professor maps only the two reviewed English local lessons',()=>{
  assert.equal(deepProfessorProviderLessonId(ids.a1),null);
  assert.equal(deepProfessorProviderLessonId(ids.a2),null);
 });
+
+test('English narration separates characters and converts timed directions to silence',()=>{
+ const e1=deepAudioSource(ids.e1)!;
+ const speech=e1.cues!.filter(cue=>cue.kind==='speech');
+ const pauses=e1.cues!.filter(cue=>cue.kind==='silence');
+ assert.ok(speech.length>20);
+ assert.ok(pauses.some(cue=>cue.durationMs===5000));
+ assert.ok(speech.some(cue=>cue.speaker==='Nora'&&cue.voice==='coral'));
+ assert.ok(speech.some(cue=>cue.speaker==='Sam'&&cue.voice==='onyx'));
+ assert.ok(speech.every(cue=>!/^\s*(?:HOST:|NORA:|SAM:|\[?pause\s+\d+\s+seconds?)/i.test(cue.text)));
+ const p1=deepAudioSource(ids.p1)!;
+ assert.ok(p1.cues!.some(cue=>cue.kind==='speech'&&cue.speaker==='NIAMH'&&cue.voice==='coral'));
+ assert.ok(p1.cues!.some(cue=>cue.kind==='speech'&&cue.speaker==='RAFAEL'&&cue.voice==='onyx'));
+ assert.ok(p1.cues!.some(cue=>cue.kind==='speech'&&cue.speaker==='THEO'&&cue.voice==='echo'));
+ assert.ok(p1.cues!.every(cue=>cue.kind==='silence'||!/^\s*(?:NIAMH:|RAFAEL:|THEO:|pause\s+\d+)/i.test(cue.text)));
+});
