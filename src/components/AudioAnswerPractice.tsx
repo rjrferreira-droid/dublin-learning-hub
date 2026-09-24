@@ -1,7 +1,8 @@
 import {useEffect,useRef,useState} from 'react';
 import type {AudioQuestion} from '../learning/audioQuestions';
 import {isFeatureEnabled} from '../config/features';
-import {assessEnglishAudioAnswer,type EnglishAudioAssessment,type EnglishAudioSkill} from '../services/englishAudioAssessment';
+import {assessEnglishAudioAnswer,readEnglishAudioResults,type EnglishAudioAssessment,type EnglishAudioSkill} from '../services/englishAudioAssessment';
+import {grammarConceptsFor} from '../learning/englishGrammarConcepts';
 
 const MAX_SECONDS=60;
 const ENGLISH_SKILLS:[EnglishAudioSkill,string][]=[
@@ -10,9 +11,11 @@ const ENGLISH_SKILLS:[EnglishAudioSkill,string][]=[
 ];
 type RecordedAnswer={url:string;blob:Blob;seconds:number;attemptId:string;heardEpisode:boolean};
 
-export function AudioAnswerPractice({lessonId,questions,active,canRecord,previewAllowed=false}:{lessonId:string;questions:readonly AudioQuestion[];active:boolean;canRecord:boolean;previewAllowed?:boolean}){
+export function AudioAnswerPractice({lessonId,questions,active,canRecord,previewAllowed=false,onEvaluated,onAssessments}:{lessonId:string;questions:readonly AudioQuestion[];active:boolean;canRecord:boolean;previewAllowed?:boolean;onEvaluated?:(count:number)=>void;onAssessments?:(results:(EnglishAudioAssessment|null)[])=>void}){
  const [recordingIndex,setRecordingIndex]=useState<number|null>(null);
  const [requestingIndex,setRequestingIndex]=useState<number|null>(null);
+ const [historyError,setHistoryError]=useState('');
+ const [historyVersion,setHistoryVersion]=useState(0);
  const [elapsed,setElapsed]=useState(0);
  const [answers,setAnswers]=useState<(RecordedAnswer|null)[]>(()=>questions.map(()=>null));
  const [error,setError]=useState<{index:number;message:string}|null>(null);
@@ -46,6 +49,15 @@ export function AudioAnswerPractice({lessonId,questions,active,canRecord,preview
   };
  },[]);
  useEffect(()=>{if(!active)stop();},[active]);
+ useEffect(()=>{
+  let current=true;setHistoryError('');
+  void readEnglishAudioResults(lessonId).then(rows=>{if(current)setAssessments(previous=>previous.map((value,index)=>value??rows.find(row=>row.question_index===index)??null));}).catch(error=>{if(current)setHistoryError(error.message);});
+  return()=>{current=false;};
+ },[lessonId,historyVersion]);
+ useEffect(()=>{onAssessments?.(assessments);},[assessments,onAssessments]);
+ const assessedWithEvidence=assessments.filter(row=>row&&row.skills.comprehension.score!==null&&row.skills.response_quality.score!==null).length;
+ useEffect(()=>{onEvaluated?.(assessedWithEvidence);},[assessedWithEvidence,onEvaluated]);
+
  if(questions.length===0)return null;
 
  const completed=answers.filter(Boolean).length;
@@ -53,6 +65,7 @@ export function AudioAnswerPractice({lessonId,questions,active,canRecord,preview
  const assessmentEnabled=isFeatureEnabled('englishAudioAssessment');
  const assessed=assessments.filter(Boolean).length;
  const previewAnswers=answers.some(answer=>answer&&!answer.heardEpisode);
+ const concepts=new Map(grammarConceptsFor(lessonId).map(concept=>[concept.id,concept.title]));
 
  async function start(questionIndex:number){
   if(!activeRef.current||requesting.current||assessmentRunning.current||recorder.current||recordingIndex!==null||!canStart)return;
@@ -125,7 +138,8 @@ export function AudioAnswerPractice({lessonId,questions,active,canRecord,preview
 
  return <section className="audio-answer-practice" aria-label="Listening questions">
   <div className="audio-answer-heading"><h3>Answer in your own words</h3><span>{questions.length} questions · up to 1 min each</span></div>
-  <p>{canRecord?'Answer each question in English. You can replay the episode or open the transcript at any time.':previewAllowed?'All five questions are ready. Listen to the full episode before recording answers for assessment. You may practise now, but those early recordings will need to be replaced after listening.':'The questions are below. Finish listening to the episode to enable recording.'}</p>
+  <p>{canRecord?'Answer each question in English. You can replay the episode or open the transcript at any time.':previewAllowed?`All ${questions.length} questions are visible. Listen to the full episode before recording answers for assessment. Early practice recordings must be replaced after listening.`:'The questions are below. Finish listening to the episode to enable recording.'}</p>
+  {historyError?<p role="alert">{historyError} <button type="button" onClick={()=>setHistoryVersion(value=>value+1)}>Reload feedback</button></p>:null}
   <div className="audio-answer-list">
    {questions.map((question,questionIndex)=>{
     const answer=answers[questionIndex];
@@ -133,7 +147,7 @@ export function AudioAnswerPractice({lessonId,questions,active,canRecord,preview
     return <article className="audio-answer-card" key={question.question}>
      <span className="audio-answer-number" aria-hidden="true">{questionIndex+1}</span>
      <div className="audio-answer-content">
-      <div className="audio-answer-top"><strong>QUESTION {questionIndex+1} OF {questions.length}</strong></div>
+      <div className="audio-answer-top"><strong>QUESTION {questionIndex+1} OF {questions.length}</strong>{concepts.has(question.conceptId)?<small>{concepts.get(question.conceptId)}</small>:null}</div>
       <h4>{question.question}</h4>
       <div className="audio-record-actions"><button type="button" disabled={!canStart||requestingIndex!==null||assessingIndex!==null||(recordingIndex!==null&&!recording)||!active} onClick={recording?stop:()=>void start(questionIndex)}>{requestingIndex===questionIndex?'Waiting for microphone…':recording?'Stop recording':answer?'Record again':'Record answer'}</button>
        {answer&&!recording?<audio controls src={answer.url} aria-label={`Your answer to question ${questionIndex+1}`}/>:null}
@@ -141,14 +155,14 @@ export function AudioAnswerPractice({lessonId,questions,active,canRecord,preview
       {error?.index===questionIndex?<p role="alert" className="audio-answer-error">{error.message}</p>:null}
       {answer&&!recording&&assessments[questionIndex]?.attempt_id!==answer.attemptId?<div className="audio-question-submit"><button type="button" onClick={()=>void assessOne(questionIndex)} disabled={!answer.heardEpisode||!canRecord||!assessmentEnabled||assessingIndex!==null||recordingIndex!==null||!active}>{assessingIndex===questionIndex?'Analysing your answer…':'Send answer for analysis'}</button>{!answer.heardEpisode?<small>Listen to the full episode, then record this answer again to enable analysis.</small>:!assessmentEnabled?<small>Voice assessment is awaiting Preview activation.</small>:null}</div>:null}
       {assessmentError?.index===questionIndex?<p role="alert" className="audio-answer-error">{assessmentError.message}</p>:null}
-      {assessments[questionIndex]?.attempt_id===answer?.attemptId?<div className="audio-question-feedback"><strong>Feedback for this answer</strong><p>{assessments[questionIndex]?.feedback}</p><details><summary>Transcript and skill notes</summary><p><strong>Heard:</strong> {assessments[questionIndex]?.transcript||'Transcript was not retained. Replay your local recording above.'}</p>{ENGLISH_SKILLS.map(([key,label])=><p key={key}><strong>{label}:</strong> {assessments[questionIndex]?.skills[key].score==null?'Not assessed':`${Math.round(assessments[questionIndex]!.skills[key].score!)}%`} · {assessments[questionIndex]?.skills[key].feedback}</p>)}</details></div>:null}
+      {assessments[questionIndex]&&(!answer||assessments[questionIndex]?.attempt_id===answer.attemptId)?<div className="audio-question-feedback"><strong>Feedback for this answer</strong><p>{assessments[questionIndex]?.feedback}</p><details><summary>Skill notes</summary><p><strong>Heard:</strong> {assessments[questionIndex]?.transcript||'Transcript was not retained. Replay your local recording above.'}</p>{ENGLISH_SKILLS.map(([key,label])=><p key={key}><strong>{label}:</strong> {assessments[questionIndex]?.skills[key].score==null?'Not assessed':`${Math.round(assessments[questionIndex]!.skills[key].score!)}%`} · {assessments[questionIndex]?.skills[key].feedback}</p>)}</details></div>:null}
      </div>
     </article>;
    })}
   </div>
   <div className="audio-answer-review" aria-label="Activity summary">
    <div className="audio-summary-heading"><div><span className="audio-summary-kicker">ACTIVITY SUMMARY</span><h4>Your listening practice</h4></div><span className="audio-summary-progress">{completed} of {questions.length} recorded</span></div>
-   <p>{assessed===questions.length?'All five answers have been analysed. Review the feedback above. These scores are formative estimates.':assessed?`${assessed} of ${questions.length} answers analysed. Send each remaining recording above for feedback.`:completed===questions.length?'All five answers are recorded. Send each answer above for analysis.':'Record an answer, then send it for analysis above. You can replay or replace any answer.'}</p>
+   <p>{assessed===questions.length?`All ${questions.length} answers have been analysed. Review the feedback above. These scores are formative estimates.`:assessed?`${assessed} of ${questions.length} answers analysed. Send each remaining recording above for feedback.`:completed===questions.length?`All ${questions.length} answers are recorded. Send each answer above for analysis.`:'Record an answer, then send it for analysis above. You can replay or replace any answer.'}</p>
    <div className="audio-skill-grid" aria-label="Assessment by skill">{ENGLISH_SKILLS.map(([key,label])=><div className="audio-skill" key={key}><span>{label}</span><strong>{skillSummary(key)}</strong></div>)}</div>
    <p className="audio-summary-note">{previewAnswers?'Preview answers are not listening evidence. After the episode plays, re-record them to request assessment. ':''}Your recordings stay available here until this lesson closes. Assessment sends a copy for analysis; the app does not save its audio or transcript to the database. Feedback and scores are held privately for retries and expire after 30 days; cleanup runs on the next assessment request. {assessed===questions.length?'A score is shown only where the recording provides enough evidence.':'No score is inferred from a recording before assessment.'}</p>
    {completed===questions.length?<details><summary>Review reference answers</summary>{questions.map((question,questionIndex)=><article key={question.question}><h5>{questionIndex+1}. {question.question}</h5><p><strong>Key facts:</strong> {question.reference}</p></article>)}</details>:null}

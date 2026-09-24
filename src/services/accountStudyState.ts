@@ -1,7 +1,7 @@
 import {supabase} from './supabase';
 
 export const ACCOUNT_STUDY_NAMESPACES={curriculum:'curriculum-v3',mockExam:'acca-fr-mock-v1'} as const;
-export type AccountStudyNamespace=typeof ACCOUNT_STUDY_NAMESPACES[keyof typeof ACCOUNT_STUDY_NAMESPACES];
+export type AccountStudyNamespace=typeof ACCOUNT_STUDY_NAMESPACES[keyof typeof ACCOUNT_STUDY_NAMESPACES]|`english-unit.${string}`;
 type JsonObject=Record<string,unknown>;
 
 const pendingWrites=new Map<string,Promise<unknown>>();

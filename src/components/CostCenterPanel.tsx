@@ -99,13 +99,13 @@ export function CostCenterPanel() {
   return (
     <div className={`cost-center-shell ${open ? 'open' : ''}`} data-testid="cost-center">
       {!open ? (
-        <button className="cost-center-launcher" onClick={() => setOpen(true)} aria-label="Open Learning Hub Cost Center">
+        <button className="cost-center-launcher" onClick={() => setOpen(true)} aria-label="Open Language Hub Cost Center">
           <span className="cost-center-dot" />
           <span>Budget</span>
           <strong>{data ? `AI ${money(actualAiSpend)}` : '$200 cap'}</strong>
         </button>
       ) : (
-        <section className="cost-center-card" aria-label="Learning Hub Cost Center">
+        <section className="cost-center-card" aria-label="Language Hub Cost Center">
           <div className="cost-center-head">
             <div>
               <div className="cost-center-eyebrow">LEARNING HUB • COST CENTER</div>

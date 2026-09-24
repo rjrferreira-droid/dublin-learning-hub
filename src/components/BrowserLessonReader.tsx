@@ -68,7 +68,7 @@ export function BrowserLessonReader({module,disabled=false}:{module:LessonModule
  }
  return <section className="browser-lesson-reader" aria-label="Browser lesson reader" data-testid="browser-lesson-reader">
   <h3>Browser read-aloud controls</h3>
-  <p>This accessibility tool reads the Learn text or its Portuguese summaries. It is not the independent Audio lesson. No OpenAI generation or Learning Hub AI charge is used; voice quality and internet requirements depend on your browser and device.</p>
+  <p>This accessibility tool reads the Learn text or its Portuguese summaries. It is not the independent Audio lesson. No OpenAI generation or Language Hub AI charge is used; voice quality and internet requirements depend on your browser and device.</p>
   {!supported?<p role="status">Read-aloud is unavailable in this browser. The written lesson remains available.</p>:<>
    <div className="browser-reader-options">
     <label>Section<select aria-label="Section" value={section} disabled={disabled} onChange={e=>{stop();setSection(Number(e.target.value));}}>{module.sections.map((s,i)=><option key={s.id} value={i}>{s.title}</option>)}</select></label>

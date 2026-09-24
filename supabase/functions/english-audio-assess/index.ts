@@ -1,5 +1,6 @@
 import 'jsr:@supabase/functions-js@2.116.0/edge-runtime.d.ts';
 import {createClient} from 'jsr:@supabase/supabase-js@2.116.0';
+import {englishActivitySource} from '../_shared/english-activity-source.ts';
 import {audioQuestionsFor} from '../../../src/learning/audioQuestions.ts';
 import {englishEpisodeSource} from '../_shared/english-episode-source.ts';
 import {audioAssessmentPrompt,normalizedAssessmentKey,parseAudioAssessment,validateAnswerWav,MAX_WAV_BYTES,
@@ -10,7 +11,7 @@ const MODEL='gpt-audio-1.5';
 const MAX_MULTIPART_BYTES=2_150_000;
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const LESSON_UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Access-Control-Allow-Methods':'POST, OPTIONS'};
+const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Access-Control-Allow-Methods':'GET, POST, OPTIONS'};
 const json=(value:unknown,status=200)=>new Response(JSON.stringify(value),{status,headers:{...cors,'Content-Type':'application/json','Cache-Control':'no-store'}});
 
 async function boundedBody(req:Request):Promise<Uint8Array>{
@@ -47,7 +48,7 @@ function estimatedCost(usage:any):{usd:number;prompt:number;audio:number;complet
 
 Deno.serve(async(req:Request)=>{
  if(req.method==='OPTIONS')return new Response('ok',{headers:cors});
- if(req.method!=='POST')return json({error:'method_not_allowed'},405);
+ if(!['GET','POST'].includes(req.method))return json({error:'method_not_allowed'},405);
  const url=Deno.env.get('SUPABASE_URL')??'',anon=Deno.env.get('SUPABASE_ANON_KEY')??'';
  const secret=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')??'';
  const auth=req.headers.get('Authorization')??'';
@@ -58,6 +59,16 @@ Deno.serve(async(req:Request)=>{
  if(url!==PREVIEW_URL)return json({error:'assessment_preview_only'},403);
  // The private, service-only budget row is the sole activation switch and
  // defaults to disabled. The exact Preview project check above is independent.
+ if(req.method==='GET'){
+  if(!secret)return json({error:'assessment_unavailable'},503);
+  const lessonId=new URL(req.url).searchParams.get('lesson_id')??'';
+  const admin=createClient(url,secret);
+  const {data:profile,error}=await admin.from('profiles').select('learner_track').eq('id',user.id).maybeSingle();
+  if(error||!profile)return json({error:'forbidden'},403);
+  try{englishActivitySource(lessonId,'speaking','0',profile.learner_track);}catch{return json({error:'forbidden'},403);}
+  const results=await admin.rpc('read_english_audio_results_v1',{p_user_id:user.id,p_lesson_id:lessonId});
+  return results.error?json({error:'assessment_unavailable'},503):json({results:results.data??[]});
+ }
  const providerKey=normalizedAssessmentKey(Deno.env.get('OPENAI_API_KEY'));
  if(!secret||!providerKey)return json({error:'assessment_unavailable'},503);
  const contentType=req.headers.get('content-type')??'';
@@ -72,10 +83,10 @@ Deno.serve(async(req:Request)=>{
  if(keys.length!==4||new Set(keys).size!==4||!['lesson_id','question_index','attempt_id','audio'].every(key=>form.has(key)))
   return json({error:'invalid_request'},400);
  const lessonId=form.get('lesson_id'),indexRaw=form.get('question_index'),attemptId=form.get('attempt_id'),audio=form.get('audio');
- if(typeof lessonId!=='string'||!LESSON_UUID.test(lessonId)||typeof indexRaw!=='string'||!/^[0-4]$/.test(indexRaw)
+ if(typeof lessonId!=='string'||!LESSON_UUID.test(lessonId)||typeof indexRaw!=='string'||/^(0|[1-9][0-9]?)$/.test(indexRaw)===false
   ||typeof attemptId!=='string'||!UUID.test(attemptId)||!(audio instanceof File))return json({error:'invalid_request'},400);
  const questionIndex=Number(indexRaw),questions=audioQuestionsFor(lessonId);
- if(questions.length!==5)return json({error:'lesson_not_found'},404);
+ if(!questions.length||questionIndex>=questions.length)return json({error:'lesson_not_found'},404);
  if(audio.size>MAX_WAV_BYTES)return json({error:'audio_too_large'},413);
  let wav:Uint8Array;
  try{wav=new Uint8Array(await audio.arrayBuffer());validateAnswerWav(wav);}

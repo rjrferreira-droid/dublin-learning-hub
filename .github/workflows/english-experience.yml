@@ -1,0 +1,29 @@
+name: English unit experience
+on:
+  push:
+    branches: [feat/audio-experience-2026-09-24]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  english-unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Content, assessment and identity contracts
+        run: node --test tests/english-unit-flow.test.ts tests/english-activity-assessment.test.ts tests/english-audio-assessment.test.ts tests/deep-english-unit1.test.ts tests/deep-english-second-units.test.ts tests/presentation.test.ts tests/deep-lesson-experience.test.ts tests/preview-catalog-isolation.test.ts tests/profile-assignment-containment.test.ts
+      - name: Provider assembly with fictional services
+        run: |
+          node scripts/bundle-english-activity-runtime.mjs
+          node --experimental-test-module-mocks --test tests/english-activity-runtime.integration.mjs
+      - run: npx playwright install --with-deps chromium
+      - name: Desktop and mobile submission and recovery
+        run: npx playwright test --config playwright.english.config.ts

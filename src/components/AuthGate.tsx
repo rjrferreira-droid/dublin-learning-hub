@@ -124,7 +124,7 @@ export function AuthGate({ children }: AuthGateProps) {
       const redirectTo = `${window.location.origin}/`;
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
       if (error) throw error;
-      setSuccessMessage('If this e-mail is assigned to the Learning Hub, a secure recovery link has been sent.');
+      setSuccessMessage('If this e-mail is assigned to the Language Hub, a secure recovery link has been sent.');
     } catch (error: unknown) {
       setErrorMessage(error instanceof Error ? error.message : 'Não foi possível enviar o link de recuperação.');
     } finally {
@@ -172,7 +172,7 @@ export function AuthGate({ children }: AuthGateProps) {
       <div className="auth-screen auth-loading-screen">
         <div className="auth-loading-card">
           <div className="auth-brand-mark">LH</div>
-          <strong>Learning Hub</strong>
+          <strong>Language Hub</strong>
           <span>Preparing your secure learning workspace…</span>
         </div>
       </div>
@@ -188,7 +188,7 @@ export function AuthGate({ children }: AuthGateProps) {
           <div className="auth-brand-row">
             <div className="auth-brand-mark">LH</div>
             <div>
-              <strong>Learning Hub</strong>
+              <strong>Language Hub</strong>
               <span>PREMIUM LEARNING</span>
             </div>
           </div>
@@ -208,8 +208,8 @@ export function AuthGate({ children }: AuthGateProps) {
           <div className="auth-card">
             <div className="auth-card-head">
               <span>{isPasswordUpdate ? 'SECURE RECOVERY' : isResetRequest ? 'ACCOUNT RECOVERY' : 'WELCOME BACK'}</span>
-              <h2>{isPasswordUpdate ? 'Choose a new password' : isResetRequest ? 'Recover your access' : 'Enter Learning Hub'}</h2>
-              <p>{isPasswordUpdate ? 'Create a new password for your Learning Hub account.' : isResetRequest ? 'We will send a secure recovery link to the assigned e-mail.' : 'Use the account assigned to this Learning Hub.'}</p>
+              <h2>{isPasswordUpdate ? 'Choose a new password' : isResetRequest ? 'Recover your access' : 'Enter Language Hub'}</h2>
+              <p>{isPasswordUpdate ? 'Create a new password for your Language Hub account.' : isResetRequest ? 'We will send a secure recovery link to the assigned e-mail.' : 'Use the account assigned to this Language Hub.'}</p>
             </div>
 
             {isPasswordUpdate ? (
@@ -304,7 +304,7 @@ export function AuthGate({ children }: AuthGateProps) {
     <LearnerSessionContext.Provider key={session.user.id} value={{userId:session.user.id,learnerKey:activeLearner}}>
     <div className={`auth-app learner-${activeLearner}`}>
       {children}
-      <button className="auth-signout" type="button" onClick={() => void logout()} title="Sign out of Learning Hub">Sair</button>
+      <button className="auth-signout" type="button" onClick={() => void logout()} title="Sign out of Language Hub">Sair</button>
     </div>
     </LearnerSessionContext.Provider>
   );

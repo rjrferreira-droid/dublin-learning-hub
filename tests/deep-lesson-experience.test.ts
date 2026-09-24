@@ -10,7 +10,7 @@ test('LessonModule.deepLesson activates the deep tabs without changing legacy mo
  assert.ok(studyPanel.includes('const deepHandled=module.deepLesson?deepLessonHandlesTab'));
  assert.ok(studyPanel.includes("hidden={activeTab!=='Learn'||deepHandled}"));
  assert.ok(deepExperience.includes("const deepCoreTabs=new Set(['Learn','Audio','Practice'])"));
- assert.ok(deepExperience.includes("const deepEnglishTabs=new Set(['Grammar','Speaking'])"));
+ assert.ok(deepExperience.includes("const deepEnglishTabs=new Set(['Speaking'])"));
 });
 
 test('deep Learn exposes prerequisites, objectives, honest workload and authored depth',()=>{
@@ -28,34 +28,16 @@ test('deep Learn exposes prerequisites, objectives, honest workload and authored
 });
 
 test('deep Audio renders only its independent authored episode and a no-generation state',()=>{
- assert.ok(deepExperience.includes('AUDIO · DISTINCT AUTHORED EPISODE'));
- assert.ok(deepExperience.includes("'Authored episode · player availability shown below'"));
- assert.ok(deepExperience.includes("'Editorial outline · not generated or playable'"));
- assert.ok(deepExperience.includes('the written lesson is never substituted as Audio'));
+ assert.ok(deepExperience.includes("deep.audioEpisode.title"));
+ assert.ok(deepExperience.includes('audioPlayer??'));
+ assert.ok(deepExperience.includes('The audio for this lesson is being prepared.'));
+ assert.ok(deepExperience.includes("deep.audioEpisode.format==='authored-script'"));
+ assert.ok(deepExperience.includes('The full episode is not published yet.'));
  assert.ok(!deepExperience.includes("(activeTab==='Learn'||activeTab==='Audio')"));
 });
 
-test('deep Grammar and Practice render all authored items with two attempts and honest evaluation',()=>{
- assert.ok(deepExperience.includes('const DEEP_ITEM_ATTEMPTS=2'));
- assert.ok(deepExperience.includes('english.grammar.stages.map'));
- assert.ok(deepExperience.includes('NOTICE → UNDERSTAND → CHOOSE → BUILD → USE'));
- assert.ok(deepExperience.includes('deep.practice.sessionItemIds.map'));
- assert.ok(deepExperience.includes('practiceItems.filter'));
- assert.ok(deepExperience.includes("items.map(item=>renderItem(item,deep.practice.items.indexOf(item),'practice'))"));
- assert.ok(deepExperience.includes("(['current','previous','confirmed-error-bank'] as const)"));
- assert.ok(deepExperience.includes("item.evaluation.kind==='selection'"));
- assert.ok(deepExperience.includes('written answers are never auto-scored'));
- assert.ok(deepExperience.includes('This screen does not claim that a record was saved.'));
-});
-
-test('deep Speaking and ACCA exam tasks expose the required evidence boundaries',()=>{
- assert.ok(deepExperience.includes('CHUNKS, STRESS, LINKING, SHADOWING, TRANSFER'));
- assert.ok(deepExperience.includes('No acoustic percentage is calculated'));
- assert.ok(deepExperience.includes('english.speaking.tasks.map'));
- assert.ok(deepExperience.includes('task.totalMarks'));
- assert.ok(deepExperience.includes('task.timeLimitMinutes'));
- assert.ok(deepExperience.includes('Marking guide'));
-});
+// English interaction and assessment coverage lives in english-unit-flow,
+// english-activity-runtime and english-activity-flow browser tests.
 
 test('a partial deep attempt never unlocks legacy lesson completion',()=>{
  assert.ok(studyPanel.includes("const deepCompletionLocked=module.deepLesson?.completion.itemLevelEvidenceRequired===true"));

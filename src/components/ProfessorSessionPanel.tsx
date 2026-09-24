@@ -155,7 +155,7 @@ export function ProfessorSessionPanel({lessonId,track,learnerKey=track==='payrol
   {(state==='ended'||state==='error')&&details&&<div hidden={compact} className="professor-outcome-holder"><SessionOutcomePanel key={details.sessionId} sessionId={details.sessionId} validation={details.validationMode} connectionFailed={state==='error'} onSavedCompletion={setSavedCompletion}/></div>}
   {accountMatches&&!busy&&<div hidden={compact} className="professor-history-holder"><RecentProfessorSessions key={account.userId+':'+resolvedLessonId(track,lessonId)} userId={account.userId} lessonId={track==='english'&&resolvedLessonId(track,lessonId)==='english-golden-lesson'?'f455a740-f50f-4eb7-95a7-9e4129ca4a68':resolvedLessonId(track,lessonId)} autoCheck={state==='error'&&!details}/></div>}
   <div ref={audioHostRef} className="professor-audio-host" aria-hidden="true"/>
-  <div className="professor-privacy-note">AI voice tutor · Raw learner voice is not stored by the Learning Hub by default.</div>
+  <div className="professor-privacy-note">AI voice tutor · Raw learner voice is not stored by the Language Hub by default.</div>
   {accountMatches&&!busy&&!compact&&<ProfessorLearningGuide track={track} lessonId={lessonId} phase={state==='ended'?'ended':'ready'}/>}
  </div>;
 }

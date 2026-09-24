@@ -1,6 +1,8 @@
 import type {LessonModule} from '../learning/lessonModules';
 import {ENGLISH_E1_MODEL_ID,ENGLISH_P1_MODEL_ID} from '../learning/localEnglishLessonRegistry';
 import {VIVIANE_ENGLISH_IDENTITIES} from '../learning/vivianeEnglishLessonRegistry';
+import {grammarConceptsFor} from '../learning/englishGrammarConcepts';
+import {englishCompanionsFor} from '../learning/englishCompanions';
 import '../learning/compact-english-learn.css';
 
 type Rule={form:string;use:string;example:string};
@@ -56,10 +58,14 @@ function pageFor(module:LessonModule):Page{
  };
 }
 
-export function CompactEnglishLearn({module,onContinue}:{module:LessonModule;onContinue:()=>void}){
+export function CompactEnglishLearn({module,onContinue,disabled=false}:{module:LessonModule;onContinue:()=>void;disabled?:boolean}){
  const page=pageFor(module);
+ const concepts=grammarConceptsFor(module.lessonId);
+ const companion=englishCompanionsFor(module.lessonId);
  return <section className="lesson-study-section deep-learn compact-english-learn" data-testid="deep-lesson-learn">
+  {companion?<div className="english-optional-video"><span>BEFORE THE UNIT · OPTIONAL</span><a href={companion.before.url} target="_blank" rel="noopener noreferrer">Watch: {companion.before.label} ↗</a><small>The unit uses the theme; the lesson and its exercises are original.</small></div>:null}
   <header className="english-page-title"><span className="english-unit-mark">LEARN</span><h2>{page.title}</h2></header>
+  {concepts.length?<nav className="english-concept-outline" aria-label="Grammar concepts in this unit"><strong>In this Learn</strong>{concepts.map((concept,index)=><a key={concept.id} href={`#english-concept-${concept.id}`}><span>{String(index+1).padStart(2,'0')}</span>{concept.title}</a>)}</nav>:null}
   <div className="english-page-body">
    <section className="english-page-section english-page-situation" aria-labelledby="english-learn-situation">
     <div className="english-section-label" aria-hidden="true">A</div>
@@ -72,11 +78,18 @@ export function CompactEnglishLearn({module,onContinue}:{module:LessonModule;onC
     <div className="english-section-label" aria-hidden="true">B</div>
     <div><h3 id="english-learn-rule">{page.ruleTitle}</h3><div className="english-rule-list">{page.rules.map(rule=><div className="english-rule-row" key={rule.form}><strong>{rule.form}</strong><span>{rule.use}</span><em>{rule.example}</em></div>)}</div></div>
    </section>
+   {concepts.map((concept,index)=><section className="english-concept-card" id={`english-concept-${concept.id}`} key={concept.id} aria-labelledby={`english-concept-title-${concept.id}`}>
+    <header><span>{String(index+1).padStart(2,'0')}</span><h3 id={`english-concept-title-${concept.id}`}>{concept.title}</h3><small>{concept.form}</small></header>
+    <div className="english-concept-explanation"><div><strong>When to use it</strong><p>{concept.when}</p></div><div><strong>Why it works</strong><p>{concept.why}</p></div></div>
+    <div className="english-concept-form"><strong>How to form it</strong><p>{concept.how}</p></div>
+    <div className="english-concept-examples"><strong>In this situation</strong>{concept.examples.map(example=><p key={example}>“{example}”</p>)}</div>
+    <p className="english-concept-contrast"><strong>Notice:</strong> {concept.contrast}</p>
+   </section>)}
    <section className="english-page-section english-page-final" aria-labelledby="english-learn-final">
     <div className="english-section-label" aria-hidden="true">C</div>
     <div><h3 id="english-learn-final">{page.lastTitle}</h3><p>{page.last}</p><p className="english-final-example">{page.lastExample}</p></div>
    </section>
   </div>
-  <button className="english-learn-next" type="button" onClick={onContinue}>Continue to Grammar →</button>
+  <button className="english-learn-next" type="button" disabled={disabled} onClick={onContinue}>Continue to Audio →</button>
  </section>;
 }

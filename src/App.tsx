@@ -8,11 +8,9 @@ import {isSequence4Slug} from './learning/sequence4Registry';
 import {WORKSHOP_CASES} from './learning/appliedPractice';
 import {loadPublishedCurriculumCatalog,type CatalogLesson} from './services/curriculumCatalog';
 import {lessonsForTrack,chooseNextPublishedLesson} from './learning/curriculumCatalogCore';
-import {LOCAL_MODEL_LESSONS} from './learning/localModelLessonRegistry';
 import {curriculumPreviewRuntimeEnabled} from './config/curriculumPreview';
 import {isFeatureEnabled} from './config/features';
 import {localEnglishLessonsForLearner} from './learning/localEnglishCatalogForLearner';
-import {LOCAL_PAYROLL_LESSONS} from './learning/localPayrollLessonRegistry';
 import {buildLocalReviewSchedule,completeLocalLesson,completeLocalReview,lastOpenedLocalLessonId,mergeLocalStudyProgress,parseLocalStudyProgress,readLocalStudyProgress,recordLocalLessonOpened,summarizeLocalCourse,writeLocalStudyProgress,type LocalReviewItem,type LocalReviewStage,type LocalStudyProgress} from './learning/localStudyProgress';
 import {isCurriculumUnitReady,readinessSummary,readyCurriculumUnits} from './learning/curriculumReadiness';
 import {isSequence3Slug} from './learning/sequence3Registry';
@@ -36,7 +34,8 @@ import {
 } from './services/learningMemory';
 import { supabase } from './services/supabase';
 import {ACCOUNT_STUDY_NAMESPACES,loadAccountStudyState,saveAccountStudyState} from './services/accountStudyState';
-import { primaryVisibleTrack } from './config/presentation';
+import { isTrackVisible, primaryVisibleTrack } from './config/presentation';
+import { LANGUAGE_COURSES, LANGUAGE_UNIT_FLOW, type LanguageKey } from './learning/languageCourseArchitecture';
 import {deepInteractiveAudioLesson,deepProfessorProviderLessonId} from './learning/deepInteractiveRegistry';
 
 type TrackKey = 'finance' | 'payroll' | 'english';
@@ -91,9 +90,9 @@ const tracks: Track[] = [
   },
 ];
 
-const tracksForLearner=(learner:LearnerKey)=>tracks.filter(track=>track.key==='english'||(learner==='rafael'?track.key==='finance':track.key==='payroll'));
+const tracksForLearner=(_learner:LearnerKey)=>tracks.filter(track=>isTrackVisible(track.key));
 // Retained by the legacy dashboard component while the course-first home owns the active route.
-const visibleTracks=tracks;
+const visibleTracks=tracks.filter(track=>isTrackVisible(track.key));
 const reviewIntervals = new Set(['D+1', 'D+7', 'D+30', 'D+90']);
 const errorDomains = new Set(['technical', 'grammar', 'vocabulary', 'pronunciation', 'fluency', 'register']);
 const LOCAL_DEPTH_REVIEW_LABEL='Depth review in progress';
@@ -181,6 +180,7 @@ function App() {
   const memoryRequest = useRef(0);
   const [view, setView] = useState<ViewKey>('dashboard');
   const [trackKey, setTrackKey] = useState<TrackKey>(primaryVisibleTrack(account.learnerKey));
+  const [languageKey, setLanguageKey] = useState<LanguageKey>('english');
   const [lessonOpen, setLessonOpen] = useState(false);
   const [lessonTab, setLessonTab] = useState('Learn');
   const [learnerKey, setLearnerKey] = useState<LearnerKey>(account.learnerKey);
@@ -204,15 +204,14 @@ function App() {
   const supportedCatalog=useMemo(()=>{
     const published=catalog.filter((lesson)=>{const base=tracks.find(t=>t.key===lesson.track);return learnerTrackKeys.has(lesson.track)&&!!base&&(lesson.id===base.lessonId||lesson.slug===p1SlugFor(lesson.track)||isSequence3Slug(lesson.track,lesson.slug)||isSequence4Slug(lesson.track,lesson.slug)||isRemainingWrittenSlug(lesson.track,lesson.slug));});
     if(!curriculumPreview)return published;
-    const technical=learnerKey==='rafael'?LOCAL_MODEL_LESSONS:LOCAL_PAYROLL_LESSONS;
-    const local=[...technical,...localEnglishLessonsForLearner(learnerKey)];
+    const local=[...localEnglishLessonsForLearner(learnerKey)];
     // The isolated Preview is a canonical local curriculum, not a blend with the
     // legacy published catalogue. Merging by slug left semantic duplicates with
     // different identities interleaved in the same course tree.
     return local;
   },[catalog,curriculumPreview,learnerKey,learnerTrackKeys]);
   const activeTrack = useMemo(() => {
-    const base=tracks.find((t)=>t.key===trackKey)??tracks[0];
+    const base=tracks.find((t)=>t.key===trackKey)??tracks.find(t=>t.key==='english')!;
     const selected=selectedCatalogLesson?.track===trackKey?selectedCatalogLesson:null;
     return selected?{...base,lesson:selected.title,lessonId:selected.id,lessonSlug:selected.slug,focus:selected.subtitle??base.focus,origin:selected.origin}:base;
   },[trackKey,selectedCatalogLesson]);
@@ -271,7 +270,15 @@ function App() {
   },[account.userId,curriculumPreview]);
 
   const privateDataVisible = learnerKey === accountLearnerKey;
-  const visibleMemory = privateDataVisible ? memory : null;
+  const visibleMemory = useMemo(()=>{
+    if(!privateDataVisible||!memory)return null;
+    const englishIds=new Set([tracks.find(track=>track.key==='english')!.lessonId,...supportedCatalog.filter(lesson=>lesson.track==='english').map(lesson=>lesson.id)]);
+    const history=memory.history.filter(session=>englishIds.has(session.lessonId));
+    return {...memory,history,latest:history[0]??null,
+      // The older aggregate evidence has no reliable course identifier. Keep
+      // those records intact in storage without presenting them as English.
+      competencies:[],errors:[],reviews:[]};
+  },[memory,privateDataVisible,supportedCatalog]);
   const memoryStatus: MemoryStatus = !privateDataVisible
     ? 'other-profile'
     : memoryLoading
@@ -283,6 +290,8 @@ function App() {
           : 'empty';
 
   const openLesson = (key: TrackKey,lesson?:CatalogLesson,options?:{tab?:string;reviewStage?:LocalReviewStage}) => {
+    if(!isTrackVisible(key))return;
+    setLanguageKey('english');
     const measured=new Set([...(visibleMemory?.history??[]).map(x=>x.lessonId),...Object.keys(localProgress.completed)]);
     const resolved=lesson??chooseNextPublishedLesson(readyCatalog,key,measured);
     if(resolved?.origin==='local-model'&&!isCurriculumUnitReady(resolved)){
@@ -308,6 +317,7 @@ function App() {
     setLessonOpen(false);
     setView('dashboard');
     setTrackKey(primaryVisibleTrack(key));
+    setLanguageKey('english');
     setSelectedCatalogLesson(null);
     setActiveLocalReview(null);
   };
@@ -316,17 +326,20 @@ function App() {
   const localCompletion=localProgress.completed[activeTrack.lessonId];
   const canSaveLocalAttempt=activeTrack.origin==='local-model'&&(!localCompletion||(activeLocalReview&&!currentReviewCompletion));
   const selectCourse=(key:TrackKey)=>{
+    if(!isTrackVisible(key))return;
+    setLanguageKey('english');
     setTrackKey(key);setSelectedCatalogLesson(null);setActiveLocalReview(null);setLessonOpen(false);setView('dashboard');
   };
+  const selectSpanish=()=>{setLanguageKey('spanish');setLessonOpen(false);setSelectedCatalogLesson(null);setActiveLocalReview(null);setView('dashboard');};
 
   return (
     <div className="app-frame">
       <aside className="sidebar" aria-label="Primary navigation">
         <div className="brand-row">
-          <div className="brand-mark">LH</div>
+          <div className="brand-mark">La</div>
           <div>
-            <div className="brand-name">Learning Hub</div>
-            <div className="brand-sub">PREMIUM LEARNING</div>
+            <div className="brand-name">Language Hub</div>
+            <div className="brand-sub">ENGLISH · ESPAÑOL</div>
           </div>
         </div>
 
@@ -334,7 +347,7 @@ function App() {
           <div className="avatar">{profile.initials}</div>
           <div className="profile-card-copy">
             <strong>{profile.displayName}</strong>
-            <span>{tracks.find(track => track.key === primaryVisibleTrack(learnerKey))?.name} • Dublin 2028/29</span>
+            <span>English &amp; Español • Dublin 2028/29</span>
           </div>
           <div className="status-dot" title="Profile active" />
         </div>
@@ -349,11 +362,12 @@ function App() {
         <NavButton label="Dashboard" icon="⌂" active={view === 'dashboard'&&!lessonOpen} onClick={() => { setView('dashboard'); setLessonOpen(false); }} />
         <div className="side-divider" />
         <div className="side-caption">MY COURSES</div>
-        <CourseTree learnerKey={learnerKey} tracks={learnerTracks} catalog={supportedCatalog} activeTrack={trackKey} activeLessonId={lessonOpen?activeTrack.lessonId:null} localProgress={localProgress} onSelectCourse={selectCourse} onSelectLesson={openLesson}/>
-        <nav className="nav-stack utility-nav" aria-label="Learning tools">
+        <CourseTree learnerKey={learnerKey} tracks={learnerTracks} catalog={supportedCatalog} activeTrack={languageKey==='english'?trackKey:null} activeLessonId={languageKey==='english'&&lessonOpen?activeTrack.lessonId:null} localProgress={localProgress} onSelectCourse={selectCourse} onSelectLesson={openLesson}/>
+        <button className={`language-course-button ${languageKey==='spanish'?'active':''}`} aria-current={languageKey==='spanish'?'page':undefined} onClick={selectSpanish}><span className="course-tree-icon spanish">ES</span><strong>ESPAÑOL</strong><small>Preparando unidades</small></button>
+        {languageKey==='english'?<nav className="nav-stack utility-nav" aria-label="Learning tools">
           <NavButton label="Revision" icon="↻" active={view === 'revision'} onClick={() => { setView('revision'); setLessonOpen(false); }} />
           <NavButton label="Ask the Professor" icon="◉" active={view === 'professor'} onClick={() => { setView('professor'); setLessonOpen(false); }} />
-        </nav>
+        </nav>:null}
 
         <div className="side-footer">
           <div className="environment-pill">V2 BUILD • PREVIEW</div>
@@ -368,20 +382,20 @@ function App() {
         <header className="topbar">
           <div>
             <div className="eyebrow">{profile.displayName.toUpperCase()} • DUBLIN 2028/29</div>
-            <h1>{lessonOpen ? activeTrack.lesson : titleForCourseView(view,activeTrack)}</h1>
-            <p>{lessonOpen ? activeTrack.focus : subtitleForCourseView(view,profile,activeTrack)}</p>
+            <h1>{languageKey==='spanish'?'Español':lessonOpen ? activeTrack.lesson : titleForCourseView(view,activeTrack)}</h1>
+            <p>{languageKey==='spanish'?'The same learning journey, with original Spanish units added as they are reviewed.':lessonOpen ? activeTrack.focus : subtitleForCourseView(view,profile,activeTrack)}</p>
           </div>
           <div className="top-actions">
             {curriculumPreview?<span className="cefr-pill" data-testid="account-study-sync">{studySyncStatus==='synced'?'Progress synced':studySyncStatus==='saving'?'Saving progress…':studySyncStatus==='loading'?'Loading progress…':'Saved on this device'}</span>:null}
-            <span className="cefr-pill">English {profile.english.cefr} → {profile.english.targetCefr}</span>
+            {languageKey==='english'?<span className="cefr-pill">English {profile.english.cefr} → {profile.english.targetCefr}</span>:null}
             <button className="ghost-btn" onClick={() => { setView('dashboard'); setLessonOpen(false); }}>Today</button>
             <button className="round-btn" aria-label="Refresh measured learning" onClick={() => void refreshMemory()}>↻</button>
           </div>
         </header>
 
-        {view!=='revision'&&view!=='professor'?<CourseTabs track={trackKey} view={view} lessonOpen={lessonOpen} onOpen={(next)=>{setLessonOpen(false);setView(next);}}/>:null}
+        {languageKey==='english'&&view!=='revision'&&view!=='professor'?<CourseTabs track={trackKey} view={view} lessonOpen={lessonOpen} onOpen={(next)=>{setLessonOpen(false);setView(next);}}/>:null}
 
-        {lessonOpen ? (
+        {languageKey==='spanish'?<SpanishCourseWorkspace />:lessonOpen ? (
           <LessonView key={account.userId+':'+learnerKey+':'+activeTrack.lessonId} track={activeTrack} learnerKey={learnerKey} memory={visibleMemory} activeTab={lessonTab} setActiveTab={setLessonTab} close={() => { setLessonOpen(false); setActiveLocalReview(null); setView('dashboard'); }} localCompletion={localCompletion} onCompleteLocal={canSaveLocalAttempt?completeCurrentLocalLesson:undefined} nextLocalLesson={activeLocalReview?null:nextLocalLesson} onOpenNextLocal={!activeLocalReview&&nextLocalLesson?()=>openLesson(nextLocalLesson.track,nextLocalLesson):undefined} localReviewStage={activeLocalReview?.lessonId===activeTrack.lessonId?activeLocalReview.stage:undefined} localReviewCompletion={currentReviewCompletion} />
         ) : view === 'dashboard' ? (
           <CourseHome trackKey={trackKey} learnerKey={learnerKey} profile={profile} memory={visibleMemory} memoryStatus={memoryStatus} openLesson={openLesson} openView={setView} catalog={supportedCatalog} localProgress={localProgress} />
@@ -392,7 +406,7 @@ function App() {
         ) : view === 'english-academy' ? (
           <EnglishAcademyView profile={profile} learnerKey={learnerKey} catalog={supportedCatalog} localProgress={localProgress} openLesson={openLesson} openView={setView} />
         ) : view === 'revision' ? (
-          <RevisionView memory={visibleMemory} memoryStatus={memoryStatus} catalog={supportedCatalog} localProgress={localProgress} openLocalReview={(item)=>openLesson(item.lesson.track,item.lesson,{tab:'Test',reviewStage:item.stage})} />
+          <RevisionView catalog={supportedCatalog} localProgress={localProgress} openLocalReview={(item)=>openLesson(item.lesson.track,item.lesson,{tab:'Practice',reviewStage:item.stage})} />
         ) : view === 'error-bank' ? (
           <ErrorBankView trackKey={trackKey} memory={visibleMemory} memoryStatus={memoryStatus} />
         ) : view === 'performance' ? (
@@ -414,11 +428,25 @@ function NavButton({ label, icon, active, onClick }: { label: string; icon: stri
   );
 }
 
+function SpanishCourseWorkspace(){
+ const course=LANGUAGE_COURSES.spanish;
+ return <section className="page-stack language-preparation" data-testid="spanish-course-workspace">
+  <div className="course-overview-panel spanish-overview">
+   <div><div className="eyebrow light">LANGUAGE HUB · {course.name.toUpperCase()}</div><h2>A new language, the same learning journey.</h2><p>Spanish units are in preparation. Each will follow the English course structure, with original explanations and activities tailored to Spanish. No lessons, answers or scores are simulated.</p></div>
+   <div className="course-progress-summary"><strong>ES</strong><span>Course structure ready · content in preparation</span></div>
+  </div>
+  <div className="section-heading"><div><div className="eyebrow">INSIDE EACH UNIT</div><h2>One connected path</h2></div><span>5 stages · flexible content</span></div>
+  <p className="priority-note"><strong>Before and after each unit</strong><span>A suggested video introduces the theme. When a relevant episode is available, a BBC 6 Minute English link follows the English unit. Links are selected with each unit.</span></p>
+  <div className="language-flow-grid">{LANGUAGE_UNIT_FLOW.map((step,index)=><article key={step.key} className="language-flow-card"><span>{String(index+1).padStart(2,'0')}</span><h3>{step.label}</h3><p>{step.description}</p></article>)}</div>
+  <p role="status" className="priority-note"><strong>Curriculum in preparation</strong><span>Units will be published as their explanations, audio, exercises and assessment are ready. English progress remains separate from Spanish progress.</span></p>
+ </section>;
+}
+
 function evidenceMessage(status: MemoryStatus) {
   if (status === 'loading') return 'Reading measured learning evidence…';
   if (status === 'unavailable') return 'Measured learning evidence is temporarily unavailable. No placeholder scores are being substituted.';
   if (status === 'other-profile') return 'This profile has separate private learning evidence. Sign in with that learner account to see measured results.';
-  return 'Study progress is available without a voice session. Use an evaluated Professor session only when you want a measured capability baseline; until then, the Learning Hub will not invent scores or priorities.';
+  return 'Study progress is available without a voice session. Use an evaluated Professor session only when you want a measured capability baseline; until then, the Language Hub will not invent scores or priorities.';
 }
 
 function EmptyEvidence({ status }: { status: MemoryStatus }) {
@@ -436,7 +464,7 @@ function EmptyEvidence({ status }: { status: MemoryStatus }) {
 }
 
 function CourseTree({learnerKey,tracks:learnerTracks,catalog,activeTrack,activeLessonId,localProgress,onSelectCourse,onSelectLesson}:{
- learnerKey:LearnerKey;tracks:Track[];catalog:CatalogLesson[];activeTrack:TrackKey;activeLessonId:string|null;localProgress:LocalStudyProgress;onSelectCourse:(track:TrackKey)=>void;onSelectLesson:(track:TrackKey,lesson?:CatalogLesson)=>void;
+ learnerKey:LearnerKey;tracks:Track[];catalog:CatalogLesson[];activeTrack:TrackKey|null;activeLessonId:string|null;localProgress:LocalStudyProgress;onSelectCourse:(track:TrackKey)=>void;onSelectLesson:(track:TrackKey,lesson?:CatalogLesson)=>void;
 }){
  const [expanded,setExpanded]=useState<Set<TrackKey>>(()=>new Set([primaryVisibleTrack(learnerKey)]));
  const [expandedParts,setExpandedParts]=useState<Set<string>>(()=>new Set(['finance:1']));
@@ -696,10 +724,9 @@ function LearningLibrary({ learnerKey,trackKey,catalog, catalogUnavailable, open
   </section>;
 }
 
-const lessonTabsFor=(track:TrackKey,deepLocal=false):readonly {label:string;key:string}[]=>deepLocal?track==='english'?
- [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Grammar',key:'Grammar'},{label:'Practice',key:'Practice'},{label:'Speaking',key:'Speaking'},{label:'Sources',key:'Sources'},{label:'Professor',key:'Professor'}]:
- [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Practice',key:'Practice'},{label:'Sources',key:'Sources'}]:track==='english'?
- [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Grammar',key:'Grammar'},{label:'Practice',key:'Practice'},{label:'Speaking',key:'Speaking'},{label:'Visual',key:'Visual'},{label:'Case',key:'Case'},{label:'Test',key:'Test'},{label:'Sources',key:'Sources'},{label:'Professor',key:'Professor'}]:track==='payroll'?
+const lessonTabsFor=(track:TrackKey,deepLocal=false):readonly {label:string;key:string}[]=>track==='english'?
+ LANGUAGE_UNIT_FLOW.map(({label,key})=>({label,key})):deepLocal?
+ [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Practice',key:'Practice'},{label:'Sources',key:'Sources'}]:track==='payroll'?
  [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Calculation',key:'Visual'},{label:'Practice',key:'Practice'},{label:'Speaking',key:'Speaking'},{label:'Case',key:'Case'},{label:'Test',key:'Test'},{label:'Sources',key:'Sources'}]:
  [{label:'Learn',key:'Learn'},{label:'Audio',key:'Audio'},{label:'Practice',key:'Practice'},{label:'Visual',key:'Visual'},{label:'Case',key:'Case'},{label:'Test',key:'Test'},{label:'Sources',key:'Sources'}];
 
@@ -861,24 +888,11 @@ function LocalReviewSection({track,label,catalog,localProgress,openLocalReview}:
   </>;
 }
 
-function RevisionView({ memory, memoryStatus, catalog, localProgress, openLocalReview }: { memory: LearningMemorySnapshot | null; memoryStatus: MemoryStatus;catalog:CatalogLesson[];localProgress:LocalStudyProgress;openLocalReview:(item:LocalReviewItem)=>void }) {
-  const reviews = memory?.reviews ?? [];
+function RevisionView({ catalog, localProgress, openLocalReview }: {catalog:CatalogLesson[];localProgress:LocalStudyProgress;openLocalReview:(item:LocalReviewItem)=>void }) {
   return (
     <section className="page-stack">
-      <LocalReviewSection track="finance" label="ACCA" catalog={catalog} localProgress={localProgress} openLocalReview={openLocalReview}/>
       <LocalReviewSection track="english" label="English" catalog={catalog} localProgress={localProgress} openLocalReview={openLocalReview}/>
-      <div className="section-heading"><div><div className="eyebrow">MEASURED SPACED REVIEW</div><h2>Review what measured evidence says is most likely to be forgotten</h2></div><span>D+1 • D+7 • D+30 • D+90</span></div>
-      {reviews.length === 0 ? <div className="review-list"><EmptyEvidence status={memoryStatus} /></div> : (
-        <div className="review-list">
-          {reviews.map((review) => (
-            <div className="review-row" key={review.id}>
-              <span className="review-date">{review.stage}</span>
-              <div><strong>{review.label}</strong><span>{review.status === 'due' ? `Due ${shortDate(review.dueDate)}` : `Scheduled ${shortDate(review.dueDate)}`}</span></div>
-              <button className="secondary-btn" disabled>{review.status === 'due' ? 'Due' : 'Queued'}</button>
-            </div>
-          ))}
-        </div>
-      )}
+      <p className="priority-note"><strong>English review only</strong><span>Only English units appear here. Older technical review records remain preserved outside the active portal.</span></p>
     </section>
   );
 }
@@ -927,7 +941,7 @@ function PerformanceView({trackKey,catalog,localProgress,memory, memoryStatus }:
   return (
     <section className="page-stack">
       <div className="section-heading"><div><div className="eyebrow">{courseName.toUpperCase()} · PERFORMANCE</div><h2>Progress and measured capability, kept separate</h2></div><span>{memory?.history.length ?? 0} evaluated session{(memory?.history.length ?? 0) === 1 ? '' : 's'}</span></div>
-      <div className="course-summary-grid performance-summary"><article><span>CURRICULUM</span><strong>{course.percent}%</strong><small>{course.completedCount}/{course.total} units completed</small></article><article><span>CHECKPOINTS</span><strong>{Object.values(localProgress.completed).filter(Boolean).length}</strong><small>saved lesson attempts</small></article><article><span>MEASURED SESSIONS</span><strong>{memory?.history.length??0}</strong><small>Professor evaluations</small></article><article><span>EVIDENCE STATUS</span><strong>{values.length}</strong><small>capabilities with a score</small></article></div>
+      <div className="course-summary-grid performance-summary"><article><span>CURRICULUM</span><strong>{course.percent}%</strong><small>{course.completedCount}/{course.total} units completed</small></article><article><span>CHECKPOINTS</span><strong>{catalog.filter(lesson=>lesson.track===trackKey&&localProgress.completed[lesson.id]).length}</strong><small>saved lesson attempts</small></article><article><span>MEASURED SESSIONS</span><strong>{memory?.history.length??0}</strong><small>Professor evaluations</small></article><article><span>EVIDENCE STATUS</span><strong>{values.length}</strong><small>capabilities with a score</small></article></div>
       {values.length === 0 ? <div className="adaptive-priority-stack"><EmptyEvidence status={memoryStatus} /></div> : (
         <div className="performance-grid">
           {values.map(({ label, value, detail }) => (
@@ -955,8 +969,7 @@ function ProfessorView({ learnerKey, profile, openLesson }: { learnerKey: Learne
         <div>
           <div className="eyebrow light">ASK THE PROFESSOR • {profile.displayName.toUpperCase()}</div>
           <h2>Use a live session when a doubt or debrief deserves conversation.</h2>
-          <p>{profile.professor.style} In ACCA and Payroll this is optional support, not a required lesson step. In English, the Professor remains part of each unit’s speaking pathway. Completed sessions can feed the private learning record used for evaluation and adaptation.</p>
-          <div className="professor-focus-list">{profile.professor.technicalFocus.slice(0, 5).map((focus) => <span key={focus}>{focus}</span>)}</div>
+          <p>{profile.professor.style} Use the Professor to discuss the English unit and receive feedback on how clearly you communicate.</p>
           <div className="hero-actions"><button className="primary-btn" onClick={() => openLesson(primaryTrack)}>Open {track.name} lesson</button></div>
         </div>
       </div>

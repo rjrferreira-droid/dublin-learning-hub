@@ -55,3 +55,17 @@ export async function assessEnglishAudioAnswer(lessonId:string,questionIndex:num
  if(latest.error||latest.data.session?.user?.id!==learnerId)throw Error('Your account changed during assessment. Sign in again.');
  return parseAssessment(payload,lessonId,questionIndex,attemptId);
 }
+
+export async function readEnglishAudioResults(lessonId:string):Promise<EnglishAudioAssessment[]>{
+ const {data:{session},error}=await supabase.auth.getSession();
+ if(error||!session)throw Error('Sign in to retrieve your evaluations.');
+ const response=await fetch(`${supabaseUrl}/functions/v1/english-audio-assess?lesson_id=${encodeURIComponent(lessonId)}`,{headers:{apikey:supabasePublishableKey,Authorization:`Bearer ${session.access_token}`},cache:'no-store',redirect:'error',signal:AbortSignal.timeout(15000)});
+ if(!response.ok)throw Error('Saved listening feedback could not be loaded.');
+ const payload=await response.json();
+ if(!Array.isArray(payload?.results)||payload.results.length>100)throw Error('Invalid assessment history.');
+ if((await supabase.auth.getSession()).data.session?.user.id!==session.user.id)throw Error('Your account changed.');
+ return payload.results.map((row:EnglishAudioAssessment)=>{
+  if(!Number.isInteger(row.question_index)||row.question_index<0||row.question_index>99||typeof row.attempt_id!=='string')throw Error('Invalid assessment history.');
+  return parseAssessment(row,lessonId,row.question_index,row.attempt_id);
+ });
+}

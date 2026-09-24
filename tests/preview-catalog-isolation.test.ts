@@ -10,7 +10,7 @@ const catalogBlock=app.slice(catalogStart,catalogEnd);
 test('Preview uses the profile-specific canonical local curriculum without legacy published interleaving',()=>{
  assert.ok(catalogStart>=0&&catalogEnd>catalogStart,'supported catalog block not found');
  assert.match(catalogBlock,/if\(!curriculumPreview\)return published;/);
- assert.match(catalogBlock,/learnerKey==='rafael'\?LOCAL_MODEL_LESSONS:LOCAL_PAYROLL_LESSONS/);
+ assert.doesNotMatch(catalogBlock,/LOCAL_MODEL_LESSONS|LOCAL_PAYROLL_LESSONS/);
  assert.match(catalogBlock,/\.\.\.localEnglishLessonsForLearner\(learnerKey\)/);
  assert.match(catalogBlock,/return local;/);
  assert.doesNotMatch(catalogBlock,/return \[\.\.\.local,\.\.\.published/);
@@ -35,7 +35,7 @@ test('an unavailable local Audio tab does not claim that duplicated read-aloud i
  assert.doesNotMatch(app,/Browser read-aloud is ready above\./);
 });
 
-test('deep local lessons hide legacy Visual, Case and Test surfaces',()=>{
- assert.match(app,/deepLocal\?track==='english'/);
- assert.match(app,/\[\{label:'Learn',key:'Learn'\},\{label:'Audio',key:'Audio'\},\{label:'Practice',key:'Practice'\},\{label:'Sources',key:'Sources'\}\]/);
+test('English lessons use the shared five-stage path without a Sources tab',()=>{
+ assert.match(app,/track==='english'\?\s*LANGUAGE_UNIT_FLOW\.map/);
+ assert.match(app,/tab:'Practice',reviewStage:item.stage/);
 });

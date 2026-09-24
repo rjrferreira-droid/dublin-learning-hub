@@ -127,8 +127,8 @@ test('CI runs the disposable profile proof and exactly pins the AuthGate excepti
     assert.ok(audioWorkflow.includes(`- '${path}'`),`${path} must trigger the PostgreSQL workflow`);
   }
   assert.match(audioWorkflow,/createdb learning_hub_profile_guard[\s\S]*profile-assignment-containment-fixture\.sql[\s\S]*profile-assignment-containment\.sql/);
-  assert.equal(sha256(authGate),'61fc88056aef215bd87587f6b41343104cad78318383dbe1ee8ef4beaa16a55b');
-  assert.match(professorWorkflow,/sha256sum src\/components\/AuthGate\.tsx[\s\S]*61fc88056aef215bd87587f6b41343104cad78318383dbe1ee8ef4beaa16a55b/);
+  assert.equal(sha256(authGate),'27f9d2f8baf59798383f5a40fdde8490cb4d9b5935adf9da7d478ac258091e5f');
+  assert.match(professorWorkflow,/sha256sum src\/components\/AuthGate\.tsx[\s\S]*27f9d2f8baf59798383f5a40fdde8490cb4d9b5935adf9da7d478ac258091e5f/);
   assert.equal(sha256(authCss),'ef62e5051af7e261c0cc8fcb8597fcbf2884e49f448441ef29fb8caad9e8bf3a');
   assert.match(professorWorkflow,/sha256sum src\/auth\.css[\s\S]*ef62e5051af7e261c0cc8fcb8597fcbf2884e49f448441ef29fb8caad9e8bf3a/);
   assert.ok(audioWorkflow.includes("- 'src/auth.css'"));

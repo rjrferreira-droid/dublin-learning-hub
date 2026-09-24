@@ -1,4 +1,4 @@
-import {useMemo, useState, type ReactNode} from 'react';
+import {useEffect, useMemo, useState, type ReactNode} from 'react';
 import {
  type ActivityEvaluation,
  type DeepLessonContract,
@@ -11,6 +11,13 @@ import {BrowserLessonReader} from './BrowserLessonReader';
 import {AudioAnswerPractice} from './AudioAnswerPractice';
 import {CompactEnglishLearn} from './CompactEnglishLearn';
 import {audioQuestionsFor} from '../learning/audioQuestions';
+import {englishPracticeSession} from '../learning/englishPracticeSession';
+import {useEnglishUnitProgress} from '../hooks/useEnglishUnitProgress';
+import {englishCompanionsFor} from '../learning/englishCompanions';
+import type {EnglishAudioAssessment} from '../services/englishAudioAssessment';
+import {WrittenEnglishAnswer} from './WrittenEnglishAnswer';
+import {readEnglishActivityResults,type EnglishActivityResult} from '../services/englishActivityAssessment';
+import {SpeakingRepeatPractice} from './SpeakingRepeatPractice';
 import {curriculumPreviewRuntimeEnabled} from '../config/curriculumPreview';
 import '../learning/deep-lesson-experience.css';
 import '../learning/deep-lesson-readability.css';
@@ -18,7 +25,7 @@ import '../learning/audio-lesson.css';
 
 const DEEP_ITEM_ATTEMPTS=2;
 const deepCoreTabs=new Set(['Learn','Audio','Practice']);
-const deepEnglishTabs=new Set(['Grammar','Speaking']);
+const deepEnglishTabs=new Set(['Speaking']);
 
 type ResponseState={selected:string[];draft:string;attempts:number;revealed:boolean;correct?:boolean};
 type ResponseMap=Record<string,ResponseState>;
@@ -33,6 +40,8 @@ type Props={
  onLearnReviewed:()=>void;
  onGrammarEngaged:()=>void;
  onPracticeEngaged:()=>void;
+ onComplete?:(correct:number,total:number)=>void;
+ completed?:boolean;
 };
 
 const emptyResponse=():ResponseState=>({selected:[],draft:'',attempts:0,revealed:false});
@@ -41,11 +50,26 @@ export function deepLessonHandlesTab(deep:DeepLessonContract,activeTab:string){
  return deepCoreTabs.has(activeTab)||(Boolean(deep.english)&&deepEnglishTabs.has(activeTab));
 }
 
-export function DeepLessonExperience({module,activeTab,readerDisabled,audioPlayer,audioListened,onTabChange,onLearnReviewed,onGrammarEngaged,onPracticeEngaged}:Props){
+export function DeepLessonExperience({module,activeTab,readerDisabled,audioPlayer,audioListened,onTabChange,onLearnReviewed,onGrammarEngaged,onPracticeEngaged,onComplete,completed}:Props){
  const deep=module.deepLesson;
- const [responses,setResponses]=useState<ResponseMap>({});
+ const [activityResults,setActivityResults]=useState<Record<string,EnglishActivityResult>>({});
+ const [historyError,setHistoryError]=useState('');
+ const [historyVersion,setHistoryVersion]=useState(0);
+ useEffect(()=>{
+  if(module.track!=='english')return;
+  let current=true;setHistoryError('');
+  void readEnglishActivityResults(module.lessonId).then(rows=>{if(current)setActivityResults(previous=>({...Object.fromEntries(rows.map(row=>[`${row.kind}:${row.item_id}`,row])),...previous}));}).catch(error=>{if(current)setHistoryError(error.message);});
+  return()=>{current=false;};
+ },[module.lessonId,module.track,historyVersion]);
+ const saveActivityResult=(result:EnglishActivityResult)=>{setActivityResults(previous=>({...previous,[`${result.kind}:${result.item_id}`]:result}));onPracticeEngaged();};
+ const unit=useEnglishUnitProgress(module.lessonId,module.track==='english');
+ const [legacyResponses,setLegacyResponses]=useState<ResponseMap>({});
+ const responses=module.track==='english'?unit.progress.responses:legacyResponses;
+ const setResponses=(change:(previous:ResponseMap)=>ResponseMap)=>module.track==='english'?unit.setProgress(previous=>({...previous,responses:change(previous.responses)})):setLegacyResponses(change);
+ const [audioEvaluated,setAudioEvaluated]=useState(0);
+ const [audioResults,setAudioResults]=useState<(EnglishAudioAssessment|null)[]>([]);
+ useEffect(()=>{if(module.track==='english'&&audioListened&&unit.ready)unit.setProgress(previous=>previous.listened?previous:{...previous,listened:true});},[audioListened,module.track,unit.ready,unit.setProgress]);
  const [readerOpen,setReaderOpen]=useState(false);
- const [speakingAttempts,setSpeakingAttempts]=useState<Record<string,number>>({});
  const [examDrafts,setExamDrafts]=useState<Record<string,string>>({});
  const learnText=useMemo(()=>module.sections.flatMap(section=>[section.title,...section.paragraphs]).join(' '),[module.sections]);
  const workload=useMemo(()=>deep?computeSupportedWorkload(deep,{learnText}):null,[deep,learnText]);
@@ -55,9 +79,18 @@ export function DeepLessonExperience({module,activeTab,readerDisabled,audioPlaye
   const byId=new Map(deep.practice.items.map(item=>[item.id,item]));
   return deep.practice.sessionItemIds.map(id=>byId.get(id)).filter((item):item is ProgressivePracticeItem=>Boolean(item));
  },[deep]);
+ const englishQuestions=useMemo(()=>deep&&module.track==='english'?englishPracticeSession(module.lessonId,deep):[],[deep,module.lessonId,module.track]);
  if(!deep)return null;
  const english=deep.english;
  const visible=deepLessonHandlesTab(deep,activeTab);
+ const choices=englishQuestions.filter(({item})=>item.evaluation.kind==='selection');
+ const choiceComplete=choices.length===10&&choices.every(({item,kind})=>responses[`${kind}:${item.id}`]?.revealed);
+ const writingComplete=englishQuestions.filter(({item})=>item.responseMode==='short-text'||item.responseMode==='extended-text').every(({item})=>{const result=activityResults[`practice:${item.id}`];return result&&Object.values(result.skills).every(skill=>skill.score!==null);});
+ const speakingComplete=Array.from({length:20},(_,index)=>activityResults[`speaking:${index}`]).every(result=>result?.skills.pronunciation.score!=null);
+ const audioComplete=audioQuestionsFor(module.lessonId).length>0&&audioEvaluated===audioQuestionsFor(module.lessonId).length;
+ const completionReady=unit.ready&&unit.saved&&unit.progress.reviewed&&unit.progress.listened&&audioComplete&&choiceComplete&&writingComplete&&speakingComplete;
+ const companion=englishCompanionsFor(module.lessonId);
+
 
  const updateResponse=(key:string,change:(previous:ResponseState)=>ResponseState)=>setResponses(current=>({
   ...current,
@@ -72,7 +105,7 @@ export function DeepLessonExperience({module,activeTab,readerDisabled,audioPlaye
   const source='sourceBucket' in item?item.sourceBucket:null;
   const canSubmit=selection?response.selected.length>0:response.draft.trim().length>=3;
   const submit=()=>{
-   if(!canSubmit||response.attempts>=DEEP_ITEM_ATTEMPTS)return;
+   if(!canSubmit||response.revealed||response.attempts>=DEEP_ITEM_ATTEMPTS||(module.track==='english'&&!unit.ready))return;
    updateResponse(key,previous=>{
     const attempts=Math.min(DEEP_ITEM_ATTEMPTS,previous.attempts+1);
     const correct=item.evaluation.kind==='selection'
@@ -86,7 +119,7 @@ export function DeepLessonExperience({module,activeTab,readerDisabled,audioPlaye
    <div className="deep-activity-meta">
     <span>{kind==='grammar'&&'stage' in item?grammarStageLabel(item.stage):progressionLabel((item as ProgressivePracticeItem).progression)}</span>
     {source?<span className={`deep-source-tag source-${source}`}>{sourceLabel(source)}</span>:null}
-    <span>{item.estimatedMinutes} min</span><span>{response.attempts}/{DEEP_ITEM_ATTEMPTS} attempts</span>
+    <span>{response.attempts}/{DEEP_ITEM_ATTEMPTS} attempts</span>
    </div>
    <h4>{index+1}. {item.prompt}</h4>
    {selection?<fieldset className="deep-selection-fieldset"><legend className="sr-only">Choose {item.responseMode==='multi-select'?'one or more answers':'one answer'}</legend>
@@ -102,7 +135,7 @@ export function DeepLessonExperience({module,activeTab,readerDisabled,audioPlaye
     <span>{item.responseMode==='calculation'?'Show your calculation and conclusion':item.responseMode==='ordering'?'Write the order and briefly justify it':'Write your response'}</span>
     <textarea id={`deep-response-${key}`} value={response.draft} disabled={response.revealed} maxLength={6000} onChange={event=>updateResponse(key,previous=>({...previous,draft:event.target.value,correct:undefined}))} placeholder="Draft from the evidence in this lesson…"/>
    </label>}
-   <div className="lesson-inline-actions"><button type="button" disabled={!canSubmit||response.attempts>=DEEP_ITEM_ATTEMPTS} onClick={submit}>{response.attempts===0?'Submit first attempt':'Submit revised attempt'}</button></div>
+   <div className="lesson-inline-actions"><button type="button" disabled={!canSubmit||response.revealed||response.attempts>=DEEP_ITEM_ATTEMPTS||(module.track==='english'&&!unit.ready)} onClick={submit}>{response.attempts===0?'Submit first attempt':'Submit revised attempt'}</button></div>
    {response.attempts===1&&!response.revealed?<div className="lesson-hint" role="status"><strong>{response.correct===false?'Not yet — one attempt remains.':'Revision step — one attempt remains.'}</strong><p>{hint??(selection?'Re-read the intention and eliminate any option the evidence does not support.':'Check the target, preserve the supplied facts and make your reasoning visible.')}</p></div>:null}
    {response.revealed?<div className={`lesson-answer-feedback ${response.correct===true?'correct':''}`} role="status">
     <strong>{response.correct===true?`Correct on attempt ${response.attempts}.`:selection?'Two attempts used — compare with the authored answer.':'Two drafts recorded — self-review against the authored reference.'}</strong>
@@ -113,7 +146,9 @@ export function DeepLessonExperience({module,activeTab,readerDisabled,audioPlaye
  };
 
  return <div className="deep-lesson-experience" hidden={!visible} data-testid="deep-lesson-experience">
-  {module.track==='english'?activeTab==='Learn'?<CompactEnglishLearn module={module} onContinue={()=>{onLearnReviewed();onTabChange('Grammar');}}/>:null:<section className="lesson-study-section deep-learn" hidden={activeTab!=='Learn'} data-testid="deep-lesson-learn">
+  {unit.error?<p role="alert">{unit.error} <button type="button" onClick={unit.retry}>Retry progress sync</button></p>:null}
+  {historyError?<p role="alert">{historyError} <button type="button" onClick={()=>setHistoryVersion(value=>value+1)}>Reload saved evaluations</button></p>:null}
+  {module.track==='english'?activeTab==='Learn'?<CompactEnglishLearn disabled={!unit.ready} module={module} onContinue={()=>{unit.setProgress(previous=>({...previous,reviewed:true}));onLearnReviewed();onTabChange('Audio');}}/>:null:<section className="lesson-study-section deep-learn" hidden={activeTab!=='Learn'} data-testid="deep-lesson-learn">
    <div className="deep-title-row"><div><div className="lesson-section-kicker">DEEP LESSON · {editorialLabel(deep.editorial.status)}</div><h2>{module.title}</h2></div><span className="deep-version">Depth {deep.editorial.depthVersion}</span></div>
    <p className="lesson-study-lead">{module.goal}</p>
    <div className="deep-summary-grid">
@@ -149,19 +184,22 @@ export function DeepLessonExperience({module,activeTab,readerDisabled,audioPlaye
    <details className="audio-transcript"><summary>Follow along with the transcript</summary>
     {deep.audioEpisode.format==='authored-script'?deep.audioEpisode.segments.map(segment=><section key={segment.id}><h3>{segment.title}</h3>{splitScript(segment.script).map((paragraph,paragraphIndex)=><p key={paragraphIndex}>{paragraph.replace(/\s*\[Pause \d+ seconds?\.\]/gi,'')}</p>)}</section>):<p>The full episode is not published yet.</p>}
    </details>
-   {module.track==='english'?<AudioAnswerPractice key={module.lessonId} lessonId={module.lessonId} questions={audioQuestionsFor(module.lessonId)} active={activeTab==='Audio'} canRecord={Boolean(audioListened)} previewAllowed={curriculumPreviewRuntimeEnabled}/>:null}
+   {module.track==='english'?<AudioAnswerPractice key={module.lessonId} lessonId={module.lessonId} questions={audioQuestionsFor(module.lessonId)} active={activeTab==='Audio'} canRecord={Boolean(audioListened||unit.progress.listened)} onEvaluated={setAudioEvaluated} onAssessments={setAudioResults} previewAllowed={curriculumPreviewRuntimeEnabled}/>:null}
   </section>
 
-  {english?<section className="lesson-study-section deep-grammar" hidden={activeTab!=='Grammar'} data-testid="deep-lesson-grammar">
-   <div className="lesson-section-kicker">GRAMMAR · NOTICE → UNDERSTAND → CHOOSE → BUILD → USE</div><h2>{english.grammar.target}</h2><p>Complete every authored item. Selection answers use a fixed key; written answers are never auto-scored. Each item allows two attempts before its reference is shown.</p>
-   {english.grammar.stages.map(stage=>{
-    const items=stage.itemIds.map(id=>english.grammar.items.find(item=>item.id===id)).filter((item):item is GrammarItem=>Boolean(item));
-    return <section className="deep-grammar-stage" key={stage.stage} data-stage={stage.stage}><div className="deep-stage-heading"><span>{grammarStageLabel(stage.stage)}</span><p>{stage.purpose}</p></div>{items.map(item=>renderItem(item,english.grammar.items.indexOf(item),'grammar'))}</section>;
-   })}
-   {english.grammar.items.filter(item=>!english.grammar.stages.some(stage=>stage.itemIds.includes(item.id))).map(item=>renderItem(item,english.grammar.items.indexOf(item),'grammar'))}
+  {english?<section className="lesson-study-section deep-grammar" hidden={activeTab!=='Practice'} data-testid="deep-lesson-grammar">
+   <div className="lesson-section-kicker">PRACTICE · GRAMMAR AND CONTEXT</div><h2>Apply the language from Learn and Audio</h2>
+   <p>{englishQuestions.length} questions: {englishQuestions.filter(({item})=>item.responseMode==='single-select'||item.responseMode==='multi-select').length} choices and {englishQuestions.filter(({item})=>item.responseMode==='short-text'||item.responseMode==='extended-text').length} written responses. A wrong choice gets a hint and one more try.</p>
+   <section className="deep-grammar-stage"><div className="deep-stage-heading"><span>Choose in context</span><p>Use the story or situation and the meaning of each form.</p></div>
+    {englishQuestions.filter(({item})=>item.responseMode==='single-select'||item.responseMode==='multi-select').map(({item,kind},index)=>renderItem(item,index,kind))}
+   </section>
+   <section className="deep-grammar-stage"><div className="deep-stage-heading"><span>Write in your own words</span><p>Send each answer for feedback on grammar, vocabulary, context and clarity. You can then revise it and send a new version.</p></div>
+    {englishQuestions.filter(({item})=>item.responseMode==='short-text'||item.responseMode==='extended-text').map(({item},index)=><WrittenEnglishAnswer key={item.id} lessonId={module.lessonId} itemId={item.id} prompt={item.prompt} index={index+10} result={activityResults[`practice:${item.id}`]} onResult={saveActivityResult} disabled={!unit.ready}/>)}
+   </section>
+   <div className="deep-completion-plan" role="status"><h3>Practice summary</h3><p>{englishQuestions.filter(({item,kind})=>item.evaluation.kind==='selection'&&responses[`${kind}:${item.id}`]?.revealed).length}/10 choices completed · {englishQuestions.filter(({item,kind})=>responses[`${kind}:${item.id}`]?.correct===true).length}/10 correct · {Object.values(activityResults).filter(result=>result.kind==='practice').length}/10 written answers evaluated.</p><div className="audio-skill-grid">{['grammar','vocabulary','context','clarity'].map(skill=>{const scores=Object.values(activityResults).filter(row=>row.kind==='practice').flatMap(row=>row.skills[skill]?.score==null?[]:[row.skills[skill].score!]);return <div className="audio-skill" key={skill}><span>{skill}</span><strong>{scores.length?`${Math.round(scores.reduce((sum,score)=>sum+score,0)/scores.length)}%`:'Awaiting evaluation'}</strong></div>;})}</div><p>Review individual feedback above. Scores are formative estimates.</p></div>
   </section>:null}
 
-  <section className="lesson-study-section deep-practice" hidden={activeTab!=='Practice'} data-testid="deep-lesson-practice">
+  <section className="lesson-study-section deep-practice" hidden={activeTab!=='Practice'||Boolean(english)} data-testid="deep-lesson-practice">
    <div className="lesson-section-kicker">PRACTICE · MIXED RETRIEVAL AND APPLICATION</div><h2>Retrieve, revise, then compare</h2><p>Selection and written tasks are labelled by source. You receive two genuine attempts before the authored answer, rubric or checklist appears.</p>
    <div className="deep-practice-mix">{(['current','previous','confirmed-error-bank'] as const).map(bucket=><article key={bucket}><span>{sourceLabel(bucket)}</span><strong>{practiceItems.filter(item=>item.sourceBucket===bucket).length}</strong><small>{deep.practice.targetMix?`${Math.round(deep.practice.targetMix[bucket]*100)}% target`:bucket==='current'?'Current lesson':'Retrieval source'}</small></article>)}</div>
    {(['current','previous','confirmed-error-bank'] as const).map(bucket=>{
@@ -180,12 +218,14 @@ export function DeepLessonExperience({module,activeTab,readerDisabled,audioPlaye
    <section className="deep-completion-plan"><h3>What completion means</h3><ul>{deep.completion.requirements.map(requirement=><li key={requirement.id}>{completionRuleLabel(requirement.rule)}: {requirement.targetIds.length} item{requirement.targetIds.length===1?'':'s'}{requirement.minimum!==undefined?` · minimum ${requirement.minimum}`:''}</li>)}</ul><p className="lesson-study-note">Item-level evidence is {deep.completion.itemLevelEvidenceRequired?'required':'not required'} by the authored contract. This local screen does not invent saved evidence or claim mastery.</p></section>
   </section>
 
-  {english?<section className="lesson-study-section deep-speaking" hidden={activeTab!=='Speaking'} data-testid="deep-lesson-speaking">
-   <div className="lesson-section-kicker">SPEAKING · CHUNKS, STRESS, LINKING, SHADOWING, TRANSFER</div><h2>Build intelligibility without a fake score</h2><div className="lesson-audio-state"><strong>No acoustic percentage is calculated</strong><p>This screen logs only a local rehearsal count. It does not infer accent quality, phoneme accuracy, fluency or CEFR level. {english.speaking.recordingRetention==='discard-after-feedback'?'The authored policy requires any future voice capture to be discarded after feedback.':'The authored policy allows recordings in learner history.'}</p></div>
-   {english.speaking.tasks.map((task,index)=>{const attempts=speakingAttempts[task.id]??0;return <article className="deep-speaking-task" key={task.id} data-testid={`deep-speaking-task-${index}`}>
-    <div className="deep-card-heading"><span>{speakingFocusLabel(task.focus)}</span><strong>{task.estimatedMinutes} min</strong></div><h3>{task.prompt}</h3>{task.model?<blockquote>{task.model}</blockquote>:null}<p className="lesson-study-note">Practise aloud. Listen for the named focus and repeat before moving to transfer.</p><button type="button" disabled={attempts>=english.speaking.attemptsPerTask} onClick={()=>setSpeakingAttempts(current=>({...current,[task.id]:Math.min(english.speaking.attemptsPerTask,(current[task.id]??0)+1)}))}>Mark rehearsal attempt · {attempts}/{english.speaking.attemptsPerTask}</button>
-   </article>})}
+  {english?<section className="lesson-study-section deep-speaking" hidden={activeTab!=='Speaking'} data-testid="deep-lesson-speaking"><SpeakingRepeatPractice lessonId={module.lessonId} active={activeTab==='Speaking'&&unit.ready} results={activityResults} onResult={saveActivityResult}/></section>:null}
+  {english&&activeTab==='Speaking'?<section className="deep-completion-plan"><h3>Your unit summary</h3><ul>
+   <li>{unit.progress.reviewed?'✓':'○'} Learn reviewed</li><li>{audioComplete?'✓':'○'} Audio questions evaluated</li><li>{choiceComplete?'✓':'○'} 10 choices completed</li><li>{writingComplete?'✓':'○'} 10 written answers evaluated</li><li>{speakingComplete?'✓':'○'} 20 pronunciation phrases evaluated</li>
+   </ul><div className="lesson-table-wrap"><table><caption>Skill averages from available evaluations</caption><thead><tr><th scope="col">Skill</th><th scope="col">Audio</th><th scope="col">Practice</th><th scope="col">Speaking</th></tr></thead><tbody>{[['comprehension','Listening'],['response_quality','Response quality'],['grammar','Grammar'],['vocabulary','Vocabulary'],['context','Context'],['clarity','Clarity'],['pronunciation','Pronunciation'],['intonation','Intonation'],['fluency','Fluency']].map(([skill,label])=><tr key={skill}><th scope="row">{label}</th><td>{averageScore(audioResults.map(row=>row?.skills[skill as keyof EnglishAudioAssessment['skills']]?.score))}</td><td>{averageScore(Object.values(activityResults).filter(row=>row.kind==='practice').map(row=>row.skills[skill]?.score))}</td><td>{averageScore(Object.values(activityResults).filter(row=>row.kind==='speaking').map(row=>row.skills[skill]?.score))}</td></tr>)}</tbody></table></div><p>Completion records this practice. Skill scores and improvement notes remain in each activity.</p>
+   {onComplete?<button type="button" disabled={!completionReady||completed} onClick={()=>onComplete(choices.filter(({item,kind})=>responses[`${kind}:${item.id}`]?.correct).length,choices.length)}>{completed?'Unit completed':'Complete unit'}</button>:null}
+   {completed?<><p>Self-study completed. Continue to Professor for your private lesson.</p><button type="button" onClick={()=>onTabChange('Professor')}>Open Professor</button>{companion?<div className="english-optional-video"><span>AFTER THE UNIT · OPTIONAL</span><a href={companion.after.url} target="_blank" rel="noopener noreferrer">Listen: {companion.after.label} ↗</a></div>:null}</>:null}
   </section>:null}
+
  </div>;
 }
 
@@ -210,5 +250,9 @@ const grammarStageLabel=(stage:string)=>({notice:'NOTICE',understand:'UNDERSTAND
 const progressionLabel=(stage:ProgressivePracticeItem['progression'])=>({retrieve:'RETRIEVE',explain:'EXPLAIN',apply:'APPLY',integrate:'INTEGRATE',transfer:'TRANSFER',exam:'EXAM'}[stage]);
 const sourceLabel=(source:ProgressivePracticeItem['sourceBucket'])=>({current:'Current unit',previous:'Previous units','confirmed-error-bank':'Error review slot'}[source]);
 const practiceBucketPurpose=(source:ProgressivePracticeItem['sourceBucket'])=>({current:'Apply the concept you are studying now.',previous:'Retrieve earlier learning instead of relying on recognition.', 'confirmed-error-bank':'Use a confirmed learner error only when one is connected; otherwise the item must identify itself as a diagnostic substitute and must not change Error Bank.'}[source]);
-const speakingFocusLabel=(focus:DeepLessonContract['english'] extends infer _Never?string:string)=>focus.replace('-', ' ').toUpperCase();
 const completionRuleLabel=(rule:DeepLessonContract['completion']['requirements'][number]['rule'])=>({view:'View',attempt:'Attempt',submit:'Submit','meet-threshold':'Meet threshold'}[rule]);
+
+function averageScore(scores:(number|null|undefined)[]){
+ const available=scores.filter((score):score is number=>typeof score==='number');
+ return available.length?`${Math.round(available.reduce((sum,score)=>sum+score,0)/available.length)}% (${available.length})`:'—';
+}

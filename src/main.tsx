@@ -4,7 +4,6 @@ import { BrowserRouter } from 'react-router-dom';
 const App=lazy(()=>import('./App'));
 import { AuthGate } from './components/AuthGate';
 import { CostCenterPanel } from './components/CostCenterPanel';
-import { LearningMemoryPanel } from './components/LearningMemoryPanel';
 import { LittleEnglish } from './components/LittleEnglish';
 import { presentation } from './config/presentation';
 import { curriculumPreviewRuntimeEnabled } from './config/curriculumPreview';
@@ -36,7 +35,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Suspense fallback={<p role="status" className="workspace-loading">Preparing your learning workspace…</p>}><App /></Suspense>
           </WorkspaceLoadBoundary>
           {presentation.showManuLauncher && <LittleEnglish />}
-          <LearningMemoryPanel />
           <CostCenterPanel />
         </AuthGate>
       )}

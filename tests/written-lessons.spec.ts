@@ -69,15 +69,18 @@ test('deep ACCA A1 exposes only the reviewed contract and never falls through to
  await expect(panel.getByTestId('local-completion-saved')).toHaveCount(0);expect(requests()).toBe(0);
 });
 
-test('deep English Unit 1 exposes the reviewed Learn → Grammar → Practice → Speaking path only',async({page})=>{
+test('deep English Unit 1 presents Learn, Audio, twenty balanced Practice items and twenty Speaking phrases',async({page})=>{
  const requests=await openFixture(page,courses[0],true);const panel=page.getByTestId('lesson-study-panel');
  await page.locator('.lesson-toolbar').getByRole('button',{name:'Dashboard'}).click();await page.getByTestId('course-tree').getByRole('button',{name:'ENGLISH',exact:true}).click();
  const home=page.getByTestId('course-home-english');await expect(home).toContainText('2 OF 20 UNITS DEEP-REVIEWED');await expect(home).toContainText('Tell a story naturally');
  await home.getByRole('button',{name:'Start English practice',exact:true}).click();await expect(panel.getByRole('heading',{name:'Tell a story naturally: past forms, rhythm & follow-up questions',exact:true})).toBeVisible();
- await panel.getByRole('button',{name:'Mark Learn reviewed & continue',exact:true}).click();await page.getByRole('tab',{name:'Grammar',exact:true}).click();
- await expect(panel.getByTestId('deep-lesson-grammar').locator('.deep-activity-card')).toHaveCount(10);
+ await expect(panel.getByTestId('deep-lesson-learn')).toContainText('Past continuous');
+ await panel.getByRole('button',{name:/Continue to Audio/}).click();await page.getByRole('tab',{name:'Practice',exact:true}).click();
+ await expect(panel.getByTestId('deep-lesson-grammar').locator('.deep-activity-card')).toHaveCount(20);
  const grammar=panel.getByTestId('deep-grammar-item-0');await grammar.getByRole('radio').first().check();await grammar.getByRole('button',{name:'Submit first attempt',exact:true}).click();
  await expect(page.getByRole('tab',{name:'Speaking',exact:true})).toBeVisible();
+ await page.getByRole('tab',{name:'Speaking',exact:true}).click();await expect(panel.locator('.speaking-repeat-list .deep-speaking-task')).toHaveCount(20);
+ await expect(page.getByRole('tab',{name:'Grammar',exact:true})).toHaveCount(0);
  await expect(page.getByRole('tab',{name:'Test',exact:true})).toHaveCount(0);
  await expect(page.getByRole('tab',{name:'Visual',exact:true})).toHaveCount(0);
  await expect(page.getByRole('tab',{name:'Case',exact:true})).toHaveCount(0);
@@ -129,7 +132,7 @@ for(const model of reviewedLocalModels)for(const viewport of [{name:'desktop',wi
  const card=library.getByTestId('catalog-lesson-'+model.slug);await expect(card).toContainText('Deep-reviewed self-study');await card.getByRole('button',{name:/^(Open|Resume|Review) lesson$/}).click();
  await expect(page.getByText('Reviewed self-study lesson',{exact:true})).toBeVisible();await expect(page.getByText('Account-synced · reviewed unit',{exact:true})).toBeVisible();const panel=page.getByTestId('lesson-study-panel');await expect(panel.getByRole('heading',{name:model.title,exact:true})).toBeVisible();
  await expect(panel.locator('.lesson-teaching-block')).toHaveCount(6);
- await page.getByRole('tab',{name:'Practice',exact:true}).click();await expect(panel.getByTestId('deep-practice-item-0')).toBeVisible();await expect(panel.getByTestId('applied-practice')).toHaveCount(0);
+ await page.getByRole('tab',{name:'Practice',exact:true}).click();await expect(panel.getByTestId('deep-lesson-grammar').locator('.deep-activity-card')).toHaveCount(20);await expect(panel.getByTestId('applied-practice')).toHaveCount(0);
  await page.getByRole('tab',{name:'Audio',exact:true}).click();await expect(panel.getByTestId('deep-lesson-audio')).toContainText('Listen for the decision');await expect(page.getByTestId('p1-interactive-gate')).toHaveCount(0);
  await expect(page.getByRole('tab',{name:'Professor',exact:true})).toHaveCount(0);expect(requests()).toBe(0);
 });
