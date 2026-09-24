@@ -139,7 +139,16 @@ export async function serveEnglishEpisodeAction(input:{
  const cue=source.renderCues[cuePlan.cueIndex];
  if(cue.kind!=='speech')return json({error:'english_episode_cue_invalid'},400);
  const generationGate=await admin.rpc('english_episode_generation_allowed_v1',{p_user_id:userId});
- if(generationGate.error||generationGate.data!==true)return json({error:'english_episode_generation_closed'},403);
+ if(generationGate.error||generationGate.data!==true){
+  // A closed cost gate still permits a read of an already-settled cue. This
+  // lets the operator reach the zero-cost final assembly without reopening
+  // paid generation or changing the one-call-per-cue admission rule.
+  const cached=await observeCue(cuePlan);
+  if(!cached.error&&cueHit(cached.data,cuePlan))
+   return json({status:'cue_complete',cue_index:cueIndex,total:speechPlan.length,
+    next_cue_index:nextAfter(cueIndex),cached:true});
+  return json({error:'english_episode_generation_closed'},403);
+ }
  const job=await admin.rpc('start_english_episode_job_v1',{p_job_id:source.jobId,p_user_id:userId,
   p_lesson_id:lessonId,p_content_version:source.identity.contentVersion,
   p_source_fingerprint:source.sourceFingerprint,p_render_revision:source.renderRevision,

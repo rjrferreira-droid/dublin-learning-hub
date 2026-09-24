@@ -19,6 +19,10 @@ test('independent MP3 speech responses join with exact silence, without midstrea
   }
   const nora=readFileSync(a),sam=readFileSync(b);
   validateEpisodeSpeechMp3(nora);validateEpisodeSpeechMp3(sam);
+  const recovered=composeMp3Cues([{kind:'speech',bytes:nora},{kind:'silence',durationMs:48},
+   {kind:'speech',bytes:sam}],15_728_640);
+  const recoveredFile=join(folder,'recovered.mp3');writeFileSync(recoveredFile,recovered);
+  assert.equal(spawnSync('ffmpeg',['-v','error','-i',recoveredFile,'-f','null','-']).status,0);
   const bytes=composeMp3Cues([{kind:'speech',bytes:nora},{kind:'silence',durationMs:3000},
    {kind:'speech',bytes:sam}],15_728_640);
   assert.equal(Buffer.from(bytes).indexOf(Buffer.from('ID3')), -1);

@@ -24,7 +24,11 @@ test('English episodes bind all spoken turns, voice choices, pauses and transcri
   assert.ok(source.transcript.includes('HOST:')||source.transcript.includes('NIAMH:'));
  }
  assert.equal(sources[0].renderCues.filter(cue=>cue.kind==='speech').length,32);
- assert.equal(sources[1].renderCues.filter(cue=>cue.kind==='speech').length,14);
+ assert.equal(sources[1].renderCues.filter(cue=>cue.kind==='speech').length,16);
+ assert.equal(sources[1].renderCues[14].kind,'silence');
+ assert.deepEqual(sources[1].renderCues[14],{kind:'silence',durationMs:48});
+ assert.deepEqual(sources[1].cuePlan.slice(-3).map(cue=>cue.cueIndex),[15,16,17]);
+ assert.ok(sources[1].renderCues.slice(15).every(cue=>cue.kind==='speech'&&cue.text.length<=1500));
 });
 
 test('wrong DB identity, track, version and slug fail before an English episode can be admitted',()=>{

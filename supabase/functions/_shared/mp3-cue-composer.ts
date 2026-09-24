@@ -11,7 +11,7 @@ const RATES=[44100,48000,32000];
 
 /** MP3 speech responses are independent files. Remove per-file tags and Xing
  * seek tables before joining complete frames into one decodable stream. */
-function parseMp3(bytes:Uint8Array):Parsed{
+function parseMp3(bytes:Uint8Array,collectFrames=true):Parsed{
  if(bytes.length<4)throw Error('audio_mp3_invalid');
  let offset=0;
  while(bytes[offset]===0x49&&bytes[offset+1]===0x44&&bytes[offset+2]===0x33){
@@ -23,6 +23,7 @@ function parseMp3(bytes:Uint8Array):Parsed{
  }
  let format:Format|undefined;
  const frames:Uint8Array[]=[];
+ let validFrameCount=0;
  while(offset<bytes.length){
   // Some encoders append a 128-byte ID3v1 tag. It is metadata, not audio.
   if(bytes.length-offset===128&&bytes[offset]===0x54&&bytes[offset+1]===0x41&&bytes[offset+2]===0x47)break;
@@ -39,7 +40,9 @@ function parseMp3(bytes:Uint8Array):Parsed{
   if(format&&(next.sampleRate!==format.sampleRate||next.channels!==format.channels||next.mpegVersion!==format.mpegVersion))
     throw Error('audio_mp3_format_mismatch');
   format=next;
-  const frame=bytes.slice(offset,offset+size);
+  // Keep views into the downloaded response. Copying every frame makes long
+  // narration cues exhaust the Edge isolate before the file can be stored.
+  const frame=bytes.subarray(offset,offset+size);
   let isSeekTable=false;
   if(frames.length===0){
    const sideInfo=version===3?(channels===1?17:32):(channels===1?9:17);
@@ -52,17 +55,17 @@ function parseMp3(bytes:Uint8Array):Parsed{
    const vbriAt=4+32;
    if(String.fromCharCode(...frame.subarray(vbriAt,vbriAt+4))==='VBRI')isSeekTable=true;
   }
-  if(!isSeekTable)frames.push(frame);
+  if(!isSeekTable){validFrameCount++;if(collectFrames)frames.push(frame);}
   offset+=size;
  }
- if(!format||frames.length<2)throw Error('audio_mp3_invalid');
+ if(!format||validFrameCount<2)throw Error('audio_mp3_invalid');
  return {frames,format};
 }
 
 /** Reject an incompatible paid response immediately, before dispatching the
  * remaining turns. The authored silence is 24 kHz mono MPEG-2 Layer III. */
 export function validateEpisodeSpeechMp3(bytes:Uint8Array):void{
- const format=parseMp3(bytes).format;
+ const format=parseMp3(bytes,false).format;
  if(format.sampleRate!==24000||format.channels!==1||format.mpegVersion!==2)
   throw Error('audio_mp3_format_mismatch');
 }

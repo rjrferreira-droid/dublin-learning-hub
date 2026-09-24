@@ -29,8 +29,8 @@ export const featureFlags: FeatureFlags = {
   adaptiveCurriculum: envFlag('VITE_FEATURE_ADAPTIVE_CURRICULUM', true),
   englishAcademy: envFlag('VITE_FEATURE_ENGLISH_ACADEMY', true),
   pronunciationAssessment: envFlag('VITE_FEATURE_PRONUNCIATION', false),
-  englishReviewedAudio: envFlag('VITE_FEATURE_ENGLISH_REVIEWED_AUDIO', false),
-  englishAudioAssessment: envFlag('VITE_FEATURE_ENGLISH_AUDIO_ASSESSMENT', false),
+  englishReviewedAudio: envFlag('VITE_FEATURE_ENGLISH_REVIEWED_AUDIO', true),
+  englishAudioAssessment: envFlag('VITE_FEATURE_ENGLISH_AUDIO_ASSESSMENT', true),
 };
 
 export function isFeatureEnabled(key: FeatureKey): boolean {

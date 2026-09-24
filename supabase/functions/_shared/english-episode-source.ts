@@ -8,13 +8,13 @@ export const ENGLISH_EPISODE_INSTRUCTIONS='Speak naturally in English, with clea
 
 /** Adjacent turns by one character become one TTS request when no authored
  * silence separates them. This preserves order and reduces the request count. */
-export function groupEnglishEpisodeCues(cues:readonly AudioCue[]):readonly AudioCue[]{
+export function groupEnglishEpisodeCues(cues:readonly AudioCue[],maxCharacters=4096):readonly AudioCue[]{
  const result:AudioCue[]=[];
  for(const cue of cues){
   if(cue.kind==='silence'){result.push(cue);continue;}
   const previous=result.at(-1);
   if(previous?.kind==='speech'&&previous.speaker===cue.speaker&&previous.voice===cue.voice
-    &&previous.text.length+1+cue.text.length<=4096){
+    &&previous.text.length+1+cue.text.length<=maxCharacters){
    result[result.length-1]={...previous,text:`${previous.text} ${cue.text}`};
   }else result.push(cue);
  }
@@ -52,7 +52,22 @@ export function englishEpisodeSource(value:{lessonId:string;lessonSlug:string;se
  jobBytes[6]=(jobBytes[6]&0x0f)|0x50;jobBytes[8]=(jobBytes[8]&0x3f)|0x80;
  const jobHex=jobBytes.subarray(0,16).toString('hex');
  const jobId=`${jobHex.slice(0,8)}-${jobHex.slice(8,12)}-${jobHex.slice(12,16)}-${jobHex.slice(16,20)}-${jobHex.slice(20)}`;
- const renderCues=groupEnglishEpisodeCues(cues);
+ const grouped=groupEnglishEpisodeCues(cues);
+ // The original P1 tail joined three authored narrator turns into a 3,428
+ // character request that exhausted Edge memory twice. Keep the first 13
+ // settled speech cues byte-for-byte stable. Retire the old cue index 14 as a
+ // 48 ms silence (two valid MP3 frames), then give each original tail turn its
+ // own paid, receipted cue.
+ // The durable recovery migration records the plan amendment and both old
+ // uncertain holds. No other lesson uses this exceptional partition.
+ const p1Recovery=value.lessonId==='e2100000-2026-4e21-8e03-000000000003';
+ if(p1Recovery&&(grouped.length!==15||grouped[14]?.kind!=='speech'
+   ||grouped[14].text.length!==3428||cues.length!==17
+   ||cues[13]?.kind!=='silence'
+   ||cues.slice(14).some(cue=>cue.kind!=='speech'||cue.speaker!=='narrator'||cue.text.length>1500)))
+  throw Error('english_episode_recovery_source_changed');
+ const renderCues=p1Recovery?
+  [...grouped.slice(0,14),{kind:'silence' as const,durationMs:48},...cues.slice(14)]:grouped;
  const cuePlan=renderCues.flatMap((cue,cueIndex)=>{
   if(cue.kind==='silence')return [];
   const cueFingerprint=createHash('sha256').update(JSON.stringify({episodeFingerprint:contract.sourceFingerprint,
