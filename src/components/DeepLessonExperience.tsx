@@ -26,6 +26,7 @@ type Props={
  activeTab:string;
  readerDisabled?:boolean;
  audioPlayer?:ReactNode;
+ audioListened?:boolean;
  onTabChange:(tab:string)=>void;
  onLearnReviewed:()=>void;
  onGrammarEngaged:()=>void;
@@ -38,7 +39,7 @@ export function deepLessonHandlesTab(deep:DeepLessonContract,activeTab:string){
  return deepCoreTabs.has(activeTab)||(Boolean(deep.english)&&deepEnglishTabs.has(activeTab));
 }
 
-export function DeepLessonExperience({module,activeTab,readerDisabled,audioPlayer,onTabChange,onLearnReviewed,onGrammarEngaged,onPracticeEngaged}:Props){
+export function DeepLessonExperience({module,activeTab,readerDisabled,audioPlayer,audioListened,onTabChange,onLearnReviewed,onGrammarEngaged,onPracticeEngaged}:Props){
  const deep=module.deepLesson;
  const [responses,setResponses]=useState<ResponseMap>({});
  const [readerOpen,setReaderOpen]=useState(false);
@@ -146,7 +147,7 @@ export function DeepLessonExperience({module,activeTab,readerDisabled,audioPlaye
    <details className="audio-transcript"><summary>Follow along with the transcript</summary>
     {deep.audioEpisode.format==='authored-script'?deep.audioEpisode.segments.map(segment=><section key={segment.id}><h3>{segment.title}</h3>{splitScript(segment.script).map((paragraph,paragraphIndex)=><p key={paragraphIndex}>{paragraph.replace(/\s*\[Pause \d+ seconds?\.\]/gi,'')}</p>)}</section>):<p>The full episode is not published yet.</p>}
    </details>
-   {module.track==='english'?<AudioAnswerPractice key={module.lessonId} questions={audioQuestionsFor(module.lessonId)} active={activeTab==='Audio'}/>:null}
+   {module.track==='english'?<AudioAnswerPractice key={module.lessonId} questions={audioQuestionsFor(module.lessonId)} active={activeTab==='Audio'} canRecord={Boolean(audioListened)}/>:null}
   </section>
 
   {english?<section className="lesson-study-section deep-grammar" hidden={activeTab!=='Grammar'} data-testid="deep-lesson-grammar">

@@ -4,8 +4,9 @@ import type {AudioQuestion} from '../learning/audioQuestions';
 const MAX_SECONDS=60;
 type RecordedAnswer={url:string;seconds:number};
 
-export function AudioAnswerPractice({questions,active}:{questions:readonly AudioQuestion[];active:boolean}){
+export function AudioAnswerPractice({questions,active,canRecord}:{questions:readonly AudioQuestion[];active:boolean;canRecord:boolean}){
  const [index,setIndex]=useState(0);
+ const [questionsStarted,setQuestionsStarted]=useState(false);
  const [recording,setRecording]=useState(false);
  const [elapsed,setElapsed]=useState(0);
  const [answers,setAnswers]=useState<(RecordedAnswer|null)[]>(()=>questions.map(()=>null));
@@ -28,7 +29,7 @@ export function AudioAnswerPractice({questions,active}:{questions:readonly Audio
  const done=index>=questions.length;
  const current=answers[index];
  async function start(){
-  if(recording||done)return;
+  if(recording||done||!questionsStarted||!canRecord)return;
   if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==='undefined'){
    setError('This browser cannot record a voice answer. Try a browser with microphone access.');return;
   }
@@ -62,11 +63,15 @@ export function AudioAnswerPractice({questions,active}:{questions:readonly Audio
  }
  return <section className="audio-answer-practice" aria-label="Listening questions">
   <div className="audio-answer-heading"><h3>Answer in your own words</h3><span>{questions.length} questions · up to 1 min each</span></div>
-  {!done?<>
+  {!questionsStarted?<div className="audio-answer-ready">
+   <div><strong>{canRecord?'Ready for your answers':'Ready when you finish listening'}</strong><p>Answer five questions in English, one at a time. You can replay the episode or open the transcript before starting.</p></div>
+   <button type="button" disabled={!canRecord} onClick={()=>setQuestionsStarted(true)}>Start questions →</button>
+   {!canRecord?<small>The questions open after the audio plays through. Your microphone is inactive until then.</small>:null}
+  </div>:!done?<>
    <p>After listening, answer each question in English. Your recordings stay in this open lesson.</p>
    <div className="audio-answer-card"><div className="audio-answer-top"><strong>QUESTION {index+1} OF {questions.length}</strong><span>{recording?`${MAX_SECONDS-elapsed}s left`:'Up to 1:00'}</span></div>
     <h4>{questions[index].question}</h4>
-    <div className="audio-record-actions"><button type="button" onClick={recording?stop:()=>void start()}>{recording?'Stop recording':current?'Record again':'Record answer'}</button>
+    <div className="audio-record-actions"><button type="button" disabled={!canRecord} onClick={recording?stop:()=>void start()}>{recording?'Stop recording':current?'Record again':'Record answer'}</button>
      {current&&!recording?<audio controls src={current.url} aria-label={`Your answer to question ${index+1}`}/>:null}</div>
     {error?<p role="alert">{error}</p>:null}
     {current&&!recording?<div className="audio-answer-next"><span>Recorded · {current.seconds}s</span><button type="button" onClick={()=>setIndex(value=>value+1)}>{index===questions.length-1?'Review answers':'Next question →'}</button></div>:null}

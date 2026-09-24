@@ -1,6 +1,7 @@
 declare const __LEARNING_HUB_CURRICULUM_PREVIEW__: boolean;
 
 export const LEARNING_HUB_PREVIEW_BRANCH = 'feat/professor-experience-2026-09-13';
+export const LEARNING_HUB_AUDIO_PREVIEW_BRANCH = 'feat/audio-experience-2026-09-24';
 
 type PreviewBuildEnvironment = {
   VERCEL_ENV?: string;
@@ -9,7 +10,8 @@ type PreviewBuildEnvironment = {
 
 export function curriculumPreviewBuildEnabled(environment: PreviewBuildEnvironment) {
   return environment.VERCEL_ENV === 'preview'
-    && environment.VERCEL_GIT_COMMIT_REF === LEARNING_HUB_PREVIEW_BRANCH;
+    && (environment.VERCEL_GIT_COMMIT_REF === LEARNING_HUB_PREVIEW_BRANCH
+      || environment.VERCEL_GIT_COMMIT_REF === LEARNING_HUB_AUDIO_PREVIEW_BRANCH);
 }
 
 export function curriculumModelPreviewEnabled(search: string, automaticPreview = false) {

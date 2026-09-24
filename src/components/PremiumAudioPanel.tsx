@@ -7,11 +7,12 @@ type PremiumAudioPanelProps = {
   lessonId?: string;
   lessonTitle: string;
   reviewedVoicesPending?: boolean;
+  onPlaybackComplete?: () => void;
 };
 
 type AudioState = PremiumAudioResult | null;
 
-export function PremiumAudioPanel({ lessonId, lessonTitle, reviewedVoicesPending = false }: PremiumAudioPanelProps) {
+export function PremiumAudioPanel({ lessonId, lessonTitle, reviewedVoicesPending = false, onPlaybackComplete }: PremiumAudioPanelProps) {
   const [audio, setAudio] = useState<AudioState>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<PremiumAudioError | null>(null);
@@ -96,7 +97,7 @@ export function PremiumAudioPanel({ lessonId, lessonTitle, reviewedVoicesPending
 
       {audio && (
         <div className="premium-audio-player">
-          <audio controls preload="metadata" src={audio.audioUrl}>
+          <audio controls preload="metadata" src={audio.audioUrl} onEnded={onPlaybackComplete}>
             Your browser does not support audio playback.
           </audio>
           <div className="premium-audio-meta">
